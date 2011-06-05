@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# Start and stop Lava daemons
+# Make sure we're running a shell that understands functions
+#
+# The following is for the Linux chkconfig utlility
+# chkconfig: - 99 01
+# description:  Load Sharing Facility
+#
+### BEGIN INIT INFO
+# Provides: lava
+# Required-Start: $local_fs $remote_fs $syslog
+# Required-Stop: $local_fs $remote_fs $syslog
+# Short-Description: Load Sharing Facility
+# Description: Load Sharing Facility
+### END INIT INFO
+
+kill_daemons() {
+    # make sure all old daemons are dead first
+    # This would be "/etc/killall lim res sbatch mbatchd" if everyone had
+    # killall
+    MACHINETYPE=`uname -a | cut -d" " -f 5`
+    PIDS=`(ps -ef; ps auxww) 2>/dev/null | egrep " lim |/lim | lim$|/lim$| sbatchd |/sbatchd | sbatchd$|/sbatchd$| mbatchd |/mbatchd | mbatchd$|/mbatchd$| res |/res | res$|/res$"| sed -n "/grep/d;s/^ *root *\([0-9]*\).*/\1/p" | sort -u`
+    if [ "$PIDS" != "" ]
+    then
+        kill $PIDS
+    fi
+}
+# The correct exit status must be returned
+EXIT_OK=0
+EXIT_ERR=1  # Failed to startup Lava
+EXIT_NA=2    # Lava not configured
+
+case "$1" in
+  'stop')
+        kill_daemons
+	rm -f /var/lock/subsys/lava
+        exit $EXIT_OK
+        ;;
+
+  'start')
+        LSF_CONF=/etc/lava/conf/lsf.conf
+
+        if [ -f $LSF_CONF ]
+        then
+            kill_daemons
+
+            # Get the location of the Lava daemons
+            . $LSF_CONF
+            # Export this env.variable to notify Lava daemons the loc. of
+            # lsf.conf
+            export LSF_ENVDIR
+
+	    . /etc/profile.d/lava.sh
+
+            # Add /etc/services entries for Lava
+            if [ `grep -c 7981\/ /etc/services` -ne 1 ]; then
+               echo "res             7981/tcp                        # Lava res" >> /etc/services
+               echo "lim             7982/udp                        # Lava lim" >> /etc/services
+               echo "mbatchd         7993/tcp                        # Lava mbatchd" >> /etc/services
+               echo "sbatchd         7994/tcp                        # Lava sbatchd" >> /etc/services
+            fi
+
+            # If they are really there, start them
+            if [ -f /usr/sbin/lim -a -f /usr/sbin/res -a -f /usr/sbin/sbatchd ]
+            then
+                /usr/sbin/lim &
+                /usr/sbin/res &
+                /usr/sbin/sbatchd &
+		touch /var/lock/subsys/lava
+                exit $EXIT_OK
+            fi
+            exit $EXIT_ERR
+        fi
+        exit $EXIT_NA
+        ;;
+  'status')
+	pidof res lim mbatchd sbatchd
+	;;
+  'reload')
+	echo "Stop lava and start for restarting the services"
+	;;
+  *)
+        echo "Script for starting up and shutting down lava"
+        echo "Usage: $0 { start | stop }"
+            exit $EXIT_ERR
+        ;;
+esac
+

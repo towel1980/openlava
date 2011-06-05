@@ -1,0 +1,86 @@
+# README for Platform Lava 1.0 (2007)
+# Copyright (C) 2007 Platform Computing Inc
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+# 	
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+#
+
+=============================
+Contents
+=============================
+
+1. Introduction
+2. Directory Structure
+3. Build Instruction
+4. Notes
+
+=============================
+1. Introduction
+=============================
+
+Lava is a load sharing and distributed batch queueing software that 
+integrates a network of computers running UNIX systems.  It consists 
+of the following components:
+
+Lava Base:
+    The software upon which all the other components are based. It 
+    includes two servers, the Load Information Manager (LIM) and 
+    the Remote Execution Server  (RES). 
+
+Lava Batch:
+    The set of utilities providing batch job scheduling for distributed 
+    environments, ensuring optimal resource sharing. It includes the
+    master and slave batch daemons (mbatchd and sbatchd).
+
+=============================
+2. Directory Structure
+=============================
+
+The contents of directories are:
+
+README: This file.
+
+Makefile:
+        Make(1) control file for compiling the source.
+
+config.h
+        Internal include file for handling platform dependent
+        prototype definitions.
+
+lsf/
+        Source code for building the Lava base daemons and tools, including 
+        the lim, pim, res, nios, and all ls* commands.
+
+lsbatch/
+        Source code for building the Lava batch scheduling daemons and tools,
+        including the mbatchd, sbatchd, and all b* commands.
+
+eauth/
+        Source code for building the external authentication daemon
+
+chkpnt/
+        Source code for building generic echkpnt and erestart framework
+
+=============================
+4. Notes
+=============================
+
+1. Lava eauth only provides the external authentication framework. Customer 
+   needs to use their own encryption and decryption logic and pass external 
+   authentication data using this framework.
+
+2. Platform Lava is not compatible with Platform LSF. Customer who needs 
+   to upgrade from Lava to LSF must drain all the jobs before upgrading. After 
+   Platform LSF installation, user needs to copy over all the configuration 
+   files (and setting). Accounting file and Event file can not be upgraded to 
+   Platform LSF.

@@ -1,0 +1,23 @@
+2011-05-02  David Bigagli  <david@davidbigagli.com>
+
+	* Makefile(s): Removed PREFIX variable from all make files and 
+	introduced Lava specific installation variables in Make.misc.
+
+	* Makefile(s): Made static link for all Lava binaries.
+
+	* Makefiles(s): Changed makefiles not to build shared libraries 
+	by default and modified the shared libraries to use standard .so 
+	suffix instead of .So.
+
+2011-04-24  David Bigagli  <david@davidbigagli.com>
+
+	* ChangeLog: Created this file.
+
+	* Make.def: Set the location of TCL header files in /usr/local/include
+	instead of /usr/include. TCL_INCLUDE = /usr/local/include
+
+	* Make.def: Added a static link for TCL libtcl8.4.a from 
+	/usr/local/lib. TCLLIB = /usr/local/lib/libtcl8.4.a
+
+	* Make.def: Removed the -O2 optimization flag and the hash-style
+	linker option.

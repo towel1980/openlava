@@ -1,0 +1,5 @@
+2011-05-08  David Bigagli  <david@davidbigagli.com>
+
+	* Makefile: Changed the install rule to use LAVA_BINDIR.
+	* brequeue.c (main): Fixed uninitialized variable compile warning.
+

@@ -1,0 +1,85 @@
+#!/bin/sh
+
+#
+# Start and stop Lava daemons
+# Run by hand or install in /etc/init.d
+# and make a symbolic link from rc3.d to it.
+#
+
+# This is the root of oepn lava installation
+# change it if installed somewhere else.
+export LAVA_TOP=/opt/open_lava-1.0
+
+# kill the old daemons first.
+#
+kill_daemons()
+{
+    killall -v lim res sbatchd  mbatchd
+}
+
+case "$1" in
+  'stop')
+        kill_daemons
+        exit 0
+        ;;
+
+  'start')
+        LSF_CONF=$LAVA_TOP/conf/lsf.conf
+
+        if [ -f $LSF_CONF ]
+        then
+            echo "Checking if daemons are still alive..."
+            kill_daemons
+
+            # Get the location of the Lava daemons
+            . $LSF_CONF
+
+            # Export this env.variable to notify Lava daemons the loc. of
+            # lsf.conf
+            export LSF_ENVDIR
+            export LSF_SERVERDIR
+            echo "Starting daemons..."
+
+            # single user mode use this
+            # to run test clusters
+            # $LSF_SERVERDIR/lim -1
+            #echo "lim started"
+            #$LSF_SERVERDIR/res -1
+            #echo "res started"
+            #$LSF_SERVERDIR/sbatchd -1
+            #echo "sbatchd started"
+
+            # multi user mode
+            $LSF_SERVERDIR/lim
+            echo "lim started"
+            $LSF_SERVERDIR/res
+            echo "res started"
+            $LSF_SERVERDIR/sbatchd
+            echo "sbatchd started"
+
+            exit 0
+        fi
+        echo "$LSF_CONF: no such file or directory"
+        exit 1
+        ;;
+  'status')
+        PID=`pidof lim`
+        echo "lim pid: <$PID>"
+        PID=`pidof res`
+        echo "res pid: <$PID>"
+        PID=`pidof sbatchd`
+        echo "sbatchd pid: <$PID>"
+        PID=`pidof mbatchd`
+        echo "lim mbatchd: <$PID>"
+        exit 0
+        ;;
+  'restart')
+        echo "Stop lava and start for restarting the services"
+        ;;
+  *)
+        echo "Script for starting up and shutting down lava"
+        echo "Usage: $0 { start | stop | status | restart }"
+        exit 0
+        ;;
+esac
+
