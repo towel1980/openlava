@@ -24,146 +24,146 @@ float realcla 48,1365
 int sd_cnt 49,1394
 int rcv_cnt 50,1410
 
-lim.conf.c,4122
+lim.conf.c,4124
 #define NL_SETN 25,855
-struct hostEntry 30,929
-    char    hostName[hostName31,948
-    char    hostModel[hostModel32,986
-    char    hostType[hostType33,1024
-    int     rcv;34,1061
-    int     nDisks;35,1095
-    float   cpuFactor;36,1130
-    float   *busyThreshold;busyThreshold37,1164
-    int     nRes;38,1192
-    char    **resList;resList39,1210
-    int     rexPriority;40,1236
-struct sharedResourceInstance *sharedResourceHead sharedResourceHead43,1265
-struct lsInfo allInfo;44,1324
-struct shortLsInfo shortInfo;45,1347
-hTab hostModelTbl;47,1378
-int sizeOfResTable 48,1397
-static int numofhosts 49,1420
-char mcServersSet 50,1448
-#define M_THEN_A 54,1528
-#define A_THEN_M 55,1548
-#define M_OR_A 56,1568
-#define ILLEGAL_CHARS 58,1589
-void *ExtResDLHandle;ExtResDLHandle119,4577
-#define VCL_VERSION 125,4784
-readShared(129,4816
-doindex 252,8826
-setIndex 327,11331
-doclist(430,15119
-dotypelist(519,18467
-dohostmodel(608,21604
-initResTable(779,27725
-resNameDefined 816,28802
-doresources(828,29001
-#define RKEY_RESOURCENAME 834,29146
-#define RKEY_TYPE 836,29202
-#define RKEY_INTERVAL 838,29250
-#define RKEY_INCREASING 840,29302
-#define RKEY_RELEASE 842,29356
-#define RKEY_DESCRIPTION 844,29414
-chkUIdxAndSetDfltRunElim(1133,43285
-setupHostNodeResBitArrays(1150,43653
-doresourcemap(1174,44304
-#define RKEY_RESOURCE_NAME 1181,44490
-#define RKEY_LOCATION 1183,44555
-addSharedResourceInstance(1349,51573
-addResourceMap 1416,53667
-parseHostList 1662,62839
-validLocationHost 1709,64300
-initResItem(1742,65221
-validType 1757,65501
-readCluster(1775,65789
-readCluster2(1868,68798
-#define ADMIN_IGNORE(1879,69040
-adjIndx 1986,72611
-domanager 2059,74688
-getClusAdmins 2151,77811
-setAdmins 2195,79479
-doclparams 2266,81944
-#define EXINTERVAL 2272,82114
-#define ELIMARGS 2274,82163
-#define PROBE_TIMEOUT 2276,82210
-#define ELIM_POLL_INTERVAL 2278,82265
-#define HOST_INACTIVITY_LIMIT 2280,82329
-#define MASTER_INACTIVITY_LIMIT 2282,82399
-#define RETRY_LIMIT	2284,82472
-#define ADJUST_DURATION	2286,82522
-#define LSF_ELIM_DEBUG 2288,82580
-#define LSF_ELIM_BLOCKTIME 2290,82635
-#define LSF_ELIM_RESTARTS 2292,82698
-initKeyList(2505,91466
-#define  HOSTNAME_ 2511,91545
-#define  MODEL 2512,91583
-#define  TYPE 2513,91623
-#define  ND 2514,91663
-#define  RESOURCES 2515,91703
-#define  RUNWINDOW 2516,91743
-#define  REXPRI_ 2517,91783
-#define  SERVER_ 2518,91823
-#define  R 2519,91863
-#define  S 2520,91903
-setMyClusterName(2558,92799
-freeKeyList(2711,98075
-dohosts(2722,98258
-putThreshold(2949,106790
-typeNameToNo(2963,107111
-archNameToNo(2975,107312
-int modelNameToNo(3019,108313
-addHost(3031,108536
-addFloatClientHost(3191,114023
-removeFloatClientHost(3283,116156
-initHostNode 3325,117154
-freeHostNodes 3437,120282
-addResource 3472,120994
-freeSharedRes 3518,122492
-addHostInstance 3534,122782
-getValidHosts 3633,126287
-addHostNodeIns 3708,129101
-isInHostNodeIns 3762,131220
-addHostList 3775,131556
-addInstance 3811,132792
-initInstance 3866,134781
-freeInstance 3890,135314
-isInHostList 3903,135577
-inHostResourcs 3924,136195
-validResource(3941,136478
-validLoadIndex(3959,136728
-validHostType(3974,136914
-validHostModel(3987,137110
-static int cntofdefault=4001,137306
-addHostType(4003,137346
-addHostModel(4040,138442
-addCluster(4090,140064
-findClusterServers(4165,142687
-reCheckRes(4230,144620
-reCheckClusterClass(4332,148247
-addMapBits 4414,150951
-reCheckClass(4424,151129
-configCheckSum(4434,151255
-getAdmins 4477,152314
-doubleResTable 4542,154298
-#define DEFAULT_RETRY_MAX 4563,154862
-#define DEFAULT_RETRY_INT 4564,154893
-confOpen(4566,154932
-mykey(4603,155875
-setExtResourcesDefDefault(4624,156177
-setExtResourcesDef(4652,156850
-setExtResourcesLoc(4768,160871
-getExtResourcesDef(4815,162065
-getExtResourcesLoc(4827,162373
-getExtResourcesValDefault(4839,162681
-getExtResourcesVal(4848,162796
-initTypeModel(4859,163129
-stripIllegalChars(4910,164964
-getHostType(4927,165189
-slaveOnlyInit(4934,165247
-slaveOnlyPreConf(4964,165701
-static int saveHostIPAddr(5105,170083
-adjHostListOrder(5132,170738
+struct hostEntry 30,923
+    char    hostName[hostName31,942
+    char    hostModel[hostModel32,980
+    char    hostType[hostType33,1018
+    int     rcv;34,1055
+    int     nDisks;35,1072
+    float   cpuFactor;36,1092
+    float   *busyThreshold;busyThreshold37,1115
+    int     nRes;38,1143
+    char    **resList;resList39,1161
+    int     rexPriority;40,1184
+struct sharedResourceInstance *sharedResourceHead sharedResourceHead43,1213
+struct lsInfo allInfo;44,1272
+struct shortLsInfo shortInfo;45,1295
+hTab hostModelTbl;47,1326
+int sizeOfResTable 48,1345
+static int numofhosts 49,1368
+char mcServersSet 50,1395
+#define M_THEN_A 54,1475
+#define A_THEN_M 55,1495
+#define M_OR_A 56,1515
+#define ILLEGAL_CHARS 58,1536
+void *ExtResDLHandle;ExtResDLHandle119,4522
+#define VCL_VERSION 125,4729
+readShared(129,4761
+doindex 252,9218
+setIndex 327,11947
+doclist(430,15905
+dotypelist(519,19460
+dohostmodel(608,22816
+initResTable(779,29433
+resNameDefined 816,30516
+doresources(828,30713
+#define RKEY_RESOURCENAME 834,30858
+#define RKEY_TYPE 836,30921
+#define RKEY_INTERVAL 838,30976
+#define RKEY_INCREASING 840,31035
+#define RKEY_RELEASE 842,31096
+#define RKEY_DESCRIPTION 844,31154
+chkUIdxAndSetDfltRunElim(1133,45490
+setupHostNodeResBitArrays(1150,45947
+doresourcemap(1174,46592
+#define RKEY_RESOURCE_NAME 1181,46778
+#define RKEY_LOCATION 1183,46843
+addSharedResourceInstance(1349,54249
+addResourceMap 1416,56341
+parseHostList 1662,66042
+validLocationHost 1709,67515
+initResItem(1742,68397
+validType 1757,68677
+readCluster(1775,68975
+readCluster2(1868,72113
+#define ADMIN_IGNORE(1879,72355
+adjIndx 1986,76411
+domanager 2059,78688
+getClusAdmins 2151,81986
+setAdmins 2195,83654
+doclparams 2266,86112
+#define EXINTERVAL 2272,86282
+#define ELIMARGS 2274,86349
+#define PROBE_TIMEOUT 2276,86414
+#define ELIM_POLL_INTERVAL 2278,86484
+#define HOST_INACTIVITY_LIMIT 2280,86559
+#define MASTER_INACTIVITY_LIMIT 2282,86637
+#define RETRY_LIMIT 2284,86717
+#define ADJUST_DURATION 2286,86785
+#define LSF_ELIM_DEBUG 2288,86857
+#define LSF_ELIM_BLOCKTIME 2290,86919
+#define LSF_ELIM_RESTARTS 2292,86989
+initKeyList(2505,95961
+#define  HOSTNAME_ 2511,96040
+#define  MODEL 2512,96078
+#define  TYPE 2513,96118
+#define  ND 2514,96158
+#define  RESOURCES 2515,96198
+#define  RUNWINDOW 2516,96238
+#define  REXPRI_ 2517,96278
+#define  SERVER_ 2518,96318
+#define  R 2519,96358
+#define  S 2520,96398
+setMyClusterName(2558,97288
+freeKeyList(2711,103465
+dohosts(2722,103647
+putThreshold(2949,112896
+typeNameToNo(2963,113255
+archNameToNo(2975,113454
+int modelNameToNo(3019,114636
+addHost(3031,114859
+addFloatClientHost(3191,120643
+removeFloatClientHost(3283,122855
+initHostNode 3325,123936
+freeHostNodes 3437,127075
+addResource 3472,127795
+freeSharedRes 3518,129291
+addHostInstance 3534,129574
+getValidHosts 3633,133014
+addHostNodeIns 3708,135820
+isInHostNodeIns 3762,137932
+addHostList 3775,138263
+addInstance 3811,139523
+initInstance 3866,141478
+freeInstance 3890,141995
+isInHostList 3903,142239
+inHostResourcs 3924,142860
+validResource(3941,143142
+validLoadIndex(3959,143391
+validHostType(3974,143590
+validHostModel(3987,143792
+static int cntofdefault=4001,143994
+addHostType(4003,144033
+addHostModel(4040,145156
+addCluster(4090,146793
+findClusterServers(4165,149413
+reCheckRes(4230,151327
+reCheckClusterClass(4332,154948
+addMapBits 4414,157877
+reCheckClass(4424,158053
+configCheckSum(4434,158174
+getAdmins 4477,159236
+doubleResTable 4542,161203
+#define DEFAULT_RETRY_MAX 4563,161785
+#define DEFAULT_RETRY_INT 4564,161816
+confOpen(4566,161855
+mykey(4603,162795
+setExtResourcesDefDefault(4624,163091
+setExtResourcesDef(4652,163746
+setExtResourcesLoc(4768,167907
+getExtResourcesDef(4815,169108
+getExtResourcesLoc(4827,169415
+getExtResourcesValDefault(4839,169722
+getExtResourcesVal(4848,169835
+initTypeModel(4859,170168
+stripIllegalChars(4910,172134
+getHostType(4927,172359
+slaveOnlyInit(4934,172413
+slaveOnlyPreConf(4964,172859
+static int saveHostIPAddr(5105,177478
+adjHostListOrder(5132,178159
 
 lim.conf.h,82
 struct liStruct *li;li20,767
@@ -584,24 +584,24 @@ struct config_param limParams[limParams87,2078
 char limtraceON 110,2670
 usage(135,3248
 main(144,3411
-doAcceptConn(682,19416
-initSignals(767,22073
-initAndConfig(816,23009
-updtimer(909,25130
-periodic(953,26128
-timeToPeriodic(1023,27717
-timeForPeriodic(1044,28156
-term_handler(1065,28470
-child_handler(1098,29156
-initSock(1129,30099
-errorBack(1205,32503
-getTclLsInfo(1239,33464
-startPIM(1271,34406
-load_objects(1316,35310
-initLiStruct(1323,35355
-initMiscLiStruct(1377,37768
-printTypeModel(1394,38294
-slaveOnlyPostConf(1437,40465
+doAcceptConn(681,19413
+initSignals(766,22070
+initAndConfig(815,23006
+updtimer(908,25127
+periodic(952,26125
+timeToPeriodic(1022,27714
+timeForPeriodic(1043,28153
+term_handler(1064,28467
+child_handler(1097,29153
+initSock(1128,30096
+errorBack(1204,32500
+getTclLsInfo(1238,33461
+startPIM(1270,34403
+load_objects(1315,35307
+initLiStruct(1322,35352
+initMiscLiStruct(1376,37765
+printTypeModel(1393,38291
+slaveOnlyPostConf(1436,40462
 
 lim.misc.c,444
 #define NL_SETN 23,828
@@ -2714,6 +2714,31 @@ getSigSymbolList 164,4350
 SIGFUNCTYPE Signal_(178,4546
 getSigSymbol 193,4873
 blockALL_SIGS_(207,5099
+
+../lib/lib.so.c,48
+soOpen_(25,815
+soClose_(32,874
+soSym_(39,922
+
+../lib/lib.sock.c,371
+static int mLSFChanSockOpt 27,896
+CreateSock_(31,934
+CreateSockEauth_(115,2911
+get_nonstd_desc_(201,4945
+TcpCreate_(239,5475
+io_nonblock_(271,6193
+io_block_(277,6268
+setLSFChanSockOpt_(284,6361
+Socket_(294,6487
+svrsockCreate_(316,6825
+svrsockAccept_(402,9074
+svrsockToString_(425,9511
+svrsockDestroy_(448,9922
+TcpConnect_(456,10055
+getMsgBuffer_(517,11443
+
+../lib/lib.so.h,32
+typedef int SO_HANDLE_T;20,762
 
 ../lib/lib.syntax.c,19
 expSyntax_(25,848

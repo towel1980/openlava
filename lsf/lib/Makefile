@@ -28,7 +28,7 @@ STATIC_OBJ = lib.eligible.o lib.init.o lib.lim.o lib.info.o \
        lib.confmisc.o lib.conf.o lib.i18n.o lib.pim.o \
        lib.queue.o lib.hosta.o lib.nioback.o lib.rcp.o \
        lib.debug.o lib.wconf.o lib.rmi.o \
-       lib.dir.o lib.utmp.o lib.id.o
+       lib.dir.o lib.utmp.o lib.id.o lib.so.o
 
 SHARED_OBJ = lib.eligible.so lib.init.so lib.lim.so lib.info.so \
        lib.sock.so lib.control.so lib.res.so lib.misc.so \
