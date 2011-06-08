@@ -4,7 +4,7 @@
 # level directory
 #
 #
-export LAVA_CLUSTERNAME = ciao
+export LAVA_CLUSTERNAME = openlava
 export LAVA_ROOT = /opt
 export LAVA_VERSION = 1.0
 export LAVA_TOP = $(LAVA_ROOT)/openlava-$(LAVA_VERSION)
