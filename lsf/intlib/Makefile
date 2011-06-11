@@ -55,3 +55,7 @@ listset.o:    intlib.h ../../config.h intlibout.h
 bitset.o:    intlib.h ../../config.h intlibout.h bitset.h
 testbitset.o: bitset.h bitset.c ../lsf.h intlib.h 
 userok.o:    ../lib/mls.h
+
+etags :
+	etags *.[hc] ../*.h ../lib/*.[hc] ../intlib/*.[hc]
+
