@@ -1,5 +1,5 @@
 #**********************************************************
 # lava.sh:
-#   Setup Lava environment variables
-#********************************************************** 
+#   Setup openlava environment variables
+#**********************************************************
 export LSF_ENVDIR=/opt/openlava/conf

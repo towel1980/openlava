@@ -1,4 +1,4 @@
 #**********************************************************
 # cshrc.lsf:
-#     Sets the C shell user environment for LSF commands
+#     Sets the C shell user environment for openlava commands
 setenv LSF_ENVDIR /opt/openlava/conf

@@ -3,9 +3,9 @@
 TOP = ../
 include $(TOP)/Make.misc
 
-LAVA_BASE_CONFIG_FILES = lsf.conf lsf.shared lsf.cluster.ciao \
+LAVA_BASE_CONFIG_FILES = lsf.conf lsf.shared lsf.cluster.openlava \
                          lsf.task 
-LAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues 
+LAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues lsb.hosts
 LAVA_STARTUP_SCRIPT = lava
 
 install:
@@ -18,10 +18,5 @@ install:
 #
 	mkdir -p $(LAVA_SBINDIR)
 	install -c -m 755 $(LAVA_STARTUP_SCRIPT)  $(LAVA_SBINDIR)
-#
-# At last create the soft link in the root installation 
-# openlava -> openlava-major.minor
-#
-	ln -sf $(LAVA_TOP) $(LAVA_ROOT)/openlava
 clean:
 	
