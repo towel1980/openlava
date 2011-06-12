@@ -97,12 +97,19 @@ make install INSTALL_PREFIX=$RPM_BUILD_ROOT
 ##
 _lavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
 _symlink=${RPM_INSTALL_PREFIX}/openlava
-_bindir=${_symlink}/bin
-_sbindir=${_symlink}/etc
-_logdir=${_symlink}/log
-_libdir=${_symlink}/lib
-_mandir=${_symlink}/man
 
+##
+## set the clustername if the OPENLAVA_CLUSTER_NAME is set
+##
+if [ x"${OPENLAVA_CLUSTER_NAME}" = x ]; then
+	_clustername=%{_clustername}
+else
+	_clustername=${OPENLAVA_CLUSTER_NAME}
+	mv ${_lavatop}/work/openlava ${_lavatop}/work/${_clustername}
+	mv ${_lavatop}/conf/lsbatch/openlava ${_lavatop}/conf/lsbatch/${_clustername}
+	mv ${_lavatop}/conf/lsf.cluster.openlava ${_lavatop}/conf/lsf.cluster.${_clustername}
+fi
+ 
 ##
 ## create the symbolic link
 ##
@@ -134,23 +141,17 @@ sed -i -e "s#__LAVATOP__#${_symlink}#" %{_sysconfdir}/profile.d/lava.csh
 ## customize the lsf.cluster.clustername file
 ##
 hostname=`hostname`
-sed -i -e "s/__HOSTNAME__/$hostname/" ${_symlink}/conf/lsf.cluster.openlava
+sed -i -e "s/__HOSTNAME__/$hostname/" ${_symlink}/conf/lsf.cluster.${_clustername}
 
 ##
 ## customize the lsf.conf file
 ##
-sed -i  -e "s#__SBINDIR__#${_sbindir}#" \
-	-e "s#__LAVATOP__#${_symlink}#" \
-	-e "s#__BINDIR__#${_bindir}#" \
-	-e "s#__LIBDIR__#${_libdir}#" \
-	-e "s#__LOGDIR__#${_logdir}#" \
-	${_symlink}/conf/lsf.conf
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/conf/lsf.conf
 
 ##
 ## customize the lsf.shared file
 ##
-sed -i -e "s/__CLUSTERNAME__/%{_clustername}/" ${_symlink}/conf/lsf.shared
-
+sed -i -e "s/__CLUSTERNAME__/${_clustername}/" ${_symlink}/conf/lsf.shared
 
 ##
 ## PREUN
@@ -309,6 +310,24 @@ fi
 %attr(-,openlava,openlava) %dir %{_logdir}
 
 %changelog
+* Sat Jun 11 2011 Robert Stober <robert@openlava.net> 1.0-1
+- Changed default install directory to /opt/openlava-1.0
+- Installation now creates a symbolic link openlava -> openlava-1.0
+- RPM is now relocatable. Specify --prefix /path/to/install/dir
+- for example, rpm -ivh --prefix /opt/test openlava-1.0-1.x86_64.rpm installs
+- /opt/test/openlava -> /opt/test/openlava-1.0
+- Added creation of openlava user
+- Changed default cluster name to "openlava"
+- Added support for cstomizing the cluster name
+- For example, export OPENLAVA_CLUSTER_NAME="bokisius"
+- then rpm -ivh openlava-1.0-1.x86_64.rpm this will: 
+- 1. Set the cluster name in the lsf.shared file
+- 2. renames the "clustername" directories  
+- The LSF binaries are now statically linked instead of being 
+- dynamically linked.
+- Renamed /etc/init.d/lava.sh to /etc/init.d/lava
+- The openlava shell initialization files lava.sh and lava.csh 
+- are now installed in /etc/profile.d
 * Fri Apr 22 2011 Robert Stober <rmstober@gmail.com> 1.0-6.6
 - Changed to install in /opt/lava
 - Added support for autoconfig of various lava config files
