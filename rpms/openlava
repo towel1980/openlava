@@ -1,9 +1,10 @@
 #!/bin/sh
 
-##
-## Start and stop Lava daemons
-##
-
+#
+# Start and stop openlava daemons
+# Run by hand or install in /etc/init.d
+# and make a symbolic link from rc3.d to it.
+#
 # The following is for the Linux chkconfig utlility
 # chkconfig: 35 99 01
 # description:  Load Sharing Facility
@@ -18,7 +19,7 @@
 ### END INIT INFO
 
 
-# This is the root of oepn lava installation
+# This is the root of openlava installation
 # change it if installed somewhere else.
 export LAVA_TOP=__LAVATOP__
 
@@ -26,11 +27,23 @@ export LAVA_TOP=__LAVATOP__
 #
 kill_daemons()
 {
-    killall -v lim res sbatchd  mbatchd
+    killall -q lim res sbatchd  mbatchd
 }
 
-case "$1" in
+# Restart is just like start since in both
+# cases previously running daemons are 
+# killed.
+opcode="$1"
+if [ "$opcode" == "restart" ]
+then 
+   opcode="start"
+   echo "Stopping daemons..."
+fi
+
+# Process the requested operation.
+case "$opcode" in
   'stop')
+        echo "Stopping daemons..."
         kill_daemons
         exit 0
         ;;
@@ -40,13 +53,12 @@ case "$1" in
 
         if [ -f $LSF_CONF ]
         then
-            echo "Checking if daemons are still alive..."
             kill_daemons
 
-            # Get the location of the Lava daemons
+            # Get the location of the openlava daemons
             . $LSF_CONF
 
-            # Export this env.variable to notify Lava daemons the loc. of
+            # Export this env.variable to notify openlava daemons the loc. of
             # lsf.conf
             export LSF_ENVDIR
             export LSF_SERVERDIR
@@ -62,7 +74,7 @@ case "$1" in
                echo "res -1 started"
                $LSF_SERVERDIR/sbatchd -1
                echo "sbatchd -1 started"
-            else 
+            else
                # multi user mode
                $LSF_SERVERDIR/lim
                echo "lim started"
@@ -86,9 +98,6 @@ case "$1" in
         PID=`pidof mbatchd`
         echo "lim mbatchd: <$PID>"
         exit 0
-        ;;
-  'restart')
-        echo "Stop lava and start for restarting the services"
         ;;
   *)
         echo "Script for starting up and shutting down lava"

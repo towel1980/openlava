@@ -10,17 +10,29 @@
 
 # This is the root of openlava installation
 # change it if installed somewhere else.
-export LAVA_TOP=/opt/openlava-1.0
+export LAVA_TOP=/opt/openlava
 
 # kill the old daemons first.
 #
 kill_daemons()
 {
-    killall -v lim res sbatchd  mbatchd
+    killall -q lim res sbatchd  mbatchd
 }
 
-case "$1" in
+# Restart is just like start since in both
+# cases previously running daemons are 
+# killed.
+opcode="$1"
+if [ "$opcode" == "restart" ]
+then 
+   opcode="start"
+   echo "Stopping daemons..."
+fi
+
+# Process the requested operation.
+case "$opcode" in
   'stop')
+        echo "Stopping daemons..."
         kill_daemons
         exit 0
         ;;
@@ -30,7 +42,6 @@ case "$1" in
 
         if [ -f $LSF_CONF ]
         then
-            echo "Checking if daemons are still alive..."
             kill_daemons
 
             # Get the location of the openlava daemons
@@ -77,11 +88,8 @@ case "$1" in
         echo "lim mbatchd: <$PID>"
         exit 0
         ;;
-  'restart')
-        echo "Stop lava and start for restarting the services"
-        ;;
   *)
-        echo "Script for starting up and shutting down lava"
+        echo "Script for starting up and shutting down openlava"
         echo "Usage: $0 { start | stop | status | restart }"
         exit 0
         ;;

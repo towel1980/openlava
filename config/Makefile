@@ -1,13 +1,14 @@
-#$Id: Makefile,v 1.1 2007/08/10 15:05:49 tmizan Exp $
-
+#
+# Directory specific make file.
+#
 TOP = ../
 include $(TOP)/Make.misc
 
 LAVA_BASE_CONFIG_FILES = lsf.conf lsf.shared lsf.cluster.openlava \
                          lsf.task 
 LAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues 
-LAVA_STARTUP_SCRIPT = lava
-LAVA_SHELL_INIT_SCRIPTS = lava.sh lava.csh
+LAVA_STARTUP_SCRIPT = openlava
+LAVA_SHELL_INIT_SCRIPTS = openlava.sh openlava.csh
 
 install:
 	mkdir -p $(LAVA_CONFDIR) 
