@@ -27,4 +27,4 @@ install:
 #
 	#ln -sf $(LAVA_TOP) $(LAVA_ROOT)/openlava
 clean:
-	
+#	
