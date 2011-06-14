@@ -116,26 +116,28 @@ fi
 ln -sf ${_lavatop} ${_symlink}
 
 ##
-## copy scripts into the relevant directories
+## customize the lava.sh file
 ##
-mv ${_symlink}/etc/lava.sh %{_sysconfdir}/profile.d
-mv ${_symlink}/etc/lava.csh %{_sysconfdir}/profile.d
-mv ${_symlink}/etc/lava %{_sysconfdir}/init.d
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lava.sh
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lava.csh
 
 ##
 ## customize the /etc/init.d/lava file
 ##
-sed -i -e "s#__LAVATOP__#${_symlink}#" %{_sysconfdir}/init.d/lava
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lava
+
+##
+## copy scripts into the relevant directories
+##
+cp ${_symlink}/etc/lava.sh %{_sysconfdir}/profile.d
+cp ${_symlink}/etc/lava.csh %{_sysconfdir}/profile.d
+cp ${_symlink}/etc/lava %{_sysconfdir}/init.d
+
 
 # Register lava daemons
 /sbin/chkconfig --add lava
 /sbin/chkconfig lava on
 
-##
-## customize the lava.sh file
-##
-sed -i -e "s#__LAVATOP__#${_symlink}#" %{_sysconfdir}/profile.d/lava.sh
-sed -i -e "s#__LAVATOP__#${_symlink}#" %{_sysconfdir}/profile.d/lava.csh
 
 ##
 ## customize the lsf.cluster.clustername file
@@ -177,6 +179,7 @@ fi
 %attr(0755,root,root) %{_lavatop}/etc/lava
 %{_lavatop}/etc/lava.sh
 %{_lavatop}/etc/lava.csh
+%{_lavatop}/etc/openlava.setup
 %{_sbindir}/eauth
 %{_sbindir}/echkpnt
 %{_sbindir}/erestart
