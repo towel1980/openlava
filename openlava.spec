@@ -307,6 +307,8 @@ fi
 %config(noreplace) %{_lavatop}/conf/lsf.conf
 %config(noreplace) %{_lavatop}/conf/lsf.cluster.%{_clustername}
 %config(noreplace) %{_lavatop}/conf/lsf.task
+%config(noreplace) %{_lavatop}/conf/README
+%config(noreplace) %{_lavatop}/conf/COPYING
 %attr(-,openlava,openlava) %{_lavatop}/work/*
 %attr(-,openlava,openlava) %dir %{_logdir}
 
