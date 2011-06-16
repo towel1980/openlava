@@ -8,7 +8,7 @@
 #
 
 Begin   ClusterAdmins
-Administrators = lavadmin
+Administrators = openlava
 End    ClusterAdmins 
 
 Begin	Host

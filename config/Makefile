@@ -13,6 +13,8 @@ LAVA_SLAVE_SETUP_SCRIPT = openlava.setup
 install:
 	mkdir -p $(LAVA_CONFDIR) 
 	install -c -m 644 $(LAVA_BASE_CONFIG_FILES) $(LAVA_CONFDIR)
+	install -c -m 644 ../README $(LAVA_CONFDIR)
+	install -c -m 644 ../COPYING $(LAVA_CONFDIR)
 #
 	mkdir -p $(LAVA_CONFDIR)/lsbatch/$(LAVA_CLUSTERNAME)/configdir
 	install -c -m 644 $(LAVA_BATCH_CONFIG_FILES) \
