@@ -118,26 +118,24 @@ ln -sf ${_lavatop} ${_symlink}
 ##
 ## customize the lava.sh file
 ##
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lava.sh
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lava.csh
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.sh
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.csh
 
 ##
 ## customize the /etc/init.d/lava file
 ##
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lava
+sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava
 
 ##
 ## copy scripts into the relevant directories
 ##
-cp ${_symlink}/etc/lava.sh %{_sysconfdir}/profile.d
-cp ${_symlink}/etc/lava.csh %{_sysconfdir}/profile.d
-cp ${_symlink}/etc/lava %{_sysconfdir}/init.d
-
+cp ${_symlink}/etc/openlava.sh %{_sysconfdir}/profile.d
+cp ${_symlink}/etc/openlava.csh %{_sysconfdir}/profile.d
+cp ${_symlink}/etc/openlava %{_sysconfdir}/init.d
 
 # Register lava daemons
-/sbin/chkconfig --add lava
-/sbin/chkconfig lava on
-
+/sbin/chkconfig --add openlava
+/sbin/chkconfig openlava on
 
 ##
 ## customize the lsf.cluster.clustername file
@@ -160,9 +158,9 @@ sed -i -e "s/__CLUSTERNAME__/${_clustername}/" ${_symlink}/conf/lsf.shared
 ##
 %preun
 if [ $1 = 0 ]; then
-   /sbin/service lava stop > /dev/null 2>&1
-   /sbin/chkconfig lava off
-   /sbin/chkconfig --del lava
+   /sbin/service openlava stop > /dev/null 2>&1
+   /sbin/chkconfig openlava off
+   /sbin/chkconfig --del openlava
 fi
 
 ##
@@ -176,9 +174,9 @@ fi
 %files
 %defattr(-,root,root)
 #%{_lavatop}/%{_lavaversion}/misc
-%attr(0755,root,root) %{_lavatop}/etc/lava
-%{_lavatop}/etc/lava.sh
-%{_lavatop}/etc/lava.csh
+%attr(0755,root,root) %{_lavatop}/etc/openlava
+%{_lavatop}/etc/openlava.sh
+%{_lavatop}/etc/openlava.csh
 %{_lavatop}/etc/openlava.setup
 %{_sbindir}/eauth
 %{_sbindir}/echkpnt
