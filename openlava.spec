@@ -313,6 +313,15 @@ fi
 %attr(-,openlava,openlava) %dir %{_logdir}
 
 %changelog
+* Thu Jun 16 2011 Robert Stober <robert@openlava.net> 1.0-1
+- Changed name of openlava startup script from "lava" to "openlava"
+- Changed the name of the linux service from "lava" to openlava in
+- the openlava startup script
+- Changed the name of the openlava shell initialization scripts
+- from lava.sh and lava.csh to openlava.sh and openlava.csh respectively.
+- Changed the openlava.spec file to install the README and COPYING files.
+- Added the openlava.setup script, which streamlines openlava setup
+- on compute servers.
 * Sat Jun 11 2011 Robert Stober <robert@openlava.net> 1.0-1
 - Changed default install directory to /opt/openlava-1.0
 - Installation now creates a symbolic link openlava -> openlava-1.0
