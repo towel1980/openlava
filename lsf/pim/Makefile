@@ -1,4 +1,3 @@
-# $Header: /cvs/CVS/lava_test/lsf/pim/Makefile,v 1.7 2007/08/15 22:18:55 tmizan Exp $
 ############################################################################
 #
 # Makefile for PIM
@@ -31,8 +30,8 @@ $(LSFLIB):
 	cd ${@D}; ${MAKE}
 
 install: $(PIM_TGT)
-	mkdir -p $(LAVA_SBINDIR) ; \
-	install -m 755 $(PIM_TGT) $(LAVA_SBINDIR)
+	mkdir -p $(OPENLAVA_SBINDIR) ; \
+	install -m 755 $(PIM_TGT) $(OPENLAVA_SBINDIR)
 
 clean: 
 	rm -f $(COMCLEAN) $(PIM_TGT)

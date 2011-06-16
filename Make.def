@@ -11,7 +11,6 @@
 # and a valid C name (alphanumeric, starting from letter)
 
 HOSTTYPE = LINUX86
-RANLIB = true
 TAROPTS = chf
 LARGE_RLIMIT_SUPPORT=-D_FILE_OFFSET_BITS=64 
 TCL_INCLUDE = /usr/local/include
@@ -27,4 +26,3 @@ AR = ar
 LD = ld
 LDFLAGS = -Wl
 EXTERN_LDFLAGS = cru $(LIB)
-LIB_OTHER = $(RANLIB) $@

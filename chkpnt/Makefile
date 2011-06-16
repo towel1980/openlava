@@ -39,8 +39,8 @@ lint	:
 	lint -Ae $(DEFINES) *.c
 
 install: build
-	mkdir -p $(LAVA_SBINDIR); \
-	install -m 755 $(BINARIES) $(LAVA_SBINDIR)
+	mkdir -p $(OPENLAVA_SBINDIR); \
+	install -m 755 $(BINARIES) $(OPENLAVA_SBINDIR)
 
 $(LSFLIB):
 	cd $(@D); $(MAKE)

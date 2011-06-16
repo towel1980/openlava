@@ -1,4 +1,6 @@
-#$Id: Makefile,v 1.2 2007/08/10 14:59:24 tmizan Exp $
+#
+#
+#
 
 TOP = ../..
 include $(TOP)/Make.misc
@@ -10,5 +12,5 @@ BATCH_MAN1 = bsub.1 bhosts.1 bjobs.1 bkill.1 \
                 lsfbatch.1 bbot.1 btop.1 \
                 bugroup.1 brequeue.1 
 install:
-	mkdir -p $(LAVA_MANDIR)/man1 ; \
-	install -c -m 644 $(BATCH_MAN1) $(LAVA_MANDIR)/man1
+	mkdir -p $(OPENLAVA_MANDIR)/man1 ; \
+	install -c -m 644 $(BATCH_MAN1) $(OPENLAVA_MANDIR)/man1

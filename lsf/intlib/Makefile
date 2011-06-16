@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.13 2007/08/15 22:18:49 tmizan Exp $
 ############################################################################
 #
 # Makefile for LIB
@@ -24,7 +23,6 @@ all:	$(LIB)
 
 $(LIB):	$(OBJS)
 	$(AR) cru $(LIB) $(OBJS)
-	$(RANLIB) $@
 
 .c.o : $<
 	$(CC) $(CFLAGS) $(OUTF) -c $< 

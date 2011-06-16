@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.6 2007/08/03 23:39:33 jchan Exp $
 ############################################################################
 #
 # Makefile for the binaries related to external authentication
@@ -32,8 +31,8 @@ $(LSFLIB):
 	cd ${@D}; $(MAKE)
 
 install: eauth
-	mkdir -p $(LAVA_SBINDIR) ; \
-	install -m 755 eauth $(LAVA_SBINDIR)
+	mkdir -p $(OPENLAVA_SBINDIR) ; \
+	install -m 755 eauth $(OPENLAVA_SBINDIR)
 
 clean: 
 	rm -f $(COMCLEAN) $(EXEC_ALL) eauth

@@ -9,5 +9,5 @@ BASE_MAN5 = install.config.5 lim.acct.5 lsf.acct.5 lsf.cluster.5 \
 PREFIX = ${INSTALL_PREFIX}
 
 install:
-	mkdir -p $(LAVA_MANDIR)/man5 ; \
-	install -c -m 644 $(BASE_MAN5) $(LAVA_MANDIR)/man5
+	mkdir -p $(OPENLAVA_MANDIR)/man5 ; \
+	install -c -m 644 $(BASE_MAN5) $(OPENLAVA_MANDIR)/man5

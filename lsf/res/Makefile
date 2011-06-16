@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.9 2007/08/15 22:18:55 tmizan Exp $
 ############################################################################
 #
 # Makefile for RES, NIOS
@@ -45,8 +44,8 @@ $(LSBLIB):
 	cd ${@D}; $(MAKE)
 
 install: $(RES_TGT)
-	mkdir -p $(LAVA_SBINDIR) ; \
-	install -m 755 $(RES_TGT) $(LAVA_SBINDIR)
+	mkdir -p $(OPENLAVA_SBINDIR) ; \
+	install -m 755 $(RES_TGT) $(OPENLAVA_SBINDIR)
 
 clean:
 	rm -f $(COMCLEAN) $(RES_TGT)

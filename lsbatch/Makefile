@@ -1,4 +1,6 @@
-#$Id: Makefile,v 1.4 2007/08/10 14:57:46 tmizan Exp $
+#
+# Da Make
+#
 
 TOP = ..
 include $(TOP)/Make.misc
@@ -28,6 +30,6 @@ clean:
 install: 
 	@for d in $(LSB_SUBDIR) man1 man5 man8; do\
 	    (echo "cd $$d; $(MAKE) $@" ; cd $$d; $(MAKE) $@); done
-	mkdir -p $(LAVA_INCLUDEDIR) 
-	install -m 644 lsbatch.h $(LAVA_INCLUDEDIR)/lsbatch.h
+	mkdir -p $(OPENLAVA_INCLUDEDIR) 
+	install -m 644 lsbatch.h $(OPENLAVA_INCLUDEDIR)/lsbatch.h
 

@@ -41,8 +41,8 @@ $(LSBLIB):
 	cd ${@D}; $(MAKE)
 
 install: build
-	mkdir -p $(LAVA_BINDIR) ; \
-	install -m 755 $(TGT) $(LAVA_BINDIR)
+	mkdir -p $(OPENLAVA_BINDIR) ; \
+	install -m 755 $(TGT) $(OPENLAVA_BINDIR)
 
 clean: 
 	rm -f $(COMCLEAN) $(TGT) 

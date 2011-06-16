@@ -30,8 +30,8 @@ slstools:
 	cd lstools; $(MAKE)
 
 install: 
-	mkdir -p $(LAVA_INCLUDEDIR)
-	install -m 644 lsf.h $(LAVA_INCLUDEDIR) 
+	mkdir -p $(OPENLAVA_INCLUDEDIR)
+	install -m 644 lsf.h $(OPENLAVA_INCLUDEDIR) 
 	@set -x; for i in ${LSF_SUBDIR} man/man1 man/man8 man/man5; do\
 	    (cd $$i; $(MAKE) $@); done
 

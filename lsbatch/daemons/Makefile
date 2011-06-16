@@ -53,8 +53,8 @@ sbatchd: $(SOBJ) $(LIBS)
 	$(CC) $(LDFLAGS) $(CFLAGS) $(SOBJ) $(LIBS) $(TCLLIB) $(OUTF)
 
 install: build
-	mkdir -p $(LAVA_SBINDIR) ; \
-	install -m 755 $(LSB_DAEMON_TGT) $(LAVA_SBINDIR)
+	mkdir -p $(OPENLAVA_SBINDIR) ; \
+	install -m 755 $(LSB_DAEMON_TGT) $(OPENLAVA_SBINDIR)
 
 clean:
 	rm -f $(COMCLEAN) $(LSB_DAEMON_TGT)

@@ -1,33 +1,33 @@
-#$Id: Makefile,v 1.1 2007/08/10 15:05:49 tmizan Exp $
+#
+#
+##
+
 
 TOP = ../
 include $(TOP)/Make.misc
 
-LAVA_BASE_CONFIG_FILES = lsf.conf lsf.shared lsf.cluster.openlava \
+OPENLAVA_BASE_CONFIG_FILES = lsf.conf lsf.shared lsf.cluster.openlava \
                          lsf.task 
-LAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues 
-LAVA_STARTUP_SCRIPT = openlava
-LAVA_SHELL_INIT_SCRIPTS = openlava.sh openlava.csh
-LAVA_SLAVE_SETUP_SCRIPT = openlava.setup
+OPENLAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues 
+OPENLAVA_STARTUP_SCRIPT = openlava
+OPENLAVA_SHELL_INIT_SCRIPTS = openlava.sh openlava.csh
+OPENLAVA_SLAVE_SETUP_SCRIPT = openlava.setup
 
 install:
-	mkdir -p $(LAVA_CONFDIR) 
-	install -c -m 644 $(LAVA_BASE_CONFIG_FILES) $(LAVA_CONFDIR)
-	install -c -m 644 ../README $(LAVA_CONFDIR)
-	install -c -m 644 ../COPYING $(LAVA_CONFDIR)
+	mkdir -p $(OPENLAVA_CONFDIR) 
+	install -c -m 644 $(OPENLAVA_BASE_CONFIG_FILES) $(OPENLAVA_CONFDIR)
+	install -c -m 644 ../README $(OPENLAVA_CONFDIR)
+	install -c -m 644 ../COPYING $(OPENLAVA_CONFDIR)
 #
-	mkdir -p $(LAVA_CONFDIR)/lsbatch/$(LAVA_CLUSTERNAME)/configdir
-	install -c -m 644 $(LAVA_BATCH_CONFIG_FILES) \
- 	$(LAVA_CONFDIR)/lsbatch/$(LAVA_CLUSTERNAME)/configdir
+	mkdir -p $(OPENLAVA_CONFDIR)/lsbatch/$(OPENLAVA_CLUSTERNAME)/configdir
+	install -c -m 644 $(OPENLAVA_BATCH_CONFIG_FILES) \
+ 	$(OPENLAVA_CONFDIR)/lsbatch/$(OPENLAVA_CLUSTERNAME)/configdir
 #
-	mkdir -p $(LAVA_SBINDIR)
-	install -c -m 755 $(LAVA_STARTUP_SCRIPT)  $(LAVA_SBINDIR)
-	install -c -m 644 $(LAVA_SHELL_INIT_SCRIPTS)  $(LAVA_SBINDIR)
-	install -c -m 755 $(LAVA_SLAVE_SETUP_SCRIPT)  $(LAVA_SBINDIR)
-#
-# At last create the soft link in the root installation 
-# openlava -> openlava-major.minor
-#
-	#ln -sf $(LAVA_TOP) $(LAVA_ROOT)/openlava
+	mkdir -p $(OPENLAVA_SBINDIR)
+	install -c -m 755 $(OPENLAVA_STARTUP_SCRIPT)  $(OPENLAVA_SBINDIR)
+	install -c -m 644 $(OPENLAVA_SHELL_INIT_SCRIPTS)  $(OPENLAVA_SBINDIR)
+	install -c -m 755 $(OPENLAVA_SLAVE_SETUP_SCRIPT)  $(OPENLAVA_SBINDIR)
+
+.PHONY : clean
 clean:
-#	
+	

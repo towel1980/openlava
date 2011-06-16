@@ -56,7 +56,6 @@ all: $(STATIC_LIB)
 
 $(STATIC_LIB): $(STATIC_OBJ)
 	$(AR) cru $(STATIC_LIB) $(STATIC_OBJ)
-	$(RANLIB) $@
 
 $(SHARED_LIB): $(SHARED_OBJ)
 	$(CC) -Wl,--hash-style=both -shared -Wl,-export-dynamic,-soname,liblsf.so.1 -o $(SHARED_LIB) $(SHARED_OBJ) -lnsl -lc
@@ -69,8 +68,8 @@ $(SHARED_LIB): $(SHARED_OBJ)
 	$(CC) -fPIC $(CFLAGS) $(OUTF) -c $<
 
 install: 
-	mkdir -p $(LAVA_LIBDIR) ; \
-	install -m 644 $(STATIC_LIB) $(LAVA_LIBDIR) ;
+	mkdir -p $(OPENLAVA_LIBDIR) ; \
+	install -m 644 $(STATIC_LIB) $(OPENLAVA_LIBDIR) ;
 clean:
 	rm -f $(COMCLEAN) $(LIB) liblsf*.so* liblsf.a
 

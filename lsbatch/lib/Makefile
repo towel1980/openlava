@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.15 2007/08/15 22:18:47 tmizan Exp $
 ############################################################################
 #
 # Makefile for Lsbatch Library
@@ -42,7 +41,6 @@ all: $(STATIC_LIB)
 
 $(STATIC_LIB): $(STATIC_OBJ)
 	$(AR) cru $(STATIC_LIB) $(STATIC_OBJ) 
-	$(RANLIB) $@
 
 $(SHARED_LIB): $(SHARED_OBJ)
 	$(CC) -shared -Wl,--hash-style=both -Wl,--export-dynamic,-soname,liblsfbat.so.1 -o liblsfbat.so.1.0.0 $(SHARED_OBJ) -lnsl -lc
@@ -50,8 +48,8 @@ $(SHARED_LIB): $(SHARED_OBJ)
 	ln -sf $(SHARED_LIB) liblsfbat.so.1
 
 install:
-	mkdir -p $(LAVA_LIBDIR) ; \
-	install -m 644 $(STATIC_LIB) $(LAVA_LIBDIR) ; 
+	mkdir -p $(OPENLAVA_LIBDIR) ; \
+	install -m 644 $(STATIC_LIB) $(OPENLAVA_LIBDIR) ; 
 clean:
 	rm -f $(COMCLEAN) liblsfbat*.so* liblsfbat.a
 

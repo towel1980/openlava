@@ -31,8 +31,8 @@ install:
 	@echo "Building on $(ARCH)..."
 	set -x; for i in $(TOP_DIR); do \
 	( if [ -d $$i ]; then cd $$i; $(MAKE) install; fi ); done
-	mkdir -p $(LAVA_LOGDIR)
-	mkdir -p $(LAVA_WORKDIR)/$(LAVA_CLUSTERNAME)/logdir
+	mkdir -p $(OPENLAVA_LOGDIR)
+	mkdir -p $(OPENLAVA_WORKDIR)/$(OPENLAVA_CLUSTERNAME)/logdir
 
 clean:
 	set -x; for i in $(TOP_DIR); do\

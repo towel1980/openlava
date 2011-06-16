@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.14 2007/08/15 22:18:43 tmizan Exp $
 ############################################################################
 #
 # Makefile for Lsbatch Commands
@@ -127,9 +126,9 @@ $(LSBLIB):
 	cd ${@D}; $(MAKE)
 
 install: $(BATCH_BIN)
-	mkdir -p $(LAVA_BINDIR) ; \
-	install -m 755 $(BATCH_BIN) $(LAVA_BINDIR) ; \
-	(cd $(LAVA_BINDIR); ln -sf bkill bstop; \
+	mkdir -p $(OPENLAVA_BINDIR) ; \
+	install -m 755 $(BATCH_BIN) $(OPENLAVA_BINDIR) ; \
+	(cd $(OPENLAVA_BINDIR); ln -sf bkill bstop; \
 	ln -sf bkill bresume ; \
 	ln -sf bkill bchkpnt ; \
 	ln -sf bmgroup bugroup) ; \

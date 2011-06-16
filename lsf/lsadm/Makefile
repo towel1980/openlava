@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.7 2007/08/15 22:18:54 tmizan Exp $
 ############################################################################
 #
 # Makefile for measurement and management programs
@@ -38,8 +37,8 @@ $(LSFLIB):
 	cd ${@D}; $(MAKE)
 
 install: $(LSADM_TGT)
-	mkdir -p $(LAVA_BINDIR) 
-	install -m 755 $(LSADM_TGT) $(LAVA_BINDIR)
+	mkdir -p $(OPENLAVA_BINDIR) 
+	install -m 755 $(LSADM_TGT) $(OPENLAVA_BINDIR)
 
 clean:
 	rm -f $(COMCLEAN) $(LSADM_TGT)

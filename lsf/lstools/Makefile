@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.12 2007/08/15 22:18:55 tmizan Exp $
 ############################################################################
 #
 # Makefile for Utility programs
@@ -73,8 +72,8 @@ $(LSFLIB):
 	cd ${@D}; $(MAKE)
 
 install: $(CMDS)
-	mkdir -p $(LAVA_BINDIR) ; \
-	install -m 755 $(CMDS) $(LAVA_BINDIR)
+	mkdir -p $(OPENLAVA_BINDIR) ; \
+	install -m 755 $(CMDS) $(OPENLAVA_BINDIR)
 
 clean:
 	rm -f $(COMCLEAN) ${CMDS}

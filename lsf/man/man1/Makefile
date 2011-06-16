@@ -8,5 +8,5 @@ BASE_MAN1 = lseligible.1  lsfintro.1  lsid.1 lsload.1  lsmon.1  lsrcp.1 \
             lstools.1
 
 install:
-	mkdir -p $(LAVA_MANDIR)/man1 ; \
-	install -c -m 644 $(BASE_MAN1) $(LAVA_MANDIR)/man1
+	mkdir -p $(OPENLAVA_MANDIR)/man1 ; \
+	install -c -m 644 $(BASE_MAN1) $(OPENLAVA_MANDIR)/man1
