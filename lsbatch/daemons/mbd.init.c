@@ -1016,7 +1016,7 @@ addGroup (struct gData **groups, char *gname, int *ngroups)
 {
 
     groups[*ngroups] = my_calloc(1,
-                                 (sizeof (struct gData), "addGroup");
+                                 sizeof (struct gData), "addGroup");
     groups[*ngroups]->group = safeSave(gname);
     h_initTab_(&groups[*ngroups]->memberTab, 0);
     groups[*ngroups]->numGroups = 0;
