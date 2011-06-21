@@ -18,7 +18,7 @@
 
 #include "lim.common.h"
 
-#define NL_SETN		24	
+#define NL_SETN		24
 
 #include <sys/sysmacros.h>
 #include <sys/vfs.h>
@@ -29,7 +29,7 @@
 #define UNIX_KERNEL_EXE_FILE  "/vmlinux"
 
 #  define  CPUSTATES 4
-#  define ut_name   ut_user   
+#  define ut_name   ut_user
 
 static char buffer[MSGSIZE];
 static long long int main_mem, free_mem, shared_mem, buf_mem, cashed_mem;
@@ -46,10 +46,10 @@ static int readMeminfo(void);
 
 #ifdef __i386__
 #include <sys/sysinfo.h>
-#define HT_BIT          0x10000000  
-#define FAMILY_ID    0x0f00         
-#define PENTIUM4_ID  0x0f00         
-#define NUM_LOG_BITS  0x00FF0000    
+#define HT_BIT          0x10000000
+#define FAMILY_ID    0x0f00
+#define PENTIUM4_ID  0x0f00
+#define NUM_LOG_BITS  0x00FF0000
 
 int CPUID_is_supported()
 {
@@ -81,7 +81,7 @@ unsigned int HTSupported(void)
 
    if ( !CPUID_is_supported() )
    {
-       
+
        ls_syslog(LOG_DEBUG, "CPUID is not supported");
        return(0);
    }
@@ -94,7 +94,7 @@ unsigned int HTSupported(void)
     }
     __asm__("cpuid" : "=a" (reg_eax), "=b"(junk), "=c"(junk1),
                                                    "=d" (reg_edx) : "a" (1));
-    
+
 
    if ((reg_eax & FAMILY_ID) !=  PENTIUM4_ID) {
        ls_syslog(LOG_DEBUG,"Not a P4 processor");
@@ -106,10 +106,10 @@ unsigned int HTSupported(void)
         return 0;
     }
 
-    
+
     __asm__("cpuid" : "=a"(junk) , "=b"(reg_ebx), "=c"(junk1),
                                                     "=d"(junk2)  : "a" (1));
-    
+
 
     log_cpu_cnt =  (unsigned char) ((reg_ebx & NUM_LOG_BITS) >> 16);
     ls_syslog(LOG_DEBUG,"Log_cpu_cnt = %d", log_cpu_cnt);
@@ -196,53 +196,35 @@ int issiblings(FILE *fp)
     } else {
        return -1;
     }
-} 
-#endif 
+}
+#endif
 
 static int
 numCpus(void)
 {
-    static char fname[] = "numCpus";
-    int cpu_number = 0;
-    FILE *fp;
-    int ret;
-    
-    if((fp=fopen("/proc/cpuinfo","r"))==NULL) {
+    static char   fname[] = "numCpus()";
+    int           cpu_number = 0;
+    FILE          *fp;
+
+    fp = fopen("/proc/cpuinfo","r");
+    if (fp == NULL) {
 	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "fopen",
-	    "/proc/cpuinfo");
+                  "/proc/cpuinfo");
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6601,
-	    "%s: assuming one CPU only"), fname); /* catgets 6601 */
+                                         "%s: assuming one CPU only"), fname); /* catgets 6601 */
 	return(1);
     }
 
-  
-     
-
- #if defined(__alpha)
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-	if (strncmp (buffer, "cpus detected", sizeof("cpus detected") - 1) == 0) {
-		if ((position = strchr(buffer, (int)':')) == NULL){
-			break;
-		}
-		else{
-			cpu_number = atoi(position+2);
-			break;
-		}
-	}
-    }
-
- #endif
-
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-       if (strncmp (buffer, "processor", sizeof("processor") - 1) == 0) {
-          cpu_number++;
-       }
+        if (strncmp (buffer, "processor", sizeof("processor") - 1) == 0) {
+            cpu_number++;
+        }
     }
 /*
 #ifdef __i386__
-    
+
     ret = issiblings(fp);
-    if ( ret == 0) { 
+    if ( ret == 0) {
        int log_cpus_per_phys;
        int klog_cpus=0;
        int cpus_of_os =0;
@@ -268,13 +250,14 @@ numCpus(void)
         ls_syslog(LOG_DEBUG, "This Linux box has siblings parameter in /proc/cpuinfo, siblings number is %d", ret);
         cpu_number = cpu_number/ret;
     }
-   
 
-#endif 
+
+#endif
 */
 
     fclose(fp);
-    return(cpu_number);
+
+    return cpu_number;
 }
 
 static float queueLength();
@@ -308,13 +291,13 @@ queueLengthEx(float *r15s, float *r1m, float *r15m)
     return -1;
   }
 
-  
+
   *r15s = (float)queueLength();
   *r1m  = (float)loadave[0];
   *r15m = (float)loadave[2];
 
   return 0;
-} 
+}
 
 static float
 queueLength(void)
@@ -330,7 +313,7 @@ queueLength(void)
     unsigned int running = 0;
 
 
-    
+
 
     dir_proc_fd = opendir("/proc");
     if ( dir_proc_fd == (DIR*)0 ) {
@@ -339,7 +322,7 @@ queueLength(void)
     }
 
     while (( process = readdir( dir_proc_fd ))) {
-	if (isdigit( process->d_name[0] ) ) { 
+	if (isdigit( process->d_name[0] ) ) {
 	    sprintf( filename, "/proc/%s/stat", process->d_name );
 	    fd = open( filename, O_RDONLY, 0);
 	    if ( fd == -1 ) {
@@ -361,7 +344,7 @@ queueLength(void)
     closedir( dir_proc_fd );
 
     if ( running > 0 ) {
-        ql = running - 1; 
+        ql = running - 1;
         if ( ql < 0 )
 	    ql = 0;
     }
@@ -398,8 +381,8 @@ cpuTime (double *itime, double *etime)
     sscanf( buffer, "cpu  %lf %lf %lf %lf",
 	&cpu_user, &cpu_nice, &cpu_sys, &cpu_idle );
 
-    
-    *itime = (cpu_idle - prev_idle);	
+
+    *itime = (cpu_idle - prev_idle);
     prev_idle = cpu_idle;
 
     ttime = cpu_user + cpu_nice + cpu_sys + cpu_idle;
@@ -420,9 +403,9 @@ realMem (float extrafactor)
 
     if (readMeminfo() == -1)
 	return(0);
-    realmem = ( free_mem + buf_mem + cashed_mem) / 1024; 
-    
-    realmem -= 2;  
+    realmem = ( free_mem + buf_mem + cashed_mem) / 1024;
+
+    realmem -= 2;
     realmem +=  extraload[MEM] * extrafactor;
     if (realmem < 0)
 	realmem = 0;
@@ -439,7 +422,7 @@ tmpspace(void)
     struct statfs fs;
 
 
-    
+
     if ( tmpcnt >= TMP_INTVL_CNT )
 	tmpcnt = 0;
 
@@ -459,7 +442,7 @@ tmpspace(void)
 
     return (tmps);
 
-} 
+}
 
 static float
 getswap(void)
@@ -467,7 +450,7 @@ getswap(void)
     static short tmpcnt;
     static float swap;
 
-    
+
     if ( tmpcnt >= SWP_INTVL_CNT )
 	tmpcnt = 0;
 
@@ -477,9 +460,9 @@ getswap(void)
 
     if (readMeminfo() == -1)
 	return(0);
-    swap = free_swap / 1024.0; 
+    swap = free_swap / 1024.0;
     return swap;
-} 
+}
 
 static float
 getpaging(float etime)
@@ -488,7 +471,7 @@ getpaging(float etime)
     static char first = TRUE;
     static double prev_pages;
     double page, page_in, page_out;
-    
+
     if ( getPage(&page_in, &page_out, TRUE) == -1 ) {
         return(0.0);
     }
@@ -507,7 +490,7 @@ getpaging(float etime)
     prev_pages = page;
 
     return smoothpg;
-} 
+}
 
 static float
 getIoRate(float etime)
@@ -525,7 +508,7 @@ getIoRate(float etime)
     if (first) {
 	kbps = 0;
 	first = FALSE;
-	
+
 	if (myHostPtr->statInfo.nDisks == 0)
 	    myHostPtr->statInfo.nDisks = 1;
     } else
@@ -539,29 +522,29 @@ getIoRate(float etime)
     smooth(&smoothio, kbps, EXP4);
 
     return(smoothio);
-} 
+}
 
 static int
 readMeminfo(void)
 {
     static char fname[] = "readMeminfo";
     FILE *f;
-    char lineBuffer[80];    
+    char lineBuffer[80];
     long long int value;
     char tag[80];
- 
+
     if ((f = fopen("/proc/meminfo", "r")) == NULL) {
 	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "open",
 	    "/proc/meminfo");
         return(-1);
     }
 
-    
+
     while (fgets(lineBuffer, sizeof(lineBuffer), f)) {
-        
+
         if (sscanf(lineBuffer, "%s %lld kB", tag, &value) != 2)
             continue;
-        
+
          if (strcmp(tag, "MemTotal:") == 0)
 	     main_mem = value;
 	 if (strcmp(tag, "MemFree:") == 0)
@@ -596,26 +579,26 @@ initReadLoad(int checkMode, int *kernelPerm)
     myHostPtr->loadIndex[R1M]  =  0.0;
     myHostPtr->loadIndex[R15M] =  0.0;
 
-    
+
     if (checkMode)
 	return;
 
-    
+
     if (statfs( "/tmp", &fs ) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "statfs",
 	    "/tmp");
         myHostPtr->statInfo.maxTmp = 0;
     } else
-        myHostPtr->statInfo.maxTmp = 
+        myHostPtr->statInfo.maxTmp =
 		(float)fs.f_blocks/((float)(1024 * 1024)/fs.f_bsize);
 
-    
-    
+
+
     stat_fd = open("/proc/stat", O_RDONLY, 0);
     if ( stat_fd == -1 ) {
 	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "open",
 	    "/proc/stat");
-         
+
          *kernelPerm = -1;
 	return;
     }
@@ -624,7 +607,7 @@ initReadLoad(int checkMode, int *kernelPerm)
 	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "read",
 	    "/proc/stat");
 	close( stat_fd );
-         
+
          *kernelPerm = -1;
 	return;
     }
@@ -635,23 +618,23 @@ initReadLoad(int checkMode, int *kernelPerm)
     prev_idle = prev_cpu_idle;
     prev_time = prev_cpu_user + prev_cpu_nice + prev_cpu_sys + prev_cpu_idle;
 
-    
+
     if (readMeminfo() == -1)
 	return;
     maxmem = main_mem / 1024;
     maxSwap = swap_mem / 1024;
-    
-    
+
+
 
     if (maxmem < 0.0)
         maxmem = 0.0;
     myHostPtr->statInfo.maxMem = maxmem;
 
-    
+
     myHostPtr->statInfo.maxSwap = maxSwap;
 
 
-} 
+}
 
 const char*
 getHostModel(void)
@@ -670,7 +653,7 @@ getHostModel(void)
         return model;
 
     while (fgets(buf, sizeof(buf) - 1, fp)) {
-        if (strncasecmp(buf, "cpu\t", 4) == 0 
+        if (strncasecmp(buf, "cpu\t", 4) == 0
         || strncasecmp(buf, "cpu family", 10) == 0) {
             char *p = strchr(buf, ':');
             if (p)
@@ -694,7 +677,7 @@ getHostModel(void)
         return model;
 
     if (isdigit(b1[0]))
-        model[pos++] = 'x'; 
+        model[pos++] = 'x';
 
     strncpy(&model[pos], b1, MAXLSFNAMELEN - 15);
     model[MAXLSFNAMELEN - 15] = '\0';
@@ -725,12 +708,12 @@ static int getPage(double *page_in, double *page_out,bool_t isPaging)
         return(-1);
     }
 
-    
+
     while (fgets(lineBuffer, sizeof(lineBuffer), f)) {
-        
+
         if (sscanf(lineBuffer, "%s %lf", tag, &value) != 2)
             continue;
-        
+
          if(isPaging){
             if (strcmp(tag, "pswpin") == 0)
                *page_in = value;

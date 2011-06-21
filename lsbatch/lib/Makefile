@@ -50,6 +50,10 @@ $(SHARED_LIB): $(SHARED_OBJ)
 install:
 	mkdir -p $(OPENLAVA_LIBDIR) ; \
 	install -m 644 $(STATIC_LIB) $(OPENLAVA_LIBDIR) ; 
+
+etags :
+	etags *.[hc] ../*.h ../daemons/*.[hc] ../../lsf/*.h \
+        ../../lsf/lib/*.[hc] ../../lsf/intlib/*.[hc]
 clean:
 	rm -f $(COMCLEAN) liblsfbat*.so* liblsfbat.a
 

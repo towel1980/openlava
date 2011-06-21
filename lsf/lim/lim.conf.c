@@ -737,11 +737,9 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
 
             }
 
-
             hashEntPtr = h_addEnt_(&hostModelTbl, keyList[0].val, &new);
-
             if (new) {
-                floatp  = (float *) malloc(sizeof(float));
+                floatp  = malloc(sizeof(float));
                 if (floatp == NULL) {
                     ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,
                               fname, "malloc", sizeof(float));
@@ -749,11 +747,11 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
                     return FALSE;
                 }
                 *floatp = atof(keyList[1].val);
-                hashEntPtr->hData = (int *) floatp;
+                hashEntPtr->hData = floatp;
             } else {
-                floatp = (float *) hashEntPtr->hData;
+                floatp = hashEntPtr->hData;
                 *floatp = atof(keyList[1].val);
-                hashEntPtr->hData = (int *) floatp;
+                hashEntPtr->hData = floatp;
             }
 
         next_value:

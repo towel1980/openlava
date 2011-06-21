@@ -33,7 +33,7 @@ static HostSock *hostSock;
 static struct connectEnt connlist[MAXCONNECT];
 static char   *connnamelist[MAXCONNECT+1];
 
-int cli_nios_fd[2] = {-1, -1};   
+int cli_nios_fd[2] = {-1, -1};
 
 void hostIndex_(char *hostName, int sock);
 extern int chanSock_(int chfd);
@@ -42,29 +42,28 @@ int delhostbysock_(int sock);
 void
 inithostsock_(void)
 {
-	hostSock = NULL; 
-} 
+    hostSock = NULL;
+}
 
 void
 initconntbl_(void)
 {
+   h_initTab_(&conn_table, 3);
 
-   h_initTab_(&conn_table, 0);
-
-} 
+}
 
 int
 connected_(char *hostName, int sock1, int sock2, int seqno)
 {
-    int new;
-    hEnt *hEntPtr;
-    int *sp;
+    int    new;
+    hEnt   *hEntPtr;
+    int    *sp;
 
     hEntPtr = h_addEnt_(&conn_table, hostName, &new);
     if (!new) {
         sp = hEntPtr->hData;
     } else {
-        sp = (int *) malloc(3*sizeof(int));
+        sp = calloc(3, sizeof(int));
         sp[0] = -1;
         sp[1] = -1;
 	sp[2] = -1;
@@ -75,24 +74,24 @@ connected_(char *hostName, int sock1, int sock2, int seqno)
 	hostIndex_(hEntPtr->keyname, sock1);
     }
 
-    if (sock2 >= 0) 
+    if (sock2 >= 0)
         sp[1] = sock2;
 
     if (seqno >= 0)
         sp[2] = seqno;
 
-    hEntPtr->hData = (int *) sp;
+    hEntPtr->hData = sp;
+
     return (0);
 
-} 
+}
 
 void
 hostIndex_(char *hostName, int sock)
 {
+    HostSock   *newSock;
 
-    HostSock *newSock;
- 
-    newSock = (HostSock *)malloc(sizeof(HostSock));
+    newSock = malloc(sizeof(HostSock));
     if (newSock == NULL) {
         ls_syslog(LOG_ERR, "hostIndex_ : malloc HostSock failed");
         exit(-1);
@@ -101,8 +100,8 @@ hostIndex_(char *hostName, int sock)
     newSock->hostname = hostName;
     newSock->next = hostSock;
     hostSock = newSock;
- 
-} 
+
+}
 
 int
 delhostbysock_(int sock)
@@ -128,7 +127,7 @@ delhostbysock_(int sock)
     }
 
     return -1;
-}    
+}
 
 int
 gethostbysock_(int sock, char *hostName)
@@ -146,51 +145,55 @@ gethostbysock_(int sock, char *hostName)
             if (tmpSock->hostname != NULL) {
                 strcpy(hostName, tmpSock->hostname);
                 return 0;
-			}	     
+			}
 		}
 		tmpSock = tmpSock->next;
     }
-	
-    strcpy(hostName, "LSF_HOST_NULL"); 
+
+    strcpy(hostName, "LSF_HOST_NULL");
     return -1;
 
-} 
+}
 
 int *
 _gethostdata_(char *hostName)
 {
-    hEnt *hEntPtr;
-    int *sp;
-    const char *officialName;
-    char official[MAXHOSTNAMELEN];
+    hEnt         *ent;
+    int          *sp;
+    const char   *officialName;
+    char         official[MAXHOSTNAMELEN];
 
     officialName = getHostOfficialByName_(hostName);
     if (!officialName)
         return ((int *)NULL);
 
     strcpy(official, officialName);
-    hEntPtr = h_getEnt_(&conn_table, official);
-    if (hEntPtr == (hEnt *)NULL) 
-        return ((int *)NULL);
+    ent = h_getEnt_(&conn_table, official);
+    if (ent == NULL)
+        return (NULL);
 
-    if ((sp = (int *)hEntPtr->hData) == (int *)NULL) {
-        return ((int *)NULL);
-    }
+    if (ent->hData == NULL)
+        return (NULL);
+
+    sp = ent->hData;
+
     return (sp);
 }
+
 int
 _isconnected_(char *hostName, int *sock)
 {
-    int *sp;
+    int   *sp;
+
     sp = _gethostdata_(hostName);
     if (sp == NULL)
         return (FALSE);
-    
+
     sock[0] = sp[0];
     sock[1] = sp[1];
-    return (TRUE);
 
-} 
+    return (TRUE);
+}
 
 int
 _getcurseqno_(char *hostName)
@@ -198,11 +201,11 @@ _getcurseqno_(char *hostName)
     int *sp;
 
     sp = _gethostdata_(hostName);
-    if (sp == NULL) 
+    if (sp == NULL)
 	return(-1);
 
     return(sp[2]);
-} 
+}
 
 void
 _setcurseqno_(char *hostName, int seqno)
@@ -210,11 +213,11 @@ _setcurseqno_(char *hostName, int seqno)
     int *sp;
 
     sp = _gethostdata_(hostName);
-    if (sp == NULL) 
+    if (sp == NULL)
         return;
 
     sp[2] = seqno;
-} 
+}
 
 int
 ls_isconnected(char *hostName)
@@ -229,20 +232,20 @@ ls_isconnected(char *hostName)
 
     strcpy(official, officialName);
     hEntPtr = h_getEnt_(&conn_table, official);
-    if (hEntPtr == (hEnt *)NULL) 
+    if (hEntPtr == NULL)
         return (FALSE);
 
     return (TRUE);
 
-} 
+}
 
 int
 getConnectionNum_(char *hostName)
 {
-    hEnt *hEntPtr;
-    const char *officialName;
-    char official[MAXHOSTNAMELEN];
-    int connNum;
+    hEnt         *hEntPtr;
+    const char   *officialName;
+    char         official[MAXHOSTNAMELEN];
+    int          *connNum;
 
     officialName = getHostOfficialByName_(hostName);
     if (!officialName)
@@ -250,39 +253,43 @@ getConnectionNum_(char *hostName)
 
     strcpy(official, officialName);
     if ((hEntPtr = h_getEnt_(&conn_table, official)) == NULL)
-	return -1; 
-    
-    connNum = hEntPtr->hData[0];
-    delhostbysock_(connNum);
-    h_delEnt_(&conn_table, hEntPtr);
-    return connNum;
+	return -1;
 
-} 
+    connNum = hEntPtr->hData;
+    delhostbysock_(connNum[0]);
+    h_delEnt_(&conn_table, hEntPtr);
+
+    return connNum[0];
+}
 
 int
 _findmyconnections_(struct connectEnt **connPtr)
 {
-    int n = 0;
-    sTab hashSearchPtr;
-    hEnt *hEntPtr;
+    int    n;
+    sTab   sTab;
+    hEnt   *ent;
 
-    hEntPtr = h_firstEnt_(&conn_table,&hashSearchPtr);
-    if (hEntPtr == (hEnt *)NULL) {
+    ent = h_firstEnt_(&conn_table, &sTab);
+    if (ent == NULL) {
         return (0);
     }
 
-    while (hEntPtr) {
-        connlist[n].hostname = hEntPtr->keyname;
-        connlist[n].csock[0] = hEntPtr->hData[0];
-        connlist[n].csock[1] = hEntPtr->hData[1];
-        hEntPtr = h_nextEnt_(&hashSearchPtr);
+    n = 0;
+    while (ent) {
+        int   *pfd;
+
+        pfd = ent->hData;
+        connlist[n].hostname = ent->keyname;
+        connlist[n].csock[0] = pfd[0];
+        connlist[n].csock[1] = pfd[1];
+        ent = h_nextEnt_(&sTab);
         n++;
     }
 
     *connPtr = connlist;
-    return (n);
 
-} 
+    return (n);
+}
 
 char **
 ls_findmyconnections(void)
@@ -291,7 +298,7 @@ ls_findmyconnections(void)
     sTab hashSearchPtr;
     hEnt *hEntPtr;
 
-    hEntPtr = h_firstEnt_(&conn_table,&hashSearchPtr);
+    hEntPtr = h_firstEnt_(&conn_table, &hashSearchPtr);
 
     while (hEntPtr) {
 	connnamelist[n] = hEntPtr->keyname;
@@ -302,5 +309,5 @@ ls_findmyconnections(void)
 
     return (connnamelist);
 
-} 
+}
 

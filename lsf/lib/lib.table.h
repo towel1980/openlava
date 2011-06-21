@@ -19,36 +19,41 @@
 #ifndef _LIB_TABLE_H_
 #define _LIB_TABLE_H_
 
-#define RESETFACTOR        2
-#define RESETLIMIT         1.5
-#define DEFAULT_SLOTS      16
+#define RESETFACTOR     2
+#define RESETLIMIT      1.5
+#define DEFAULT_SLOTS   11
 
+/* Double linked list addressed by each
+ * hash table slot.
+ */
 struct hLinks {
     struct hLinks *fwPtr;
     struct hLinks *bwPtr;
 };
 
-typedef struct hLinks hLinks;
-
+/* This is a slot entry the table
+ */
 typedef struct hEnt {
-    hLinks   links;            
-    int      *hData;           
-    char     *keyname;        
+    struct hLinks   *fwPtr;
+    struct hLinks   *bwPtr;
+    void            *hData;
+    char            *keyname;
 } hEnt;
 
-
+/* This si the hash table itself.
+ */
 typedef struct hTab {
-    hLinks *slotPtr;          
-    int     numEnts;           
-    int     size;              
+    struct hLinks   *slotPtr;
+    int             numEnts;
+    int             size;
 } hTab;
 
 
 typedef struct sTab {
-    hTab     *tabPtr;     
-    int      nIndex;            
-    hEnt     *hEntPtr;         
-    hLinks   *hList;          
+    hTab            *tabPtr;
+    int             nIndex;
+    hEnt            *hEntPtr;
+    struct hLinks   *hList;
 } sTab;
 
 #define HTAB_ZERO_OUT(HashTab) \
@@ -83,22 +88,21 @@ typedef struct sTab {
 
 typedef void       (*HTAB_DATA_DESTROY_FUNC_T)(void *);
 
-extern void        insList_(hLinks *, hLinks *);
-extern void        remList_(hLinks *);
-extern void        initList_(hLinks *);
-extern void        h_initTab_(hTab *, int);
-extern void        h_freeTab_(hTab *, void (*destroy)(void *));
-extern int         h_TabEmpty_(hTab *);
-extern void        h_delTab_(hTab *);
-extern hEnt *      h_getEnt_(hTab *, const char *);
-extern hEnt *      h_addEnt_(hTab *, const char *, int *);
-extern hEnt *      lh_addEnt_(hTab *, char *, int *);
-extern void        h_delEnt_(hTab *, hEnt *);
-extern void        h_rmEnt_(hTab *, hEnt *);
-extern hEnt *      h_firstEnt_(hTab *, sTab *);
-extern hEnt *      h_nextEnt_(sTab *);
-extern void        h_freeRefTab_(hTab *);
-extern void        h_delRef_(hTab *, hEnt *);
+extern void   insList_(struct hLinks *, struct hLinks *);
+extern void   remList_(struct hLinks *);
+extern void   initList_(struct hLinks *);
+extern void   h_initTab_(hTab *, int);
+extern void   h_freeTab_(hTab *, void (*destroy)(void *));
+extern int    h_TabEmpty_(hTab *);
+extern void   h_delTab_(hTab *);
+extern hEnt   *h_getEnt_(hTab *, const char *);
+extern hEnt   *h_addEnt_(hTab *, const char *, int *);
+extern void   h_delEnt_(hTab *, hEnt *);
+extern void   h_rmEnt_(hTab *, hEnt *);
+extern hEnt   *h_firstEnt_(hTab *, sTab *);
+extern hEnt   *h_nextEnt_(sTab *);
+extern void   h_freeRefTab_(hTab *);
+extern void   h_delRef_(hTab *, hEnt *);
 #endif
 
 

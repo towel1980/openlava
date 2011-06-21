@@ -39,7 +39,7 @@ ls_resreq(char *task)
     else
        return(resreq);
 
-} 
+}
 
 
 int
@@ -55,13 +55,13 @@ ls_eligible(char *task, char *resreqstr, char mode)
 
     lserrno = LSE_NO_ERR;
 
-    if (! task) 
+    if (! task)
         return FALSE;
 
     if ((p=getenv("LSF_TRS")) == NULL) {
 	if ((p = strrchr(task, '/')) == NULL)
             p = task;
-	else 
+	else
             p++;
     }
     else
@@ -80,7 +80,7 @@ ls_eligible(char *task, char *resreqstr, char mode)
 
     return (mode == LSF_REMOTE_MODE || mykey != NULL);
 
-} 
+}
 
 static int
 inittasklists_(void)
@@ -100,10 +100,10 @@ inittasklists_(void)
         if (readtaskfile_(filename, NULL, NULL, &ltask_table, &rtask_table,
                           FALSE) >=0)
             listok = TRUE;
-            
+
     clName = ls_getclustername();
     if (clName != NULL) {
-        sprintf(filename, "%s/lsf.task.%s", 
+        sprintf(filename, "%s/lsf.task.%s",
 		   genParams_[LSF_CONFDIR].paramValue, clName);
         if (access(filename, R_OK) == 0) {
             if (readtaskfile_(filename, NULL, NULL, &ltask_table, &rtask_table,
@@ -117,7 +117,7 @@ inittasklists_(void)
         strcat(filename, "/.lsftask");
         if (access(filename, R_OK) == 0) {
             if (readtaskfile_(filename, NULL, NULL, &ltask_table, &rtask_table,
-                              FALSE) >= 0) 
+                              FALSE) >= 0)
                 listok = TRUE;
         }
     }
@@ -127,10 +127,10 @@ inittasklists_(void)
     lserrno = LSE_BAD_TASKF;
     return -1;
 
-} 
+}
 
 int
-readtaskfile_(char *filename, hTab *minusListl, hTab *minusListr, 
+readtaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
                hTab *localList, hTab *remoteList, char useMinus)
 {
     FILE  *fp;
@@ -183,7 +183,7 @@ readtaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
                 if (strcasecmp(word, "remotetasks") == 0) {
 		    phase = ph_begin;
 		    break;
-		} 
+		}
 		fclose(fp);
 		lserrno = LSE_BAD_EXP;
 		return -1;
@@ -201,18 +201,18 @@ readtaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
 	    } else if (word[0] == '+' || word[0] == '-') {
 		minus = word[0] == '-';
 		word++;
-	    } 
+	    }
 
 	    if (minus) {
 		if ((deletetask_(word, remoteList) < 0) && useMinus)
-                    (void)inserttask_(word, minusListr); 
+                    (void)inserttask_(word, minusListr);
 	    } else
 		(void)inserttask_(word, remoteList);
             break;
 
         case ph_local:
 	    word = getNextWord_(&line);
-            if (strcasecmp(word, "end") == 0) { 
+            if (strcasecmp(word, "end") == 0) {
 		word = getNextWord_(&line);
 		if (word == NULL) {
 		    fclose(fp);
@@ -244,7 +244,7 @@ readtaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
 	    if (minus) {
 		if ((deletetask_(word, localList) < 0) && useMinus)
                     (void)inserttask_(word, minusListl);
-               
+
 	    } else
 		(void)inserttask_(word, localList);
             break;
@@ -259,7 +259,7 @@ readtaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
 
     fclose(fp);
     return(0);
-} 
+}
 
 int
 writetaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
@@ -272,7 +272,7 @@ writetaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
     if ((fp = fopen(filename, "w")) == NULL) {
 
        lserrno = LSE_FILE_SYS;
-       return(-1); 
+       return(-1);
     }
 
     fprintf(fp, "Begin LocalTasks\n");
@@ -299,7 +299,7 @@ writetaskfile_(char *filename, hTab *minusListl, hTab *minusListr,
     fclose(fp);
     return(0);
 
-} 
+}
 
 int
 ls_insertrtask(char *task)
@@ -315,14 +315,14 @@ ls_insertrtask(char *task)
 	sp = strchr(task, *p);
     else
 	sp = strchr(task, '/');
-  
+
     if (sp && expSyntax_(sp+1) < 0) {
         return -1;
     }
     inserttask_(task, &rtask_table);
     return 0;
 
-} 
+}
 
 int
 ls_insertltask(char *task)
@@ -335,7 +335,7 @@ ls_insertltask(char *task)
     inserttask_(task, &ltask_table);
     return 0;
 
-} 
+}
 
 void
 inserttask_(char *taskstr, hTab *tasktb)
@@ -346,7 +346,7 @@ inserttask_(char *taskstr, hTab *tasktb)
     hEnt *hEntPtr;
     int *oldcp;
     char  *p;
-    int   taskResSep; 
+    int   taskResSep;
 
     if ((p=getenv("LSF_TRS")) != NULL)
 	taskResSep = *p;
@@ -361,18 +361,17 @@ inserttask_(char *taskstr, hTab *tasktb)
     }
 
     hEntPtr = h_addEnt_(tasktb, task, &succ);
-
     if (!succ) {
         oldcp = hEntPtr->hData;
-	hEntPtr->hData = (int *)NULL;
-        if (oldcp != (int *)NULL) {
+	hEntPtr->hData = NULL;
+        if (oldcp != NULL) {
             free(oldcp);
         }
     }
 
-    hEntPtr->hData = ((resreq == NULL) ? NULL : ((int *) putstr_(resreq)));
+    hEntPtr->hData = ((resreq == NULL) ? NULL : (putstr_(resreq)));
     free(task);
-} 
+}
 
 int
 ls_deletertask(char *task)
@@ -383,7 +382,7 @@ ls_deletertask(char *task)
 
     return (deletetask_(task, &rtask_table));
 
-} 
+}
 
 int
 ls_deleteltask(char *task)
@@ -394,7 +393,7 @@ ls_deleteltask(char *task)
 
     return (deletetask_(task, &ltask_table));
 
-} 
+}
 
 int
 deletetask_(char *taskstr, hTab *tasktb)
@@ -414,7 +413,7 @@ deletetask_(char *taskstr, hTab *tasktb)
 	*sp = '\0';
 
     hEntPtr = h_getEnt_(tasktb, (char *)task);
-    if (hEntPtr == (hEnt *)NULL) { 
+    if (hEntPtr == (hEnt *)NULL) {
         lserrno = LSE_BAD_ARGS;
 	free(task);
         return (-1);
@@ -425,7 +424,7 @@ deletetask_(char *taskstr, hTab *tasktb)
     free(task);
     return(0);
 
-} 
+}
 
 int
 ls_listrtask(char ***taskList, int sortflag)
@@ -436,7 +435,7 @@ ls_listrtask(char ***taskList, int sortflag)
 
     return (listtask_(taskList, &rtask_table, sortflag));
 
-} 
+}
 
 int
 ls_listltask(char ***taskList, int sortflag)
@@ -447,7 +446,7 @@ ls_listltask(char ***taskList, int sortflag)
 
     return (listtask_(taskList, &ltask_table, sortflag));
 
-} 
+}
 
 static int tcomp_(const void *tlist1, const void *tlist2);
 
@@ -456,11 +455,11 @@ listtask_(char ***taskList, hTab *tasktb, int sortflag)
 {
     static char **tlist;
     hEnt *hEntPtr;
-    hLinks *hashLinks;
-    int  nEntry;  
-    int  index;  
+    struct hLinks *hashLinks;
+    int  nEntry;
+    int  index;
     int  listindex;
-    int  tasklen; 
+    int  tasklen;
     char buf[MAXLINELEN];
     char  *p;
 
@@ -481,7 +480,7 @@ listtask_(char ***taskList, hTab *tasktb, int sortflag)
         hashLinks = &(tasktb->slotPtr[index]);
         for ( hEntPtr = (hEnt *) hashLinks->bwPtr;
               hEntPtr != (hEnt *) hashLinks;
-              hEntPtr = (hEnt *) ((hLinks *) hEntPtr)->bwPtr) {
+              hEntPtr = (hEnt *) ((struct hLinks *) hEntPtr)->bwPtr) {
             strcpy(buf, hEntPtr->keyname);
             if (hEntPtr->hData != (int *)NULL) {
                 tasklen = strlen(buf);
@@ -504,10 +503,10 @@ listtask_(char ***taskList, hTab *tasktb, int sortflag)
     *taskList = tlist;
     return (nEntry);
 
-} 
+}
 
 static int
 tcomp_(const void *tlist1, const void *tlist2)
 {
     return(strcmp(*(char **)tlist1, *(char **)tlist2));
-} 
+}

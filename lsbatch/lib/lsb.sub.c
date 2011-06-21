@@ -24,7 +24,7 @@
 #include <time.h>
 #else
 #include <sys/time.h>
-#endif 
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -97,10 +97,10 @@ char optionFileName[MAXLSFNAMELEN];
 char *loginShell;
 static char *additionEsubInfo=NULL;
 
-extern const char *defaultSpoolDir; 
-static const char* getDefaultSpoolDir(); 
+extern const char *defaultSpoolDir;
+static const char* getDefaultSpoolDir();
 
-extern void sub_perror(char *usrMsg); 
+extern void sub_perror(char *usrMsg);
 
 static void trimSpaces(char *str);
 static int parseXF(struct submit *, char *, char **);
@@ -110,13 +110,13 @@ static int checkLimit(int limit, int factor);
 int mySubUsage_(void *);
 int bExceptionTabInit(void);
 
-static hTab *bExceptionTab;    
+static hTab *bExceptionTab;
 
 typedef int (*bException_handler_t)(void *);
- 
+
 typedef struct bException {
-    char *name;                    
-    bException_handler_t handler;  
+    char *name;
+    bException_handler_t handler;
 } bException_t;
 
 extern char **environ;
@@ -171,11 +171,11 @@ extern int processXFReq(char *key,char *line,struct submit *jobSubReq);
 extern char *extractStringValue(char *line);
 
 
-#define  NL_SETN   13   
-                        
+#define  NL_SETN   13
+
 
 #define ESUBNAME "esub"
-	
+
 
 char *niosArgv[5];
 char niosPath[MAXFILENAMELEN];
@@ -195,10 +195,10 @@ lsb_submit(struct submit  *jobSubReq, struct submitReply *submitRep)
 
     if (logclass & (LC_TRACE | LC_EXEC))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
-    
+
     lsberrno = LSBE_BAD_ARG;
 
-    
+
     subNewLine_(jobSubReq->resReq);
     subNewLine_(jobSubReq->dependCond);
     subNewLine_(jobSubReq->preExecCmd);
@@ -216,28 +216,28 @@ lsb_submit(struct submit  *jobSubReq, struct submitReply *submitRep)
 
 
     if (getCommonParams (jobSubReq, &submitReq, submitRep) < 0)
-        return (-1);                     
-    
-    
-    
-    if (!(jobSubReq->options & SUB_QUEUE)) { 
-        
+        return (-1);
+
+
+
+    if (!(jobSubReq->options & SUB_QUEUE)) {
+
         if ((queue = getenv("LSB_DEFAULTQUEUE")) != NULL
              && queue[0] != '\0') {
-            submitReq.queue = queue; 
+            submitReq.queue = queue;
             submitReq.options |= SUB_QUEUE;
-        } 
+        }
     }
 
     submitReq.cwd = cwd;
 
-    
+
     if ((grpEntry = getgrgid(getgid())) == NULL) {
 	if (logclass & ( LC_TRACE | LC_EXEC))
 	    ls_syslog(LOG_DEBUG, "%s: group id %d, does not have an name in the unix group file", fname, (int)getgid());
     } else {
-	
-     
+
+
 	if (putEnv("LSB_UNIXGROUP", grpEntry->gr_name) < 0) {
 	    if (logclass & ( LC_TRACE | LC_EXEC ))
 		ls_syslog(LOG_DEBUG, "%s: group <%s>, cannot be set in the environment.", fname, grpEntry->gr_name);
@@ -246,11 +246,11 @@ lsb_submit(struct submit  *jobSubReq, struct submitReply *submitRep)
 
     makeCleanToRunEsub();
 
-    
+
     if (getUserInfo(&submitReq, jobSubReq) < 0)
         return (-1);
 
-    
+
     if (!(jobSubReq->options & SUB_QUEUE)) {
         if (queue != NULL && queue[0] != '\0') {
             jobSubReq->queue = queue;
@@ -260,16 +260,16 @@ lsb_submit(struct submit  *jobSubReq, struct submitReply *submitRep)
 
     modifyJobInformation(jobSubReq);
     if (getCommonParams (jobSubReq, &submitReq, submitRep) < 0)
-        return (-1);                     
-    
+        return (-1);
+
 #ifdef INTER_DAEMON_AUTH
-    
+
     putEnv("LSF_EAUTH_AUX_PASS", "yes");
 #endif
 
-    
+
     if ( (lsbParams[LSB_INTERACTIVE_STDERR].paramValue != NULL)
-	 && (strcasecmp(lsbParams[LSB_INTERACTIVE_STDERR].paramValue, 
+	 && (strcasecmp(lsbParams[LSB_INTERACTIVE_STDERR].paramValue,
 			"y") == 0) ) {
 	if (putEnv("LSF_INTERACTIVE_STDERR", "y") < 0) {
 	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_S, fname, "putenv");
@@ -279,19 +279,19 @@ lsb_submit(struct submit  *jobSubReq, struct submitReply *submitRep)
     if (authTicketTokens_(&auth, NULL) == -1) {
         return (-1);
     }
-    
-    if (submitReq.options & SUB_RESTART) 
+
+    if (submitReq.options & SUB_RESTART)
         jobId = subRestart(jobSubReq, &submitReq, submitRep, &auth);
-    else 
+    else
         jobId = subJob(jobSubReq, &submitReq, submitRep, &auth);
 
     return(jobId);
 
-} 
+}
 
 
 int
-getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq, 
+getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
                                              struct submitReply *submitRep)
 {
     int i, useKb = 0;
@@ -300,13 +300,13 @@ getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     if (logclass & (LC_TRACE | LC_EXEC))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
-    if (jobSubReq == NULL || submitRep == NULL) 
+    if (jobSubReq == NULL || submitRep == NULL)
         return (-1);
-    
+
     submitReq->options = jobSubReq->options;
     submitReq->options2 = jobSubReq->options2;
-    
-    
+
+
     if (jobSubReq->options & SUB_DEPEND_COND) {
         if (dependCondSyntax(jobSubReq->dependCond) < 0)
 	    return (-1);
@@ -319,13 +319,13 @@ getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     if (jobSubReq->options & SUB_PRE_EXEC) {
         if (!jobSubReq->preExecCmd)
 	    return (-1);
-        if (strlen(jobSubReq->preExecCmd) >= MAXLINELEN - 1) 
+        if (strlen(jobSubReq->preExecCmd) >= MAXLINELEN - 1)
 	    return (-1);
         else
             submitReq->preExecCmd = jobSubReq->preExecCmd;
     } else
         submitReq->preExecCmd = "";
-    
+
     if (jobSubReq->options & SUB_QUEUE) {
         if (!jobSubReq->queue) {
             lsberrno = LSBE_BAD_QUEUE;
@@ -339,23 +339,23 @@ getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     if (jobSubReq->options & SUB_HOST) {
         submitReq->numAskedHosts = jobSubReq->numAskedHosts;
         submitReq->askedHosts = jobSubReq->askedHosts;
-    } else 
+    } else
 	submitReq->numAskedHosts = 0;
-    
+
     if (submitReq->numAskedHosts < 0)
 	return (-1);
-    
+
     for (i = 0; i < submitReq->numAskedHosts; i++) {
-         if ((submitReq->askedHosts[i]) 
+         if ((submitReq->askedHosts[i])
                 && (strlen (submitReq->askedHosts[i]) + 1) < MAXHOSTNAMELEN)
              continue;
          lsberrno = LSBE_BAD_HOST;
          submitRep->badReqIndx = i;
 	 return (-1);
     }
-    
+
     if (jobSubReq->options & SUB_HOST_SPEC) {
-        if (!jobSubReq->hostSpec) 
+        if (!jobSubReq->hostSpec)
 	    return (-1);
         if (strlen(jobSubReq->hostSpec) >= MAXHOSTNAMELEN - 1)
 	    return (-1);
@@ -363,68 +363,68 @@ getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
             submitReq->hostSpec = jobSubReq->hostSpec;
     } else
         submitReq->hostSpec = "";
-    
+
     submitReq->beginTime = jobSubReq->beginTime;
     submitReq->termTime = jobSubReq->termTime;
 
-    
+
     if (!limitIsOk_(jobSubReq->rLimits)) {
 	useKb = 1;
 	submitReq->options |= SUB_RLIMIT_UNIT_IS_KB;
     }
-       
+
     for (i = 0; i < LSF_RLIM_NLIMITS; i++)
-        submitReq->rLimits[i] = -1;		
+        submitReq->rLimits[i] = -1;
 
     if (jobSubReq->rLimits[LSF_RLIMIT_CPU] >= 0)
-        submitReq->rLimits[LSF_RLIMIT_CPU] = 
+        submitReq->rLimits[LSF_RLIMIT_CPU] =
 				    jobSubReq->rLimits[LSF_RLIMIT_CPU];
     if (jobSubReq->rLimits[LSF_RLIMIT_RUN] >= 0)
-        submitReq->rLimits[LSF_RLIMIT_RUN] = 
+        submitReq->rLimits[LSF_RLIMIT_RUN] =
 				    jobSubReq->rLimits[LSF_RLIMIT_RUN];
 
     if (jobSubReq->rLimits[LSF_RLIMIT_FSIZE] > 0) {
 	if (useKb) {
-	    submitReq->rLimits[LSF_RLIMIT_FSIZE] = 
+	    submitReq->rLimits[LSF_RLIMIT_FSIZE] =
 			jobSubReq->rLimits[LSF_RLIMIT_FSIZE];
 	} else {
-	    submitReq->rLimits[LSF_RLIMIT_FSIZE] = 
+	    submitReq->rLimits[LSF_RLIMIT_FSIZE] =
 			jobSubReq->rLimits[LSF_RLIMIT_FSIZE] * 1024;
 	}
     }
     if (jobSubReq->rLimits[LSF_RLIMIT_DATA] > 0) {
 	if (useKb) {
-	    submitReq->rLimits[LSF_RLIMIT_DATA] 
+	    submitReq->rLimits[LSF_RLIMIT_DATA]
 		    = jobSubReq->rLimits[LSF_RLIMIT_DATA];
 	} else {
-	    submitReq->rLimits[LSF_RLIMIT_DATA] 
+	    submitReq->rLimits[LSF_RLIMIT_DATA]
 		    = jobSubReq->rLimits[LSF_RLIMIT_DATA] * 1024;
 	}
     }
     if (jobSubReq->rLimits[LSF_RLIMIT_STACK] > 0) {
 	if (useKb) {
-	    submitReq->rLimits[LSF_RLIMIT_STACK] 
+	    submitReq->rLimits[LSF_RLIMIT_STACK]
 		    = jobSubReq->rLimits[LSF_RLIMIT_STACK];
 	} else {
-	    submitReq->rLimits[LSF_RLIMIT_STACK] 
+	    submitReq->rLimits[LSF_RLIMIT_STACK]
 		    = jobSubReq->rLimits[LSF_RLIMIT_STACK] * 1024;
 	}
     }
     if (jobSubReq->rLimits[LSF_RLIMIT_CORE] >= 0) {
 	if (useKb) {
-	    submitReq->rLimits[LSF_RLIMIT_CORE] 
+	    submitReq->rLimits[LSF_RLIMIT_CORE]
 	       = jobSubReq->rLimits[LSF_RLIMIT_CORE];
 	} else {
-	    submitReq->rLimits[LSF_RLIMIT_CORE] 
+	    submitReq->rLimits[LSF_RLIMIT_CORE]
 	       = jobSubReq->rLimits[LSF_RLIMIT_CORE] * 1024;
 	}
     }
     if (jobSubReq->rLimits[LSF_RLIMIT_RSS] > 0) {
 	if (useKb) {
-	    submitReq->rLimits[LSF_RLIMIT_RSS] 
+	    submitReq->rLimits[LSF_RLIMIT_RSS]
 	       = jobSubReq->rLimits[LSF_RLIMIT_RSS];
 	} else {
-	    submitReq->rLimits[LSF_RLIMIT_RSS] 
+	    submitReq->rLimits[LSF_RLIMIT_RSS]
 	       = jobSubReq->rLimits[LSF_RLIMIT_RSS] * 1024;
 	}
     }
@@ -441,20 +441,20 @@ getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     if (jobSubReq->rLimits[LSF_RLIMIT_PROCESS] > 0)
         submitReq->rLimits[LSF_RLIMIT_PROCESS]
                = jobSubReq->rLimits[LSF_RLIMIT_PROCESS];
- 
-    if ((jobSubReq->beginTime > 0 && jobSubReq->termTime > 0) 
+
+    if ((jobSubReq->beginTime > 0 && jobSubReq->termTime > 0)
                               && (submitReq->beginTime > submitReq->termTime)) {
 	lsberrno = LSBE_START_TIME;
 	return (-1);
     }
-    
-    
+
+
     submitReq->submitTime = time(0);
-    
+
     if (jobSubReq->options2 & SUB2_JOB_PRIORITY) {
 	submitReq->userPriority = jobSubReq->userPriority;
-    } else { 
-	submitReq->userPriority = -1; 
+    } else {
+	submitReq->userPriority = -1;
     }
 
     if (logclass & (LC_TRACE | LC_EXEC))
@@ -462,7 +462,7 @@ getCommonParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 
     return(0);
 
-} 
+}
 
 static int
 createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
@@ -475,12 +475,12 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
     int tsoptlen;
 
     tsoptlen = 0;
-    
+
     if (logclass & (LC_TRACE | LC_EXEC))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
     length = sizeof(CMDSTART) + sizeof(TRAPSIGCMD) + sizeof(WAITCLEANCMD) +
-	sizeof(EXITCMD) + strlen(jobSubReq->command) + tsoptlen + 
+	sizeof(EXITCMD) + strlen(jobSubReq->command) + tsoptlen +
           sizeof(LSBNUMENV) +
 	    sizeof(ENVSSTART) + sizeof(EDATASTART) + sizeof(SHELLLINE) + 1 +
 		MAX_LSB_NAME_LEN * 2  +
@@ -503,13 +503,13 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
         free(useracctmap);
         useracctmap=NULL;
     }
-    
+
     strcat(jf->data, "LSF_VERSION='");
     sprintf (num, "%d", LSF_VERSION);
     strcat(jf->data, num);
     strcat(jf->data, "'; export LSF_VERSION\n");
     length += 13 + strlen(num) + 23;
-    
+
     for (ep = environ; *ep; ep++) {
         noEqual = FALSE;
         if (logclass & (LC_TRACE | LC_EXEC)) {
@@ -526,14 +526,14 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
 	    !strncmp(*ep, "LSB_EXIT_PRE_ABORT=", 19) ||
 	    !strncmp(*ep, "LSB_EXIT_REQUEUE=", 17) ||
 	    !strncmp(*ep, "LS_JOBPID=", 10) ||
-	    !strncmp(*ep, "LSB_INTERACTIVE=", 16) ||	    
+	    !strncmp(*ep, "LSB_INTERACTIVE=", 16) ||
 	    !strncmp(*ep, "LSB_ACCT_MAP=", 13) ||
 	    !strncmp(*ep, "LSB_JOB_STARTER=", 16) ||
-	    !strncmp(*ep, "LSB_EVENT_ATTRIB=", 17) ||	    	    	    
+	    !strncmp(*ep, "LSB_EVENT_ATTRIB=", 17) ||
 	    !strncmp(*ep, "LSF_VERSION=", 12) ||
 	    !strncmp(*ep, "LSB_SUB_", 8) ||
-	    
-	    
+
+
 	    !strncmp(*ep, "HOME=", 5) ||
 	    !strncmp(*ep, "PWD=", 4) ||
 	    !strncmp(*ep, "USER=", 5)) {
@@ -541,7 +541,7 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
 	}
 
 	if (!(jobSubReq->options & SUB_INTERACTIVE)) {
-	   
+
 	    if (!strncmp(*ep, "TERMCAP=", 8) || !strncmp(*ep, "TERM=", 5))
 	        continue;
 	}
@@ -555,14 +555,14 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
 	}
 
         if (strncmp(sp, "DISPLAY=", 8) == 0) {
-             
+
             sp = chDisplay_(sp);
         }
 
 	for (p = sp; *p != '\0' && *p != '='; p++);
 
         if (*p =='\0') {
-            
+
             noEqual = TRUE;
             if (logclass & (LC_TRACE | LC_EXEC)) {
                 ls_syslog (LOG_DEBUG, "%s: environment variable <%s> doesn't have '='", fname, sp);
@@ -576,7 +576,7 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
         } else {
             len1 = strlen(p+1) + 1;
         }
-	if ((length += (len = strlen(sp) + len1 
+	if ((length += (len = strlen(sp) + len1
 			+ sizeof(TAILCMD) + strlen(sp) + 1)) > size) {
 	    char *newp = (char *) realloc(jf->data, (size += (len > MSGSIZE ?
 							      len : MSGSIZE)));
@@ -601,21 +601,21 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
 	strcat(jf->data, sp);
 	strcat(jf->data, "\n");
         if (noEqual != TRUE) {
-	    *p = '=';	
+	    *p = '=';
         }
         if (logclass & (LC_TRACE | LC_EXEC)) {
-            ls_syslog (LOG_DEBUG, "%s:length=%d, size=%d, jf->len=%d, numEnv=%d", 
+            ls_syslog (LOG_DEBUG, "%s:length=%d, size=%d, jf->len=%d, numEnv=%d",
                               fname, length, size, strlen(jf->data), ++numEnv);
         }
 	FREEUP(oldp);
     }
-   
+
     if ((length +=  (len = sizeof (TRAPSIGCMD) + sizeof (CMDSTART)
                 + strlen (jobSubReq->command) + tsoptlen + sizeof (WAITCLEANCMD)
                 + sizeof (EXITCMD) + sizeof (EDATASTART) + ed.len
-                 
+
                 + MAX_LSB_NAME_LEN)) > size) {
-        char *newp = (char *) realloc(jf->data, 
+        char *newp = (char *) realloc(jf->data,
                              (size += (len > MSGSIZE ? len : MSGSIZE)));
         if (newp == NULL) {
             lsberrno = LSBE_NO_MEM;
@@ -625,7 +625,7 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
         jf->data = newp;
     }
     if (logclass & (LC_TRACE | LC_EXEC)) {
-        ls_syslog (LOG_DEBUG, "%s:length=%d, size=%d, jf->len=%d, numEnv=%d", 
+        ls_syslog (LOG_DEBUG, "%s:length=%d, size=%d, jf->len=%d, numEnv=%d",
                               fname, length, size, strlen(jf->data), numEnv);
     }
 
@@ -635,12 +635,12 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
     strcat(jf->data, jobSubReq->command);
 
     strcat(jf->data, WAITCLEANCMD);
-    strcat(jf->data, EXITCMD);    
+    strcat(jf->data, EXITCMD);
 
     appendEData(jf, &ed);
 
     return (0);
-} 
+}
 
 void appendEData(struct lenData *jf, struct lenData *ed)
 {
@@ -656,8 +656,8 @@ void appendEData(struct lenData *jf, struct lenData *ed)
 }
 
 
-static LS_LONG_INT 
-send_batch (struct submitReq *submitReqPtr, struct lenData *jf, 
+static LS_LONG_INT
+send_batch (struct submitReq *submitReqPtr, struct lenData *jf,
 	    struct submitReply *submitReply, struct lsfAuth *auth)
 {
     static char fname[] = "send_batch";
@@ -683,9 +683,9 @@ send_batch (struct submitReq *submitReqPtr, struct lenData *jf,
 	lsberrno = LSBE_NO_MEM;
 	return (-1);
     }
-    
-    
-    
+
+
+
     mbdReqtype = BATCH_JOB_SUB;
     xdrmem_create(&xdrs, request_buf, reqBufSize, XDR_ENCODE);
     initLSFHeader_(&hdr);
@@ -698,7 +698,7 @@ send_batch (struct submitReq *submitReqPtr, struct lenData *jf,
         return(-1);
     }
 
-    if ( (cc = callmbd(NULL, request_buf, XDR_GETPOS(&xdrs), &reply_buf, 
+    if ( (cc = callmbd(NULL, request_buf, XDR_GETPOS(&xdrs), &reply_buf,
                        &hdr, NULL, sndJobFile_, (int *) jf)) < 0) {
 	xdr_destroy(&xdrs);
         if (logclass & (LC_TRACE | LC_EXEC))
@@ -708,26 +708,26 @@ send_batch (struct submitReq *submitReqPtr, struct lenData *jf,
     }
     xdr_destroy(&xdrs);
     free(request_buf);
-    
+
     lsberrno = hdr.opCode;
-    if (cc == 0) { 
+    if (cc == 0) {
 	submitReply->badJobId = 0;
 	submitReply->badReqIndx = 0;
 	submitReply->queue = "";
 	submitReply->badJobName = "";
 	return (-1);
     }
-    
+
     if ((reply = (struct submitMbdReply *)malloc(sizeof(struct submitMbdReply)))
 	== NULL) {
         lsberrno = LSBE_NO_MEM;
 	free(reply);
 	return(-1);
     }
-    
-    
+
+
     xdrmem_create(&xdrs, reply_buf, XDR_DECODE_SIZE_(cc), XDR_DECODE);
-    
+
     if (!xdr_submitMbdReply(&xdrs, reply, &hdr)) {
 	lsberrno = LSBE_XDR;
 	free(reply_buf);
@@ -737,11 +737,11 @@ send_batch (struct submitReq *submitReqPtr, struct lenData *jf,
     }
 
     free(reply_buf);
-    
+
     xdr_destroy(&xdrs);
 
-    
-    
+
+
     submitReply->badJobId = reply->jobId;
     submitReply->badReqIndx = reply->badReqIndx;
     submitReply->queue = reply->queue;
@@ -753,20 +753,20 @@ send_batch (struct submitReq *submitReqPtr, struct lenData *jf,
         jobId = reply->jobId;
         free(reply);
         if (logclass & (LC_TRACE | LC_EXEC))
-            ls_syslog(LOG_DEBUG1, "%s: mbd says job <%s> has been restarted", 
+            ls_syslog(LOG_DEBUG1, "%s: mbd says job <%s> has been restarted",
                                   fname, lsb_jobid2str(jobId));
         return (jobId);
     }
 
     free(reply);
     return(-1);
-} 
+}
 
 static int
 dependCondSyntax(char *dependCond)
 {
     return (0);
-} 
+}
 
 static LS_LONG_INT
 subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
@@ -776,7 +776,7 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
     struct lenData jf;
     struct jobNewLog *jobLog = NULL;
     struct xFile *xFiles = NULL;
-    char resReq[MAXLINELEN], fromHost[MAXFILENAMELEN];  
+    char resReq[MAXLINELEN], fromHost[MAXFILENAMELEN];
     char mailUser[MAX_LSB_NAME_LEN], projectName[MAX_LSB_NAME_LEN];
     char loginShell[MAX_LSB_NAME_LEN], schedHostType[MAX_LSB_NAME_LEN];
     int length, line;
@@ -791,8 +791,8 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
         int lserrno;
         int lsberrno;
     } err;
-    char chkPath[MAXFILENAMELEN];  
-    struct linger   linstr = {1, 5};    
+    char chkPath[MAXFILENAMELEN];
+    struct linger   linstr = {1, 5};
 
     memset(chkPath,0,MAXFILENAMELEN);
     err.error = err.eno = err.lserrno = err.lsberrno = 0;
@@ -800,34 +800,34 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
     if (logclass & (LC_TRACE | LC_EXEC))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
-    
+
     if (socketpair (AF_UNIX, SOCK_STREAM, 0, childIoFd) < 0) {
         lsberrno = LSBE_SYS_CALL;
         return (-1);
     }
 
     makeCleanToRunEsub();
-    
+
     pid = fork();
     if (pid < 0) {
         lsberrno = LSBE_SYS_CALL;
         return (-1);
     } else if (pid == 0) {
-        
+
 
 	uid_t uid;
         char chklog[MAXFILENAMELEN];
         FILE *fp;
-        struct eventRec *logPtr;   
+        struct eventRec *logPtr;
         int exitVal = -1;
 
         close (childIoFd[0]);
 
-    	setsockopt(childIoFd[1], SOL_SOCKET, SO_LINGER, (char *)&linstr, 
+    	setsockopt(childIoFd[1], SOL_SOCKET, SO_LINGER, (char *)&linstr,
 		sizeof(linstr));
 
-        uid = getuid();             
-        if (setuid (uid) < 0) {                 
+        uid = getuid();
+        if (setuid (uid) < 0) {
             lsberrno = LSBE_BAD_USER;
             goto sendErr;
         }
@@ -837,15 +837,15 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
         } else
             sprintf(chklog, "%s/chklog", chkPath);
 
-        
-        if (write(childIoFd[1], (char *) chkPath, sizeof(chkPath)) != sizeof(chkPath)) { 
+
+        if (write(childIoFd[1], (char *) chkPath, sizeof(chkPath)) != sizeof(chkPath)) {
         goto childExit;
         }
 
 	if (lsberrno == LSBE_BAD_CHKLOG) goto sendErr;
- 
+
         if (logclass & (LC_TRACE | LC_EXEC))
-            ls_syslog(LOG_DEBUG1, "%s: Child tries to open chklog file <%s>", 
+            ls_syslog(LOG_DEBUG1, "%s: Child tries to open chklog file <%s>",
                                  fname, chklog);
         if ((fp = fopen(chklog, "r")) == NULL) {
             lsberrno = LSBE_BAD_CHKLOG;
@@ -860,14 +860,14 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
         jobLog = &logPtr->eventLog.jobNewLog;
 
         if (logclass & (LC_TRACE | LC_EXEC))
-            ls_syslog(LOG_DEBUG1, "%s: Child got job log from chklog file", 
-                                  fname); 
+            ls_syslog(LOG_DEBUG1, "%s: Child got job log from chklog file",
+                                  fname);
 
         err.error = FALSE;
         if (write(childIoFd[1], (char *) &err, sizeof(err)) != sizeof(err)) {
             goto childExit;
         }
-        
+
 	if (write(childIoFd[1], (char *) &ed.len, sizeof(ed.len))
 	                                        != sizeof(ed.len)) {
 	    goto childExit;
@@ -879,7 +879,7 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
 	    }
 	}
 
-        
+
         if (b_write_fix(childIoFd[1], (char *) jobLog, sizeof(struct jobNewLog))
                                               != sizeof(struct jobNewLog)) {
             goto childExit;
@@ -904,9 +904,9 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
 	    if ((length = strlen (jobLog->mailUser) +1) >= MAX_LSB_NAME_LEN)
 		goto childExit;
             if (write(childIoFd[1], (char *) &length, sizeof(length))
-                                               != sizeof(length)) 
+                                               != sizeof(length))
                 goto childExit;
-            if (write(childIoFd[1], jobLog->mailUser, length) != length) 
+            if (write(childIoFd[1], jobLog->mailUser, length) != length)
 		goto childExit;
         }
 
@@ -914,9 +914,9 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
 	    if ((length = strlen (jobLog->projectName) +1) >= MAX_LSB_NAME_LEN)
 		goto childExit;
             if (write(childIoFd[1], (char *) &length, sizeof(length))
-                                               != sizeof(length)) 
+                                               != sizeof(length))
                 goto childExit;
-            if (write(childIoFd[1], jobLog->projectName, length) != length) 
+            if (write(childIoFd[1], jobLog->projectName, length) != length)
 		goto childExit;
         }
 
@@ -924,21 +924,21 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
 	    if ((length = strlen (jobLog->loginShell) +1) >= MAX_LSB_NAME_LEN)
 		goto childExit;
             if (write(childIoFd[1], (char *) &length, sizeof(length))
-                                               != sizeof(length)) 
+                                               != sizeof(length))
                 goto childExit;
-            if (write(childIoFd[1], jobLog->loginShell, length) != length) 
+            if (write(childIoFd[1], jobLog->loginShell, length) != length)
 		goto childExit;
         }
-         	
+
 	if ((length = strlen (jobLog->schedHostType) +1) >= MAX_LSB_NAME_LEN)
 		goto childExit;
         if (write(childIoFd[1], (char *) &length, sizeof(length))
-                                               != sizeof(length)) 
+                                               != sizeof(length))
             goto childExit;
-        if (write(childIoFd[1], jobLog->schedHostType, length) != length) 
+        if (write(childIoFd[1], jobLog->schedHostType, length) != length)
             goto childExit;
 
-        
+
         if ((logPtr = lsb_geteventrec(fp, &line)) == NULL
             || logPtr->type != EVENT_JOB_START) {
             goto childExit;
@@ -964,7 +964,7 @@ subRestart(struct submit  *jobSubReq, struct submitReq *submitReq,
                                            length) != length) {
             goto childExit;
         }
-        exitVal = 0;        
+        exitVal = 0;
 
 childExit:
         if (logclass & (LC_TRACE | LC_EXEC)) {
@@ -982,7 +982,7 @@ sendErr:
         err.eno = errno;
         err.lserrno = lserrno;
         err.lsberrno = lsberrno;
-        
+
         if (write(childIoFd[1], (char *) &err, sizeof(err)) != sizeof(err)) {
             close(childIoFd[1]);
             exit(-1);
@@ -991,18 +991,18 @@ sendErr:
         exit(0);
     }
 
-    
+
 
     close (childIoFd[1]);
 
-    
+
     if (read(childIoFd[0], (char *) chkPath, sizeof(chkPath)) != sizeof(chkPath)) {
         goto parentErr;
     }
 
-    
 
-    err.error = FALSE;                             
+
+    err.error = FALSE;
     if (read(childIoFd[0], (char *) &err, sizeof(err)) != sizeof(err)) {
         goto parentErr;
     }
@@ -1013,15 +1013,15 @@ sendErr:
         goto parentErr;
     }
 
-    
+
     if (read(childIoFd[0], (char *) &ed.len, sizeof(ed.len)) !=
 						    sizeof(ed.len)) {
 	goto parentErr;
     }
     if (ed.len > 0) {
-	if ((ed.data = (char *) malloc(ed.len)) == NULL) 
+	if ((ed.data = (char *) malloc(ed.len)) == NULL)
             goto parentErr;
-     
+
         if (b_read_fix(childIoFd[0], ed.data, ed.len) != ed.len) {
 	    FREEUP(ed.data);
 	    ed.len = 0;
@@ -1030,7 +1030,7 @@ sendErr:
     } else
         ed.data = NULL;
 
-    
+
     if ((jobLog = (struct jobNewLog *) malloc (sizeof (struct jobNewLog)))
             == NULL) {
         goto parentErr;
@@ -1043,7 +1043,7 @@ sendErr:
                                           != sizeof(length)) {
         goto parentErr;
     }
-    jobLog->resReq = resReq;                          
+    jobLog->resReq = resReq;
     if (read(childIoFd[0], jobLog->resReq, length) != length) {
         goto parentErr;
     }
@@ -1058,42 +1058,42 @@ sendErr:
             goto parentErr;
         }
     }
-    
+
     if (jobLog->options & SUB_MAIL_USER) {
         if (read(childIoFd[0], (char *) &length, sizeof(length))
-                                          != sizeof(length)) 
+                                          != sizeof(length))
             goto parentErr;
-        jobLog->mailUser = mailUser;             
-        if (read(childIoFd[0], jobLog->mailUser, length) != length) 
-            goto parentErr;
-    }
-	
-    if (jobLog->options & SUB_PROJECT_NAME) {
-        if (read(childIoFd[0], (char *) &length, sizeof(length))
-                                          != sizeof(length)) 
-            goto parentErr;
-        jobLog->projectName = projectName;             
-        if (read(childIoFd[0], jobLog->projectName, length) != length) 
+        jobLog->mailUser = mailUser;
+        if (read(childIoFd[0], jobLog->mailUser, length) != length)
             goto parentErr;
     }
 
-	
+    if (jobLog->options & SUB_PROJECT_NAME) {
+        if (read(childIoFd[0], (char *) &length, sizeof(length))
+                                          != sizeof(length))
+            goto parentErr;
+        jobLog->projectName = projectName;
+        if (read(childIoFd[0], jobLog->projectName, length) != length)
+            goto parentErr;
+    }
+
+
     if (jobLog->options & SUB_LOGIN_SHELL) {
         if (read(childIoFd[0], (char *) &length, sizeof(length))
-                                          != sizeof(length)) 
+                                          != sizeof(length))
             goto parentErr;
-        jobLog->loginShell = loginShell;             
-        if (read(childIoFd[0], jobLog->loginShell, length) != length) 
+        jobLog->loginShell = loginShell;
+        if (read(childIoFd[0], jobLog->loginShell, length) != length)
             goto parentErr;
     }
     if (read(childIoFd[0], (char *) &length, sizeof(length))
-                                          != sizeof(length)) 
+                                          != sizeof(length))
         goto parentErr;
-    jobLog->schedHostType = schedHostType;             
-    if (read(childIoFd[0], jobLog->schedHostType, length) != length) 
+    jobLog->schedHostType = schedHostType;
+    if (read(childIoFd[0], jobLog->schedHostType, length) != length)
          goto parentErr;
 
-    
+
     length = sizeof (submitReq->restartPid);
     if (read(childIoFd[0], (char *) &submitReq->restartPid, length)
                                                          != length) {
@@ -1103,41 +1103,41 @@ sendErr:
                                           != sizeof(length)) {
         goto parentErr;
     }
-    submitReq->fromHost = fromHost;                   
+    submitReq->fromHost = fromHost;
     if (read(childIoFd[0], submitReq->fromHost, length) != length) {
         goto parentErr;
     }
 
     if (logclass & (LC_TRACE | LC_EXEC))
-        ls_syslog(LOG_DEBUG1, "%s: Parent got the job log from child", 
+        ls_syslog(LOG_DEBUG1, "%s: Parent got the job log from child",
                                  fname);
 
-    
+
 
     lsberrno = LSBE_BAD_CHKLOG;
 
 
-    
+
     if (strlen(jobLog->jobName) >= MAX_CMD_DESC_LEN)
         goto parentErr;
 
     if ((ptr = strchr(jobLog->jobName, '[')) != NULL
         && strrchr(jobSubReq->command, '/')) {
-       
+
         char element[10];
-        *ptr = '\0';  
+        *ptr = '\0';
         ptr = strrchr(jobSubReq->command, '/');
 	ptr++;
         if (islongint_(ptr)){
-            
-            sprintf(element, "[%d]", LSB_ARRAY_IDX(atoi64_(ptr)));                        
+
+            sprintf(element, "[%d]", LSB_ARRAY_IDX(atoi64_(ptr)));
         }
         strcat(jobLog->jobName, element);
     }
 
     if ((ptr = strchr(jobLog->jobName, '/')) != NULL) {
         if (ptr == strrchr(jobLog->jobName, '/'))
-            
+
             sprintf(jobLog->jobName, "%s", ++ptr);
     }
 
@@ -1272,7 +1272,7 @@ sendErr:
 	submitReq->schedHostType = "";
 
     close(childIoFd[0]);
-    if (waitpid (pid, &status, 0) < 0) {        
+    if (waitpid (pid, &status, 0) < 0) {
         lsberrno = LSBE_SYS_CALL;
         goto leave;
     }
@@ -1299,28 +1299,28 @@ parentErr:
         ls_syslog(LOG_DEBUG, "%s: Parent failed in receiving messages from child", fname);
     if (!err.error) {
         lsberrno = LSBE_SYS_CALL;
-        err.eno = errno;                         
+        err.eno = errno;
     }
     close(childIoFd[0]);
-    if (waitpid (pid, &status, 0) < 0)          
+    if (waitpid (pid, &status, 0) < 0)
         lsberrno = LSBE_SYS_CALL;
     else
-        errno = err.eno;           
-    jobId = -1;                      
+        errno = err.eno;
+    jobId = -1;
     goto leave;
 
-} 
+}
 
 int
 getChkDir(char *givenDir, char *chkPath)
 {
     char *strPtr;
 
-    if (((strPtr = strrchr(givenDir, '/')) != NULL) 
-        && (islongint_(strPtr+1))) {  
+    if (((strPtr = strrchr(givenDir, '/')) != NULL)
+        && (islongint_(strPtr+1))) {
         sprintf(chkPath, "%s", givenDir);
         return(0);
-    } else { 
+    } else {
            DIR *dirp;
            struct dirent *dp;
            char jobIdDir[MAXFILENAMELEN];
@@ -1330,15 +1330,15 @@ getChkDir(char *givenDir, char *chkPath)
            if ((dirp = opendir(givenDir)) == NULL)
                return (-1);
            while ((dp = readdir(dirp)) != NULL) {
-                
-               if (strcpy(jobIdDir, dp->d_name) == NULL) 
+
+               if (strcpy(jobIdDir, dp->d_name) == NULL)
                    i++;
-               if (i > 1) { 
+               if (i > 1) {
                    (void) closedir(dirp);
                    return (-1);
                }
            }
-           if (islongint_(jobIdDir)) {  
+           if (islongint_(jobIdDir)) {
                sprintf(chkPath, "%s/%s", givenDir, jobIdDir);
                (void) closedir(dirp);
                return (0);
@@ -1348,15 +1348,15 @@ getChkDir(char *givenDir, char *chkPath)
            }
     }
 
-} 
+}
 
- 
+
 static LS_LONG_INT
 subJob(struct submit  *jobSubReq, struct submitReq *submitReq,
 	   struct submitReply *submitRep, struct lsfAuth *auth)
 {
 
-    char homeDir[MAXFILENAMELEN]; 
+    char homeDir[MAXFILENAMELEN];
     char resReq[MAXLINELEN];
     char cmd[MAXLINELEN];
     struct lenData jf;
@@ -1395,27 +1395,27 @@ subJob(struct submit  *jobSubReq, struct submitReq *submitReq,
             goto cleanup;
         }
     }
-    
+
     jobId = send_batch(submitReq, &jf, submitRep, auth);
     free(jf.data);
 
     if (jobId > 0) {
 
-	if (submitReq->options & SUB_INTERACTIVE) {	
+	if (submitReq->options & SUB_INTERACTIVE) {
 	    sigset_t sigMask;
 	    sigemptyset(&sigMask);
 	    sigaddset(&sigMask, SIGINT);
 	    sigprocmask(SIG_BLOCK, &sigMask, NULL);
 
 	}
-	
+
 	if (!getenv("BSUB_QUIET"))
 	    postSubMsg(jobSubReq, jobId, submitRep);
 
 	if (submitReq->options & SUB_INTERACTIVE) {
 	    int jobIdFd, pid;
 	    char *envBuf;
-	    if ((envBuf = getenv("JOBID_FD")) != NULL) { 
+	    if ((envBuf = getenv("JOBID_FD")) != NULL) {
 		jobIdFd = atoi(envBuf);
 		if (b_write_fix(jobIdFd, (char *) &jobId, sizeof(jobId))
 		    != sizeof(jobId)) {
@@ -1429,13 +1429,13 @@ subJob(struct submit  *jobSubReq, struct submitReq *submitReq,
 	    }
 
 	    startNios(submitReq, niosSock, jobId);
-	    
+
 	    exit(-1);
 	}
 
 	if (submitReq->options2 & SUB2_BSUB_BLOCK) {
 	    startNios(submitReq, niosSock, jobId);
-	    
+
 	    exit(-1);
 	}
     }
@@ -1443,11 +1443,11 @@ subJob(struct submit  *jobSubReq, struct submitReq *submitReq,
 cleanup:
 
     if (jobId < 0) {
-        
+
 	const char* spoolHost;
 	int err;
 
-        
+
 	if (subSpoolFiles.inFileSpool[0]) {
 	    spoolHost = getSpoolHostBySpoolFile(subSpoolFiles.inFileSpool);
 	    err = chUserRemoveSpoolFile(spoolHost, subSpoolFiles.inFileSpool);
@@ -1458,7 +1458,7 @@ cleanup:
 	    }
 	}
 
-        
+
 	if (subSpoolFiles.commandSpool[0]) {
 	    spoolHost = getSpoolHostBySpoolFile(subSpoolFiles.commandSpool);
 	    err = chUserRemoveSpoolFile(spoolHost, subSpoolFiles.commandSpool);
@@ -1471,10 +1471,10 @@ cleanup:
     }
 
     return (jobId);
-} 
+}
 
 
- 
+
 static const char*
 getDefaultSpoolDir()
 {
@@ -1502,7 +1502,7 @@ chUserCopySpoolFile(const char * srcFile, spoolOptions_t fileType)
     int exitVal, cc;
     int rcpp[2];
 
-    
+
     if (defaultSpoolDir == NULL) {
         defaultSpoolDir = getDefaultSpoolDir();
     }
@@ -1517,7 +1517,7 @@ chUserCopySpoolFile(const char * srcFile, spoolOptions_t fileType)
 
     switch(pid = fork()) {
         case 0:
-            
+
             close(rcpp[0]);
 
 	    exitVal = -1;
@@ -1544,7 +1544,7 @@ chUserCopySpoolFile(const char * srcFile, spoolOptions_t fileType)
             exit (exitVal);
 
         case -1:
-            
+
             close(rcpp[0]);
             close(rcpp[1]);
             perror("chUserCopySpoolFile:fork");
@@ -1552,7 +1552,7 @@ chUserCopySpoolFile(const char * srcFile, spoolOptions_t fileType)
 	    return NULL;
 
         default:
-            
+
             close(rcpp[1]);
 
             cc = read(rcpp[0], &parentSpoolInfo,
@@ -1570,27 +1570,27 @@ chUserCopySpoolFile(const char * srcFile, spoolOptions_t fileType)
 		return NULL;
             }
 
-             
+
             if (WIFEXITED(status) == 0) {
                 fprintf(stderr, I18N(443, "Child process killed by signal.\n")); /* catgets 443 */
                 lsberrno = LSBE_SYS_CALL;
 		return NULL;
             }
-            else {  
-                if (WEXITSTATUS(status) == 0xff) {  
+            else {
+                if (WEXITSTATUS(status) == 0xff) {
                     lsberrno = LSBE_SYS_CALL;
 		    return NULL;
                 }
             }
 
             break;
-    } 
+    }
 
     return &parentSpoolInfo;
 }
 
 
-int 
+int
 chUserRemoveSpoolFile( const char * hostName, const char * spoolFile)
 {
     pid_t pid;
@@ -1607,7 +1607,7 @@ chUserRemoveSpoolFile( const char * hostName, const char * spoolFile)
 
     switch(pid = fork()) {
         case 0:
-            
+
 
             setuid( getuid() );
             if ( removeSpoolFile( hostName, dirName ) == 0 ) {
@@ -1618,13 +1618,13 @@ chUserRemoveSpoolFile( const char * hostName, const char * spoolFile)
             break;
 
         case -1:
-            
+
             perror("chUserRemoveSpoolFile:fork");
             lsberrno = LSBE_SYS_CALL;
             return -1;
 
         default:
-            
+
 
             if (waitpid(pid, &status, 0) < 0 ) {
                 perror("chUserRemoveSpoolFile:waitpid");
@@ -1632,27 +1632,27 @@ chUserRemoveSpoolFile( const char * hostName, const char * spoolFile)
                 return -1;
             }
 
-             
+
             if (WIFEXITED(status) == 0) {
                 fprintf(stderr, I18N(443, "Child process killed by signal.\n")); /* catgets 443 */
                 lsberrno = LSBE_SYS_CALL;
                 return -1;
             }
-            else {  
-                if (WEXITSTATUS(status) == 0xff) {  
+            else {
+                if (WEXITSTATUS(status) == 0xff) {
                     lsberrno = LSBE_SYS_CALL;
                     return -1;
                 }
             }
 
-    } 
+    }
 
     return 0;
 }
 
- 
-int 
-getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq, 
+
+int
+getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
                 struct submitReply *submitRep, struct lsfAuth *auth,
 		LSB_SUB_SPOOL_FILE_T* subSpoolFiles)
 {
@@ -1668,8 +1668,8 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    lsberrno = LSBE_BAD_JOB;
 	    return (-1);
 	}
-	
-	
+
+
         if (strlen(jobSubReq->jobName) >= MAX_CMD_DESC_LEN - 1) {
             lsberrno = LSBE_BAD_JOB;
 	    return (-1);
@@ -1677,13 +1677,13 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
             submitReq->jobName = jobSubReq->jobName;
     } else
         submitReq->jobName = "";
-    
+
     if (jobSubReq->options & SUB_IN_FILE) {
         if (!jobSubReq->inFile) {
 	    lsberrno = LSBE_BAD_ARG;
 	    return (-1);
 	}
-	    
+
         if (strlen(jobSubReq->inFile) >= MAXFILENAMELEN - 1) {
 	    lsberrno = LSBE_SYS_CALL;
 	    errno = ENAMETOOLONG;
@@ -1692,18 +1692,18 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	submitReq->inFile = jobSubReq->inFile;
         submitReq->inFileSpool = "";
     } else if (jobSubReq->options2 & SUB2_IN_FILE_SPOOL) {
-        
+
 	const char* pSpoolFile;
 	int spoolFileLen;
 	const LSB_SPOOL_INFO_T *spoolInfo;
 
-        
+
 	spoolInfo = chUserCopySpoolFile(jobSubReq->inFile, SPOOL_INPUT_FILE);
 	if (spoolInfo == NULL) {
             return (-1);
 	}
 
-        
+
 	pSpoolFile = spoolInfo->spoolFile;
 	spoolFileLen = strlen(pSpoolFile);
 	if (spoolFileLen >= MAXFILENAMELEN) {
@@ -1719,8 +1719,8 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
         submitReq->inFile = "";
     }
 
-    
-    if (jobSubReq->options & SUB_MAIL_USER) { 
+
+    if (jobSubReq->options & SUB_MAIL_USER) {
         if (!jobSubReq->mailUser) {
 	    lsberrno = LSBE_BAD_ARG;
 	    return(-1);
@@ -1733,7 +1733,7 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
         submitReq->mailUser = jobSubReq->mailUser;
     } else
 	submitReq->mailUser = "";
-    
+
     if (jobSubReq->options & SUB_PROJECT_NAME) {
 	if (!jobSubReq->projectName) {
 	    lsberrno = LSBE_BAD_ARG;
@@ -1745,22 +1745,22 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    return(-1);
         }
 	submitReq->projectName = jobSubReq->projectName;
-    } else 
-	submitReq->projectName = ""; 
+    } else
+	submitReq->projectName = "";
 
     if (jobSubReq->options & SUB_OUT_FILE) {
         if (!jobSubReq->outFile) {
 	    lsberrno = LSBE_BAD_ARG;
 	    return (-1);
 	}
-	
+
         if (strlen(jobSubReq->outFile) >= MAXFILENAMELEN - 1) {
 	    lsberrno = LSBE_SYS_CALL;
 	    errno = ENAMETOOLONG;
 	    return (-1);
 	}
 	submitReq->outFile = jobSubReq->outFile;
-    } else 
+    } else
          submitReq->outFile = "";
 
     if (jobSubReq->options & SUB_ERR_FILE) {
@@ -1768,7 +1768,7 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    lsberrno = LSBE_BAD_ARG;
 	    return (-1);
 	}
-	
+
         if (strlen(jobSubReq->errFile) >= MAXFILENAMELEN - 1) {
 	    lsberrno = LSBE_SYS_CALL;
 	    errno = ENAMETOOLONG;
@@ -1781,10 +1781,10 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     if (jobSubReq->options & SUB_CHKPNT_PERIOD) {
 	if (!(jobSubReq->options & SUB_CHKPNTABLE))
 	    return (-1);
-	
+
         if (jobSubReq->chkpntPeriod < 0)
 	    return (-1);
-        else 
+        else
             submitReq->chkpntPeriod = jobSubReq->chkpntPeriod;
     } else
         submitReq->chkpntPeriod = 0;
@@ -1794,41 +1794,41 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    lsberrno = LSBE_BAD_ARG;
 	    return (-1);
 	}
-	    
+
         if (strlen(jobSubReq->chkpntDir) >= MAXFILENAMELEN - 1) {
 	    lsberrno = LSBE_SYS_CALL;
 	    errno = ENAMETOOLONG;
 	    return (-1);
 	}
-	
+
 	submitReq->chkpntDir = jobSubReq->chkpntDir;
 	submitReq->options |= SUB_CHKPNTABLE;
     } else
         submitReq->chkpntDir = "";
-    
-    if (jobSubReq->numProcessors < 0 
+
+    if (jobSubReq->numProcessors < 0
         || jobSubReq->maxNumProcessors < jobSubReq->numProcessors) {
 	lsberrno = LSBE_BAD_ARG;
 	return (-1);
     }
-   
+
     if (jobSubReq->numProcessors == 0 && jobSubReq->maxNumProcessors == 0) {
-	
+
 	jobSubReq->options2 |= SUB2_USE_DEF_PROCLIMIT;
 	submitReq->options2 |= SUB2_USE_DEF_PROCLIMIT;
     }
 
-    if (jobSubReq->numProcessors != DEFAULT_NUMPRO 
+    if (jobSubReq->numProcessors != DEFAULT_NUMPRO
 		  && jobSubReq->maxNumProcessors != DEFAULT_NUMPRO) {
-        submitReq->numProcessors = (jobSubReq->numProcessors) 
+        submitReq->numProcessors = (jobSubReq->numProcessors)
         	? jobSubReq->numProcessors : 1;
-        submitReq->maxNumProcessors = (jobSubReq->maxNumProcessors) 
+        submitReq->maxNumProcessors = (jobSubReq->maxNumProcessors)
 	    ? jobSubReq->maxNumProcessors : 1;
     } else {
 	submitReq->numProcessors = DEFAULT_NUMPRO;
 	submitReq->maxNumProcessors = DEFAULT_NUMPRO;
     }
-    
+
     if (jobSubReq->options & SUB_LOGIN_SHELL) {
 	if (!jobSubReq->loginShell) {
 	    lsberrno = LSBE_BAD_ARG;
@@ -1840,27 +1840,27 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    return(-1);
         }
 	submitReq->loginShell = jobSubReq->loginShell;
-    } else 
-	submitReq->loginShell = ""; 
+    } else
+	submitReq->loginShell = "";
 
-    
+
     submitReq->schedHostType = "";
 
-    
+
     submitReq->restartPid = 0;
-    submitReq->jobFile = ""; 
+    submitReq->jobFile = "";
 
     if (jobSubReq->command == (char *)NULL ) {
 	lsberrno = LSBE_BAD_CMD;
 	return (-1);
     }
-    
+
     lineStrBuf[0] = '\0';
     jobdesp = lineStrBuf;
     strncat(lineStrBuf, jobSubReq->command, MAX_CMD_DESC_LEN - 1);
 
     if ((sp = strstr(jobdesp, "SCRIPT_\n")) != NULL) {
-        
+
         jobSubReqCmd1Offset = sp + strlen("SCRIPT_\n") - jobdesp;
         jobdesp += jobSubReqCmd1Offset;
         if ((sp = strstr(jobdesp, "SCRIPT_\n")) != NULL) {
@@ -1873,8 +1873,8 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     jobdespBuf[0] = '\0';
     strncat(jobdespBuf, jobdesp, MAX_CMD_DESC_LEN - 1);
     jobdesp = jobdespBuf;
-        
-    
+
+
     for (lastNonSpaceIdx = 0, lastNonSpaceChar = ';', i = 0;
 	 jobdesp[i] != '\0'; i++) {
 	if (jobdesp[i] == '\n') {
@@ -1888,48 +1888,48 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    lastNonSpaceIdx = i;
 	}
     }
-    if (jobdesp[lastNonSpaceIdx] == ';') 
+    if (jobdesp[lastNonSpaceIdx] == ';')
 	jobdesp[lastNonSpaceIdx] = '\0';
 
     for (i = 0; jobSubReq->command[i] != '\0'; i++) {
-	
+
 	if (jobSubReq->command[i] == ';' || jobSubReq->command[i] == ' ' ||
 	    jobSubReq->command[i] == '&' || jobSubReq->command[i] == '>' ||
 	    jobSubReq->command[i] == '<' || jobSubReq->command[i] == '|' ||
 	    jobSubReq->command[i] == '\t' || jobSubReq->command[i] == '\n')
 	    break;
     }
-    if ((i == 0) && (jobSubReq->command[0] != ' ')) { 
+    if ((i == 0) && (jobSubReq->command[0] != ' ')) {
 	lsberrno = LSBE_BAD_CMD;
 	return (-1);
     }
 
-    
+
     strcpy (submitReq->command, jobdesp);
 
-    
+
     if (jobSubReq->options2 & SUB2_MODIFY_CMD) {
         for (i = 0; jobSubReq->newCommand[i] != '\0'; i++) {
-       	
-	    if (jobSubReq->newCommand[i] == ';' || 
+
+	    if (jobSubReq->newCommand[i] == ';' ||
 		jobSubReq->newCommand[i] == ' ' ||
-	        jobSubReq->newCommand[i] == '&' || 
+	        jobSubReq->newCommand[i] == '&' ||
 		jobSubReq->newCommand[i] == '>' ||
-	        jobSubReq->newCommand[i] == '<' || 
+	        jobSubReq->newCommand[i] == '<' ||
 		jobSubReq->newCommand[i] == '|' ||
-	        jobSubReq->newCommand[i] == '\t' || 
+	        jobSubReq->newCommand[i] == '\t' ||
 		jobSubReq->newCommand[i] == '\n')
 	        break;
         }
-        if ((i == 0) && (jobSubReq->command[0] != ' ')) { 
+        if ((i == 0) && (jobSubReq->command[0] != ' ')) {
     	    lsberrno = LSBE_BAD_CMD;
 	    return (-1);
         }
     }
 
-    
+
     if (jobSubReq->options2 & SUB2_JOB_CMD_SPOOL) {
-	
+
 	const char* pSpoolCmd;
 	int spoolCmdLen;
 	const char* pSrcCmd;
@@ -1938,16 +1938,16 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
         const LSB_SPOOL_INFO_T* spoolInfo;
         char* sp;
 
-        
+
 	if (jobSubReq->options & SUB_MODIFY) {
-	    
+
 	    strcpy(submitReq->command, jobSubReq->newCommand);
 
-            
+
 	    pSrcCmd = getCmdPathName_(jobSubReq->newCommand, &srcCmdLen);
 	} else {
-            
-	    pSrcCmd = getCmdPathName_(&jobSubReq->command[jobSubReqCmd1Offset], 
+
+	    pSrcCmd = getCmdPathName_(&jobSubReq->command[jobSubReqCmd1Offset],
 		                     &srcCmdLen);
 	}
         if (srcCmdLen >= sizeof(lineStrBuf)) {
@@ -1956,17 +1956,17 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
             return (-1);
         }
 
-        
+
 	memcpy(lineStrBuf, pSrcCmd, srcCmdLen);
 	lineStrBuf[srcCmdLen] = 0;
 
-        
+
 	spoolInfo = chUserCopySpoolFile(lineStrBuf, SPOOL_COMMAND);
 	if (spoolInfo == NULL) {
             return (-1);
         }
 
-        
+
 	pSpoolCmd = spoolInfo->spoolFile;
 	spoolCmdLen = strlen(pSpoolCmd);
 	if (spoolCmdLen >= MAXFILENAMELEN) {
@@ -1978,22 +1978,22 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	submitReq->commandSpool = subSpoolFiles->commandSpool;
 
 	if (!(jobSubReq->options & SUB_MODIFY)) {
-            
+
 	    char* pChangeSrcCmd = (char*)pSrcCmd;
 
 	    if (spoolCmdLen <= srcCmdLen) {
-	        
+
 	        memcpy(pChangeSrcCmd, pSpoolCmd, spoolCmdLen);
 	        for (ii = spoolCmdLen, jj = srcCmdLen;
 				 pChangeSrcCmd[jj]; ii++, jj++) {
 	            pChangeSrcCmd[ii] = pChangeSrcCmd[jj];
 	        }
 	        pChangeSrcCmd[ii] = 0;
-            } else { 
-	        
+            } else {
+
 	        int oldLen, newLen;
 
-	        
+
 	        sp = jobSubReq->command;
 	        oldLen = strlen(sp);
 	        newLen = oldLen + spoolCmdLen - srcCmdLen;
@@ -2004,12 +2004,12 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	        }
 	        jobSubReq->command = sp;
 
-		
+
 	        pChangeSrcCmd = (char*)
-		      getCmdPathName_(&jobSubReq->command[jobSubReqCmd1Offset], 
+		      getCmdPathName_(&jobSubReq->command[jobSubReqCmd1Offset],
 		                      &srcCmdLen);
 
-	        
+
 	        for (ii = newLen, jj = oldLen;
 			   jj >= srcCmdLen; ii--, jj--) {
 	            pChangeSrcCmd[ii] = pChangeSrcCmd[jj];
@@ -2018,7 +2018,7 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    }
 	}
     } else if (jobSubReq->options2 & SUB2_MODIFY_CMD) {
-	
+
 	strcpy(submitReq->command, jobSubReq->newCommand);
 	submitReq->commandSpool = "";
     } else {
@@ -2026,12 +2026,12 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     }
 
 
-    
+
     {
         lineStrBuf[0] = '\0';
         strncat(lineStrBuf, jobSubReq->command, MIN(i, MAXLINELEN));
     }
-   
+
     if ((myHostName = ls_getmyhostname()) == NULL) {
         lsberrno = LSBE_LSLIB;
 	return (-1);
@@ -2041,7 +2041,7 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
 	    lsberrno = LSBE_BAD_RESREQ;
 	    return (-1);
 	}
-	
+
         strcpy (submitReq->resReq,jobSubReq->resReq);
     } else  {
 
@@ -2051,32 +2051,32 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     submitReq->fromHost = myHostName;
 
     umask(submitReq->umask = umask(0077));
-    
-    
-    
+
+
+
     if ((jobSubReq->options & SUB_OTHER_FILES) && jobSubReq->nxf > 0) {
 	submitReq->nxf = jobSubReq->nxf;
 	submitReq->xf = jobSubReq->xf;
-    } else 
+    } else
         submitReq->nxf = 0;
-    
+
     if ((pw = getpwdirlsfuser_(auth->lsfUserName)) == NULL) {
 	lsberrno = LSBE_SYS_CALL;
 	return (-1);
     }
-    
+
     if (strlen(pw->pw_dir) >= MAXFILENAMELEN - 1) {
 	lsberrno = LSBE_SYS_CALL;
 	errno = ENAMETOOLONG;
 	return (-1);
     }
-    
-        
+
+
     for (i = 0; pw->pw_dir[i] != '\0' && submitReq->cwd[i] == pw->pw_dir[i];
 	 i++);
 
-    
-    
+
+
     if ((i != 0) && (pw->pw_dir[i] == '\0')) {
 	if (submitReq->cwd[i] == '\0')
 	    submitReq->cwd[0] = '\0';
@@ -2085,17 +2085,17 @@ getOtherParams (struct submit  *jobSubReq, struct submitReq *submitReq,
     }
 
     strcpy(submitReq->subHomeDir, pw->pw_dir);
-    
-    submitReq->sigValue = (jobSubReq->options & SUB_WINDOW_SIG) 
+
+    submitReq->sigValue = (jobSubReq->options & SUB_WINDOW_SIG)
 	? sig_encode(jobSubReq->sigValue) : 0;
     if (submitReq->sigValue > 31 || submitReq->sigValue < 0) {
         lsberrno = LSBE_BAD_SIGNAL;
 	return (-1);
     }
-    
+
     return (0);
 
-} 
+}
 
 static char *
 acctMapGet(int *fail, char *lsfUserName)
@@ -2110,15 +2110,15 @@ acctMapGet(int *fail, char *lsfUserName)
    struct stat statbuf;
 
    if ((pw = getpwdirlsfuser_(lsfUserName)) == NULL)
-       return (NULL); 
-   
+       return (NULL);
+
    strcpy(hostfn, pw->pw_dir);
    strcat(hostfn,"/.lsfhosts");
 
    if ((fp=fopen(hostfn, "r")) == NULL)
        return(NULL);
- 
-   
+
+
    if ((fstat(fileno(fp), &statbuf) < 0) ||
 	(statbuf.st_uid != 0 && statbuf.st_uid != pw->pw_uid) ||
 	(statbuf.st_mode & 066)) {
@@ -2128,7 +2128,7 @@ acctMapGet(int *fail, char *lsfUserName)
 
    maplen =256;
    map = malloc(maplen);
-   if (!map) { 
+   if (!map) {
       lsberrno = LSBE_NO_MEM;
       *fail=1;
       return(NULL);
@@ -2140,15 +2140,15 @@ acctMapGet(int *fail, char *lsfUserName)
        if (num < 2 || (num ==3 && (strcmp(dir,"recv") == 0 &&
                                   strcmp(dir,"send") != 0)))
            continue;
-       
+
        if (strcmp(user,"+") == 0) {
            continue;
        }
 
        len += strlen(clusorhost) + 1 + strlen(user) + 1;
        if (len > maplen) {
-          char *newmap; 
-        
+          char *newmap;
+
           maplen += 256;
           if ((newmap=realloc(map, maplen)) == NULL) {
              lsberrno = LSBE_NO_MEM;
@@ -2156,16 +2156,16 @@ acctMapGet(int *fail, char *lsfUserName)
              *fail=1;
 	     return(NULL);
           }
-          map = newmap;  
+          map = newmap;
        }
        strcat(map,clusorhost);
        strcat(map," ");
        strcat(map,user);
-       strcat(map," "); 
-   } 
+       strcat(map," ");
+   }
    return(map);
 
-} 
+}
 
 static int
 getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
@@ -2190,7 +2190,7 @@ getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
 
     uid = getuid();
 
-    
+
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, childIoFd) < 0) {
         lsberrno = LSBE_SYS_CALL;
         return (-1);
@@ -2199,11 +2199,11 @@ getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
     if ((pid = fork()) < 0) {
         lsberrno = LSBE_SYS_CALL;
         return (-1);
-    } else if (pid > 0) { 
+    } else if (pid > 0) {
         LS_WAIT_T status;
         close(childIoFd[1]);
 
-        err.eno = -1;                  
+        err.eno = -1;
         if (read(childIoFd[0], (char *) &err, sizeof(err)) != sizeof(err)) {
             lsberrno = LSBE_SYS_CALL;
             err.error = TRUE;
@@ -2211,14 +2211,14 @@ getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
         }
 
         if (err.error) {
-            errno = err.eno;          
+            errno = err.eno;
             lserrno = err.lserrno;
             lsberrno = err.lsberrno;
             goto waitforchild;
         }
-        err.eno = -1;                  
+        err.eno = -1;
 
-        
+
         if (read(childIoFd[0], (char *) &cwdLen,
                  sizeof(cwdLen)) != sizeof(cwdLen)) {
             err.error = TRUE;
@@ -2231,31 +2231,31 @@ getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
             goto waitforchild;
         }
 
-        
-        err.eno = -1;                  
+
+        err.eno = -1;
         if (read(childIoFd[0], (char *) &err, sizeof(err)) != sizeof(err)) {
 
             lsberrno = LSBE_SYS_CALL;
             err.error = TRUE;
             goto waitforchild;
         }
- 
+
         if (err.error) {
-            errno = err.eno;          
+            errno = err.eno;
             lserrno = err.lserrno;
             lsberrno = err.lsberrno;
             goto waitforchild;
         }
-        err.eno = -1;                  
+        err.eno = -1;
 
-        
+
         if (read(childIoFd[0], (char *) &ed.len, sizeof(ed.len)) !=
 	    sizeof(ed.len)) {
             err.error = TRUE;
             lsberrno = LSBE_SYS_CALL;
             goto waitforchild;
         }
-        
+
         FREEUP(ed.data);
         if (ed.len > 0) {
             if ((ed.data = (char *) malloc(ed.len)) == NULL) {
@@ -2268,26 +2268,26 @@ getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
                 err.error = TRUE;
                 lsberrno = LSBE_SYS_CALL;
                 goto waitforchild;
-            }	    
+            }
         } else
             ed.data = NULL;
 
-        
-        err.eno = -1;                  
+
+        err.eno = -1;
         if (read(childIoFd[0], (char *) &err, sizeof(err)) != sizeof(err)) {
 
             lsberrno = LSBE_SYS_CALL;
             err.error = TRUE;
             goto waitforchild;
         }
- 
+
         if (err.error) {
-            errno = err.eno;          
+            errno = err.eno;
             lserrno = err.lserrno;
             lsberrno = err.lsberrno;
             goto waitforchild;
         }
-        err.eno = -1;                  
+        err.eno = -1;
 
         if (read(childIoFd[0], (char *) &len, sizeof(len)) != sizeof(len)) {
             err.error = TRUE;
@@ -2307,26 +2307,26 @@ getUserInfo(struct submitReq *submitReq, struct submit *jobSubReq)
                 goto waitforchild;
             }
         }
-        
+
 waitforchild:
         close(childIoFd[0]);
 
         if (err.eno < 0)
-            err.eno = errno;                 
+            err.eno = errno;
         if (waitpid(pid, &status, 0) < 0) {
             lsberrno = LSBE_SYS_CALL;
             return (-1);
         }
 
 	if (err.error) {
-	    errno = err.eno;      
+	    errno = err.eno;
             return(-1);
         }
 
         return (0);
     }
 
-    
+
 
     close(childIoFd[0]);
 
@@ -2335,7 +2335,7 @@ waitforchild:
         goto errorParent;
     }
 
-	
+
     if(mygetwd_(submitReq->cwd) == NULL) {
         lsberrno = LSBE_SYS_CALL;
         goto errorParent;
@@ -2348,7 +2348,7 @@ waitforchild:
         exit(-1);
     }
 
-    
+
     if (write(childIoFd[1], (char *) &cwdLen, sizeof(cwdLen))
                                                 != sizeof(cwdLen)) {
         close(childIoFd[1]);
@@ -2368,8 +2368,8 @@ waitforchild:
            exit(-1);
        }
     }
-    
-    
+
+
     if (write(childIoFd[1], (char *) &ed.len, sizeof(ed.len))
 	!= sizeof(ed.len)) {
         close(childIoFd[1]);
@@ -2383,15 +2383,15 @@ waitforchild:
         }
     }
 
-    
+
     fail=0;
-    
-    if ((usermap=acctMapGet(&fail, lsfUserName)) == NULL)      
+
+    if ((usermap=acctMapGet(&fail, lsfUserName)) == NULL)
         len =0;
-    else    
+    else
         len = strlen(usermap) + 1;
 
-    if (fail) 
+    if (fail)
        goto errorParent;
     else {
        err.error = FALSE;
@@ -2418,13 +2418,13 @@ waitforchild:
     err.lserrno = lserrno;
     err.lsberrno = lsberrno;
 
-    
+
     if (write(childIoFd[1], (char *) &err, sizeof(err)) != sizeof(err))
         exit(-1);
 
     exit(0);
 
-} 
+}
 
 
 static int
@@ -2439,18 +2439,18 @@ xdrSubReqSize(struct submitReq *req)
 	  ALIGNWORD_(strlen(req->resReq)) + 4 +
 	  ALIGNWORD_(strlen(req->fromHost) + 1) + 4 +
 	  ALIGNWORD_(strlen(req->dependCond) + 1) + 4 +
-	  ALIGNWORD_(strlen(req->jobName) + 1) + 4 +      
+	  ALIGNWORD_(strlen(req->jobName) + 1) + 4 +
 	  ALIGNWORD_(strlen(req->command) + 1) + 4 +
-	  ALIGNWORD_(strlen(req->jobFile) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->inFile) + 1) +	4 +  
-	  ALIGNWORD_(strlen(req->outFile) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->errFile) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->inFileSpool) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->commandSpool) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->preExecCmd) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->hostSpec) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->chkpntDir) + 1) + 4 +      
-	  ALIGNWORD_(strlen(req->subHomeDir) + 1) + 4 +      
+	  ALIGNWORD_(strlen(req->jobFile) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->inFile) + 1) +	4 +
+	  ALIGNWORD_(strlen(req->outFile) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->errFile) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->inFileSpool) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->commandSpool) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->preExecCmd) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->hostSpec) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->chkpntDir) + 1) + 4 +
+	  ALIGNWORD_(strlen(req->subHomeDir) + 1) + 4 +
 	  ALIGNWORD_(strlen(req->cwd) + 1) + 4 +
 	  ALIGNWORD_(strlen(req->mailUser) + 1) + 4 +
 	  ALIGNWORD_(strlen(req->projectName) + 1) + 4;
@@ -2462,16 +2462,16 @@ xdrSubReqSize(struct submitReq *req)
 	sz += ALIGNWORD_(sizeof(struct xFile) + 4 * 4);
 
     return (sz);
-} 
-    
-	
+}
+
+
 static
 int createNiosSock(struct submitReq *submitReq)
 {
     int                  asock;
     socklen_t            len;
-    struct sockaddr_in   sin;	
-    
+    struct sockaddr_in   sin;
+
     if ((asock = TcpCreate_(TRUE, 0)) < 0) {
 	lsberrno = LSBE_LSLIB;
 	return(-1);
@@ -2484,10 +2484,10 @@ int createNiosSock(struct submitReq *submitReq)
        lserrno = LSE_SOCK_SYS;
        return (-1);
     }
-    
+
     submitReq->niosPort = ntohs(sin.sin_port);
     return (asock);
-} 
+}
 
 static
 void startNios(struct submitReq *submitReq, int asock, LS_LONG_INT jobId)
@@ -2498,16 +2498,16 @@ void startNios(struct submitReq *submitReq, int asock, LS_LONG_INT jobId)
 	{"LSF_SERVERDIR", NULL},
 	{NULL, NULL}
     };
-#define LSF_NIOSDIR 0    
+#define LSF_NIOSDIR 0
 
 
     setuid(getuid());
-    
+
     if (initenv_(niosParams, NULL) < 0) {
 	ls_perror("initenv nios");
 	exit(-1);
     }
-    
+
     if (submitReq->options2 & SUB2_BSUB_BLOCK) {
         sprintf(envStr, "%s", lsb_jobidinstr(jobId));
         putEnv("BSUB_BLOCK", envStr);
@@ -2539,14 +2539,14 @@ void startNios(struct submitReq *submitReq, int asock, LS_LONG_INT jobId)
     execv(niosArgv[0], niosArgv);
     perror(niosArgv[0]);
     exit(-1);
-} 
-	
-	
+}
+
+
 static void
 postSubMsg(struct submit *req, LS_LONG_INT jobId, struct submitReply *reply)
 {
 
-    
+
 
     if ((req->options & SUB_QUEUE) || (req->options & SUB_RESTART)) {
 	if(getenv("BSUB_STDERR"))
@@ -2567,15 +2567,15 @@ postSubMsg(struct submit *req, LS_LONG_INT jobId, struct submitReply *reply)
     fflush(stdout);
 
     prtBETime_(req);
-    
+
     if (req->options2 & SUB2_BSUB_BLOCK)
 	fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,402, "<<Waiting for dispatch ...>>\n")));  /* catgets 402 */
 
     if (req->options & SUB_INTERACTIVE)
-	fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,402, "<<Waiting for dispatch ...>>\n")));  
+	fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,402, "<<Waiting for dispatch ...>>\n")));
 
-    
-} 
+
+}
 
 
 void
@@ -2595,11 +2595,11 @@ prtBETime_(struct submit *req)
         sp = _i18n_ctime(ls_catd, CTIME_FORMAT_a_b_d_T_Y, &req->termTime);
         fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,405, "Job will be terminated by %s\n")), sp);  /* catgets 405 */
     }
-} 
+}
 
 
 
-int 
+int
 gettimefor (char *toptarg, time_t *tTime)
 {
     struct tm *tmPtr;
@@ -2629,7 +2629,7 @@ gettimefor (char *toptarg, time_t *tTime)
             tindex++;
             break;
         }
-    }     
+    }
     if ( tindex < 2 || tindex > 4 ) {
 	return(-1);
     }
@@ -2649,7 +2649,7 @@ gettimefor (char *toptarg, time_t *tTime)
 	    return(-1);
         }
         if (( (ttime[2] < tmPtr->tm_mday) ||
-              ((ttime[2] == tmPtr->tm_mday) && (ttime[1] < currhour)) || 
+              ((ttime[2] == tmPtr->tm_mday) && (ttime[1] < currhour)) ||
               ((ttime[2] == tmPtr->tm_mday) && (ttime[1] == currhour) &&
                (ttime[0] < currmin))
             ) && tindex == 1)
@@ -2677,21 +2677,21 @@ gettimefor (char *toptarg, time_t *tTime)
         }
     }
 
-    
+
     tmPtr->tm_isdst = -1;
 
-    
+
     *tTime = *tTime < mktime(tmPtr) ? mktime(tmPtr) : mktime(tmPtr) + 86400;
 
     return(0);
-} 
+}
 
 int
 setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    int mask, int mask2, char **errMsg)
 {
     int eflag = 0, oflag = 0;
-    int badIdx, v1, v2; 
+    int badIdx, v1, v2;
     char *sp, *cp;
     char savearg[MAXLINELEN];
     char *optName;
@@ -2732,7 +2732,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             req->rLimits[rLimit] = DELETE_NUMBER; \
             break;}
 
-    getoptfunc  = my_getopt;    
+    getoptfunc  = my_getopt;
 
     while ((optName = getoptfunc(argc, argv, template, errMsg)) != NULL) {
 	switch (optName[0]) {
@@ -2773,12 +2773,12 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	case 'f':
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkSubDelOption (SUB_OTHER_FILES, "fn");
-	    if (req->options & SUB_RESTART) {       
+	    if (req->options & SUB_RESTART) {
 		req->options |= SUB_RESTART_FORCE;
 		break;
 	    }
-	    
-	    
+
+
             if (mask & SUB_OTHER_FILES) {
 	        if (parseXF (req, optarg, errMsg) < 0)
 	    	    return(-1);
@@ -2790,40 +2790,40 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkSubDelOption ((SUB_CHKPNT_PERIOD | SUB_CHKPNT_DIR), "kn");
             if (!(mask & SUB_CHKPNT_DIR))
-                
+
                 break;
 
             cp = optarg;
             while (*(cp++) == ' ');
 
             if ((sp = strchr(cp, ' ')) != NULL) {
-                
-		
+
+
                 int  bPeriodExist = 0;
                 int  bMethodExist = 0;
 		char *pCurWord = NULL;
 
-                
+
                 *sp  = '\0';
 
-                
+
                 while (*(++sp) == ' ');
 
-                
+
                 while ((sp != NULL)&&(*sp != '\0')){
                     pCurWord = sp;
-                    
+
                     if (isdigit((int)(*pCurWord))) {
-                        
+
                         if ( bPeriodExist ){
-                            PRINT_ERRMSG1(errMsg, 
-			       _i18n_msg_get(ls_catd,NL_SETN,408, 
+                            PRINT_ERRMSG1(errMsg,
+			       _i18n_msg_get(ls_catd,NL_SETN,408,
 			       "%s: Bad checkpoint period value"),/* catgets 408 */
 			       pCurWord);
                             return(-1);
                         }
 
-                        
+
                         sp = strchr(pCurWord,' ');
                         if ( sp != NULL){
                             *sp = '\0';
@@ -2831,8 +2831,8 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 
                         if (!isint_(pCurWord)
                             || (req->chkpntPeriod = atoi(pCurWord) * 60) <= 0){
-                            PRINT_ERRMSG1(errMsg, 
-			       _i18n_msg_get(ls_catd,NL_SETN,408, 
+                            PRINT_ERRMSG1(errMsg,
+			       _i18n_msg_get(ls_catd,NL_SETN,408,
 			       "%s: Bad checkpoint period value"),/* catgets 408 */
 			       pCurWord);
                             return(-1);
@@ -2841,51 +2841,51 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                         req->options |= SUB_CHKPNT_PERIOD;
 
                     }else if (strstr(pCurWord,"method=") == pCurWord) {
-                        
-                        
+
+
                         if ( bMethodExist ){
-                             PRINT_ERRMSG1(errMsg, 
-			       _i18n_msg_get(ls_catd,NL_SETN,445, 
+                             PRINT_ERRMSG1(errMsg,
+			       _i18n_msg_get(ls_catd,NL_SETN,445,
 			       "%s: Syntax error. Correct syntax is method=name of your checkpoint method"),/* catgets 445 */
 			       pCurWord);
                              return(-1);
                         }
-                        
+
                         sp = strchr(pCurWord,' ');
                         if (sp != NULL){
                             *sp = '\0';
                         }
-                        
+
                         pCurWord = strchr(pCurWord,'=');
-                        if (*(++pCurWord) != '\0' ){ 
+                        if (*(++pCurWord) != '\0' ){
                             putEnv("LSB_ECHKPNT_METHOD",pCurWord);
                         }else{
-                            PRINT_ERRMSG1(errMsg, 
-			       _i18n_msg_get(ls_catd,NL_SETN,445, 
+                            PRINT_ERRMSG1(errMsg,
+			       _i18n_msg_get(ls_catd,NL_SETN,445,
 			       "%s: Syntax error. Correct syntax is method=name of your checkpoint method"),/* catgets 445 */
 			       pCurWord);
 	                    return(-1);
                         }
                         bMethodExist = 1;
                     }else{
-                        PRINT_ERRMSG1(errMsg, 
-			       _i18n_msg_get(ls_catd,NL_SETN,446, 
+                        PRINT_ERRMSG1(errMsg,
+			       _i18n_msg_get(ls_catd,NL_SETN,446,
 			       "%s: Syntax error. Correct syntax is bsub -k \"chkpnt_dir [period] [method=checkpoint method]\""),/* catgets 446 */
 			       pCurWord);
                         return(-1);
                     }
-                    
+
                     if (sp != NULL){
                         while(*(++sp) == ' ');
                     }
                 }
             }
 	    req->chkpntDir = optarg;
-            req->options |= SUB_CHKPNT_DIR;	    
+            req->options |= SUB_CHKPNT_DIR;
 	    break;
 
 	case 'R':
-	    
+
             checkSubDelOption (SUB_RES_REQ, "Rn");
             if (mask & SUB_RES_REQ) {
 		if (req->resReq != NULL){
@@ -2907,10 +2907,10 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    break;
 
 	case 'I':
-            if (flagI || flagK) { 
+            if (flagI || flagK) {
 		myArgs.argc = req->options;
 		lsb_throw("LSB_BAD_BSUBARGS", &myArgs);
-                
+
                 return (-1);
             }
 
@@ -2926,7 +2926,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    } else {
 		myArgs.argc = req->options;
 		lsb_throw("LSB_BAD_BSUBARGS", &myArgs);
-		
+
 		return (-1);
 	    }
 	    break;
@@ -2936,10 +2936,10 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             req->options2 |= SUB2_HOLD;
             break;
         case 'K':
-            if (flagI || flagK) { 
+            if (flagI || flagK) {
 		myArgs.argc = req->options;
 		lsb_throw("LSB_BAD_BSUBARGS", &myArgs);
-                
+
                 return (-1);
             }
             flagK++;
@@ -2961,11 +2961,11 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	case 'h':
             myArgs.argc = req->options;
             lsb_throw("LSB_BAD_BSUBARGS", &myArgs);
-	    
+
 	    return (-1);
 
 	case 'm':
-	    req->options2 |= SUB2_MODIFY_PEND_JOB;	   
+	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkSubDelOption (SUB_HOST, "mn");
             if (!(mask & SUB_HOST))
                 break;
@@ -2980,7 +2980,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    if (req->numAskedHosts == 0) {
                 myArgs.argc = req->options;
 		lsb_throw("LSB_BAD_BSUBARGS", &myArgs);
-	        
+
                 return (-1);
             }
             break;
@@ -2996,16 +2996,16 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    break;
 
 	case 'i':
-	    
+
 	    pExclStr = "isn|is|in|i";
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
 	    if (strncmp (optName, "is", 2) == 0) {
-		
 
-		
+
+
 		if ((req->options & SUB_IN_FILE)
 			     || (req->delOptions & SUB_IN_FILE)) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444,
 		        "%s options are exclusive"), /* catgets  444 */
 		        pExclStr);
 		    return(-1);
@@ -3015,7 +3015,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                     break;
 
 	        if (strlen(optarg) > MAXFILENAMELEN - 1) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409,
 		        "%s: File name too long"), /* catgets 409 */
 		        optarg);
 		    return(-1);
@@ -3023,12 +3023,12 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	        req->inFile = optarg;
 	        req->options2 |= SUB2_IN_FILE_SPOOL;
 	    } else {
-		
 
-		
+
+
 		if ((req->options2 & SUB2_IN_FILE_SPOOL)
 			     || (req->delOptions2 & SUB2_IN_FILE_SPOOL)) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444,
 		        "%s options are exclusive"), /* catgets  444 */
 		        pExclStr);
 		    return(-1);
@@ -3039,7 +3039,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                     break;
 
 	        if (strlen(optarg) > MAXFILENAMELEN - 1) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409,
 		        "%s: File name too long"), /* catgets 409 */
 		        optarg);
 		    return(-1);
@@ -3056,7 +3056,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                 break;
 
 	    if (strlen(optarg) > MAXFILENAMELEN - 1) {
-		PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,410, 
+		PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,410,
 		    "%s: File name too long"), /* catgets 410 */
 		    optarg);
 		return(-1);
@@ -3068,25 +3068,25 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                 if (strcmp(req->outFile, req->errFile) == 0) {
                     req->options &= ~SUB_ERR_FILE;
                     req->errFile = "";
-                }	
+                }
 	    }
 	    break;
 
-	case 'u': 	
-	     
+	case 'u':
+
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkSubDelOption (SUB_MAIL_USER, "un");
-	    if ((mask & SUB_MAIL_USER)) 
+	    if ((mask & SUB_MAIL_USER))
 	    {
 	        if (strlen(optarg) > MAXHOSTNAMELEN - 1) {
-	    	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,411, 
+	    	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,411,
 			"%s: Mail destination name too long"),/* catgets 411 */
 			optarg);
 		    return(-1);
 	        }
 
 	        req->mailUser = optarg;
-	        req->options |= SUB_MAIL_USER; 
+	        req->options |= SUB_MAIL_USER;
 	    }
 	    break;
 
@@ -3098,7 +3098,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                 break;
 
 	    if (strlen(optarg) > MAXFILENAMELEN - 1) {
-		PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,412, 
+		PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,412,
 		    "%s: File name too long"), /* catgets 412 */
 		    optarg);
 		return(-1);
@@ -3118,25 +3118,25 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             if (req->options & SUB_MODIFY && strcmp (optName, "nn") == 0) {
                if (req->numProcessors != 0) {
-                    PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,413, 
+                    PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,413,
 			"You cannot modify and set default at the same time")); /* catgets 413 */
                     return (-1);
                 }
-                req->numProcessors = DEL_NUMPRO;   
-                req->maxNumProcessors = DEL_NUMPRO;   
+                req->numProcessors = DEL_NUMPRO;
+                req->maxNumProcessors = DEL_NUMPRO;
                 break;
             }
-            if (req->numProcessors != 0)        
-                
+            if (req->numProcessors != 0)
+
                 break;
 
             if (getValPair (&optarg, &v1, &v2) < 0) {
-                PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,414, 
+                PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,414,
 		    "Bad argument for option -n")); /* catgets 414 */
                 return -1;
             }
             if (v1 <= 0 || v2 <= 0) {
-	        PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,415, 
+	        PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,415,
 		    "The number of processors must be a positive integer")); /* catgets 415 */
 	        return(-1);
             }
@@ -3150,12 +3150,12 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                     req->numProcessors = 1;
             }
             if (req->numProcessors > req->maxNumProcessors) {
-                PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,416, 
+                PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,416,
 		    "Bad argument for option -n")); /* catgets 416 */
                 return -1;
             }
 	    break;
-	    
+
 	case 'q':
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkSubDelOption (SUB_QUEUE, "qn");
@@ -3170,7 +3170,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             if (req->options & SUB_MODIFY && strcmp (optName, "bn") == 0) {
                 if (req->beginTime != 0 &&
                             req->beginTime != DELETE_NUMBER) {
-                    PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,417, 
+                    PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,417,
 			"You cannot modify and set default at the same time")); /* catgets 417 */
                     return (-1);
                 }
@@ -3178,13 +3178,13 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
                 break;
             }
             if (req->beginTime != 0)
-                
+
 		break;
 
 	    strcpy (savearg, optarg);
 	    if (gettimefor(optarg, &req->beginTime) < 0) {
 		lsberrno = LSBE_BAD_TIME;
-		if (errMsg != NULL) 
+		if (errMsg != NULL)
 		    sprintf(*errMsg, "%s:%s", savearg, lsb_sysmsg());
 		else
 		    sub_perror (savearg);
@@ -3197,8 +3197,8 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             if (req->options & SUB_MODIFY && strcmp (optName, "tn") == 0) {
                 if (req->termTime != 0 &&
                             req->termTime != DELETE_NUMBER) {
-                    PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,417, 
-			"You cannot modify and set default at the same time")); 
+                    PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,417,
+			"You cannot modify and set default at the same time"));
                     return (-1);
                 }
                 req->termTime = DELETE_NUMBER;
@@ -3206,44 +3206,44 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             }
 
             if (req->termTime != 0)
-                
+
 		break;
 
-	    strcpy (savearg, optarg);	    
+	    strcpy (savearg, optarg);
 	    if (gettimefor(optarg, &req->termTime) < 0) {
 		lsberrno = LSBE_BAD_TIME;
-		if (errMsg != NULL) 
+		if (errMsg != NULL)
 		    sprintf(*errMsg, "%s:%s", savearg, lsb_sysmsg());
 	        else
 		    sub_perror (savearg);
 	        return (-1);
-	    }	    
+	    }
 	    break;
 
 	case 's':
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
 	    if ( strncmp (optName, "sp", 2) == 0) {
-		
+
 		checkSubDelOption2(SUB2_JOB_PRIORITY, "spn");
-		if (!(mask2 & SUB2_JOB_PRIORITY)) 
+		if (!(mask2 & SUB2_JOB_PRIORITY))
 		    break;
 
 		if ( !isint_(optarg) || (req->userPriority = atoi(optarg)) <= 0 ) {
-		    PRINT_ERRMSG1(errMsg, I18N(494, 
+		    PRINT_ERRMSG1(errMsg, I18N(494,
 			"%s: Illegal job priority"), /* catgets 494 */
 			optarg);
 		    return (-1);
-	   	} 
+	   	}
 		req->options2 |= SUB2_JOB_PRIORITY;
 	    }
-	    else {  
+	    else {
 		printf("-s option is set\n");
                 checkSubDelOption (SUB_WINDOW_SIG, "sn");
 
                 if (!(mask & SUB_WINDOW_SIG))
-                    break;        
+                    break;
 	        if ((req->sigValue = getSigVal(optarg)) < 0) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,419, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,419,
 		        "%s: Illegal signal value"), /* catgets 419 */
 		        optarg);
 		    return(-1);
@@ -3251,23 +3251,23 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	        req->options |= SUB_WINDOW_SIG;
 	    }
 	    break;
-	    
+
 	case 'c':
 	    req->options2 |= SUB2_MODIFY_RUN_JOB;
             checkRLDelOption (LSF_RLIMIT_CPU, "cn");
             if (req->rLimits[LSF_RLIMIT_CPU] != DEFAULT_RLIMIT)
-                
+
 		break;
 
-	    
-	    
+
+
             strcpy (savearg, optarg);
-            
+
 	    if ((sp = strchr(optarg, '/')) != NULL &&
                  strlen(sp+1) > 0) {
                 req->options |= SUB_HOST_SPEC;
                 if (req->hostSpec && strcmp (req->hostSpec, sp + 1) != 0) {
-                    PRINT_ERRMSG2(errMsg, (_i18n_msg_get(ls_catd,NL_SETN,420, 
+                    PRINT_ERRMSG2(errMsg, (_i18n_msg_get(ls_catd,NL_SETN,420,
 		    "More than one host_spec is specified: <%s> and <%s>" )), req->hostSpec, sp + 1); /* catgets 420 */
                     return(-1);
                 }
@@ -3279,7 +3279,7 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             if ((cp = strchr(optarg, ':')) != NULL)
                 *cp = '\0';
 	    if ((!isint_(optarg)) || (atoi(optarg) < 0)) {
-	        PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,421, 
+	        PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,421,
 		    "%s: Bad CPULIMIT specification"), /* catgets 421 */
 		    savearg);
 	        return(-1);
@@ -3289,77 +3289,77 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             if (cp != NULL) {
                 optarg = cp + 1;
                 if ((!isint_(optarg)) || (atoi(optarg) < 0)) {
-                    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,421, 
-			"%s: Bad CPULIMIT specification"), 
+                    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,421,
+			"%s: Bad CPULIMIT specification"),
 			savearg);
                     return(-1);
                 }
                 else {
-                    req->rLimits[LSF_RLIMIT_CPU] *= 60;   
+                    req->rLimits[LSF_RLIMIT_CPU] *= 60;
                     req->rLimits[LSF_RLIMIT_CPU] += atoi(optarg);
                 }
             }
             if (req->rLimits[LSF_RLIMIT_CPU] < 0) {
-                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,423, 
+                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,423,
 		    "%s: CPULIMIT value should be a positive integer"), /* catgets 423 */
 		    savearg);
                  return(-1);
             }
 
 	    if (!checkLimit(req->rLimits[LSF_RLIMIT_CPU], 60)) {
-                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,424, 
+                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,424,
 		    "%s: CPULIMIT value is too big"), /* catgets 424 */
 		    optarg);
 		return(-1);
             }
-	    
+
 	    req->rLimits[LSF_RLIMIT_CPU] *= 60;
             break;
 
-	case 'P': 	
+	case 'P':
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkSubDelOption (SUB_PROJECT_NAME, "Pn");
-	    if ((mask & SUB_PROJECT_NAME)) 
+	    if ((mask & SUB_PROJECT_NAME))
 	    {
 	        if (strlen(optarg) > MAX_LSB_NAME_LEN - 1) {
-	    	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,425, 
+	    	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,425,
 			"%s:  project name too long"),  /* catgets 425 */
 			optarg);
 		    return(-1);
 	        }
 
 	        req->projectName = optarg;
-	        req->options |= SUB_PROJECT_NAME; 
+	        req->options |= SUB_PROJECT_NAME;
 	    }
 	    break;
 
-	    
+
 	case 'W':
 	    req->options2 |= SUB2_MODIFY_RUN_JOB;
-            checkRLDelOption (LSF_RLIMIT_RUN, "Wn"); 
+            checkRLDelOption (LSF_RLIMIT_RUN, "Wn");
 
             if (req->rLimits[LSF_RLIMIT_RUN] != DEFAULT_RLIMIT)
-                
+
 		break;
 
-	    
-	    	    
+
+
             strcpy (savearg, optarg);
 	    if ((sp = strchr(optarg, '/')) != NULL) {
                 req->options |= SUB_HOST_SPEC;
                 if (req->hostSpec && strcmp (req->hostSpec, sp + 1) != 0) {
-                    PRINT_ERRMSG2(errMsg, (_i18n_msg_get(ls_catd,NL_SETN,420, 
+                    PRINT_ERRMSG2(errMsg, (_i18n_msg_get(ls_catd,NL_SETN,420,
 			"More than one host_spec is specified: <%s> and <%s>")),
-			req->hostSpec, sp + 1); 
+			req->hostSpec, sp + 1);
                     return(-1);
                 }
 		req->hostSpec = sp + 1;
 		*sp = '\0';
-	    } 
+	    }
             if ((cp = strchr(optarg, ':')) != NULL)
                 *cp = '\0';
 	    if ((!isint_(optarg)) || (atoi(optarg) < 0)) {
-	        PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,428, 
+	        PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,428,
 		    "%s: Bad RUNLIMIT specification"), /* catgets 428 */
 		    savearg);
 	        return(-1);
@@ -3369,44 +3369,44 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
             if (cp != NULL) {
                 optarg = cp + 1;
                 if ((!isint_(optarg)) || (atoi(optarg) < 0)) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,428, 
-			"%s: Bad RUNLIMIT specification"), 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,428,
+			"%s: Bad RUNLIMIT specification"),
 			savearg);
                     return(-1);
                 }
                 else {
-                    req->rLimits[LSF_RLIMIT_RUN] *= 60;     
+                    req->rLimits[LSF_RLIMIT_RUN] *= 60;
                     req->rLimits[LSF_RLIMIT_RUN] += atoi(optarg);
                 }
             }
             if (req->rLimits[LSF_RLIMIT_RUN] < 0) {
-                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,430, 
+                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,430,
 		    "%s: RUNLIMIT value should be a positive integer"), /* catgets 430 */
 		    savearg);
                  return(-1);
             }
 	    if (!checkLimit(req->rLimits[LSF_RLIMIT_RUN], 60)) {
-                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,431, 
+                PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,431,
 		    "%s: RUNLIMIT value is too big"),  /* catgets 431 */
-		    optarg); 
+		    optarg);
 		return(-1);
             }
-	    
+
 	    req->rLimits[LSF_RLIMIT_RUN] *= 60;
             break;
 
 	case 'F':
-	    req->options2 |= SUB2_MODIFY_PEND_JOB; 
+	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkRLDelOption (LSF_RLIMIT_FSIZE, "Fn");
             if (req->rLimits[LSF_RLIMIT_FSIZE] != DEFAULT_RLIMIT)
-                
+
 		break;
 
-	    if (isint_(optarg) 
+	    if (isint_(optarg)
                      && ((req->rLimits[LSF_RLIMIT_FSIZE] = atoi(optarg)) > 0)) {
 		break;
             }
-	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,432, 
+	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,432,
 		"%s: FILELIMIT value should be a positive integer"), /* catgets 432 */
 		optarg);
 	    return(-1);
@@ -3415,85 +3415,85 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkRLDelOption (LSF_RLIMIT_DATA, "Dn");
             if (req->rLimits[LSF_RLIMIT_DATA] != DEFAULT_RLIMIT)
-                
+
 		break;
 
-	    if (isint_(optarg) 
+	    if (isint_(optarg)
 		  && ((req->rLimits[LSF_RLIMIT_DATA] = atoi(optarg)) > 0)) {
 	        break;
             }
-	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,433, 
+	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,433,
 		"%s: DATALIMIT value should be a positive integer"), /* catgets 433 */
 	    	optarg);
 	    return(-1);
-	    
+
 	case 'S':
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkRLDelOption (LSF_RLIMIT_STACK, "Sn");
 
             if (req->rLimits[LSF_RLIMIT_STACK] != DEFAULT_RLIMIT)
-                
+
 		break;
 
 	    if (isint_(optarg)
 		   && ((req->rLimits[LSF_RLIMIT_STACK] = atoi(optarg)) > 0)) {
 	        break;
             }
-	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,434, 
+	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,434,
 		"%s: STACKLIMIT value should be a positive integer"), /* catgets 434 */
 		optarg);
 	    return(-1);
-	    
+
 	case 'C':
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
             checkRLDelOption (LSF_RLIMIT_CORE, "Cn");
             if (req->rLimits[LSF_RLIMIT_CORE] != DEFAULT_RLIMIT)
-                
+
 		break;
 
 	    if (isint_(optarg)
 		&&  ((req->rLimits[LSF_RLIMIT_CORE] = atoi(optarg)) >= 0)) {
 	        break;
             }
-	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,435, 
+	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,435,
 		"%s: CORELIMIT value should be a positive integer"), /* catgets 435 */
 		optarg);
 	    return(-1);
-	    
+
 	case 'M':
 	    req->options2 |= SUB2_MODIFY_RUN_JOB;
             checkRLDelOption (LSF_RLIMIT_RSS, "Mn");
             if (req->rLimits[LSF_RLIMIT_RSS] != DEFAULT_RLIMIT)
-                
+
 		break;
 
-	    if (isint_(optarg) 
+	    if (isint_(optarg)
 		    && ((req->rLimits[LSF_RLIMIT_RSS] = atoi(optarg)) > 0)) {
 		break;
             }
-	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,436, 
+	    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,436,
 		"%s: MEMLIMT value should be a positive integer"), /* catgets 436 */
 		optarg);
 	    return(-1);
 
-        	  
+
         case 'p':
             checkRLDelOption (LSF_RLIMIT_PROCESS, "pn");
             if (req->rLimits[LSF_RLIMIT_PROCESS] != DEFAULT_RLIMIT)
-                
+
                 break;
 
             if (isint_(optarg)
                   && ((req->rLimits[LSF_RLIMIT_PROCESS] = atoi(optarg)) > 0)) {
                 if (!checkLimit(req->rLimits[LSF_RLIMIT_PROCESS], 1)) {
-                    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,437, 
+                    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,437,
 			"%s: PROCESSLIMIT value is too big\n"), /* catgets 437 */
-			optarg); 
+			optarg);
                     return(-1);
                 }
                 break;
             }
-            PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,438, 
+            PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,438,
 	        "%s: PROCESSLIMIT value should be a positive integer\n"), /* catgets 438 */
                 optarg);
             return(-1);
@@ -3501,34 +3501,34 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
         case 'v':
             checkRLDelOption (LSF_RLIMIT_SWAP, "vn");
             if (req->rLimits[LSF_RLIMIT_SWAP] != DEFAULT_RLIMIT)
-                
+
                 break;
 
             if (isint_(optarg)
                     && ((req->rLimits[LSF_RLIMIT_SWAP] = atoi(optarg)) > 0)) {
                 break;
             }
-            PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,439, 
+            PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,439,
 		"%s: SWAPLIMIT value should be a positive integer\n"), /* catgets 439 */
                 optarg);
             return(-1);
- 
+
         case 'O':
-	    if ( req->options == 0) { 
+	    if ( req->options == 0) {
 	        optionFlag = TRUE;
 		strcpy( optionFileName, optarg);
              }
  	    else
                 req->options |= SUB_MODIFY_ONCE;
-            break; 
+            break;
 
         case 'Z':
 	    pExclStr = "Zsn|Zs|Z";
 	    req->options2 |= SUB2_MODIFY_PEND_JOB;
 	    if (strncmp (optName, "Zs", 2) == 0) {
-		
+
 		if (req->options2 & SUB2_MODIFY_CMD) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444,
 		        "%s options are exclusive"), /* catgets  444 */
 		        pExclStr);
 		    return(-1);
@@ -3540,29 +3540,29 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 
 		if (req->options & SUB_MODIFY) {
 	            if (strlen(optarg) >= MAXLINELEN) {
-		        PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409, 
+		        PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409,
 		            "%s: File name too long"), /* catgets 409 */
 		            optarg);
 		        return(-1);
 	            }
 
 	            req->newCommand = optarg;
-	            req->options2 |= SUB2_MODIFY_CMD; 
+	            req->options2 |= SUB2_MODIFY_CMD;
 		}
 
 	        req->options2 |= SUB2_JOB_CMD_SPOOL;
 	    } else {
-		
+
 		if ((req->options2 & SUB2_JOB_CMD_SPOOL)
 			     || (req->delOptions2 & SUB2_JOB_CMD_SPOOL)) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN, 444,
 		        "%s options are exclusive"), /* catgets  444 */
 		        pExclStr);
 		    return(-1);
 		}
 
 	        if (strlen(optarg) >= MAXLINELEN) {
-		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409, 
+		    PRINT_ERRMSG1(errMsg, _i18n_msg_get(ls_catd,NL_SETN,409,
 		        "%s: File name too long"), /* catgets 409 */
 		        optarg);
 		    return(-1);
@@ -3578,33 +3578,33 @@ setOption_ (int argc, char **argv, char *template, struct submit *req,
 	case 'V':
 	    fputs(_LS_VERSION_, stderr);
 	    exit(0);
-	
+
 	default:
             myArgs.argc = req->options;
             lsb_throw("LSB_BAD_BSUBARGS", &myArgs);
-	    
+
 	    return (-1);
 	}
 
     }
-    
+
     if ((req->options & SUB_INTERACTIVE)
         && (req->options & SUB_JOB_NAME)
         && strchr(req->jobName, '[')) {
-	PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,440, 
+	PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,440,
 	    "Interactive job not supported for job arrays")); /* catgets 440 */
         return(-1);
     }
-    
+
     if ((req->options2 & SUB2_BSUB_BLOCK)
         && (req->options & SUB_JOB_NAME)
         && strchr(req->jobName, '[')) {
-	PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,441, 
+	PRINT_ERRMSG0(errMsg, _i18n_msg_get(ls_catd,NL_SETN,441,
 	    "Job array doesn't support -K option")); /* catgets 441 */
         return(-1);
     }
     return (0);
-} 
+}
 
 
 static int
@@ -3613,7 +3613,7 @@ parseLine_ (char *line, int *embedArgc, char ***embedArgv, char **errMsg )
 #define INCREASE 40
     int parsing = TRUE, i;
     static char **argBuf = NULL, *key;
-    static char fname[] = "parseLine_"; 
+    static char fname[] = "parseLine_";
     static int argNum = 0;
     static int first = TRUE,  bufSize = INCREASE;
     char *sp, *sQuote, *dQuote, quoteMark;
@@ -3622,12 +3622,12 @@ parseLine_ (char *line, int *embedArgc, char ***embedArgv, char **errMsg )
     if (first == TRUE) {
         if ((argBuf = (char **) malloc(INCREASE * sizeof(char *)))
              == NULL) {
-            PRINT_ERRMSG2(errMsg, I18N_FUNC_FAIL_M, fname, "malloc"); 
+            PRINT_ERRMSG2(errMsg, I18N_FUNC_FAIL_M, fname, "malloc");
             return (-1);
         }
 	first = FALSE;
-    } else { 
-	for (i = 0; i < argNum; i++) 
+    } else {
+	for (i = 0; i < argNum; i++)
 	    FREEUP(argBuf[i + 1]);
         argNum = 0;
     }
@@ -3637,37 +3637,37 @@ parseLine_ (char *line, int *embedArgc, char ***embedArgv, char **errMsg )
     key = "BSUB";
     SKIPSPACE(line);
 
-    
-    if (*line == '\0' || *line != '#')       
+
+    if (*line == '\0' || *line != '#')
         return (-1);
 
-    ++line;                       
+    ++line;
     SKIPSPACE(line);
-    if (strncmp (line, key, strlen(key)) == 0) {      
-        line += strlen(key);                          
+    if (strncmp (line, key, strlen(key)) == 0) {
+        line += strlen(key);
         SKIPSPACE(line);
-        if (*line != '-') {       
-            parsing = FALSE;      
+        if (*line != '-') {
+            parsing = FALSE;
             return (-1);
         }
         while (TRUE) {
             quoteMark = '"';
-            if ((sQuote = strchr(line, '\'')) != NULL) 
+            if ((sQuote = strchr(line, '\'')) != NULL)
                 if ((dQuote = strchr(line, '"')) == NULL || sQuote < dQuote)
-                    
+
                     quoteMark = '\'';
 
             if ((sp = getNextValueQ_(&line, quoteMark, quoteMark)) == NULL)
                 goto FINISH;
-    
-            if (*sp == '#')   
+
+            if (*sp == '#')
                 goto FINISH ;
 
-            if ((*embedArgc) + 2 > bufSize ) {   
+            if ((*embedArgc) + 2 > bufSize ) {
                 if ((tmp = (char **) realloc(argBuf,
                            (bufSize + INCREASE) * sizeof(char *))) == NULL) {
                     PRINT_ERRMSG2(errMsg, I18N_FUNC_FAIL_M, fname,
-				"realloc"); 
+				"realloc");
                     argNum = *embedArgc - 1;
 		    *embedArgv = argBuf;
                     return (-1);
@@ -3680,7 +3680,7 @@ parseLine_ (char *line, int *embedArgc, char ***embedArgv, char **errMsg )
 			 argBuf[*embedArgc] = NULL;
         }
     }
-    else  
+    else
 	return (-1);
 
 FINISH:
@@ -3688,7 +3688,7 @@ FINISH:
     argBuf[*embedArgc] = NULL;
     *embedArgv = argBuf;
     return (0);
-} 
+}
 
 
 struct submit *
@@ -3713,7 +3713,7 @@ parseOptFile_ (char *filename, struct submit *req, char **errMsg)
 	    fname, "access", filename);
 	return (NULL);
     }
-    
+
     if (socketpair (AF_UNIX, SOCK_STREAM, 0, childIoFd) < 0) {
 	PRINT_ERRMSG2(errMsg, I18N_FUNC_FAIL, fname, "socketpair");
 	lsberrno = LSBE_SYS_CALL;
@@ -3727,15 +3727,15 @@ parseOptFile_ (char *filename, struct submit *req, char **errMsg)
         PRINT_ERRMSG2(errMsg, I18N_FUNC_FAIL_M, fname, "fork");
         return(NULL);
     } else if (pid == 0) {
-        
+
 	char childLine[MAXLINELEN*4];
 	int  exitVal = -1;
 
         close (childIoFd[0]);
-        uid = getuid();             
-        if (setuid (uid) < 0) {                 
+        uid = getuid();
+        if (setuid (uid) < 0) {
             lsberrno = LSBE_BAD_USER;
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "setuid");  
+	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "setuid");
 	    goto childExit;
         }
         if (logclass & (LC_TRACE | LC_EXEC))
@@ -3749,7 +3749,7 @@ parseOptFile_ (char *filename, struct submit *req, char **errMsg)
 
         lineLen=strlen(childLine);
 
-        if (write(childIoFd[1], (char *)&lineLen, sizeof(lineLen)) 
+        if (write(childIoFd[1], (char *)&lineLen, sizeof(lineLen))
 	    != sizeof(lineLen)) {
 	        goto childExit;
         }
@@ -3760,29 +3760,29 @@ parseOptFile_ (char *filename, struct submit *req, char **errMsg)
 childExit:
         if (logclass & (LC_TRACE | LC_EXEC)) {
 	    if (exitVal == 0)
-	        ls_syslog(LOG_DEBUG, 
+	        ls_syslog(LOG_DEBUG,
 	            "%s: Child succeeded in sending messages to parent", fname);
             else
-	        ls_syslog(LOG_DEBUG, 
+	        ls_syslog(LOG_DEBUG,
 	            "%s: Child failed in sending messages to parent", fname);
         }
         close(childIoFd[1]);
         exit(exitVal);
-    } 
+    }
 
-    
-    if (waitpid (pid, &status, 0) < 0)  {         
+
+    if (waitpid (pid, &status, 0) < 0)  {
         lsberrno = LSBE_SYS_CALL;
         goto parentErr;
     }
 
     close (childIoFd[1]);
-    if (WEXITSTATUS (status)) {  
+    if (WEXITSTATUS (status)) {
         ls_syslog(LOG_DEBUG, "%s: child failed!", fname);
 	goto parentErr;
-    } 
+    }
 
-    if (read (childIoFd[0], (char *) &length, sizeof(length)) 
+    if (read (childIoFd[0], (char *) &length, sizeof(length))
 		 != sizeof (length))
         goto parentErr;
 
@@ -3803,8 +3803,8 @@ childExit:
 	    goto parentErr;
     }
     if (optArgc > 1) {
-        
-        optind = 1;          
+
+        optind = 1;
         if (setOption_ (optArgc, optArgv, template, req,
 			~req->options, ~req->options2, errMsg) == -1)
 	    goto parentErr;
@@ -3819,20 +3819,20 @@ parentErr:
     FREEUP (lineBuf);
     close(childIoFd[0]);
     return (NULL);
-} 
+}
 
 
-void 
+void
 subUsage_(int option, char **errMsg)
 {
 #define I18N_ESUB_INFO_USAGE \
     _i18n_msg_get(ls_catd,NL_SETN,447,"\t\t[-a additional_esub_information]\n")
-    
-    if (errMsg == NULL) {  
+
+    if (errMsg == NULL) {
 	if (option & SUB_RESTART) {
 
             fprintf(stderr, I18N_Usage);
-	    fprintf(stderr, ": brestart [-h] [-V] [-x] [-f] [-N] [-B] [-q \"queue_name...\"] \n");  
+	    fprintf(stderr, ": brestart [-h] [-V] [-x] [-f] [-N] [-B] [-q \"queue_name...\"] \n");
 	    fprintf(stderr, "\t\t[-m \"host_name[+[pref_level]] | host_group[+[pref_level]]...]\"\n");
 
 	    fprintf(stderr, "\t\t[-w \'dependency_expression\'] [-b begin_time] [-t term_time]\n");
@@ -3841,71 +3841,71 @@ subUsage_(int option, char **errMsg)
 	    fprintf(stderr, "\t\t[-C core_limit] [-M mem_limit] \n");
 	    fprintf(stderr, "\t\t[-W run_limit[/host_name|/host_model]] \n");
 	    fprintf(stderr, "\t\t[-S stack_limit] [-E \"pre_exec_command [argument ...]\"]\n");
-	    
+
 	    fprintf(stderr, "\t\tcheckpoint_dir[job_ID | \"job_ID[index]\"]\n");
 	    fprintf(stderr, I18N_ESUB_INFO_USAGE);
-	   
+
 	} else if (option & SUB_MODIFY) {
 	    fprintf(stderr, I18N_Usage);
-	    fprintf(stderr, ": bmod [-h] [-V] [-x | -xn]"); 
-	    
+	    fprintf(stderr, ": bmod [-h] [-V] [-x | -xn]");
+
 	    fprintf(stderr, "\n");
 
 	    if (lsbMode_ & LSB_MODE_BATCH) {
-		fprintf(stderr, "\t\t[-r | -rn] [-N | -Nn] [-B | -Bn]\n"); 
-		fprintf(stderr, "\t\t[-c cpu_limit[/host_spec] | -cn] [-F file_limit | -Fn]\n"); 
+		fprintf(stderr, "\t\t[-r | -rn] [-N | -Nn] [-B | -Bn]\n");
+		fprintf(stderr, "\t\t[-c cpu_limit[/host_spec] | -cn] [-F file_limit | -Fn]\n");
 		fprintf(stderr, "\t\t[-M mem_limit | -Mn] [-D data_limit | -Dn] [-S stack_limit | -Sn]\n");
-		fprintf(stderr, "\t\t[-C core_limit | -Cn] [-W run_limit[/host_spec] | -Wn ]\n"); 
-		fprintf(stderr, "\t\t[-k chkpnt_dir [chkpnt_period] | -kn] [-P project_name | -Pn]\n"); 
+		fprintf(stderr, "\t\t[-C core_limit | -Cn] [-W run_limit[/host_spec] | -Wn ]\n");
+		fprintf(stderr, "\t\t[-k chkpnt_dir [chkpnt_period] | -kn] [-P project_name | -Pn]\n");
 		fprintf(stderr, "\t\t[-L login_shell | -Ln] \n");
 	    }
-		
-	    
-	    fprintf(stderr, "\t\t[-w depend_cond | -wn] [-R res_req| -Rn] [-J job_name | -Jn]\n"); 
-	    fprintf(stderr, "\t\t[-q queue_name ... | -qn] \n"); 
+
+
+	    fprintf(stderr, "\t\t[-w depend_cond | -wn] [-R res_req| -Rn] [-J job_name | -Jn]\n");
+	    fprintf(stderr, "\t\t[-q queue_name ... | -qn] \n");
 	    fprintf(stderr, "\t\t[-m host_name[+[pref_level]] | host_group[+[pref_level]]...| -mn]\"\n");
-	    fprintf(stderr, "\t\t[-n min_processors[,max_processors] | -nn]\n"); 
-	    fprintf(stderr, "\t\t[-b begin_time | -bn] [-t term_time | -tn]\n");  
+	    fprintf(stderr, "\t\t[-n min_processors[,max_processors] | -nn]\n");
+	    fprintf(stderr, "\t\t[-b begin_time | -bn] [-t term_time | -tn]\n");
 	    fprintf(stderr, "\t\t[-i in_file | -is in_file | -in | -isn]\n");
 	    fprintf(stderr, "\t\t[-o out_file | -on] [-e err_file | -en]\n");
 	    fprintf(stderr, "\t\t[-u mail_user | -un] [[-f \"lfile op [rfile]\"] ... | -fn] \n");
-	    fprintf(stderr, "\t\t[-E \"pre_exec_command [argument ...]\" | -En]\n");	 
-	    fprintf(stderr, "\t\t[-sp job_priority | -spn]\n");	 
-	    fprintf(stderr, "\t\t[-Z \"new_command\" | -Zs \"new_command\" | -Zsn] \n");   
+	    fprintf(stderr, "\t\t[-E \"pre_exec_command [argument ...]\" | -En]\n");
+	    fprintf(stderr, "\t\t[-sp job_priority | -spn]\n");
+	    fprintf(stderr, "\t\t[-Z \"new_command\" | -Zs \"new_command\" | -Zsn] \n");
 	    fprintf(stderr, "\t\t[ jobId | \"jobId[index_list]\" ] \n");
 	    fprintf(stderr, I18N_ESUB_INFO_USAGE);
 	} else {
 
 	    fprintf(stderr, I18N_Usage);
-	    fprintf(stderr, ": bsub [-h] [-V] [-x] [-H]"); 
-	    
+	    fprintf(stderr, ": bsub [-h] [-V] [-x] [-H]");
+
 	    if (lsbMode_ & LSB_MODE_BATCH) {
 		fprintf(stderr, " [-r] [-N] [-B] [-I | -K | -Ip | -Is]\n");
-		fprintf(stderr, "\t\t[-L login_shell] [-c cpu_limit[/host_spec]] [-F file_limit]\n");  
+		fprintf(stderr, "\t\t[-L login_shell] [-c cpu_limit[/host_spec]] [-F file_limit]\n");
 		fprintf(stderr, "\t\t[-W run_limit[/host_spec]] [-k chkpnt_dir [chkpnt_period] [method=chkpnt_dir]]\n");
-		fprintf(stderr, "\t\t[-P project_name] ");  
+		fprintf(stderr, "\t\t[-P project_name] ");
 	    }
 	    fprintf(stderr, "\n");
 
 	    fprintf(stderr, "\t\t[-q queue_name ...]  [-R res_req]\n");
 	    fprintf(stderr, "\t\t[-m \"host_name[+[pref_level]] | host_group[+[pref_level]]...]\"\n");
-	    fprintf(stderr, "\t\t[-n min_processors[,max_processors]] [-J job_name]\n");  
-	    fprintf(stderr, "\t\t[-b begin_time] [-t term_time] [-u mail_user]\n");	     
+	    fprintf(stderr, "\t\t[-n min_processors[,max_processors]] [-J job_name]\n");
+	    fprintf(stderr, "\t\t[-b begin_time] [-t term_time] [-u mail_user]\n");
 	    fprintf(stderr, "\t\t[-i in_file | -is in_file] [-o out_file] [-e err_file]\n");
 	    fprintf(stderr, "\t\t[-M mem_limit]  [-D data_limit]  [-S stack_limit]\n");
-	    
-	    fprintf(stderr, "\t\t[[-f \"lfile op [rfile]\"] ...] [-w depend_cond]\n");  
 
-	    fprintf(stderr, "\t\t[-E \"pre_exec_command [argument ...]\"] [-Zs]\n"); 
-	    fprintf(stderr, "\t\t[-sp job_priority]\n");	 
+	    fprintf(stderr, "\t\t[[-f \"lfile op [rfile]\"] ...] [-w depend_cond]\n");
+
+	    fprintf(stderr, "\t\t[-E \"pre_exec_command [argument ...]\"] [-Zs]\n");
+	    fprintf(stderr, "\t\t[-sp job_priority]\n");
 	    fprintf(stderr, "\t\t[command [argument ...]]\n");
 	    fprintf(stderr, I18N_ESUB_INFO_USAGE);
 	}
 
         exit (-1);
     }
-   
-} 
+
+}
 
 
 static int
@@ -3913,34 +3913,34 @@ parseXF(struct submit *req, char *arg, char **errMsg)
 {
     static int maxNxf = 0;
     static struct xFile *xp = NULL;
-    static char fname[] = "parseXF"; 
+    static char fname[] = "parseXF";
     struct xFile *tmp = NULL;
     int options = 0;
     char op[MAXLINELEN], lf[MAXFILENAMELEN], rf[MAXFILENAMELEN];
     char *p;
     char saveArg[MAXLINELEN];
-    
-#define NUMXF 10    
+
+#define NUMXF 10
 
     if (maxNxf == 0) {
 	if ((xp = (struct xFile *) malloc(NUMXF * sizeof(struct xFile)))
 	    == NULL) {
 	    if (errMsg != NULL) {
 	        sprintf(*errMsg, I18N_FUNC_FAIL_S, fname, "malloc",
-			 lsb_sysmsg()); 
+			 lsb_sysmsg());
             }
 	    else
 	        sub_perror(_i18n_msg_get(ls_catd,NL_SETN,484, "Unable to allocate memory for -f option"));  /* catgets 484 */
 	    return (-1);
 	}
-	maxNxf = NUMXF;	
+	maxNxf = NUMXF;
     }
-    
+
     req->xf = xp;
-	
+
     strcpy(saveArg, arg);
 
-    
+
     if ((p = strstr(saveArg, "<<"))) {
         strcpy(op, "<<");
         options = XF_OP_EXEC2SUB | XF_OP_EXEC2SUB_APPEND;
@@ -3974,7 +3974,7 @@ parseXF(struct submit *req, char *arg, char **errMsg)
     memcpy(lf, saveArg, p - saveArg);
     memcpy(rf, p + strlen(op), strlen(saveArg) - strlen(lf) - strlen(op));
 
-    if (strstr(lf, ">") || strstr(rf, ">") || strstr(rf, "<")) {       
+    if (strstr(lf, ">") || strstr(rf, ">") || strstr(rf, "<")) {
          PRINT_ERRMSG2(errMsg, (_i18n_msg_get(ls_catd,NL_SETN,487,
          "Invalid file operation \"%s\" specification in -f \"%s\"")),  /* catgets 487 */
          op, saveArg);
@@ -4020,42 +4020,42 @@ parseXF(struct submit *req, char *arg, char **errMsg)
     } else {
         strcpy(rf, lf);
     }
-    
+
     if (req->nxf + 1 > maxNxf) {
 	tmp = xp;
 	if ((xp = (struct xFile *) myrealloc(req->xf,
 					    (maxNxf + NUMXF) * sizeof(struct xFile)))
 	    == NULL) {
 	    if (errMsg != NULL) {
-	        sprintf(*errMsg, I18N_FUNC_FAIL_S, fname, "myrealloc", 
-			 lsb_sysmsg());	
+	        sprintf(*errMsg, I18N_FUNC_FAIL_S, fname, "myrealloc",
+			 lsb_sysmsg());
             }
-	    else 
-	        sub_perror((_i18n_msg_get(ls_catd,NL_SETN,484, "Unable to allocate memory for -f option"))); 
+	    else
+	        sub_perror((_i18n_msg_get(ls_catd,NL_SETN,484, "Unable to allocate memory for -f option")));
             xp = tmp;
 	    return (-1);
 	}
-	maxNxf += NUMXF;	
+	maxNxf += NUMXF;
 	req->xf = xp;
     }
-    
+
     strcpy(req->xf[req->nxf].subFn, lf);
     strcpy(req->xf[req->nxf].execFn, rf);
-    req->xf[req->nxf].options = options;    
-    
+    req->xf[req->nxf].options = options;
+
     req->nxf++;
     return (0);
-} 
-    
-    
+}
+
+
 static int
 checkLimit(int limit, int factor)
 {
-    if ((float) limit * (float) factor >= (float) INFINIT_INT ) 
+    if ((float) limit * (float) factor >= (float) INFINIT_INT )
         return FALSE;
-    else 
+    else
         return TRUE;
-} 
+}
 
 int
 runBatchEsub(struct lenData *ed, struct submit *jobSubReq)
@@ -4081,7 +4081,7 @@ runBatchEsub(struct lenData *ed, struct submit *jobSubReq)
     struct config_param myParams[] = { {"LSB_SUB_COMMANDNAME", NULL},
                                        {NULL, NULL} };
 
-    
+
 
 #define QUOTE_STR(_str1,_str)  { \
 int i, j, cnt=0; \
@@ -4130,7 +4130,7 @@ char ch, next, *tmp_str=NULL; \
 	    fprintf(parmfp, "%s=SUB_RESET\n", name); \
 	} \
     }
-    
+
 #define SET_PARM_BOOL(flag, name, sub) { \
 	if ((sub)->options & flag) { \
 	    fprintf(parmfp, "%s=Y\n", name); \
@@ -4145,7 +4145,7 @@ char ch, next, *tmp_str=NULL; \
 	} else if ((sub)->delOptions & flag) { \
 	    fprintf(parmfp, "%s=SUB_RESET\n", name); \
 	} \
-    }	      
+    }
 
 #define SET_PARM_STR_2(flag, name, sub, field) { \
        char *quote_field;  \
@@ -4159,7 +4159,7 @@ char ch, next, *tmp_str=NULL; \
            fprintf(parmfp, "%s=SUB_RESET\n", name); \
        } \
     }
-    
+
 #define SET_PARM_BOOL_2(flag, name, sub) { \
        if ((sub)->options2 & flag) { \
            fprintf(parmfp, "%s=Y\n", name); \
@@ -4174,7 +4174,7 @@ char ch, next, *tmp_str=NULL; \
 	} else if ((sub)->delOptions2 & flag) { \
 	    fprintf(parmfp, "%s=SUB_RESET\n", name); \
 	} \
-    }	      
+    }
 
 #define SET_PARM_NUMBER(name, field, delnum, defnum) { \
 	    if (field == delnum) { \
@@ -4185,12 +4185,12 @@ char ch, next, *tmp_str=NULL; \
 	}
 
 
-    
+
     sprintf (esub, "%s/%s", lsbParams[LSB_SERVERDIR].paramValue, ESUBNAME);
     if (stat(esub, &sbuf) < 0)
 	return (0);
 
-    
+
     sprintf(parmFile, "%s/.lsbsubparm.%d", LSTMPDIR, (int)getpid());
 
     if ((parmfp = fopen(parmFile, "w")) == NULL) {
@@ -4199,11 +4199,11 @@ char ch, next, *tmp_str=NULL; \
     }
 
     chmod(parmFile, 0666);
-    
+
     SET_PARM_STR(SUB_JOB_NAME, "LSB_SUB_JOB_NAME", jobSubReq, jobName);
     SET_PARM_STR(SUB_QUEUE, "LSB_SUB_QUEUE", jobSubReq, queue);
     SET_PARM_STR(SUB_IN_FILE, "LSB_SUB_IN_FILE", jobSubReq, inFile);
-    SET_PARM_STR(SUB_OUT_FILE, "LSB_SUB_OUT_FILE", jobSubReq, outFile);    
+    SET_PARM_STR(SUB_OUT_FILE, "LSB_SUB_OUT_FILE", jobSubReq, outFile);
     SET_PARM_STR(SUB_ERR_FILE, "LSB_SUB_ERR_FILE", jobSubReq, errFile);
     SET_PARM_BOOL(SUB_EXCLUSIVE, "LSB_SUB_EXCLUSIVE", jobSubReq);
     SET_PARM_BOOL(SUB_NOTIFY_END, "LSB_SUB_NOTIFY_END", jobSubReq);
@@ -4223,38 +4223,38 @@ char ch, next, *tmp_str=NULL; \
     SET_PARM_STR(SUB_LOGIN_SHELL, "LSB_SUB_LOGIN_SHELL", jobSubReq,
 		 loginShell);
     SET_PARM_STR(SUB_MAIL_USER, "LSB_SUB_MAIL_USER", jobSubReq, mailUser);
-    SET_PARM_BOOL(SUB_MODIFY, "LSB_SUB_MODIFY", jobSubReq);    
-    SET_PARM_BOOL(SUB_MODIFY_ONCE, "LSB_SUB_MODIFY_ONCE", jobSubReq);    
+    SET_PARM_BOOL(SUB_MODIFY, "LSB_SUB_MODIFY", jobSubReq);
+    SET_PARM_BOOL(SUB_MODIFY_ONCE, "LSB_SUB_MODIFY_ONCE", jobSubReq);
     SET_PARM_STR(SUB_PROJECT_NAME, "LSB_SUB_PROJECT_NAME", jobSubReq,
 		 projectName);
     SET_PARM_BOOL(SUB_INTERACTIVE, "LSB_SUB_INTERACTIVE", jobSubReq);
     SET_PARM_BOOL(SUB_PTY, "LSB_SUB_PTY", jobSubReq);
     SET_PARM_BOOL(SUB_PTY_SHELL, "LSB_SUB_PTY_SHELL", jobSubReq);
-	
+
     SET_PARM_BOOL_2(SUB2_HOLD, "LSB_SUB_HOLD", jobSubReq);
     SET_PARM_INT_2(SUB2_JOB_PRIORITY, "LSB_SUB2_JOB_PRIORITY", jobSubReq,
                  userPriority);
     SET_PARM_STR_2(SUB2_IN_FILE_SPOOL, "LSB_SUB2_IN_FILE_SPOOL", jobSubReq,
                  inFile);
     SET_PARM_BOOL_2(SUB2_JOB_CMD_SPOOL, "LSB_SUB2_JOB_CMD_SPOOL", jobSubReq);
-    
+
     ls_readconfenv(myParams, NULL);
 
-    
+
     if (myParams[LSB_SUB_COMMANDNAME].paramValue) {
        int cmdSize, cmdNameSize, tmpCnt;
-      
+
        int start=0;
 
        cmdSize = strlen(jobSubReq->command);
        cmdNameSize = 0;
-      
+
        if ( strstr(jobSubReq->command, SCRIPT_WORD) != NULL)
        {
                int i=0, found;
 	       char *p , *q;
 
-               
+
                while (jobSubReq->command[i] != '\n')
                        i ++;
 
@@ -4265,17 +4265,17 @@ char ch, next, *tmp_str=NULL; \
 
 		  found = 0;
 
-                  
+
                    while ( (cmdNameSize < cmdSize)  &&
                           (isspace(jobSubReq->command[cmdNameSize]) ||
                            (jobSubReq->command[cmdNameSize] == '\n')) )
-		  { 
+		  {
                         start ++;
                         cmdNameSize++;
 			found = 1;
                   }
-		
-                  
+
+
                   while ( (cmdNameSize < cmdSize) &&
                           (jobSubReq->command[start]=='#') )
                   {
@@ -4289,23 +4289,23 @@ char ch, next, *tmp_str=NULL; \
                   }
                } while (found);
 
-              
+
                p = strstr(&jobSubReq->command[start], SCRIPT_WORD_END);
                q = &jobSubReq->command[start];
                while (q != p) {
                   q ++;
-                  
+
                   if (*q == '\n') break;
                }
 
                if (q == p) start = cmdNameSize = cmdSize;
        }
 
-       
+
        while (cmdNameSize < cmdSize)
        {
          if ( isspace(jobSubReq->command[cmdNameSize]) )
-	   break; 
+	   break;
          cmdNameSize++;
        }
 
@@ -4321,7 +4321,7 @@ char ch, next, *tmp_str=NULL; \
        }
        fprintf(parmfp, "\"\n");
 
-				
+
        do {
 	   char *x=unwrapCommandLine(jobSubReq->command);
 	   fprintf(parmfp,"LSB_SUB_COMMAND_LINE=\"%s\"\n",x);
@@ -4330,7 +4330,7 @@ char ch, next, *tmp_str=NULL; \
 
     if (jobSubReq->options & SUB_HOST) {
 	char askedHosts[MAXLINELEN];
-    
+
 	askedHosts[0] = '\0';
 	for (i = 0; i < jobSubReq->numAskedHosts; i++) {
 	    strcat(askedHosts, jobSubReq->askedHosts[i]);
@@ -4356,10 +4356,10 @@ char ch, next, *tmp_str=NULL; \
     SET_PARM_NUMBER("LSB_SUB_MAX_NUM_PROCESSORS",
                     (jobSubReq->maxNumProcessors? jobSubReq->maxNumProcessors:DEFAULT_NUMPRO),
                    DEL_NUMPRO, DEFAULT_NUMPRO);
-    SET_PARM_NUMBER("LSB_SUB_BEGIN_TIME", jobSubReq->beginTime, 
+    SET_PARM_NUMBER("LSB_SUB_BEGIN_TIME", jobSubReq->beginTime,
 		    DELETE_NUMBER, 0);
-    SET_PARM_NUMBER("LSB_SUB_TERM_TIME", jobSubReq->termTime, 
-		    DELETE_NUMBER, 0);            
+    SET_PARM_NUMBER("LSB_SUB_TERM_TIME", jobSubReq->termTime,
+		    DELETE_NUMBER, 0);
 
     if (jobSubReq->delOptions & SUB_OTHER_FILES) {
 	fprintf(parmfp, "LSB_SUB_OTHER_FILES=SUB_RESET\n");
@@ -4367,10 +4367,10 @@ char ch, next, *tmp_str=NULL; \
 	char str[MAXLINELEN];
 
 	fprintf(parmfp, "LSB_SUB_OTHER_FILES=%d\n",jobSubReq->nxf);
-	
+
 	for (i = 0; i < jobSubReq->nxf; i++) {
 	    sprintf(str, "%s ", jobSubReq->xf[i].subFn);
-				
+
 	    if (jobSubReq->xf[i].options & XF_OP_SUB2EXEC)
 		strcat(str, ">");
 	    else if (jobSubReq->xf[i].options & XF_OP_SUB2EXEC_APPEND)
@@ -4379,7 +4379,7 @@ char ch, next, *tmp_str=NULL; \
 		strcat(str, "<<");
 	    else if (jobSubReq->xf[i].options & XF_OP_EXEC2SUB)
 		strcat(str, "<");
-	    
+
 	    sprintf(str, "%s %s", str, jobSubReq->xf[i].execFn);
 	    fprintf(parmfp, "LSB_SUB_OTHER_FILES_%d=\"%s\"\n", i, str);
 	}
@@ -4388,7 +4388,7 @@ char ch, next, *tmp_str=NULL; \
     if(additionEsubInfo!=NULL) {
 	fprintf(parmfp,"LSB_SUB_ADDITIONAL=\"%s\"\n",additionEsubInfo);
     }
-    
+
     fclose(parmfp);
 
     putEnv("LSB_SUB_ABORT_VALUE", "97");
@@ -4400,21 +4400,21 @@ char ch, next, *tmp_str=NULL; \
 	if (cc == -2) {
             char *deltaFileName=NULL;
             struct stat stbuf;
-	    
+
 	    lsberrno = LSBE_ESUB_ABORT;
 	    unlink(parmFile);
 
-            
+
             if( (deltaFileName=getenv("LSB_SUB_MODIFY_FILE")) != NULL )
             {
-                if(stat(deltaFileName, &stbuf)!=ENOENT) 
+                if(stat(deltaFileName, &stbuf)!=ENOENT)
                	    unlink(deltaFileName);
             }
 
             deltaFileName=NULL;
             if( (deltaFileName=getenv("LSB_SUB_MODIFY_ENVFILE")) != NULL )
             {
-                if(stat(deltaFileName, &stbuf)!=ENOENT) 
+                if(stat(deltaFileName, &stbuf)!=ENOENT)
                     unlink(deltaFileName);
             }
 	    return(-1);
@@ -4424,8 +4424,8 @@ char ch, next, *tmp_str=NULL; \
     unlink(parmFile);
 
     return (0);
-    
-} 
+
+}
 
 static int
 readOptFile(char *filename, char *childLine)
@@ -4433,10 +4433,10 @@ readOptFile(char *filename, char *childLine)
     char *p, *sp, *sline, *start;
     int lineLen;
     FILE *fp;
-    
+
     if ((fp = fopen(filename, "r")) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, "readOptFile", 
-		  "fopen", filename); 
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, "readOptFile",
+		  "fopen", filename);
         return(-1);
     }
     lineLen = 0;
@@ -4444,65 +4444,56 @@ readOptFile(char *filename, char *childLine)
     while ((sline = getNextLine_(fp, FALSE)) != NULL) {
         sp = sline;
         SKIPSPACE(sp);
-        
-        if (*sp != '#') 
+
+        if (*sp != '#')
             continue;
-        if ((p = strstr(sp, "\\n")) != NULL) 
+        if ((p = strstr(sp, "\\n")) != NULL)
             *p = '\0';
-	++sp;       
+	++sp;
 	SKIPSPACE(sp);
 
-	if (strncmp (sp, "BSUB", 4) == 0) {    
+	if (strncmp (sp, "BSUB", 4) == 0) {
 	    sp += 4;
             start = sp;
             SKIPSPACE(sp);
-            if (*sp != '-')   
+            if (*sp != '-')
                 continue;
             else {
-                if ( (sp = strstr( sp, "#")) != NULL ) 
-		    
+                if ( (sp = strstr( sp, "#")) != NULL )
+
 	            *sp = '\0';
                 sp = sline;
 		lineLen = strlen(sp);
-		if ( childLine[0] == '\0' )  
+		if ( childLine[0] == '\0' )
 		    strcpy(childLine, sline);
-		else  
-		    strncat (childLine, start, strlen(start)); 
+		else
+		    strncat (childLine, start, strlen(start));
 		continue;
              }
-        } else  
+        } else
 	        continue;
-    } 
+    }
 
     fclose(fp);
     return(0);
-} 
+}
 
 int
 bExceptionTabInit(void)
 {
-    bExceptionTab = (hTab *) malloc(sizeof(hTab));
-    if (bExceptionTab) {
-        h_initTab_(bExceptionTab, 8);
-        return 0;
-    }
-    else
-	return (-1);
-} 
+    bExceptionTab = calloc(1, sizeof(hTab));
+    h_initTab_(bExceptionTab, 3);
+}
 
 static bException_t *
 bExceptionCreate(void)
 {
-    bException_t *exception;
-    exception = (bException_t *) malloc(sizeof(bException_t));
+    bException_t   *exception;
 
-    if (exception) {
-	exception->name = NULL;
-	exception->handler = NULL;
-    }
+    exception = calloc(1, sizeof(bException_t));
 
-    return (exception);
-} 
+    return exception;
+}
 
 int
 mySubUsage_(void *args)
@@ -4514,7 +4505,7 @@ mySubUsage_(void *args)
     myArgs = (struct args *) args;
     subUsage_(myArgs->argc, myArgs->argv);
     return 0;
-} 
+}
 
 void
 lsb_throw(const char *exceptionName, void *extra)
@@ -4525,7 +4516,7 @@ lsb_throw(const char *exceptionName, void *extra)
     if (! exceptionName || *exceptionName == '\0')
 	return;
 
-    if (! bExceptionTab) 
+    if (! bExceptionTab)
 	return;
 
     hEnt = h_getEnt_(bExceptionTab, (char *) exceptionName);
@@ -4537,49 +4528,40 @@ lsb_throw(const char *exceptionName, void *extra)
 
     if (! exception || ! exception->handler)
 	return;
-    else 
+    else
 	(*exception->handler)(extra);
 
-} 
+}
 
 int
 lsb_catch(const char *exceptionName, int (*exceptionHandler)(void *))
 {
-    static char fname[] = "lsb_catch()";
-    hEnt *hEnt;
-    void *hData;
-    bException_t *exception;
+    hEnt           *hEnt;
+    bException_t   *exception;
 
     if (! exceptionName || *exceptionName == '\0') {
 	lsberrno = LSBE_BAD_ARG;
 	return -1;
     }
 
-    if (! bExceptionTab) { 
+    if (! bExceptionTab) {
 	lsberrno = LSBE_LSLIB;
 	return -1;
     }
 
     hEnt = h_getEnt_(bExceptionTab, (char *) exceptionName);
     if (! hEnt) {
-	hData = (int *) bExceptionCreate();
-	if (! hData) {
-	    fprintf(stderr, "%s: failed to create a exception for key %s\n",
-		fname, exceptionName);
-            lsberrno = LSBE_LSBLIB;
-	    return (-1);
-	}
 	hEnt = h_addEnt_(bExceptionTab, (char *) exceptionName, NULL);
-	hEnt->hData = (int *) hData;
+	hEnt->hData = bExceptionCreate();
     }
- 
-    exception = (bException_t *) hEnt->hData;
+
+    exception = hEnt->hData;
     if (! exception->name)
-	 exception->name = strdup((char *) exceptionName);
+	 exception->name = strdup(exceptionName);
     exception->handler = exceptionHandler;
 
     return 0;
-} 
+}
 
 
 #define I18N_MSG(msgid,msg) _i18n_msg_get(ls_catd,NL_SETN,msgid,msg)
@@ -4637,7 +4619,7 @@ void makeCleanToRunEsub()
     char parmDeltaFile[MAXPATHLEN];
     char envDeltaFile[MAXPATHLEN];
     struct stat stbuf;
-    
+
     sprintf(parmDeltaFile, "%s/.lsbsubdeltaparm.%d.%d",
 	    LSTMPDIR, (int)getpid(), (int)getuid());
     sprintf(envDeltaFile, "%s/.lsbsubdeltaenv.%d.%d",
@@ -4653,7 +4635,7 @@ void makeCleanToRunEsub()
 
     putEnv("LSB_SUB_MODIFY_FILE",parmDeltaFile);
     putEnv("LSB_SUB_MODIFY_ENVFILE",envDeltaFile);
-} 
+}
 
 void modifyJobInformation(struct submit *jobSubReq)
 {
@@ -4671,11 +4653,11 @@ void modifyJobInformation(struct submit *jobSubReq)
 #define STR2PARM  6
 #define BOOL2PARM 7
 #define RLIMPARM  8
-#define STRSPARM  9		
+#define STRSPARM  9
 
 #define FIELD_OFFSET(type,field) (long)(&(((struct type *)0)->field))
 #define FIELD_PTR_PTR(base,offset) (((char *)base)+offset)
-    
+
     FILE *fp;
     int  lineNum;
     char *line=NULL,*key;
@@ -4762,9 +4744,9 @@ void modifyJobInformation(struct submit *jobSubReq)
 	     FIELD_OFFSET(submit,termTime),0},
 	    {"LSB_SUB_COMMAND_LINE",STRPARM,
 	     FIELD_OFFSET(submit,command),0},
-	    {NULL,0,0,0}	    
+	    {NULL,0,0,0}
 	};
-    
+
     sprintf(parmDeltaFile, "%s/.lsbsubdeltaparm.%d.%d",
 	    LSTMPDIR, (int)getpid(), (int)getuid());
     sprintf(envDeltaFile, "%s/.lsbsubdeltaenv.%d.%d",
@@ -4773,29 +4755,29 @@ void modifyJobInformation(struct submit *jobSubReq)
     if(access(parmDeltaFile,R_OK)==F_OK) {
 	fp=fopen(parmDeltaFile,"r");
 	lineNum=0;
-	
+
 	while((line=getNextLineC_(fp,&lineNum,TRUE))!=NULL) {
 	    int i,j;
-	    
+
 	    key=getNextWordSet(&line," \t=!@#$%^&*()");
-				
+
 	    while(*line!='=') line++;
-	    line++;		
-	    while(isspace((int)*line)) line++; 
+	    line++;
+	    while(isspace((int)*line)) line++;
 
 	    validKey=0;
-	    
-            
+
+
 	    if (strncmp(key,"LSB_SUB_OTHER_FILES",
 			strlen("LSB_SUB_OTHER_FILES"))==0) {
 		processXFReq(key,line,jobSubReq);
 		continue;
 	    }
-	    
+
 	    for(i=0;jobSubReqParams[i].parmName;i++) {
 		if(strcmp(key,jobSubReqParams[i].parmName)==0) {
 		    validKey=1;
-		    
+
 		    switch (jobSubReqParams[i].parmType) {
 			case STRPARM:
 			    if(checkEmptyString(line)) {
@@ -4806,7 +4788,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 
 			    if ((strcmp(key,"LSB_SUB_COMMAND_LINE")==0) &&
 				(jobSubReq->options & SUB_RESTART)) {
-				
+
 				break;
 			    }
 
@@ -4822,7 +4804,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 					      fname,line,key);
 				    break;
 				}
-				
+
 				if(strcmp(key,"LSB_SUB_COMMAND_LINE")!=0) {
 				    *(char **)(FIELD_PTR_PTR(
 						   jobSubReq,
@@ -4840,7 +4822,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 					jobSubReq->delOptions2 &= ~SUB2_MODIFY_CMD;
 				    }
 				}
-				
+
 				jobSubReq->options |= jobSubReqParams[i].subOption;
 				jobSubReq->delOptions &= ~jobSubReqParams[i].subOption;
 			    }
@@ -4856,7 +4838,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 					      fname,line,key);
 				    break;
 				}
-				
+
 				v=atoi(line);
 				*(int *)(FIELD_PTR_PTR(
 					     jobSubReq,
@@ -4876,7 +4858,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 				jobSubReq->delOptions |= jobSubReqParams[i].subOption;
 			    }
 			    else {
-				    
+
 				ls_syslog(LOG_WARNING,MSG_BAD_BOOLVAL3s,
 					  fname,line,key);
 			    }
@@ -4892,7 +4874,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 				jobSubReq->options2 &= ~jobSubReqParams[i].subOption;
 				jobSubReq->delOptions2 |= jobSubReqParams[i].subOption;
 			    }
-			    else {				
+			    else {
 
 				sValue=extractStringValue(line);
 				if(sValue==NULL) {
@@ -4921,7 +4903,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 					      fname,line,key);
 				    break;
 				}
-				
+
 				v=atoi(line);
 				*(int *)(FIELD_PTR_PTR(
 					     jobSubReq,
@@ -4941,7 +4923,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 				jobSubReq->delOptions2 |= jobSubReqParams[i].subOption;
 			    }
 			    else {
-				    
+
 				ls_syslog(LOG_WARNING,MSG_BAD_BOOLVAL3s,
 					  fname,line,key);
 			    }
@@ -4966,11 +4948,11 @@ void modifyJobInformation(struct submit *jobSubReq)
 					     jobSubReqParams[i].fieldOffset))
 				    =v;
 			    }
-				
+
 			    if (jobSubReq->maxNumProcessors<jobSubReq->numProcessors) {
 				jobSubReq->maxNumProcessors=jobSubReq->numProcessors;
 			    }
-			    
+
 			    break;
 			case RLIMPARM:
 			    j=jobSubReqParams[i].fieldOffset;
@@ -5001,7 +4983,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 					  fname,line,key);
 				break;
 			    }
-			    
+
 			    if (strcmp(key,"LSB_SUB_HOSTS")==0) {
 				int badIdx;
 
@@ -5025,7 +5007,7 @@ void modifyJobInformation(struct submit *jobSubReq)
 		    break;
 		}
 	    }
-	    
+
 	    if (!validKey) {
 		ls_syslog(LOG_WARNING,MSG_BAD_ENVAR2s,
 			  fname,key);
@@ -5037,24 +5019,24 @@ void modifyJobInformation(struct submit *jobSubReq)
     }
 
     compactXFReq(jobSubReq);
-    
+
     if(access(envDeltaFile,R_OK)==F_OK) {
 	fp=fopen(envDeltaFile,"r");
 	lineNum=0;
-	
+
 	while((line=getNextLineC_(fp,&lineNum,TRUE))!=NULL) {
-	    
+
 	    key=getNextWordSet(&line," \t =!@#$%^&*()");
 	    while(*line!='=') line++;
 
 	    line++;
-	    
+
 	    putEnv(key,getNextValueQ_(&line,'"','"'));
 	}
 	fclose(fp);
 	unlink(envDeltaFile);
     }
-} 
+}
 
 char *unwrapCommandLine(char *commandLine)
 {
@@ -5076,7 +5058,7 @@ char *unwrapCommandLine(char *commandLine)
     sp=(char *)strstr(jobdesp,"SCRIPT_\n");
     if(sp==NULL) {
 	jobDespBuf=putstr_(jobdesp);
-	return &jobDespBuf[0]; 
+	return &jobDespBuf[0];
     }
 
     jobdesp=sp+strlen("SCRIPT_\n");
@@ -5084,7 +5066,7 @@ char *unwrapCommandLine(char *commandLine)
     sp=strstr(jobdesp,"SCRIPT_\n");
     if (sp==NULL) {
 	jobDespBuf=putstr_(jobdesp);
-	return &jobDespBuf[0]; 
+	return &jobDespBuf[0];
     }
     while(*sp!='\n') sp--;
     sp++;
@@ -5106,8 +5088,8 @@ char *unwrapCommandLine(char *commandLine)
 	else if(!isspace((int)*p2)) hasNonSpaceC=1;
 	p2++;
     }
-    return &jobDespBuf[0]; 
-} 
+    return &jobDespBuf[0];
+}
 
 char *wrapCommandLine(char *command)
 {
@@ -5125,10 +5107,10 @@ char *wrapCommandLine(char *command)
 	strcpy(cmdString,command);
 	return cmdString;
     }
-    
+
     sprintf(cmdString,"(cat <<_USER_\\SCRIPT_\n%s\n%s",command,szTmpShellCommands);
     return cmdString;
-} 
+}
 
 
 void compactXFReq(struct submit *jobSubReq)
@@ -5147,7 +5129,7 @@ void compactXFReq(struct submit *jobSubReq)
 	i++;
     }
     jobSubReq->nxf=j;
-} 
+}
 
 int checkEmptyString(char *s)
 {
@@ -5159,22 +5141,22 @@ int checkEmptyString(char *s)
     }
 
     return 1;
-} 
+}
 
 int stringIsToken(char *s,char *tok)
 {
     char *s1=s;
-    
+
     while(isspace((int)*s1)
 	  && (*s1)) s1++;
-    
+
     if(strncmp(s1,tok,strlen(tok))==0) {
 	char *p=s1+strlen(tok);
 	return checkEmptyString(p);
     }
 
     return 0;
-} 
+}
 
 int stringIsDigitNumber(char *s)
 {
@@ -5184,15 +5166,15 @@ int stringIsDigitNumber(char *s)
 	  && (*s1)) s1++;
 
     if(*s1==0x0) return 0;
-    
-    if(*s1=='0') {		
+
+    if(*s1=='0') {
 	return checkEmptyString(s1+1);
     }
 
     while(isdigit((int)*s1)) s1++;
 
     return checkEmptyString(s1);
-} 
+}
 
 char *extractStringValue(char *line)
 {
@@ -5204,7 +5186,7 @@ char *extractStringValue(char *line)
     while(isspace((int)*p) && (*p!=0x0)) p++;
 
     if (*p!='\"') {
-				
+
 	return NULL;
     }
 
@@ -5214,29 +5196,29 @@ char *extractStringValue(char *line)
 	p++;i++;
     }
 
-    if(*p==0) return NULL;	
+    if(*p==0) return NULL;
 
     p++;
     if(checkEmptyString(p)) {
 	sValue[i]=0x0;
 	return sValue;
     }
-				
+
     return NULL;
-} 
+}
 
 int processXFReq(char *key,char *line,struct submit *jobSubReq)
 {
     static char fname[]="processXFRequest";
     int validKey,v;
     char *sValue;
-    
+
     if(strcmp(key,"LSB_SUB_OTHER_FILES")==0) {
 	validKey=1;
 
 	if (stringIsToken(line,"SUB_RESET")) {
 	    free(jobSubReq->xf);
-	    jobSubReq->xf=NULL; 
+	    jobSubReq->xf=NULL;
 	    jobSubReq->options &= ~SUB_OTHER_FILES;
 	    jobSubReq->delOptions |= SUB_OTHER_FILES;
 	    jobSubReq->nxf=0;
@@ -5252,9 +5234,9 @@ int processXFReq(char *key,char *line,struct submit *jobSubReq)
 
 	    v=atoi(line);
 	    p=(struct xFile *)malloc(v*sizeof(struct xFile));
-			    
+
 	    if(p==NULL) {
-		    
+
 		ls_syslog(LOG_ERR,MSG_ALLOC_MEMF_IN_XFs,
 			  fname);
 		return -1;
@@ -5270,7 +5252,7 @@ int processXFReq(char *key,char *line,struct submit *jobSubReq)
 	}
     }
     else {
-	    
+
 	char *sp=key+strlen("LSB_SUB_OTHER_FILES_");
 	char xfSeq[32];
 
@@ -5278,17 +5260,17 @@ int processXFReq(char *key,char *line,struct submit *jobSubReq)
 	strncat(xfSeq,sp,sizeof(xfSeq)-2);
 
 	if(!stringIsDigitNumber(xfSeq)) {
-		
+
 	    ls_syslog(LOG_WARNING,MSG_BAD_ENVAR2s,
 		      fname,key);
 	    return -1;
 	}
-		    
+
 	v=atoi(xfSeq);validKey=1;
 	if (v<jobSubReq->nxf) {
 	    char op[20];
 	    char *txt,*srcf;
-			    
+
 	    jobSubReq->xf[v].options=0;
 
 	    sValue=extractStringValue(line);
@@ -5308,18 +5290,18 @@ int processXFReq(char *key,char *line,struct submit *jobSubReq)
 			  line,sValue);
 		return -1;
 	    }
-			
+
 	    strcpy(jobSubReq->xf[v].subFn,srcf);
 	    while(isspace((int)*txt) && (*txt!=0x0)) txt++;
 
-		
+
 	    op[0]=op[1]=op[2]='\000';
 	    op[0]=*txt++;
 	    if (!isspace((int)*txt)) op[1]=*txt++;
 
 	    while(isspace((int)*txt) && (*txt!=0x0)) txt++;
 	    strcpy(jobSubReq->xf[v].execFn,txt);
-			    
+
 	    if(strcmp(op,"<")==0) {
 		jobSubReq->xf[v].options |= XF_OP_EXEC2SUB;
 	    }
@@ -5340,20 +5322,20 @@ int processXFReq(char *key,char *line,struct submit *jobSubReq)
 		jobSubReq->xf[v].options |= XF_OP_SUB2EXEC;
 	    }
 	    else {
-		    
+
 		ls_syslog(LOG_WARNING,MSG_BAD_XF_OP2s,
 			  fname,op);
 	    }
 	}
 	else {
-		
+
 	    ls_syslog(LOG_WARNING,MSG_BAD_ENVAL3s,fname,
 		      line,key);
 	}
     }
-    
+
     return 0;
-} 
+}
 static void trimSpaces(char *str)
 {
     char *ptr;
@@ -5362,16 +5344,16 @@ static void trimSpaces(char *str)
         return;
     }
 
-   
+
     while( isspace((int) *str) ) {
         for(ptr = str; *ptr; ptr++) {
             *ptr = ptr[1];
         }
     }
 
-   
+
     ptr = str;
-    while( *ptr ) { 
+    while( *ptr ) {
         ptr++;
     }
 
@@ -5380,4 +5362,4 @@ static void trimSpaces(char *str)
         *ptr = '\0';
         ptr--;
     }
-} 
+}

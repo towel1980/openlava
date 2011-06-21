@@ -289,83 +289,12 @@ my_malloc(int len, char *fileName)
 {
     return(malloc(len));
 
-#if 0
-    static char fname[] = "my_malloc()";
-    char *sp, *caller = fileName;
-
-    if (caller == NULL)
-        caller = "";
-
-    if (!len) {
-        len = 4;
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 8235,
-            "%s: %s- Zero bytes requested; allocating %d bytes"), /* catgets 8235 */
-            fname, caller, len);
-    }
-    sp = malloc(len);
-    if (!sp) {
-        if (reserved) {
-            free(reserved);
-            reserved = NULL;
-            return (my_malloc(len, caller));
-        }
-
-        lsb_merr( _i18n_printf(I18N_FUNC_FAIL, fname, "malloc"));
-        ls_syslog(LOG_ERR, I18N_FUNC_S_D_FAIL_M,
-                  fname, "malloc", caller, len);
-        if (masterme)
-            die(MASTER_FATAL);
-        else
-            relife();
-    }
-
-    if (! reserved)
-        reserved = malloc(MSGSIZE);
-
-    return sp;
-#endif
 }
 
 void *
 my_calloc(int nelem, int esize, char *fileName)
 {
     return(calloc(nelem, esize));
-#if 0
-    static char fname[] = "my_calloc()";
-    char *sp, *caller = fileName;
-
-    if (caller == NULL)
-        caller = "";
-
-    if (!nelem || !esize) {
-        nelem = 1;
-        esize = 4;
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 8235,
-            "%s: %s- Zero bytes requested; allocating %d bytes"),
-            fname, caller, esize);
-    }
-
-    sp = calloc(nelem, esize);
-    if (!sp) {
-        if (reserved) {
-            FREEUP(reserved);
-            return (my_calloc(nelem, esize, caller));
-        }
-
-        lsb_merr( _i18n_printf(I18N_FUNC_FAIL, fname, "calloc"));
-        ls_syslog(LOG_ERR, I18N_FUNC_S_D_FAIL_M, fname, "calloc",
-            caller, esize);
-        if (masterme)
-            die(MASTER_MEM);
-        else
-            relife();
-    }
-
-    if (! reserved)
-        reserved = malloc(MSGSIZE);
-
-    return sp;
-#endif
 }
 
 void
