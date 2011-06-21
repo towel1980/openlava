@@ -283,7 +283,7 @@ parseSection(char *resReq, struct sections *section)
 {
     static char   *reqString;
     static int    reqStringSize;
-    char          *cp
+    char          *cp;
     char          *p;
     int           i;
     int           j;
