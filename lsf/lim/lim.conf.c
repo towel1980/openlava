@@ -629,7 +629,7 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
             allInfo.modelRefs[i] = 0;
         }
 
-        h_initTab_(&hostModelTbl, 0);
+        h_initTab_(&hostModelTbl, 11);
         first = FALSE;
     }
 

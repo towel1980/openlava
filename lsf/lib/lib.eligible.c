@@ -89,8 +89,8 @@ inittasklists_(void)
     char *homep;
     char *clName;
 
-    h_initTab_(&rtask_table, 0);
-    h_initTab_(&ltask_table, 0);
+    h_initTab_(&rtask_table, 11);
+    h_initTab_(&ltask_table, 11);
 
     if (initenv_(NULL, NULL) <0)
 	return -1;

@@ -1791,8 +1791,8 @@ createJobFile(char *lsbDir, char *chkpntDir, struct jobCard *jp, struct lenData 
     shellLine=SHELLLINE;
     if ((cc = write(fd, shellLine, strlen(shellLine))) !=
         strlen(shellLine)) {
-        sprintf(errMsg,
-                "createJobFile: Job <%s> write jobfile %s len=%d cc=%d failed: %s",
+        sprintf(errMsg, "createJobFile:\
+ Job <%s> write jobfile %s len=%lu cc=%d failed: %s",
                 lsb_jobidinstr(jobSpecsPtr->jobId),
                 jobFile,
                 strlen(shellLine) + 1,

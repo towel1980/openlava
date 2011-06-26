@@ -5046,23 +5046,35 @@ acumulateValue (double statusValue, double jobValue)
 int
 resigJobs(int *resignal)
 {
-    static char fname[] = "resigJobs";
-    int num, sigcnt = 0, sVsigcnt, mxsigcnt = 5;
-    struct hData *hData;
-    static char first = TRUE;
-    int list, retVal = TRUE;
-    struct jData *jpbw, *next;
-    static LS_BITSET_T *processedHosts=NULL;
+    static char          fname[] = "resigJobs()";
+    static char          first = TRUE;
+    int                  num;
+    int                  sigcnt = 0;
+    int                  sVsigcnt;
+    int                  mxsigcnt = 5;
+    int                  list;
+    int                  retVal = TRUE;
+    struct hData         *hData;
+    struct jData         *jpbw;
+    struct jData         *next;
+    static LS_BITSET_T   *processedHosts;
 
-    if (logclass & (LC_TRACE | LC_SIGNAL))
-        ls_syslog (LOG_DEBUG1, "%s: Entering this routine... eP=%d",
+    if (logclass & (LC_TRACE | LC_SIGNAL)) {
+        ls_syslog (LOG_DEBUG1, "\
+%s: Entering this routine... eP=%d",
                    fname, eventPending);
+    }
 
+    sigcnt = 0;
+    mxsigcnt = 5;
 
     for (list = 0; list < NJLIST; list++) {
         if (list != MJL && list != PJL)
             continue;
-        for (jpbw = jDataList[list]->back; jpbw != jDataList[list];
+        /* For pending and migrating jobs only...
+         */
+        for (jpbw = jDataList[list]->back;
+             jpbw != jDataList[list];
              jpbw = next) {
 
             INC_CNT(PROF_CNT_firstLoopresigJobs);
@@ -5076,18 +5088,19 @@ resigJobs(int *resignal)
         }
     }
 
-
     if (first) {
-        processedHosts=simpleSetCreate(numofhosts+1, "resigJobs");
+        processedHosts = simpleSetCreate(numofhosts + 1,
+                                         "resigJobs");
         if (processedHosts == NULL) {
-            ls_syslog(LOG_ERR, "%s: simpleSetCreate() failed %s",
+            ls_syslog(LOG_ERR, "\
+%s: simpleSetCreate() failed %s",
                       fname, setPerror(bitseterrno));
             mbdDie(MASTER_MEM);
         }
         first = FALSE;
     }
 
-    sigcnt=0;
+    sigcnt = 0;
     if (setClear(processedHosts) < 0) {
         ls_syslog(LOG_ERR, "%s: setClear() failed", fname);
         return retVal;
@@ -5096,6 +5109,8 @@ resigJobs(int *resignal)
     for (list = 0; list <= NJLIST && sigcnt < mxsigcnt; list++) {
         if (list != SJL && list != FJL && list != ZJL)
             continue;
+        /* For all jobs in SJL, FJL and ZJL
+         */
         for (jpbw = jDataList[list]->back;
              jpbw != jDataList[list] && sigcnt < mxsigcnt;
              jpbw = next) {
@@ -5109,7 +5124,7 @@ resigJobs(int *resignal)
 
             hData = jpbw->hPtr[0];
 
-            if (setIsMember(processedHosts, (void *)hData->hostId))
+            if (setIsMember(processedHosts, (void *)&hData->hostId))
                 continue;
 
             if (hData->hStatus & HOST_STAT_REMOTE)
@@ -5125,13 +5140,15 @@ resigJobs(int *resignal)
             sVsigcnt = sigcnt;
             if (resigJobs1 (jpbw, &sigcnt) < 0) {
                 if (logclass & (LC_TRACE | LC_SIGNAL))
-                    ls_syslog (LOG_DEBUG2, "%s: Signaling job %s failed; sigcnt= %d host=%s", fname, lsb_jobid2str(jpbw->jobId), sigcnt, hData->host);
+                    ls_syslog (LOG_DEBUG2, "\
+%s: Signaling job %s failed; sigcnt= %d host=%s",
+                               fname, lsb_jobid2str(jpbw->jobId),
+                               sigcnt, hData->host);
                 return retVal;
             }
 
-
             if (sigcnt > sVsigcnt)
-                setAddElement(processedHosts, (void*)hData->hostId);
+                setAddElement(processedHosts, (void *)&hData->hostId);
         }
     }
 
@@ -5154,7 +5171,7 @@ resigJobs(int *resignal)
             continue;
 
 
-        if (setIsMember(processedHosts, (void*)hData->hostId))
+        if (setIsMember(processedHosts, (void *)&hData->hostId))
             continue;
 
         TIMEIT(1, sndJobMsgs (hData, &sigcnt), "sndJobMsgs");

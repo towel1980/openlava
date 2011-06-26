@@ -4483,6 +4483,8 @@ bExceptionTabInit(void)
 {
     bExceptionTab = calloc(1, sizeof(hTab));
     h_initTab_(bExceptionTab, 3);
+
+    return 0;
 }
 
 static bException_t *

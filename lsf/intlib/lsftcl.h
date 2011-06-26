@@ -16,27 +16,27 @@
  *
  */
 typedef struct {
-    char     *name;
-    int clientData;
+    char   *name;
+    int    clientData;
 } attribFunc;
 
 
-#define   CPUFACTOR  nRes + numIndx 
-#define   NDISK      nRes + numIndx + 1 
-#define   REXPRI     nRes + numIndx + 2 
-#define   MAXCPUS_   nRes + numIndx + 3 
-#define   MAXMEM     nRes + numIndx + 4 
-#define   MAXSWAP    nRes + numIndx + 5 
-#define   MAXTMP     nRes + numIndx + 6 
-#define   CPU_       nRes + numIndx + 7 
-#define   SERVER     nRes + numIndx + 8 
+#define   CPUFACTOR  (nRes + numIndx)
+#define   NDISK      (nRes + numIndx + 1)
+#define   REXPRI     (nRes + numIndx + 2)
+#define   MAXCPUS_   (nRes + numIndx + 3)
+#define   MAXMEM     (nRes + numIndx + 4)
+#define   MAXSWAP    (nRes + numIndx + 5)
+#define   MAXTMP     (nRes + numIndx + 6)
+#define   CPU_       (nRes + numIndx + 7)
+#define   SERVER     (nRes + numIndx + 8)
 
-#define   HOSTTYPE   1 
-#define   HOSTMODEL  2 
-#define   HOSTSTATUS 3 
-#define   HOSTNAME   4 
-#define   LAST_STRING (HOSTNAME+1)
-#define   DEFINEDFUNCTION 5 
+#define   HOSTTYPE   1
+#define   HOSTMODEL  2
+#define   HOSTSTATUS 3
+#define   HOSTNAME   4
+#define   LAST_STRING (HOSTNAME + 1)
+#define   DEFINEDFUNCTION 5
 
 #define   TCL_CHECK_SYNTAX  0
 #define   TCL_CHECK_EXPRESSION 1
@@ -51,7 +51,7 @@ struct tclHostData {
     short hostInactivityCount;
     int     *status;
     float   *loadIndex;
-    int     rexPriority; 
+    int     rexPriority;
     char    *hostType;
     char    *hostModel;
     char    *fromHostType;

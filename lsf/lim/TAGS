@@ -56,114 +56,114 @@ setIndex 327,11947
 doclist(430,15905
 dotypelist(519,19460
 dohostmodel(608,22816
-initResTable(779,29433
-resNameDefined 816,30516
-doresources(828,30713
-#define RKEY_RESOURCENAME 834,30858
-#define RKEY_TYPE 836,30921
-#define RKEY_INTERVAL 838,30976
-#define RKEY_INCREASING 840,31035
-#define RKEY_RELEASE 842,31096
-#define RKEY_DESCRIPTION 844,31154
-chkUIdxAndSetDfltRunElim(1133,45490
-setupHostNodeResBitArrays(1150,45947
-doresourcemap(1174,46592
-#define RKEY_RESOURCE_NAME 1181,46778
-#define RKEY_LOCATION 1183,46843
-addSharedResourceInstance(1349,54249
-addResourceMap 1416,56341
-parseHostList 1662,66042
-validLocationHost 1709,67515
-initResItem(1742,68397
-validType 1757,68677
-readCluster(1775,68975
-readCluster2(1868,72113
-#define ADMIN_IGNORE(1879,72355
-adjIndx 1986,76411
-domanager 2059,78688
-getClusAdmins 2151,81986
-setAdmins 2195,83654
-doclparams 2266,86112
-#define EXINTERVAL 2272,86282
-#define ELIMARGS 2274,86349
-#define PROBE_TIMEOUT 2276,86414
-#define ELIM_POLL_INTERVAL 2278,86484
-#define HOST_INACTIVITY_LIMIT 2280,86559
-#define MASTER_INACTIVITY_LIMIT 2282,86637
-#define RETRY_LIMIT 2284,86717
-#define ADJUST_DURATION 2286,86785
-#define LSF_ELIM_DEBUG 2288,86857
-#define LSF_ELIM_BLOCKTIME 2290,86919
-#define LSF_ELIM_RESTARTS 2292,86989
-initKeyList(2505,95961
-#define  HOSTNAME_ 2511,96040
-#define  MODEL 2512,96078
-#define  TYPE 2513,96118
-#define  ND 2514,96158
-#define  RESOURCES 2515,96198
-#define  RUNWINDOW 2516,96238
-#define  REXPRI_ 2517,96278
-#define  SERVER_ 2518,96318
-#define  R 2519,96358
-#define  S 2520,96398
-setMyClusterName(2558,97288
-freeKeyList(2711,103465
-dohosts(2722,103647
-putThreshold(2949,112896
-typeNameToNo(2963,113255
-archNameToNo(2975,113454
-int modelNameToNo(3019,114636
-addHost(3031,114859
-addFloatClientHost(3191,120643
-removeFloatClientHost(3283,122855
-initHostNode 3325,123936
-freeHostNodes 3437,127075
-addResource 3472,127795
-freeSharedRes 3518,129291
-addHostInstance 3534,129574
-getValidHosts 3633,133014
-addHostNodeIns 3708,135820
-isInHostNodeIns 3762,137932
-addHostList 3775,138263
-addInstance 3811,139523
-initInstance 3866,141478
-freeInstance 3890,141995
-isInHostList 3903,142239
-inHostResourcs 3924,142860
-validResource(3941,143142
-validLoadIndex(3959,143391
-validHostType(3974,143590
-validHostModel(3987,143792
-static int cntofdefault=4001,143994
-addHostType(4003,144033
-addHostModel(4040,145156
-addCluster(4090,146793
-findClusterServers(4165,149413
-reCheckRes(4230,151327
-reCheckClusterClass(4332,154948
-addMapBits 4414,157877
-reCheckClass(4424,158053
-configCheckSum(4434,158174
-getAdmins 4477,159236
-doubleResTable 4542,161203
-#define DEFAULT_RETRY_MAX 4563,161785
-#define DEFAULT_RETRY_INT 4564,161816
-confOpen(4566,161855
-mykey(4603,162795
-setExtResourcesDefDefault(4624,163091
-setExtResourcesDef(4652,163746
-setExtResourcesLoc(4768,167907
-getExtResourcesDef(4815,169108
-getExtResourcesLoc(4827,169415
-getExtResourcesValDefault(4839,169722
-getExtResourcesVal(4848,169835
-initTypeModel(4859,170168
-stripIllegalChars(4910,172134
-getHostType(4927,172359
-slaveOnlyInit(4934,172413
-slaveOnlyPreConf(4964,172859
-static int saveHostIPAddr(5105,177478
-adjHostListOrder(5132,178159
+initResTable(777,29396
+resNameDefined 814,30479
+doresources(826,30676
+#define RKEY_RESOURCENAME 832,30821
+#define RKEY_TYPE 834,30884
+#define RKEY_INTERVAL 836,30939
+#define RKEY_INCREASING 838,30998
+#define RKEY_RELEASE 840,31059
+#define RKEY_DESCRIPTION 842,31117
+chkUIdxAndSetDfltRunElim(1131,45453
+setupHostNodeResBitArrays(1148,45910
+doresourcemap(1172,46555
+#define RKEY_RESOURCE_NAME 1179,46741
+#define RKEY_LOCATION 1181,46806
+addSharedResourceInstance(1347,54212
+addResourceMap 1414,56304
+parseHostList 1660,66005
+validLocationHost 1707,67478
+initResItem(1740,68360
+validType 1755,68640
+readCluster(1773,68938
+readCluster2(1866,72076
+#define ADMIN_IGNORE(1877,72318
+adjIndx 1984,76374
+domanager 2057,78651
+getClusAdmins 2149,81949
+setAdmins 2193,83617
+doclparams 2264,86075
+#define EXINTERVAL 2270,86245
+#define ELIMARGS 2272,86312
+#define PROBE_TIMEOUT 2274,86377
+#define ELIM_POLL_INTERVAL 2276,86447
+#define HOST_INACTIVITY_LIMIT 2278,86522
+#define MASTER_INACTIVITY_LIMIT 2280,86600
+#define RETRY_LIMIT 2282,86680
+#define ADJUST_DURATION 2284,86748
+#define LSF_ELIM_DEBUG 2286,86820
+#define LSF_ELIM_BLOCKTIME 2288,86882
+#define LSF_ELIM_RESTARTS 2290,86952
+initKeyList(2503,95924
+#define  HOSTNAME_ 2509,96003
+#define  MODEL 2510,96041
+#define  TYPE 2511,96081
+#define  ND 2512,96121
+#define  RESOURCES 2513,96161
+#define  RUNWINDOW 2514,96201
+#define  REXPRI_ 2515,96241
+#define  SERVER_ 2516,96281
+#define  R 2517,96321
+#define  S 2518,96361
+setMyClusterName(2556,97251
+freeKeyList(2709,103428
+dohosts(2720,103610
+putThreshold(2947,112859
+typeNameToNo(2961,113218
+archNameToNo(2973,113417
+int modelNameToNo(3017,114599
+addHost(3029,114822
+addFloatClientHost(3189,120606
+removeFloatClientHost(3281,122818
+initHostNode 3323,123899
+freeHostNodes 3435,127038
+addResource 3470,127758
+freeSharedRes 3516,129254
+addHostInstance 3532,129537
+getValidHosts 3631,132977
+addHostNodeIns 3706,135783
+isInHostNodeIns 3760,137895
+addHostList 3773,138226
+addInstance 3809,139486
+initInstance 3864,141441
+freeInstance 3888,141958
+isInHostList 3901,142202
+inHostResourcs 3922,142823
+validResource(3939,143105
+validLoadIndex(3957,143354
+validHostType(3972,143553
+validHostModel(3985,143755
+static int cntofdefault=3999,143957
+addHostType(4001,143996
+addHostModel(4038,145119
+addCluster(4088,146756
+findClusterServers(4163,149376
+reCheckRes(4228,151290
+reCheckClusterClass(4330,154911
+addMapBits 4412,157840
+reCheckClass(4422,158016
+configCheckSum(4432,158137
+getAdmins 4475,159199
+doubleResTable 4540,161166
+#define DEFAULT_RETRY_MAX 4561,161748
+#define DEFAULT_RETRY_INT 4562,161779
+confOpen(4564,161818
+mykey(4601,162758
+setExtResourcesDefDefault(4622,163054
+setExtResourcesDef(4650,163709
+setExtResourcesLoc(4766,167870
+getExtResourcesDef(4813,169071
+getExtResourcesLoc(4825,169378
+getExtResourcesValDefault(4837,169685
+getExtResourcesVal(4846,169798
+initTypeModel(4857,170131
+stripIllegalChars(4908,172097
+getHostType(4925,172322
+slaveOnlyInit(4932,172376
+slaveOnlyPreConf(4962,172822
+static int saveHostIPAddr(5103,177441
+adjHostListOrder(5130,178122
 
 lim.conf.h,82
 struct liStruct *li;li20,767
@@ -475,50 +475,50 @@ lockHost(2065,59813
 
 lim.linux.h,1540
 #define NL_SETN	21,789
-#define UNIX_KERNEL_EXE_FILE 29,925
-#  define  CPUSTATES 31,967
-#  define ut_name 32,990
-static char buffer[buffer34,1022
-static long long int main_mem,35,1051
-static long long int main_mem, free_mem,35,1051
-static long long int main_mem, free_mem, shared_mem,35,1051
-static long long int main_mem, free_mem, shared_mem, buf_mem,35,1051
-static long long int main_mem, free_mem, shared_mem, buf_mem, cashed_mem;35,1051
-static long long int swap_mem,36,1125
-static long long int swap_mem, free_swap;36,1125
-#define nonuser(39,1169
-static double prev_time 41,1221
-static double prev_cpu_user,42,1265
-static double prev_cpu_user, prev_cpu_nice,42,1265
-static double prev_cpu_user, prev_cpu_nice, prev_cpu_sys,42,1265
-static double prev_cpu_user, prev_cpu_nice, prev_cpu_sys, prev_cpu_idle;42,1265
-static unsigned long    prevRQ;43,1338
-#define HT_BIT 49,1514
-#define FAMILY_ID 50,1551
-#define PENTIUM4_ID 51,1588
-#define NUM_LOG_BITS 52,1625
-int CPUID_is_supported(54,1663
-unsigned int HTSupported(73,2259
-#define BUF_SIZE 121,3633
-#define HT_TEXT 122,3656
-int ht_os_cpus(124,3692
-#define HT_FLAG_CHECKED 161,4448
-#define SIBLINGS_CHECKED 162,4477
-int issiblings(164,4508
-numCpus(203,5540
-queueLengthEx(282,7536
-#define LINUX_LDAV_FILE 285,7629
-queueLength(320,8306
-cpuTime 378,9630
-realMem 417,10490
-tmpspace(434,10781
-getswap(465,11298
-getpaging(485,11574
-getIoRate(513,12113
-readMeminfo(545,12781
-initReadLoad(585,13787
-getHostModel(657,15347
-static int getPage(714,16700
+#define UNIX_KERNEL_EXE_FILE 29,924
+#  define  CPUSTATES 31,966
+#  define ut_name 32,989
+static char buffer[buffer34,1018
+static long long int main_mem,35,1047
+static long long int main_mem, free_mem,35,1047
+static long long int main_mem, free_mem, shared_mem,35,1047
+static long long int main_mem, free_mem, shared_mem, buf_mem,35,1047
+static long long int main_mem, free_mem, shared_mem, buf_mem, cashed_mem;35,1047
+static long long int swap_mem,36,1121
+static long long int swap_mem, free_swap;36,1121
+#define nonuser(39,1165
+static double prev_time 41,1217
+static double prev_cpu_user,42,1261
+static double prev_cpu_user, prev_cpu_nice,42,1261
+static double prev_cpu_user, prev_cpu_nice, prev_cpu_sys,42,1261
+static double prev_cpu_user, prev_cpu_nice, prev_cpu_sys, prev_cpu_idle;42,1261
+static unsigned long    prevRQ;43,1334
+#define HT_BIT 49,1510
+#define FAMILY_ID 50,1545
+#define PENTIUM4_ID 51,1573
+#define NUM_LOG_BITS 52,1601
+int CPUID_is_supported(54,1635
+unsigned int HTSupported(73,2231
+#define BUF_SIZE 121,3586
+#define HT_TEXT 122,3609
+int ht_os_cpus(124,3645
+#define HT_FLAG_CHECKED 161,4401
+#define SIBLINGS_CHECKED 162,4430
+int issiblings(164,4461
+numCpus(203,5491
+queueLengthEx(265,7241
+#define LINUX_LDAV_FILE 268,7334
+queueLength(303,8008
+cpuTime 361,9326
+realMem 400,10181
+tmpspace(417,10465
+getswap(448,10977
+getpaging(468,11247
+getIoRate(496,11781
+readMeminfo(528,12447
+initReadLoad(568,13428
+getHostModel(640,14936
+static int getPage(697,16287
 
 lim.load.c,577
 #define NL_SETN 22,799
@@ -896,53 +896,53 @@ loadIndexValue(1697,48089
 
 lim.rload.c,1214
 #define NL_SETN 31,980
-#define  EXP3 33,1006
-#define  EXP4 34,1034
-#define  EXP6 35,1061
-#define  EXP12 36,1089
-#define  EXP180 37,1117
-#define MAXIDLETIME 39,1146
-#  define L_SET 43,1217
-#  define L_SET 45,1257
-float k_hz;49,1301
-pid_t elim_pid 62,1473
-int defaultRunElim 64,1495
-static float overRide[overRide66,1524
-int ELIMrestarts 75,1774
-int ELIMdebug 76,1797
-int ELIMblocktime 77,1816
-satIndex(87,2063
-loadIndex(97,2194
-smooth(108,2443
-getutime(115,2571
-#define IDLE_INTVL	144,3097
-#define GUESS_NUM 145,3120
-time_t lastActiveTime 150,3158
-#define ENV_LAST_ACTIVE_TIME 152,3186
-putLastActiveTime 155,3245
-getLastActiveTime 168,3566
-idletime(192,4040
-getXIdle(344,7688
-readLoad(381,8352
-lim_popen(599,14303
-lim_pclose(644,15292
-saveIndx(677,15821
-getSharedResBitPos(733,17164
-getExtResourcesLoad(753,17571
-isResourceSharedByHost(785,18449
-#define timersub(796,18699
-#define ELIMNAME 806,19212
-#define MAXEXTRESLEN 807,19236
-getusr(809,19274
-unblockSigs_(1173,29214
-setUnkwnValues 1187,29469
-saveSBValue 1210,30141
-initConfInfo(1277,32444
-getElimRes 1303,33127
-callElim(1344,34271
-startElim(1406,35499
-termElim(1429,35975
-isResourceSharedInAllHosts(1440,36091
+#define  EXP3 33,1000
+#define  EXP4 34,1028
+#define  EXP6 35,1055
+#define  EXP12 36,1083
+#define  EXP180 37,1111
+#define MAXIDLETIME 39,1140
+#  define L_SET 43,1202
+#  define L_SET 45,1242
+float k_hz;49,1284
+pid_t elim_pid 62,1455
+int defaultRunElim 64,1477
+static float overRide[overRide66,1506
+int ELIMrestarts 75,1755
+int ELIMdebug 76,1778
+int ELIMblocktime 77,1797
+satIndex(87,2043
+loadIndex(97,2172
+smooth(108,2417
+getutime(115,2544
+#define IDLE_INTVL	144,3058
+#define GUESS_NUM 145,3080
+time_t lastActiveTime 150,3111
+#define ENV_LAST_ACTIVE_TIME 152,3139
+putLastActiveTime 155,3197
+getLastActiveTime 168,3514
+idletime(192,3950
+getXIdle(344,7544
+readLoad(381,8189
+lim_popen(599,14017
+lim_pclose(644,14983
+saveIndx(673,15471
+getSharedResBitPos(726,16870
+getExtResourcesLoad(746,17274
+isResourceSharedByHost(778,18112
+#define timersub(789,18361
+#define ELIMNAME 799,18874
+#define MAXEXTRESLEN 800,18898
+getusr(802,18936
+unblockSigs_(1166,28482
+setUnkwnValues 1180,28736
+saveSBValue 1203,29388
+initConfInfo(1270,31661
+getElimRes 1296,32340
+callElim(1337,33464
+startElim(1399,34672
+termElim(1422,35145
+isResourceSharedInAllHosts(1433,35259
 
 lim.xdr.c,351
 #define NL_SETN 21,797
@@ -960,488 +960,488 @@ decfloat16_(266,6920
 xdr_lvector(290,7395
 xdr_minSLimConfData(343,8654
 
-../lsf.h,15576
+../lsf.h,15771
 #define _LSF_H_20,774
 typedef long long int LS_LONG_INT;30,944
 typedef unsigned long long LS_UNS_LONG_INT;31,979
 #define LS_LONG_FORMAT 32,1023
-#define _LS_VERSION_ 39,1119
-#define _LS_VERSION_ 41,1231
-#define _LS_VERSION_ 45,1372
-#define _LS_VERSION_ 47,1484
-#define LAVA_VERSION 51,1593
-#define LSF_VERSION 52,1627
-#define LAVA_XDR_VERSION1_0 53,1660
-#define LAVA_CURRENT_VERSION 55,1708
-#define P_(58,1769
-#define P_(61,1811
-#define LSF_DEFAULT_SOCKS	66,1858
-#define MAXLINELEN	67,1890
-#define MAXLSFNAMELEN 68,1916
-#define MAXSRES 70,1955
-#define MAXRESDESLEN 71,1993
-#define NBUILTINDEX	72,2031
-#define MAXTYPES 73,2065
-#define MAXMODELS 74,2103
-#define MAXTYPES_31 75,2141
-#define MAXMODELS_31 76,2179
-#define MAXFILENAMELEN 77,2217
-#define MAXEVARS 78,2255
-#define GENMALLOCPACE 80,2294
-#define FIRST_RES_SOCK	82,2333
-# define LS_WAIT_T	85,2383
-# define LS_STATUS(86,2413
-# define LS_WAIT_INT88,2456
-# define LS_WAIT_T	89,2477
-# define LS_STATUS(90,2500
-#define R15S 94,2535
-#define R1M 95,2560
-#define R15M 96,2585
-#define UT 97,2610
-#define PG 98,2635
-#define IO 99,2660
-#define LS 100,2685
-#define IT 101,2710
-#define TMP 102,2735
-#define SWP 103,2760
-#define MEM 104,2785
-#define USR1 105,2811
-#define USR2 106,2837
-#define INFINIT_LOAD 108,2864
-#define INFINIT_FLOAT 109,2909
-#define INFINIT_INT 111,2955
-#define INFINIT_LONG_INT 112,2989
-#define INFINIT_SHORT 114,3029
-#define DEFAULT_RLIMIT 116,3060
-#define LSF_RLIMIT_CPU 118,3091
-#define LSF_RLIMIT_FSIZE 119,3133
-#define LSF_RLIMIT_DATA 120,3175
-#define LSF_RLIMIT_STACK 121,3217
-#define LSF_RLIMIT_CORE 122,3259
-#define LSF_RLIMIT_RSS 123,3301
-#define LSF_RLIMIT_NOFILE 124,3343
-#define LSF_RLIMIT_OPEN_MAX 125,3385
-#define LSF_RLIMIT_VMEM 126,3427
-#define LSF_RLIMIT_SWAP 127,3469
-#define LSF_RLIMIT_RUN 128,3513
-#define LSF_RLIMIT_PROCESS 129,3555
-#define LSF_RLIM_NLIMITS 130,3597
-#define LSF_NULL_MODE 133,3641
-#define LSF_LOCAL_MODE 134,3670
-#define LSF_REMOTE_MODE 135,3697
-#define RF_MAXHOSTS 137,3725
-#define RF_CMD_MAXHOSTS 139,3748
-#define RF_CMD_RXFLAGS 140,3774
-#define STATUS_TIMEOUT 143,3801
-#define STATUS_IOERR 144,3841
-#define STATUS_EXCESS 145,3881
-#define STATUS_REX_NOMEM 146,3921
-#define STATUS_REX_FATAL 147,3961
-#define STATUS_REX_CWD 148,4001
-#define STATUS_REX_PTY 149,4041
-#define STATUS_REX_SP 150,4081
-#define STATUS_REX_FORK 151,4121
-#define STATUS_REX_TOK 152,4161
-#define STATUS_REX_UNKNOWN 153,4201
-#define STATUS_REX_NOVCL 154,4241
-#define STATUS_REX_NOSYM 155,4281
-#define STATUS_REX_VCL_INIT 156,4321
-#define STATUS_REX_VCL_SPAWN 157,4361
-#define STATUS_REX_EXEC 158,4401
-#define STATUS_REX_MLS_INVAL 159,4441
-#define STATUS_REX_MLS_CLEAR 160,4481
-#define STATUS_REX_MLS_RHOST 161,4521
-#define STATUS_REX_MLS_DOMIN 162,4561
-#define REX_FATAL_ERROR(164,4602
-#define   REXF_USEPTY 177,5385
-#define   REXF_CLNTDIR 178,5428
-#define   REXF_TASKPORT 179,5471
-#define   REXF_SHMODE 180,5514
-#define   REXF_TASKINFO 181,5557
-#define   REXF_REQVCL 182,5600
-#define   REXF_SYNCNIOS 183,5643
-#define   REXF_TTYASYNC	184,5686
-#define   REXF_STDERR 185,5729
-#define EXACT 187,5773
-#define OK_ONLY 188,5800
-#define NORMALIZE 189,5827
-#define LOCALITY 190,5868
-#define IGNORE_RES 191,5895
-#define LOCAL_ONLY 192,5922
-#define DFT_FROMTYPE 193,5963
-#define ALL_CLUSTERS 194,5992
-#define EFFECTIVE 195,6033
-#define RECV_FROM_CLUSTERS 196,6074
-#define NEED_MY_CLUSTER_NAME 197,6107
-#define SEND_TO_CLUSTERS 199,6143
-#define FROM_MASTER 201,6177
-#define KEEPUID 203,6205
-#define RES_CMD_REBOOT 205,6233
-#define RES_CMD_SHUTDOWN 206,6278
-#define RES_CMD_LOGON 207,6323
-#define RES_CMD_LOGOFF 208,6357
-#define LIM_CMD_REBOOT 210,6392
-#define LIM_CMD_SHUTDOWN 211,6426
-struct connectEnt 214,6462
-    char *hostname;hostname215,6505
-    int csock[csock216,6525
-#define INTEGER_BITS 219,6547
-#define GET_INTNUM(220,6579
-#define LIM_UNAVAIL 222,6625
-#define LIM_LOCKEDU 223,6657
-#define LIM_LOCKEDW 224,6695
-#define LIM_BUSY 225,6733
-#define LIM_RESDOWN 226,6771
-#define LIM_LOCKEDM 227,6809
-#define LIM_OK_MASK 229,6848
-#define LIM_SBDDOWN 231,6888
-#define LS_ISUNAVAIL(236,6930
-#define LS_ISBUSYON(238,6999
-#define LS_ISBUSY(241,7118
-#define LS_ISLOCKEDU(243,7177
-#define LS_ISLOCKEDW(245,7244
-#define LS_ISLOCKEDM(247,7311
-#define LS_ISLOCKED(249,7378
-#define LS_ISRESDOWN(251,7476
-#define LS_ISSBDDOWN(253,7543
-#define LS_ISOK(255,7610
-#define LS_ISOKNRES(258,7670
-struct placeInfo 260,7751
-   char  hostName[hostName261,7780
-   int   numtask;262,7815
-struct hostLoad 265,7837
-   char  hostName[hostName266,7866
-   int   *status;status267,7901
-   float *li;li268,7919
-enum valueType 271,7937
-enum valueType {LS_BOOLEAN,LS_BOOLEAN271,7937
-enum valueType {LS_BOOLEAN, LS_NUMERIC,271,7937
-enum valueType {LS_BOOLEAN, LS_NUMERIC, LS_STRING,271,7937
-enum valueType {LS_BOOLEAN, LS_NUMERIC, LS_STRING, LS_EXTERNAL}LS_EXTERNAL271,7937
-#define BOOLEAN 272,8002
-#define NUMERIC 273,8030
-#define STRING 274,8058
-#define EXTERNAL 275,8085
-enum orderType 276,8114
-enum orderType {INCR,INCR276,8114
-enum orderType {INCR, DECR,276,8114
-enum orderType {INCR, DECR, NA}NA276,8114
-#define RESF_BUILTIN 278,8148
-#define RESF_DYNAMIC 279,8182
-#define RESF_GLOBAL 280,8216
-#define RESF_SHARED 281,8250
-#define RESF_EXTERNAL 282,8284
-#define RESF_RELEASE 283,8318
-#define RESF_DEFINED_IN_RESOURCEMAP 284,8352
-struct resItem 288,8405
-    char name[name289,8422
-    char des[des290,8454
-    enum valueType valueType;291,8488
-    enum orderType orderType;292,8522
-    int  flags;293,8556
-    int  interval;294,8590
-struct lsInfo 297,8628
-    int    nRes;298,8656
-    struct resItem *resTable;resTable299,8673
-    int    nTypes;300,8703
-    char   hostTypes[hostTypes301,8722
-    int    nModels;302,8770
-    char   hostModels[hostModels303,8790
-    char   hostArchs[hostArchs304,8840
-    int    modelRefs[modelRefs305,8890
-    float  cpuFactor[cpuFactor306,8924
-    int    numIndx;307,8957
-    int    numUsrIndx;308,8987
-#define CLUST_STAT_OK 311,9021
-#define CLUST_STAT_UNAVAIL 312,9060
-struct clusterInfo 314,9100
-    char  clusterName[clusterName315,9121
-    int   status;316,9159
-    char  masterName[masterName317,9177
-    char  managerName[managerName318,9215
-    int   managerId;319,9253
-    int   numServers;320,9274
-    int   numClients;321,9302
-    int   nRes;322,9330
-    char  **resources;resources323,9358
-    int    nTypes;324,9386
-    char **hostTypes;hostTypes325,9405
-    int    nModels;326,9433
-    char **hostModels;hostModels327,9460
-    int    nAdmins;328,9488
-    int  *adminIds;adminIds329,9516
-    char **admins;admins330,9544
-struct hostInfo 333,9576
-    char  hostName[hostName334,9594
-    char  *hostType;hostType335,9630
-    char  *hostModel;hostModel336,9651
-    float cpuFactor;337,9673
-    int   maxCpus;338,9694
-    int   maxMem;339,9713
-    int   maxSwap;340,9731
-    int   maxTmp;341,9750
-    int   nDisks;342,9769
-    int   nRes;343,9787
-    char  **resources;resources344,9803
-    char  *windows;windows345,9826
-    int   numIndx;346,9848
-    float *busyThreshold;busyThreshold347,9867
-    char  isServer;348,9894
-    int   rexPriority;349,9914
-struct config_param 352,9941
-    char *paramName;paramName353,9973
-    char *paramValue;paramValue354,9994
-struct	lsfRusage 358,10021
-	double ru_utime;359,10040
-	double ru_stime;360,10067
-	double	ru_maxrss;361,10094
-	double	ru_ixrss;362,10113
-	double	ru_ismrss;363,10133
-	double	ru_idrss;364,10154
-	double	ru_isrss;365,10174
-	double	ru_minflt;366,10194
-	double	ru_majflt;367,10215
-	double	ru_nswap;368,10236
-	double	ru_inblock;369,10256
-	double	ru_oublock;370,10278
-	double  ru_ioch;371,10300
-	double	ru_msgsnd;372,10327
-	double	ru_msgrcv;373,10348
-	double	ru_nsignals;374,10369
-	double	ru_nvcsw;375,10392
-	double	ru_nivcsw;376,10412
-	double  ru_exutime;377,10433
-struct lsfAcctRec 381,10465
-    int pid;382,10485
-    char *username;username383,10498
-    int exitStatus;384,10518
-    time_t dispTime;385,10538
-    time_t termTime;386,10559
-    char *fromHost;fromHost387,10580
-    char *execHost;execHost388,10600
-    char *cwd;cwd389,10620
-    char *cmdln;cmdln390,10635
-    struct lsfRusage lsfRu;391,10652
-#define NIO_STDIN_ON 396,10686
-#define NIO_STDIN_OFF 397,10736
-#define NIO_TAGSTDOUT_ON 398,10786
-#define NIO_TAGSTDOUT_OFF 399,10836
-#define NIO_TASK_STDINON 401,10887
-#define NIO_TASK_STDINOFF 402,10937
-#define NIO_TASK_ALL 403,10987
-#define NIO_TASK_CONNECTED 404,11037
-enum nioType 406,11088
-    NIO_STATUS,407,11103
-    NIO_STDOUT,408,11143
-    NIO_EOF,409,11183
-    NIO_IOERR,410,11223
-    NIO_REQUEUE,411,11263
-    NIO_STDERR 412,11296
-struct nioEvent 415,11340
-    int tid;416,11358
-    enum nioType type;417,11391
-    int status;418,11424
-struct nioInfo 421,11461
-    int num;422,11478
-    struct nioEvent *ioTask;ioTask423,11511
-struct confNode 428,11546
-    struct confNode *leftPtr;leftPtr429,11564
-    struct confNode *rightPtr;rightPtr430,11595
-    struct confNode *fwPtr;fwPtr431,11627
-    char	*cond;cond432,11656
-    int		beginLineNum;433,11674
-    int		numLines;434,11698
-    char	**lines;lines435,11718
-    char	tag;436,11737
-struct pStack 439,11757
-    int top;440,11773
-    int size;441,11786
-    struct confNode **nodes;nodes442,11800
-struct confHandle 445,11833
-    struct confNode *rootNode;rootNode446,11853
-    char        *fname;fname447,11885
-    struct confNode *curNode;curNode448,11911
-    int		lineCount;449,11943
-    struct pStack *ptrStack;ptrStack450,11964
-struct lsConf 453,11998
-    struct confHandle *confhandle;confhandle454,12014
-    int         numConds;455,12050
-    char        **conds;conds456,12078
-    int		*values;values457,12105
-struct sharedConf 460,12129
-    struct lsInfo *lsinfo;lsinfo461,12149
-    char	*clusterName;clusterName462,12176
-    char 	*servers;servers463,12199
-typedef struct lsSharedResourceInstance 466,12223
-    char *value;value467,12265
-    int  nHosts;468,12290
-    char **hostList;hostList469,12315
-} LS_SHARED_RESOURCE_INST_T;471,12337
-typedef struct lsSharedResourceInfo 473,12367
-    char *resourceName;resourceName474,12405
-    int  nInstances;475,12431
-    LS_SHARED_RESOURCE_INST_T  *instances;instances476,12457
-} LS_SHARED_RESOURCE_INFO_T;477,12504
-struct clusterConf 479,12534
-    struct clusterInfo *clinfo;clinfo480,12555
-    int       numHosts;481,12587
-    struct hostInfo *hosts;hosts482,12611
-    int numShareRes;483,12639
-    LS_SHARED_RESOURCE_INFO_T *shareRes;shareRes484,12660
-struct pidInfo 489,12707
-    int pid;490,12724
-    int ppid;491,12747
-    int pgid;492,12771
-    int jobid;493,12794
-struct jRusage 496,12822
-    int mem;497,12839
-    int swap;498,12862
-    int utime;499,12885
-    int stime;500,12908
-    int npids;501,12931
-    struct pidInfo *pidInfo;pidInfo502,12954
-    int npgids;504,13007
-    int *pgid;pgid505,13030
-#define LSE_NO_ERR 510,13059
-#define LSE_BAD_XDR 511,13098
-#define LSE_MSG_SYS 512,13137
-#define LSE_BAD_ARGS 513,13176
-#define LSE_MASTR_UNKNW 514,13215
-#define LSE_LIM_DOWN 515,13254
-#define LSE_PROTOC_LIM 516,13293
-#define LSE_SOCK_SYS 517,13332
-#define LSE_ACCEPT_SYS 518,13371
-#define LSE_BAD_TASKF 519,13410
-#define LSE_NO_HOST 520,13449
-#define LSE_NO_ELHOST 521,13488
-#define LSE_TIME_OUT 522,13527
-#define LSE_NIOS_DOWN 523,13566
-#define LSE_LIM_DENIED 524,13605
-#define LSE_LIM_IGNORE 525,13644
-#define LSE_LIM_BADHOST 526,13683
-#define LSE_LIM_ALOCKED 527,13722
-#define LSE_LIM_NLOCKED 528,13761
-#define LSE_LIM_BADMOD 529,13800
-#define LSE_SIG_SYS 530,13839
-#define LSE_BAD_EXP 531,13878
-#define LSE_NORCHILD 532,13917
-#define LSE_MALLOC 533,13956
-#define LSE_LSFCONF 534,13995
-#define LSE_BAD_ENV 535,14034
-#define LSE_LIM_NREG 536,14073
-#define LSE_RES_NREG 537,14112
-#define LSE_RES_NOMORECONN 538,14151
-#define LSE_BADUSER 539,14190
-#define LSE_RES_ROOTSECURE 540,14229
-#define LSE_RES_DENIED 541,14268
-#define LSE_BAD_OPCODE 542,14307
-#define LSE_PROTOC_RES 543,14346
-#define LSE_RES_CALLBACK 544,14385
-#define LSE_RES_NOMEM 545,14424
-#define LSE_RES_FATAL 546,14463
-#define LSE_RES_PTY 547,14502
-#define LSE_RES_SOCK 548,14541
-#define LSE_RES_FORK 549,14580
-#define LSE_NOMORE_SOCK 550,14619
-#define LSE_WDIR 551,14658
-#define LSE_LOSTCON 552,14697
-#define LSE_RES_INVCHILD 553,14736
-#define LSE_RES_KILL 554,14775
-#define LSE_PTYMODE 555,14814
-#define LSE_BAD_HOST 556,14853
-#define LSE_PROTOC_NIOS 557,14892
-#define LSE_WAIT_SYS 558,14931
-#define LSE_SETPARAM 559,14970
-#define LSE_RPIDLISTLEN 560,15009
-#define LSE_BAD_CLUSTER 561,15048
-#define LSE_RES_VERSION 562,15087
-#define LSE_EXECV_SYS 563,15126
-#define LSE_RES_DIR 564,15165
-#define LSE_RES_DIRW 565,15204
-#define LSE_BAD_SERVID 566,15243
-#define LSE_NLSF_HOST 567,15282
-#define LSE_UNKWN_RESNAME 568,15321
-#define LSE_UNKWN_RESVALUE 569,15360
-#define LSE_TASKEXIST 570,15399
-#define LSE_BAD_TID 571,15438
-#define LSE_TOOMANYTASK 572,15477
-#define LSE_LIMIT_SYS 573,15516
-#define LSE_BAD_NAMELIST 574,15555
-#define LSE_LIM_NOMEM 575,15594
-#define LSE_NIO_INIT 576,15633
-#define LSE_CONF_SYNTAX 577,15672
-#define LSE_FILE_SYS 578,15711
-#define LSE_CONN_SYS 579,15750
-#define LSE_SELECT_SYS 580,15789
-#define LSE_EOF 581,15828
-#define LSE_ACCT_FORMAT 582,15867
-#define LSE_BAD_TIME 583,15906
-#define LSE_FORK 584,15945
-#define LSE_PIPE 585,15984
-#define LSE_ESUB 586,16023
-#define LSE_EAUTH 587,16062
-#define LSE_NO_FILE 588,16101
-#define LSE_NO_CHAN 589,16140
-#define LSE_BAD_CHAN 590,16179
-#define LSE_INTERNAL 591,16218
-#define LSE_PROTOCOL 592,16257
-#define LSE_MISC_SYS 593,16296
-#define LSE_RES_RUSAGE 594,16335
-#define LSE_NO_RESOURCE 595,16374
-#define LSE_BAD_RESOURCE 596,16413
-#define LSE_RES_PARENT 597,16452
-#define LSE_I18N_SETLC 598,16491
-#define LSE_I18N_CATOPEN 599,16530
-#define LSE_I18N_NOMEM 600,16569
-#define LSE_NO_MEM 601,16608
-#define LSE_FILE_CLOSE 602,16647
-#define LSE_LIMCONF_NOTREADY 603,16686
-#define LSE_MASTER_LIM_DOWN 604,16725
-#define LSE_MLS_INVALID 605,16764
-#define LSE_MLS_CLEARANCE 606,16803
-#define LSE_MLS_RHOST 607,16842
-#define LSE_MLS_DOMINATE 608,16881
-#define LSE_NERR 609,16920
-#define LSE_ISBAD_RESREQ(612,16961
-#define LSE_SYSCALL(616,17088
-#define TIMEIT(630,17525
-#define TIMEVAL(645,18197
-#define LC_SCHED 660,18847
-#define LC_EXEC 661,18879
-#define LC_TRACE 662,18911
-#define LC_COMM 663,18943
-#define LC_XDR 664,18975
-#define LC_CHKPNT 665,19007
-#define LC_FILE 666,19039
-#define LC_AUTH 667,19071
-#define LC_HANG 668,19103
-#define LC_SIGNAL 669,19135
-#define LC_PIM 670,19167
-#define LC_SYS 671,19199
-#define LC_JLIMIT 672,19231
-#define LC_PEND 673,19263
-#define LC_LOADINDX 674,19295
-#define LC_JGRP 675,19327
-#define LC_JARRAY 676,19359
-#define LC_MPI 677,19391
-#define LC_ELIM 678,19423
-#define LC_M_LOG 679,19455
-#define LC_PERFM 680,19487
-#define LOG_DEBUG1 682,19520
-#define LOG_DEBUG2 683,19556
-#define LOG_DEBUG3 684,19592
-#define LSF_NIOS_REQUEUE	686,19627
-#define ls_init(701,19931
-extern void    ls_syslog P_(778,23773
-extern void	ls_errlog P_(784,23947
-typedef int (*exceptProto)exceptProto843,26630
-struct extResInfo 845,26665
-    char *name;name846,26685
-    char *type;type847,26710
-    char *interval;interval848,26735
-    char *increasing;increasing849,26760
-    char *des;des850,26785
-#undef P_859,27028
+#define _LS_VERSION_ 39,1118
+#define _LS_VERSION_ 41,1230
+#define _LS_VERSION_ 45,1371
+#define _LS_VERSION_ 47,1483
+#define LAVA_VERSION 51,1591
+#define LSF_VERSION 52,1616
+#define LAVA_XDR_VERSION1_0 53,1649
+#define LAVA_CURRENT_VERSION 55,1689
+#define P_(58,1749
+#define P_(61,1791
+#define LSF_DEFAULT_SOCKS 66,1838
+#define MAXLINELEN 67,1873
+#define MAXLSFNAMELEN 68,1909
+#define MAXSRES 70,1945
+#define MAXRESDESLEN 71,1980
+#define NBUILTINDEX 72,2016
+#define MAXTYPES 73,2051
+#define MAXMODELS 74,2087
+#define MAXTYPES_31 75,2123
+#define MAXMODELS_31 76,2158
+#define MAXFILENAMELEN 77,2193
+#define MAXEVARS 78,2229
+#define GENMALLOCPACE 80,2265
+#define FIRST_RES_SOCK 82,2303
+# define LS_WAIT_T 85,2354
+# define LS_STATUS(86,2389
+# define LS_WAIT_INT88,2434
+# define LS_WAIT_T 89,2455
+# define LS_STATUS(90,2483
+#define R15S 94,2520
+#define R1M 95,2545
+#define R15M 96,2570
+#define UT 97,2595
+#define PG 98,2620
+#define IO 99,2645
+#define LS 100,2670
+#define IT 101,2695
+#define TMP 102,2720
+#define SWP 103,2745
+#define MEM 104,2770
+#define USR1 105,2796
+#define USR2 106,2822
+#define INFINIT_LOAD 108,2849
+#define INFINIT_FLOAT 109,2894
+#define INFINIT_INT 111,2940
+#define INFINIT_LONG_INT 112,2974
+#define INFINIT_SHORT 114,3014
+#define DEFAULT_RLIMIT 116,3045
+#define LSF_RLIMIT_CPU 118,3076
+#define LSF_RLIMIT_FSIZE 119,3106
+#define LSF_RLIMIT_DATA 120,3136
+#define LSF_RLIMIT_STACK 121,3166
+#define LSF_RLIMIT_CORE 122,3196
+#define LSF_RLIMIT_RSS 123,3226
+#define LSF_RLIMIT_NOFILE 124,3256
+#define LSF_RLIMIT_OPEN_MAX 125,3286
+#define LSF_RLIMIT_VMEM 126,3316
+#define LSF_RLIMIT_SWAP 127,3346
+#define LSF_RLIMIT_RUN 128,3390
+#define LSF_RLIMIT_PROCESS 129,3420
+#define LSF_RLIM_NLIMITS 130,3451
+#define LSF_NULL_MODE 133,3484
+#define LSF_LOCAL_MODE 134,3511
+#define LSF_REMOTE_MODE 135,3538
+#define RF_MAXHOSTS 137,3566
+#define RF_CMD_MAXHOSTS 139,3589
+#define RF_CMD_RXFLAGS 140,3615
+#define STATUS_TIMEOUT 143,3642
+#define STATUS_IOERR 144,3676
+#define STATUS_EXCESS 145,3710
+#define STATUS_REX_NOMEM 146,3744
+#define STATUS_REX_FATAL 147,3778
+#define STATUS_REX_CWD 148,3812
+#define STATUS_REX_PTY 149,3846
+#define STATUS_REX_SP 150,3880
+#define STATUS_REX_FORK 151,3914
+#define STATUS_REX_TOK 152,3948
+#define STATUS_REX_UNKNOWN 153,3982
+#define STATUS_REX_NOVCL 154,4016
+#define STATUS_REX_NOSYM 155,4050
+#define STATUS_REX_VCL_INIT 156,4084
+#define STATUS_REX_VCL_SPAWN 157,4118
+#define STATUS_REX_EXEC 158,4152
+#define STATUS_REX_MLS_INVAL 159,4186
+#define STATUS_REX_MLS_CLEAR 160,4220
+#define STATUS_REX_MLS_RHOST 161,4254
+#define STATUS_REX_MLS_DOMIN 162,4288
+#define REX_FATAL_ERROR(164,4323
+#define   REXF_USEPTY 177,5106
+#define   REXF_CLNTDIR 178,5141
+#define   REXF_TASKPORT 179,5176
+#define   REXF_SHMODE 180,5211
+#define   REXF_TASKINFO 181,5246
+#define   REXF_REQVCL 182,5281
+#define   REXF_SYNCNIOS 183,5316
+#define   REXF_TTYASYNC 184,5351
+#define   REXF_STDERR 185,5386
+#define EXACT 187,5422
+#define OK_ONLY 188,5449
+#define NORMALIZE 189,5476
+#define LOCALITY 190,5503
+#define IGNORE_RES 191,5530
+#define LOCAL_ONLY 192,5557
+#define DFT_FROMTYPE 193,5584
+#define ALL_CLUSTERS 194,5611
+#define EFFECTIVE 195,5638
+#define RECV_FROM_CLUSTERS 196,5666
+#define NEED_MY_CLUSTER_NAME 197,5699
+#define SEND_TO_CLUSTERS 199,5735
+#define FROM_MASTER 201,5769
+#define KEEPUID 203,5797
+#define RES_CMD_REBOOT 205,5825
+#define RES_CMD_SHUTDOWN 206,5859
+#define RES_CMD_LOGON 207,5893
+#define RES_CMD_LOGOFF 208,5927
+#define LIM_CMD_REBOOT 210,5962
+#define LIM_CMD_SHUTDOWN 211,5996
+struct connectEnt 214,6032
+    char *hostname;hostname215,6052
+    int csock[csock216,6072
+#define INTEGER_BITS 219,6094
+#define GET_INTNUM(220,6124
+#define LIM_UNAVAIL 222,6170
+#define LIM_LOCKEDU 223,6202
+#define LIM_LOCKEDW 224,6234
+#define LIM_BUSY 225,6266
+#define LIM_RESDOWN 226,6298
+#define LIM_LOCKEDM 227,6330
+#define LIM_OK_MASK 229,6365
+#define LIM_SBDDOWN 231,6400
+#define LS_ISUNAVAIL(236,6438
+#define LS_ISBUSYON(238,6507
+#define LS_ISBUSY(241,6626
+#define LS_ISLOCKEDU(243,6685
+#define LS_ISLOCKEDW(245,6752
+#define LS_ISLOCKEDM(247,6819
+#define LS_ISLOCKED(249,6886
+#define LS_ISRESDOWN(251,6983
+#define LS_ISSBDDOWN(253,7050
+#define LS_ISOK(255,7117
+#define LS_ISOKNRES(258,7177
+struct placeInfo 260,7258
+   char  hostName[hostName261,7277
+   int   numtask;262,7312
+struct hostLoad 265,7334
+   char  hostName[hostName266,7352
+   int   *status;status267,7387
+   float *li;li268,7405
+enum valueType 271,7423
+enum valueType {LS_BOOLEAN,LS_BOOLEAN271,7423
+enum valueType {LS_BOOLEAN, LS_NUMERIC,271,7423
+enum valueType {LS_BOOLEAN, LS_NUMERIC, LS_STRING,271,7423
+enum valueType {LS_BOOLEAN, LS_NUMERIC, LS_STRING, LS_EXTERNAL}LS_EXTERNAL271,7423
+#define BOOLEAN 272,7488
+#define NUMERIC 273,7516
+#define STRING 274,7544
+#define EXTERNAL 275,7571
+enum orderType 276,7600
+enum orderType {INCR,INCR276,7600
+enum orderType {INCR, DECR,276,7600
+enum orderType {INCR, DECR, NA}NA276,7600
+#define RESF_BUILTIN 278,7634
+#define RESF_DYNAMIC 279,7664
+#define RESF_GLOBAL 280,7694
+#define RESF_SHARED 281,7724
+#define RESF_EXTERNAL 282,7754
+#define RESF_RELEASE 283,7784
+#define RESF_DEFINED_IN_RESOURCEMAP 284,7814
+struct resItem 288,7859
+    char name[name289,7876
+    char des[des290,7906
+    enum valueType valueType;291,7934
+    enum orderType orderType;292,7964
+    int  flags;293,7994
+    int  interval;294,8010
+struct lsInfo 297,8033
+    int    nRes;298,8049
+    struct resItem *resTable;resTable299,8066
+    int    nTypes;300,8096
+    char   hostTypes[hostTypes301,8115
+    int    nModels;302,8162
+    char   hostModels[hostModels303,8182
+    char   hostArchs[hostArchs304,8231
+    int    modelRefs[modelRefs305,8279
+    float  cpuFactor[cpuFactor306,8312
+    int    numIndx;307,8345
+    int    numUsrIndx;308,8365
+#define CLUST_STAT_OK 311,8392
+#define CLUST_STAT_UNAVAIL 312,8431
+struct clusterInfo 314,8471
+    char  clusterName[clusterName315,8492
+    int   status;316,8530
+    char  masterName[masterName317,8548
+    char  managerName[managerName318,8586
+    int   managerId;319,8624
+    int   numServers;320,8645
+    int   numClients;321,8667
+    int   nRes;322,8689
+    char  **resources;resources323,8705
+    int    nTypes;324,8728
+    char **hostTypes;hostTypes325,8747
+    int    nModels;326,8769
+    char **hostModels;hostModels327,8789
+    int    nAdmins;328,8812
+    int  *adminIds;adminIds329,8832
+    char **admins;admins330,8852
+struct hostInfo 333,8875
+    char  hostName[hostName334,8893
+    char  *hostType;hostType335,8929
+    char  *hostModel;hostModel336,8950
+    float cpuFactor;337,8972
+    int   maxCpus;338,8993
+    int   maxMem;339,9012
+    int   maxSwap;340,9030
+    int   maxTmp;341,9049
+    int   nDisks;342,9067
+    int   nRes;343,9085
+    char  **resources;resources344,9101
+    char  *windows;windows345,9124
+    int   numIndx;346,9144
+    float *busyThreshold;busyThreshold347,9163
+    char  isServer;348,9189
+    int   rexPriority;349,9209
+struct config_param 352,9236
+    char *paramName;paramName353,9258
+    char *paramValue;paramValue354,9279
+struct  lsfRusage 358,9306
+        double ru_utime;359,9326
+        double ru_stime;360,9351
+        double  ru_maxrss;361,9376
+        double  ru_ixrss;362,9403
+        double  ru_ismrss;363,9429
+        double  ru_idrss;364,9456
+        double  ru_isrss;365,9482
+        double  ru_minflt;366,9508
+        double  ru_majflt;367,9535
+        double  ru_nswap;368,9562
+        double  ru_inblock;369,9588
+        double  ru_oublock;370,9616
+        double  ru_ioch;371,9644
+        double  ru_msgsnd;372,9669
+        double  ru_msgrcv;373,9696
+        double  ru_nsignals;374,9723
+        double  ru_nvcsw;375,9752
+        double  ru_nivcsw;376,9778
+        double  ru_exutime;377,9805
+struct lsfAcctRec 381,9838
+    int pid;382,9858
+    char *username;username383,9871
+    int exitStatus;384,9891
+    time_t dispTime;385,9911
+    time_t termTime;386,9932
+    char *fromHost;fromHost387,9953
+    char *execHost;execHost388,9973
+    char *cwd;cwd389,9993
+    char *cmdln;cmdln390,10008
+    struct lsfRusage lsfRu;391,10025
+#define NIO_STDIN_ON 396,10059
+#define NIO_STDIN_OFF 397,10108
+#define NIO_TAGSTDOUT_ON 398,10157
+#define NIO_TAGSTDOUT_OFF 399,10206
+#define NIO_TASK_STDINON 401,10256
+#define NIO_TASK_STDINOFF 402,10305
+#define NIO_TASK_ALL 403,10354
+#define NIO_TASK_CONNECTED 404,10403
+enum nioType 406,10453
+    NIO_STATUS,407,10468
+    NIO_STDOUT,408,10484
+    NIO_EOF,409,10500
+    NIO_IOERR,410,10513
+    NIO_REQUEUE,411,10528
+    NIO_STDERR412,10545
+struct nioEvent 415,10564
+    int tid;416,10582
+    enum nioType type;417,10595
+    int status;418,10618
+struct nioInfo 421,10638
+    int num;422,10655
+    struct nioEvent *ioTask;ioTask423,10668
+struct confNode 428,10703
+    struct confNode *leftPtr;leftPtr429,10721
+    struct confNode *rightPtr;rightPtr430,10751
+    struct confNode *fwPtr;fwPtr431,10782
+    char        *cond;cond432,10810
+    int         beginLineNum;433,10833
+    int         numLines;434,10863
+    char        **lines;lines435,10889
+    char        tag;436,10914
+struct pStack 439,10939
+    int top;440,10955
+    int size;441,10968
+    struct confNode **nodes;nodes442,10982
+struct confHandle 445,11015
+    struct confNode *rootNode;rootNode446,11035
+    char        *fname;fname447,11066
+    struct confNode *curNode;curNode448,11090
+    int         lineCount;449,11120
+    struct pStack *ptrStack;ptrStack450,11147
+struct lsConf 453,11180
+    struct confHandle *confhandle;confhandle454,11196
+    int         numConds;455,11231
+    char        **conds;conds456,11257
+    int         *values;values457,11282
+struct sharedConf 460,11311
+    struct lsInfo   *lsinfo;lsinfo461,11331
+    char            *clusterName;clusterName462,11360
+    char            *servers;servers463,11394
+typedef struct lsSharedResourceInstance 466,11428
+    char *value;value467,11470
+    int  nHosts;468,11487
+    char **hostList;hostList469,11504
+} LS_SHARED_RESOURCE_INST_T;471,11526
+typedef struct lsSharedResourceInfo 473,11556
+    char *resourceName;resourceName474,11594
+    int  nInstances;475,11618
+    LS_SHARED_RESOURCE_INST_T  *instances;instances476,11639
+} LS_SHARED_RESOURCE_INFO_T;477,11682
+struct clusterConf 479,11712
+    struct clusterInfo *clinfo;clinfo480,11733
+    int       numHosts;481,11765
+    struct hostInfo *hosts;hosts482,11789
+    int numShareRes;483,11817
+    LS_SHARED_RESOURCE_INFO_T *shareRes;shareRes484,11838
+struct pidInfo 489,11885
+    int pid;490,11902
+    int ppid;491,11915
+    int pgid;492,11929
+    int jobid;493,11943
+struct jRusage 496,11962
+    int mem;497,11979
+    int swap;498,11992
+    int utime;499,12006
+    int stime;500,12021
+    int npids;501,12036
+    struct pidInfo *pidInfo;pidInfo502,12051
+    int npgids;504,12081
+    int *pgid;pgid505,12097
+#define LSE_NO_ERR 510,12118
+#define LSE_BAD_XDR 511,12152
+#define LSE_MSG_SYS 512,12186
+#define LSE_BAD_ARGS 513,12220
+#define LSE_MASTR_UNKNW 514,12254
+#define LSE_LIM_DOWN 515,12288
+#define LSE_PROTOC_LIM 516,12322
+#define LSE_SOCK_SYS 517,12356
+#define LSE_ACCEPT_SYS 518,12390
+#define LSE_BAD_TASKF 519,12424
+#define LSE_NO_HOST 520,12458
+#define LSE_NO_ELHOST 521,12493
+#define LSE_TIME_OUT 522,12528
+#define LSE_NIOS_DOWN 523,12563
+#define LSE_LIM_DENIED 524,12598
+#define LSE_LIM_IGNORE 525,12633
+#define LSE_LIM_BADHOST 526,12668
+#define LSE_LIM_ALOCKED 527,12703
+#define LSE_LIM_NLOCKED 528,12738
+#define LSE_LIM_BADMOD 529,12773
+#define LSE_SIG_SYS 530,12808
+#define LSE_BAD_EXP 531,12843
+#define LSE_NORCHILD 532,12878
+#define LSE_MALLOC 533,12913
+#define LSE_LSFCONF 534,12948
+#define LSE_BAD_ENV 535,12983
+#define LSE_LIM_NREG 536,13018
+#define LSE_RES_NREG 537,13053
+#define LSE_RES_NOMORECONN 538,13088
+#define LSE_BADUSER 539,13123
+#define LSE_RES_ROOTSECURE 540,13158
+#define LSE_RES_DENIED 541,13193
+#define LSE_BAD_OPCODE 542,13228
+#define LSE_PROTOC_RES 543,13263
+#define LSE_RES_CALLBACK 544,13298
+#define LSE_RES_NOMEM 545,13333
+#define LSE_RES_FATAL 546,13368
+#define LSE_RES_PTY 547,13403
+#define LSE_RES_SOCK 548,13438
+#define LSE_RES_FORK 549,13473
+#define LSE_NOMORE_SOCK 550,13508
+#define LSE_WDIR 551,13543
+#define LSE_LOSTCON 552,13578
+#define LSE_RES_INVCHILD 553,13613
+#define LSE_RES_KILL 554,13648
+#define LSE_PTYMODE 555,13683
+#define LSE_BAD_HOST 556,13718
+#define LSE_PROTOC_NIOS 557,13753
+#define LSE_WAIT_SYS 558,13788
+#define LSE_SETPARAM 559,13823
+#define LSE_RPIDLISTLEN 560,13858
+#define LSE_BAD_CLUSTER 561,13893
+#define LSE_RES_VERSION 562,13928
+#define LSE_EXECV_SYS 563,13963
+#define LSE_RES_DIR 564,13998
+#define LSE_RES_DIRW 565,14033
+#define LSE_BAD_SERVID 566,14068
+#define LSE_NLSF_HOST 567,14103
+#define LSE_UNKWN_RESNAME 568,14138
+#define LSE_UNKWN_RESVALUE 569,14173
+#define LSE_TASKEXIST 570,14208
+#define LSE_BAD_TID 571,14243
+#define LSE_TOOMANYTASK 572,14278
+#define LSE_LIMIT_SYS 573,14313
+#define LSE_BAD_NAMELIST 574,14348
+#define LSE_LIM_NOMEM 575,14383
+#define LSE_NIO_INIT 576,14418
+#define LSE_CONF_SYNTAX 577,14453
+#define LSE_FILE_SYS 578,14488
+#define LSE_CONN_SYS 579,14523
+#define LSE_SELECT_SYS 580,14558
+#define LSE_EOF 581,14593
+#define LSE_ACCT_FORMAT 582,14628
+#define LSE_BAD_TIME 583,14663
+#define LSE_FORK 584,14698
+#define LSE_PIPE 585,14733
+#define LSE_ESUB 586,14768
+#define LSE_EAUTH 587,14803
+#define LSE_NO_FILE 588,14838
+#define LSE_NO_CHAN 589,14873
+#define LSE_BAD_CHAN 590,14908
+#define LSE_INTERNAL 591,14943
+#define LSE_PROTOCOL 592,14978
+#define LSE_MISC_SYS 593,15013
+#define LSE_RES_RUSAGE 594,15048
+#define LSE_NO_RESOURCE 595,15083
+#define LSE_BAD_RESOURCE 596,15118
+#define LSE_RES_PARENT 597,15153
+#define LSE_I18N_SETLC 598,15188
+#define LSE_I18N_CATOPEN 599,15223
+#define LSE_I18N_NOMEM 600,15258
+#define LSE_NO_MEM 601,15293
+#define LSE_FILE_CLOSE 602,15328
+#define LSE_LIMCONF_NOTREADY 603,15363
+#define LSE_MASTER_LIM_DOWN 604,15398
+#define LSE_MLS_INVALID 605,15433
+#define LSE_MLS_CLEARANCE 606,15468
+#define LSE_MLS_RHOST 607,15503
+#define LSE_MLS_DOMINATE 608,15538
+#define LSE_NERR 609,15573
+#define LSE_ISBAD_RESREQ(612,15610
+#define LSE_SYSCALL(616,15797
+#define TIMEIT(630,16570
+#define TIMEVAL(645,17222
+#define LC_SCHED 660,17872
+#define LC_EXEC 661,17903
+#define LC_TRACE 662,17934
+#define LC_COMM 663,17965
+#define LC_XDR 664,17996
+#define LC_CHKPNT 665,18027
+#define LC_FILE 666,18058
+#define LC_AUTH 667,18089
+#define LC_HANG 668,18120
+#define LC_SIGNAL 669,18151
+#define LC_PIM 670,18182
+#define LC_SYS 671,18213
+#define LC_JLIMIT 672,18244
+#define LC_PEND 673,18275
+#define LC_LOADINDX 674,18306
+#define LC_JGRP 675,18337
+#define LC_JARRAY 676,18368
+#define LC_MPI 677,18399
+#define LC_ELIM 678,18430
+#define LC_M_LOG 679,18461
+#define LC_PERFM 680,18492
+#define LOG_DEBUG1 682,18524
+#define LOG_DEBUG2 683,18558
+#define LOG_DEBUG3 684,18592
+#define LSF_NIOS_REQUEUE 686,18627
+#define ls_init(701,18934
+extern void    ls_syslog P_(778,22947
+extern void     ls_errlog P_(784,23117
+typedef int (*exceptProto)exceptProto843,25854
+struct extResInfo 845,25889
+    char *name;name846,25909
+    char *type;type847,25925
+    char *interval;interval848,25941
+    char *increasing;increasing849,25961
+    char *des;des850,25983
+#undef P_859,26215
 
 ../lib/lib.channel.c,1178
 #define MAXLOOP 26,885
@@ -1689,20 +1689,20 @@ static HostSock *hostSock;hostSock31,987
 static struct connectEnt connlist[connlist33,1015
 static char   *connnamelist[connnamelist34,1062
 int cli_nios_fd[cli_nios_fd36,1106
-inithostsock_(43,1252
-initconntbl_(49,1302
-connected_(57,1364
-hostIndex_(90,1926
-delhostbysock_(108,2287
-gethostbysock_(134,2742
-_gethostdata_(160,3197
-_isconnected_(182,3697
-_getcurseqno_(196,3906
-_setcurseqno_(208,4049
-ls_isconnected(220,4205
-getConnectionNum_(240,4595
-_findmyconnections_(263,5066
-ls_findmyconnections(288,5584
+inithostsock_(43,1249
+initconntbl_(49,1300
+connected_(56,1360
+hostIndex_(90,1914
+delhostbysock_(107,2261
+gethostbysock_(133,2712
+_gethostdata_(159,3158
+_isconnected_(184,3641
+_getcurseqno_(199,3848
+_setcurseqno_(211,3989
+ls_isconnected(223,4143
+getConnectionNum_(243,4523
+_findmyconnections_(266,5019
+ls_findmyconnections(295,5517
 
 ../lib/lib.control.c,175
 ls_limcontrol(25,849
@@ -1727,23 +1727,23 @@ ls_initdebug 26,846
 #define LSF_LOG_MASK 47,1319
 
 ../lib/lib.dir.c,362
-static struct hTab hashTab;46,1261
-char chosenPath[chosenPath55,1545
-usePath(58,1589
-mychdir_(65,1673
-tryPwd(212,4667
-int getMap_(283,5948
-putin_(297,6234
-netHostChdir(313,6559
-mountNet_(340,7033
-myopen_(373,7647
-myfopen_(405,8418
-mystat_(437,9171
-mychmod_(469,9904
-myexecv_(501,10637
-myunlink_(539,11369
-mymkdir_(574,12072
-myrename_(606,12806
+static struct hTab hashTab;46,1259
+char chosenPath[chosenPath55,1543
+usePath(58,1587
+mychdir_(65,1669
+tryPwd(212,4556
+int getMap_(283,5773
+putin_(297,6058
+netHostChdir(313,6342
+mountNet_(340,6813
+myopen_(373,7413
+myfopen_(405,8182
+mystat_(437,8930
+mychmod_(469,9660
+myexecv_(501,10392
+myunlink_(539,11122
+mymkdir_(574,11823
+myrename_(606,12555
 
 ../lib/lib.eauth.c,354
 #define exit(31,1018
@@ -1765,24 +1765,24 @@ hTab rtask_table;25,865
 hTab ltask_table;26,883
 static char listok;28,902
 ls_resreq(33,964
-ls_eligible(46,1140
-inittasklists_(86,1874
-readtaskfile_(133,3134
-    enum phase 137,3283
-    enum phase {ph_begin,ph_begin137,3283
-    enum phase {ph_begin, ph_remote,137,3283
-    enum phase {ph_begin, ph_remote, ph_local}ph_local137,3283
-writetaskfile_(265,6309
-ls_insertrtask(305,7239
-ls_insertltask(328,7589
-inserttask_(341,7749
-ls_deletertask(378,8456
-ls_deleteltask(389,8608
-deletetask_(400,8763
-ls_listrtask(431,9261
-ls_listltask(442,9444
-listtask_(455,9687
-tcomp_(510,11065
+ls_eligible(46,1139
+inittasklists_(86,1870
+readtaskfile_(133,3117
+    enum phase 137,3265
+    enum phase {ph_begin,ph_begin137,3265
+    enum phase {ph_begin, ph_remote,137,3265
+    enum phase {ph_begin, ph_remote, ph_local}ph_local137,3265
+writetaskfile_(265,6271
+ls_insertrtask(305,7199
+ls_insertltask(328,7546
+inserttask_(341,7705
+ls_deletertask(377,8387
+ls_deleteltask(388,8538
+deletetask_(399,8692
+ls_listrtask(430,9188
+ls_listltask(441,9370
+listtask_(454,9612
+tcomp_(509,10998
 
 ../lib/lib.err.c,313
 #define HAS_VSNPRINTF27,900
@@ -2090,14 +2090,14 @@ ls_sharedresourceinfo(680,18959
 
 ../lib/lib.init.c,190
 #define NL_SETN 29,936
-int mlsSbdMode 31,957
-char rootuid_ 33,984
-ls_initrex(36,1012
-opensocks_(98,2392
-ls_fdbusy(164,4032
-lsfSetXUid(191,4628
-lsfExecLog(207,4933
-lsfExecX(224,5389
+int mlsSbdMode 31,956
+char rootuid_ 33,981
+ls_initrex(36,1009
+opensocks_(98,2548
+ls_fdbusy(166,4285
+lsfSetXUid(200,4971
+lsfExecLog(216,5286
+lsfExecX(233,5776
 
 ../lib/lib.initenv.c,782
 #define NL_SETN 24,865
@@ -2768,59 +2768,59 @@ getLogMask(347,8130
 getLogClass_ 410,9535
 ls_closelog_ext(473,11390
 
-../lib/lib.table.c,381
-insList_(29,1010
-remList_(45,1347
-initList_(59,1584
-h_initTab_(72,1757
-h_freeTab_(96,2232
-h_TabEmpty_(127,3019
-h_delTab_(133,3088
-h_getEnt_(139,3193
-h_addEnt_(149,3401
-lh_addEnt_(185,4265
-h_delEnt_(220,5018
-h_rmEnt_(235,5312
-h_firstEnt_(249,5537
-h_nextEnt_(268,5823
-getAddr(295,6437
-h_findEnt(307,6608
-resetTab(323,6942
-h_delRef_(350,7635
-h_freeRefTab_(362,7857
+../lib/lib.table.c,386
+insList_(33,1144
+remList_(42,1345
+initList_(56,1595
+h_initTab_(64,1700
+h_freeTab_(84,2136
+h_TabEmpty_(115,3013
+h_delTab_(121,3082
+h_getEnt_(131,3254
+h_addEnt_(144,3501
+h_delEnt_(183,4419
+h_rmEnt_(200,4751
+h_firstEnt_(218,5096
+h_nextEnt_(238,5409
+getAddr(267,6084
+h_findEnt(279,6253
+resetTab(297,6607
+h_delRef_(326,7365
+h_freeRefTab_(338,7593
+getClosestPrime(365,8210
 
-../lib/lib.table.h,1020
+../lib/lib.table.h,1106
 #define _LIB_TABLE_H_20,786
 #define RESETFACTOR 22,809
-#define RESETLIMIT 23,838
-#define DEFAULT_SLOTS 24,869
-struct hLinks 26,900
-    struct hLinks *fwPtr;fwPtr27,916
-    struct hLinks *bwPtr;bwPtr28,942
-typedef struct hLinks hLinks;31,972
-typedef struct hEnt 33,1003
-    hLinks   links;34,1025
-    int      *hData;hData35,1057
-    char     *keyname;keyname36,1089
-} hEnt;37,1120
-typedef struct hTab 40,1130
-    hLinks *slotPtr;slotPtr41,1152
-    int     numEnts;42,1183
-    int     size;43,1215
-} hTab;44,1247
-typedef struct sTab 47,1257
-    hTab     *tabPtr;tabPtr48,1279
-    int      nIndex;49,1306
-    hEnt     *hEntPtr;hEntPtr50,1339
-    hLinks   *hList;hList51,1371
-} sTab;52,1402
-#define HTAB_ZERO_OUT(54,1411
-#define HTAB_NUM_ELEMENTS(60,1508
-#define FOR_EACH_HTAB_ENTRY(62,1563
-#define END_FOR_EACH_HTAB_ENTRY 70,1861
-#define FOR_EACH_HTAB_DATA(72,1898
-#define END_FOR_EACH_HTAB_DATA 82,2292
-typedef void       (*HTAB_DATA_DESTROY_FUNC_T)HTAB_DATA_DESTROY_FUNC_T84,2328
+#define RESETLIMIT 23,835
+#define DEFAULT_SLOTS 24,863
+struct hLinks 29,955
+    struct hLinks *fwPtr;fwPtr30,971
+    struct hLinks *bwPtr;bwPtr31,997
+typedef struct hEnt 36,1065
+    struct hLinks   *fwPtr;fwPtr37,1087
+    struct hLinks   *bwPtr;bwPtr38,1115
+    void            *hData;hData39,1143
+    char            *keyname;keyname40,1171
+} hEnt;41,1201
+typedef struct hTab 45,1248
+    struct hLinks   *slotPtr;slotPtr46,1270
+    int             numEnts;47,1300
+    int             size;48,1329
+} hTab;49,1355
+typedef struct sTab 52,1365
+    hTab            *tabPtr;tabPtr53,1387
+    int             nIndex;54,1416
+    hEnt            *hEntPtr;hEntPtr55,1444
+    struct hLinks   *hList;hList56,1474
+} sTab;57,1502
+#define HTAB_ZERO_OUT(59,1511
+#define HTAB_NUM_ELEMENTS(65,1608
+#define FOR_EACH_HTAB_ENTRY(67,1663
+#define END_FOR_EACH_HTAB_ENTRY 75,1961
+#define FOR_EACH_HTAB_DATA(77,1998
+#define END_FOR_EACH_HTAB_DATA 87,2392
+typedef void       (*HTAB_DATA_DESTROY_FUNC_T)HTAB_DATA_DESTROY_FUNC_T89,2428
 
 ../lib/lib.term.c,751
 #define VREPRINT 28,936
@@ -4048,76 +4048,76 @@ struct listSet 19,762
 struct listSetIterator 24,850
     struct listSet   *pos;pos25,875
 
-../intlib/lsftcl.c,522
+../intlib/lsftcl.c,590
 #define NL_SETN 25,884
-static struct tclHostData *currHPtr;currHPtr27,912
-static struct Tcl_Interp *globinterp globinterp28,949
-static char overRideFromType;29,994
-static char runTimeDataQueried;30,1024
-static int numIndx;31,1056
-static int nRes;32,1076
-static struct tclLsInfo *myTclLsInfo myTclLsInfo33,1093
-numericValue 43,1499
-booleanValue(108,3760
-stringValue(147,4633
-definedCmd(277,8368
-initTcl(322,9493
-evalResReq(442,13319
-getResValue 493,14582
-copyTclLsInfo 513,15181
-freeTclLsInfo 564,16827
+static struct tclHostData   *hPtr;hPtr27,908
+static struct Tcl_Interp    *globinterp;globinterp28,943
+static char                 overRideFromType;29,984
+static char                 runTimeDataQueried;30,1030
+static int                  numIndx;31,1078
+static int                  nRes;32,1115
+static struct tclLsInfo     *myTclLsInfo;myTclLsInfo33,1149
+numericValue(46,1625
+booleanValue(139,3867
+stringValue(188,4937
+definedCmd(335,9053
+initTcl(395,10414
+evalResReq(581,15656
+getResValue(636,16962
+copyTclLsInfo(662,17589
+freeTclLsInfo(702,18655
 
-../intlib/lsftcl.h,1684
-    char     *name;name19,777
-    int clientData;20,797
-} attribFunc;21,817
-#define   CPUFACTOR 24,833
-#define   NDISK 25,870
-#define   REXPRI 26,911
-#define   MAXCPUS_ 27,952
-#define   MAXMEM 28,993
-#define   MAXSWAP 29,1034
-#define   MAXTMP 30,1075
-#define   CPU_ 31,1116
-#define   SERVER 32,1157
-#define   HOSTTYPE 34,1199
-#define   HOSTMODEL 35,1223
-#define   HOSTSTATUS 36,1247
-#define   HOSTNAME 37,1271
-#define   LAST_STRING 38,1295
-#define   DEFINEDFUNCTION 39,1330
-#define   TCL_CHECK_SYNTAX 41,1360
-#define   TCL_CHECK_EXPRESSION 42,1390
-struct tclHostData 44,1424
-    char    *hostName;hostName45,1445
-    int      maxCpus;46,1468
-    int      maxMem;47,1490
-    int      maxSwap;48,1511
-    int      maxTmp;49,1533
-    int      nDisks;50,1554
-    short hostInactivityCount;51,1575
-    int     *status;status52,1606
-    float   *loadIndex;loadIndex53,1627
-    int     rexPriority;54,1651
-    char    *hostType;hostType55,1677
-    char    *hostModel;hostModel56,1700
-    char    *fromHostType;fromHostType57,1724
-    char    *fromHostModel;fromHostModel58,1751
-    float   cpuFactor;59,1779
-    int     ignDedicatedResource;60,1802
-    int     *resBitMaps;resBitMaps61,1836
-    int     *DResBitMaps;DResBitMaps62,1861
-    int     numResPairs;63,1887
-    struct resPair *resPairs;resPairs64,1912
-    int      flag;65,1942
-    int      overRideFromType;66,1961
-struct tclLsInfo 69,1996
-    int  numIndx;70,2015
-    char **indexNames;indexNames71,2033
-    int  nRes;72,2056
-    char **resName;resName73,2071
-    int  *stringResBitMaps;stringResBitMaps74,2091
-    int  *numericResBitMaps;numericResBitMaps75,2119
+../intlib/lsftcl.h,1685
+    char   *name;name19,777
+    int    clientData;20,795
+} attribFunc;21,818
+#define   CPUFACTOR 24,834
+#define   NDISK 25,872
+#define   REXPRI 26,914
+#define   MAXCPUS_ 27,956
+#define   MAXMEM 28,998
+#define   MAXSWAP 29,1040
+#define   MAXTMP 30,1082
+#define   CPU_ 31,1124
+#define   SERVER 32,1166
+#define   HOSTTYPE 34,1209
+#define   HOSTMODEL 35,1232
+#define   HOSTSTATUS 36,1255
+#define   HOSTNAME 37,1278
+#define   LAST_STRING 38,1301
+#define   DEFINEDFUNCTION 39,1338
+#define   TCL_CHECK_SYNTAX 41,1367
+#define   TCL_CHECK_EXPRESSION 42,1397
+struct tclHostData 44,1431
+    char    *hostName;hostName45,1452
+    int      maxCpus;46,1475
+    int      maxMem;47,1497
+    int      maxSwap;48,1518
+    int      maxTmp;49,1540
+    int      nDisks;50,1561
+    short hostInactivityCount;51,1582
+    int     *status;status52,1613
+    float   *loadIndex;loadIndex53,1634
+    int     rexPriority;54,1658
+    char    *hostType;hostType55,1683
+    char    *hostModel;hostModel56,1706
+    char    *fromHostType;fromHostType57,1730
+    char    *fromHostModel;fromHostModel58,1757
+    float   cpuFactor;59,1785
+    int     ignDedicatedResource;60,1808
+    int     *resBitMaps;resBitMaps61,1842
+    int     *DResBitMaps;DResBitMaps62,1867
+    int     numResPairs;63,1893
+    struct resPair *resPairs;resPairs64,1918
+    int      flag;65,1948
+    int      overRideFromType;66,1967
+struct tclLsInfo 69,2002
+    int  numIndx;70,2021
+    char **indexNames;indexNames71,2039
+    int  nRes;72,2062
+    char **resName;resName73,2077
+    int  *stringResBitMaps;stringResBitMaps74,2097
+    int  *numericResBitMaps;numericResBitMaps75,2125
 
 ../intlib/misc.c,1027
 #define NL_SETN 30,976
@@ -4170,51 +4170,51 @@ makeShare(207,6315
 isStaticSharedResource(308,8903
 isDynamicSharedResource(316,9099
 
-../intlib/resreq.c,1165
+../intlib/resreq.c,1177
 struct sections 24,877
-    char *select;select25,895
-    char *order;order26,913
-    char *rusage;rusage27,930
-    char *filter;filter28,948
-    char *span;span29,966
-enum syntaxType 32,986
-enum syntaxType {OLD,OLD32,986
-enum syntaxType {OLD, NEW,32,986
-enum syntaxType {OLD, NEW, EITHER}EITHER32,986
-hTab resNameTbl 52,1894
-hTab keyNameTbl 53,1926
-#define KEY_DURATION 54,1958
-#define KEY_HOSTS 55,1984
-#define KEY_PTILE 56,2010
-#define KEY_DECAY 57,2036
-#define NUM_KEYS 58,2062
-#define ALLOC_STRING(60,2089
-#define REALLOC_STRING(68,2444
-initParse 83,3209
-getResEntry(127,4649
-getKeyEntry(139,4844
-parseResReq(151,5033
-parseSection(223,7096
-#define NSECTIONS 229,7261
-#define SELECT_SECT 230,7287
-#define ORDER_SECT 231,7313
-#define RUSAGE_SECT 232,7339
-#define FILTER_SECT 233,7365
-#define SPAN_SECT 234,7391
-parseSelect(316,9316
-parseOrder(465,13398
-parseFilter(506,14352
-parseUsage 538,15150
-parseSpan 610,17115
-getSyntax(655,18289
-validValue(680,18958
-resToClassNew(726,20263
-resToClassOld(890,25916
-setDefaults(1015,29401
-freeResVal 1085,31236
-initResVal 1104,31621
-getTimeVal(1120,31890
-getVal(1146,32399
+    char   *select;select25,895
+    char   *order;order26,915
+    char   *rusage;rusage27,934
+    char   *filter;filter28,954
+    char   *span;span29,974
+enum syntaxType 32,996
+enum syntaxType {OLD,OLD32,996
+enum syntaxType {OLD, NEW,32,996
+enum syntaxType {OLD, NEW, EITHER}EITHER32,996
+hTab resNameTbl 69,2264
+hTab keyNameTbl 70,2296
+#define KEY_DURATION 71,2328
+#define KEY_HOSTS 72,2354
+#define KEY_PTILE 73,2380
+#define KEY_DECAY 74,2406
+#define NUM_KEYS 75,2432
+#define ALLOC_STRING(77,2459
+#define REALLOC_STRING(85,2814
+initParse(103,3599
+getResEntry(177,5617
+getKeyEntry(193,5840
+parseResReq(208,6022
+parseSection(282,8077
+#define NSECTIONS 291,8283
+#define SELECT_SECT 292,8309
+#define ORDER_SECT 293,8335
+#define RUSAGE_SECT 294,8361
+#define FILTER_SECT 295,8387
+#define SPAN_SECT 296,8413
+parseSelect(378,10316
+parseOrder(527,14326
+parseFilter(568,15270
+parseUsage 600,16056
+parseSpan 672,17942
+getSyntax(717,19082
+validValue(742,19746
+resToClassNew(788,21044
+resToClassOld(952,26486
+setDefaults(1077,29820
+freeResVal 1147,31623
+initResVal 1166,32005
+getTimeVal(1182,32271
+getVal(1208,32756
 
 ../intlib/resreq.h,1134
 #define MIN(20,773

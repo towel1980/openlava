@@ -810,7 +810,7 @@ addHost (struct hostInfo *hI, struct hData *hD,  char *filename,
 
     } else if (override) {
 
-        hData = (struct hData*) newEnt->hData;
+        hData = (struct hData *) newEnt->hData;
         if (needPollHost (hData, hD)) {
             hData->flags |= HOST_NEEDPOLL;
 	    hData->pollTime = 0;
@@ -1487,14 +1487,16 @@ my_atoi (char *arg, int upBound, int botBound)
 
 }
 
+/* initQData()
+ */
 static struct qData *
 initQData (void)
 {
-    static char fname[] = "initQData";
-    struct qData *qp;
-    int    i;
+    static char    fname[] = "initQData()";
+    struct qData   *qp;
+    int            i;
 
-    qp = (struct qData *) my_malloc(sizeof (struct qData), "initQData");
+    qp = my_calloc(1, sizeof (struct qData), "initQData");
     qp->queue = NULL;
     qp->queueId = 0;
     qp->description = NULL;
@@ -1502,9 +1504,9 @@ initQData (void)
     qp->priority           = DEF_PRIO;
     qp->nice               = DEF_NICE;
     qp->uJobLimit          = INFINIT_INT;
-    qp->uAcct = (struct hTab *) NULL;
+    qp->uAcct              = NULL;
     qp->pJobLimit          = INFINIT_FLOAT;
-    qp->hAcct = (struct hTab *) NULL;
+    qp->hAcct              = NULL;
     qp->windows            = NULL;
     qp->windowsD           = NULL;
     qp->windEdge           = 0;
@@ -1532,10 +1534,10 @@ initQData (void)
     qp->schedDelay         = INFINIT_INT;
     qp->acceptIntvl        = INFINIT_INT;
 
-    qp->loadSched = (float *) my_calloc(allLsInfo->numIndx,
-                                        sizeof(float), fname);
-    qp->loadStop = (float *) my_calloc(allLsInfo->numIndx,
-                                        sizeof(float), fname);
+    qp->loadSched = my_calloc(allLsInfo->numIndx,
+                              sizeof(float), fname);
+    qp->loadStop = my_calloc(allLsInfo->numIndx,
+                             sizeof(float), fname);
 
     initThresholds (qp->loadSched, qp->loadStop);
     qp->procLimit = -1;
@@ -1575,9 +1577,9 @@ initQData (void)
     qp->numAskedPtr = 0;
     qp->askedOthPrio = -1;
 
-    qp->reasonTb = (int **) my_calloc(2, sizeof(int *), fname);
-    qp->reasonTb[0] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
-    qp->reasonTb[1] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
+    qp->reasonTb = my_calloc(2, sizeof(int *), fname);
+    qp->reasonTb[0] = my_calloc(numLsfHosts+2, sizeof(int), fname);
+    qp->reasonTb[1] = my_calloc(numLsfHosts+2, sizeof(int), fname);
     for (i = 0; i <= numLsfHosts+1; i++) {
 	qp->reasonTb[0][i] = 0;
 	qp->reasonTb[1][i] = 0;
@@ -2689,7 +2691,7 @@ createCondNodes (int numConds, char **conds, char *fileName, int flags)
 	    lsb_CheckError = WARNING_ERR;
 	}
         newEnt = h_addEnt_(&condDataList, condNode->name, &new);
-	newEnt->hData = (int *) condNode;
+	newEnt->hData = condNode;
         continue;
     }
 }
@@ -2922,11 +2924,11 @@ addDefaultHost (void)
 static void
 removeFlags (struct hTab *dataList, int flags, int listType)
 {
-    static char fname[] = "removeFlags()";
-    sTab sTabPtr;
-    hEnt *hEntPtr;
-    struct hData  *hData;
-    struct uData  *uData;
+    static char    fname[] = "removeFlags()";
+    sTab           sTabPtr;
+    hEnt           *hEntPtr;
+    struct hData   *hData;
+    struct uData   *uData;
 
     hEntPtr = h_firstEnt_(dataList, &sTabPtr);
     while (hEntPtr) {
@@ -2941,9 +2943,9 @@ removeFlags (struct hTab *dataList, int flags, int listType)
                 break;
             default:
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6210,
-		    "%s: Bad data list type <%d>"), /* catgets 6210 */
-		    fname,
-		    listType);
+                                                 "%s: Bad data list type <%d>"), /* catgets 6210 */
+                          fname,
+                          listType);
                 return;
          }
          hEntPtr = h_nextEnt_(&sTabPtr);
@@ -3194,12 +3196,12 @@ NULL) {
 static void
 updUserList (int mbdInitFlags)
 {
-    static char fname[] = "updUserList()";
-    struct uData *  defUser;
-    struct gData *  gPtr;
-    int             i;
-    char *          key;
-    hEnt *          hashTableEnt;
+    static char    fname[] = "updUserList()";
+    struct uData   *defUser;
+    struct gData   *gPtr;
+    int            i;
+    char           *key;
+    hEnt           *hashTableEnt;
 
     defUser = getUserData ("default");
 
@@ -3212,19 +3214,21 @@ updUserList (int mbdInitFlags)
 	uData = (struct uData *)hashTableEnt->hData;
 
 
-	if ( mbdInitFlags == RECONFIG_CONF || mbdInitFlags == WINDOW_CONF) {
+	if (mbdInitFlags == RECONFIG_CONF
+            || mbdInitFlags == WINDOW_CONF) {
 	    int j;
 	    FREEUP( uData->reasonTb[0]);
 	    FREEUP( uData->reasonTb[1]);
-	    uData->reasonTb[0] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
-	    uData->reasonTb[1] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
+	    uData->reasonTb[0] = my_calloc(numLsfHosts+2,
+                                           sizeof(int), fname);
+	    uData->reasonTb[1] = my_calloc(numLsfHosts+2,
+                                           sizeof(int), fname);
 
 	    for(j = 0; j < numLsfHosts+2; j++) {
 		uData->reasonTb[0][j] = 0;
 		uData->reasonTb[1][j] = 0;
 	    }
 	}
-
 
 	if (uData->flags & USER_UPDATE) {
 
@@ -3749,8 +3753,6 @@ cleanup(int mbdInitFlags)
 
 
     resetStaticSchedVariables();
-
-
 
 
     for (pqData = qDataList->forw; pqData != qDataList; pqData = pqData->forw) {

@@ -24,8 +24,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#include <sys/statvfs.h> 
-#define NL_SETN		10	
+#include <sys/statvfs.h>
+#define NL_SETN		10
 
 #define CHECKQUSABLE(qp, oldReason, newReason)  \
 {                     \
@@ -33,7 +33,7 @@
 	(mSchedStage & M_STAGE_QUE_CAND)) { \
         qp->flags |= QUEUE_UPDATE_USABLE;                              \
     }                                                           \
-}                                                              
+}
 
 extern int getQUsable(struct qData *);
 extern int schedule;
@@ -43,50 +43,50 @@ void setFirstStartOff();
 
 
 
-static void                   updUAcct (struct jData *, struct uData *, 
-					struct hTab **, int, 
-					int, int, int, int, struct hData *, 
-					void (*)(struct userAcct *, void *), 
+static void                   updUAcct (struct jData *, struct uData *,
+					struct hTab **, int,
+					int, int, int, int, struct hData *,
+					void (*)(struct userAcct *, void *),
 					void *);
-static void                   updHAcct (struct jData *, struct qData *, 
-					struct uData *, struct hTab **, 
+static void                   updHAcct (struct jData *, struct qData *,
+					struct uData *, struct hTab **,
 					int, int, int, int,
 					void (*)(struct hostAcct *, void *),
 					void *);
-static void                   updHostData (char, struct jData *, 
+static void                   updHostData (char, struct jData *,
 					   int, int, int, int, int);
-static void                   updUserData1 (struct jData *, struct uData *, 
+static void                   updUserData1 (struct jData *, struct uData *,
 					    int, int, int, int, int, int);
-static void                   addValue (int *currentValue, int num, 
-					struct jData *jp, 
+static void                   addValue (int *currentValue, int num,
+					struct jData *jp,
 					char *fname, char *counter);
 static void                   initUData (struct uData *);
 static void                   addOneAbs (int *, int, int);
-static struct userAcct *      addUAcct (struct hTab **, struct uData *, int, 
+static struct userAcct *      addUAcct (struct hTab **, struct uData *, int,
 					int, int, int, int);
 extern char *                 lsfDefaultProject;
 extern int                    getQUsable(struct qData *);
 
-void 
+void
 updCounters (struct jData *jData, int oldStatus, time_t eventTime)
 {
     static char fname[] = "updCounters";
     int num, numReq;
 
     if (IS_FINISH (oldStatus))
-        return;                              
+        return;
 
     if (MASK_STATUS (jData->jStatus & ~JOB_STAT_UNKWN)
         == MASK_STATUS (oldStatus & ~JOB_STAT_UNKWN))
-        return;                              
+        return;
 
     if (IS_PEND (jData->jStatus) && IS_PEND (oldStatus))
-        return;        
+        return;
 
     num = jData->numHostPtr;
     numReq = jData->shared->jobBill.maxNumProcessors;
 
-    
+
     switch (MASK_STATUS (jData->jStatus & ~JOB_STAT_UNKWN)) {
     case JOB_STAT_RUN:
         if ((oldStatus & JOB_STAT_PEND) || (oldStatus & JOB_STAT_PSUSP) ) {
@@ -102,7 +102,7 @@ updCounters (struct jData *jData, int oldStatus, time_t eventTime)
 	    updUserData(jData, 0, 0, num, 0, -num, 0);
 	    updHostData(FALSE, jData, 0, 1, 0, -1, 0);
 	} else if ( (oldStatus & ( JOB_STAT_RUN | JOB_STAT_WAIT)) ) {
-	    ls_syslog(LOG_DEBUG2, I18N(7014, 
+	    ls_syslog(LOG_DEBUG2, I18N(7014,
 			"%s: Job %s RWAIT to RUN"), /* catgets 7014 */
 			fname, lsb_jobid2str(jData->jobId));
         } else {
@@ -155,22 +155,22 @@ updCounters (struct jData *jData, int oldStatus, time_t eventTime)
     case JOB_STAT_EXIT:
     case JOB_STAT_DONE:
 
-	
+
 	if (oldStatus & JOB_STAT_WAIT) {
 	    if ( logclass & (LC_TRACE | LC_EXEC )) {
-                ls_syslog(LOG_DEBUG, 
-                          "%s: last job in the chunk <%s> exits: status WAIT", 
+                ls_syslog(LOG_DEBUG,
+                          "%s: last job in the chunk <%s> exits: status WAIT",
                           fname, lsb_jobid2str(jData->jobId));
-	    }	 
+	    }
             updQaccount (jData, -num, 0, -num, 0, 0, 0);
             updHostData(TRUE, jData, -1, -1, 0, 0, 0);
             updUserData(jData, -num, 0, -num, 0, 0, 0);
         } else if (oldStatus & JOB_STAT_RUN) {
-	    
+
 	    updQaccount (jData, -num, 0, -num, 0, 0, 0);
 	    updHostData(TRUE, jData, -1, -1, 0, 0, 0);
 	    updUserData(jData, -num, 0, -num, 0, 0, 0);
-        } else if (oldStatus & JOB_STAT_USUSP) { 
+        } else if (oldStatus & JOB_STAT_USUSP) {
             updQaccount (jData, -num, 0, 0, 0, -num, 0);
 	    updHostData(TRUE, jData, -1, 0, 0, -1, 0);
 	    updUserData(jData, -num, 0, 0, 0, -num, 0);
@@ -178,28 +178,28 @@ updCounters (struct jData *jData, int oldStatus, time_t eventTime)
             updQaccount (jData, -num, 0, 0, -num, 0, 0);
 	    updHostData(TRUE, jData, -1, 0, -1, 0, 0);
 	    updUserData(jData, -num, 0, 0, -num, 0, 0);
-        } else if (IS_PEND (oldStatus)) {  
+        } else if (IS_PEND (oldStatus)) {
             updQaccount (jData, -numReq, -numReq, 0, 0, 0, 0);
 	    updUserData(jData, -numReq, -numReq, 0, 0, 0, 0);
-        } 
+        }
         else {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7003,
 		"%s: Job <%s> transited from %x to %x"), /* catgets 7003 */
                 fname, lsb_jobid2str(jData->jobId), oldStatus, jData->jStatus);
         }
         break;
-	
+
     case JOB_STAT_PEND:
         if (oldStatus & JOB_STAT_RUN) {
             updQaccount (jData, numReq-num, numReq, -num, 0, 0, 0);
 	    updHostData(TRUE, jData, -1, -1, 0, 0, 0);
 	    updUserData(jData, numReq-num, numReq, -num, 0, 0, 0);
         }
-        else if (oldStatus & JOB_STAT_USUSP) { 
+        else if (oldStatus & JOB_STAT_USUSP) {
             updQaccount (jData, -num+numReq, numReq, 0, 0, -num, 0);
 	    updHostData(TRUE, jData, -1, 0, 0, -1, 0);
 	    updUserData(jData, -num+numReq, numReq, 0, 0, -num, 0);
-        } 
+        }
         else if (oldStatus & JOB_STAT_SSUSP) {
             updQaccount (jData, -num+numReq, numReq, 0, -num, 0, 0);
 	    updHostData(TRUE, jData, -1, 0, -1, 0, 0);
@@ -227,7 +227,7 @@ updCounters (struct jData *jData, int oldStatus, time_t eventTime)
 	}
 	break;
     default:
-	
+
 	if ( IS_POST_FINISH(jData->jStatus) ) {
 	    break;
 	}
@@ -235,7 +235,7 @@ updCounters (struct jData *jData, int oldStatus, time_t eventTime)
 	    "%s: Job <%s> transited from %d to %d"), /* catgets 7004 */
             fname, lsb_jobid2str(jData->jobId), oldStatus, jData->jStatus);
     }
-} 
+}
 
 void
 updSwitchJob (struct jData *jp, struct qData *qfp, struct qData *qtp,
@@ -251,18 +251,18 @@ updSwitchJob (struct jData *jp, struct qData *qfp, struct qData *qtp,
         jp->qPtr = qtp;
         jp->jStatus &= ~JOB_STAT_RESERVE;
         reserved = TRUE;
-    } 
+    }
     switch (MASK_STATUS(jp->jStatus)) {
         case JOB_STAT_PEND:
         case JOB_STAT_PSUSP:
             jp->qPtr = qfp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, -oldNumReq, -oldNumReq, 0, 0, 0, 0);
 	        updUserData(jp, -oldNumReq, -oldNumReq, 0, 0, 0, 0);
             }
             jp->qPtr = qtp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, numReq, numReq, 0, 0, 0, 0);
 	        updUserData(jp, numReq, numReq, 0, 0, 0, 0);
@@ -271,14 +271,14 @@ updSwitchJob (struct jData *jp, struct qData *qfp, struct qData *qtp,
         case JOB_STAT_RUN:
         case (JOB_STAT_RUN | JOB_STAT_UNKWN):
             jp->qPtr = qfp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, -num, 0, -num, 0, 0, 0);
 	        updHostData(TRUE, jp, -1, -1, 0, 0, 0);
 	        updUserData(jp,-num, 0, -num, 0, 0, 0);
             }
             jp->qPtr = qtp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, num, 0, num, 0, 0, 0);
 	        updHostData(TRUE, jp, 1, 1, 0, 0, 0);
@@ -288,14 +288,14 @@ updSwitchJob (struct jData *jp, struct qData *qfp, struct qData *qtp,
         case JOB_STAT_SSUSP:
         case (JOB_STAT_SSUSP | JOB_STAT_UNKWN):
             jp->qPtr = qfp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, -num, 0, 0, -num, 0, 0);
 	        updHostData(TRUE, jp, -1, 0, -1, 0, 0);
 	        updUserData(jp,-num, 0, 0, -num, 0, 0);
             }
             jp->qPtr = qtp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, num, 0, 0, num, 0, 0);
 	        updHostData(TRUE, jp, 1, 0, 1, 0, 0);
@@ -305,14 +305,14 @@ updSwitchJob (struct jData *jp, struct qData *qfp, struct qData *qtp,
         case JOB_STAT_USUSP:
         case (JOB_STAT_USUSP | JOB_STAT_UNKWN):
             jp->qPtr = qfp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, -num, 0, 0, 0, -num, 0);
 	        updHostData(TRUE, jp, -1, 0, 0, -1, 0);
 	        updUserData(jp,-num, 0, 0, 0, -num, 0);
             }
             jp->qPtr = qtp;
-            
+
             if (mSchedStage != M_STAGE_REPLAY) {
                 updQaccount (jp, num, 0, 0, 0, num, 0);
 	        updHostData(TRUE, jp, 1, 0, 0, 1, 0);
@@ -327,7 +327,7 @@ updSwitchJob (struct jData *jp, struct qData *qfp, struct qData *qtp,
         jp->jStatus |= JOB_STAT_RESERVE;
     }
 
-} 
+}
 
 
 void
@@ -342,7 +342,7 @@ updQaccount (struct jData *jp, int numJobs, int numPEND,
     if (logclass & LC_JLIMIT)
 	ls_syslog(LOG_DEBUG1, "%s: Entering with job=%s queue=%s numJobs=%d numPEND=%d numRUN=%d numSSUSP=%d numUSUSP=%d numRESERVE=%d", fname, lsb_jobid2str(jp->jobId), qp->queue, numJobs, numPEND, numRUN, numSSUSP, numUSUSP, numRESERVE);
 
-    
+
     addValue (&qp->numJobs, numJobs, jp, fname, "numJobs");
     addValue (&qp->numPEND, numPEND, jp, fname, "numPEND");
     addValue (&qp->numRUN, numRUN, jp, fname, "numRUN");
@@ -357,48 +357,48 @@ updQaccount (struct jData *jp, int numJobs, int numPEND,
     else
         numSlots = qp->maxJobs - (qp->numJobs - qp->numPEND);
     if (qp->reasonTb[1][0] == INFINIT_INT)
-        qp->reasonTb[1][0] = 0;         
+        qp->reasonTb[1][0] = 0;
     SET_REASON(numSlots <= 0, qp->reasonTb[1][0], PEND_QUE_JOB_LIMIT);
     if (numSlots <= 0 && (logclass & LC_JLIMIT))
 	ls_syslog(LOG_DEBUG3, "%s: Q's MAX reached; reason=%d numSlots=%d", fname, qp->reasonTb[1][0], numSlots);
 
-    newJob = (numRUN == 0 && numSSUSP == 0 && numUSUSP == 0 
+    newJob = (numRUN == 0 && numSSUSP == 0 && numUSUSP == 0
               && numRESERVE == 0 && numPEND == 0);
-    
-    
-    updUAcct(jp, jp->uPtr, &(qp->uAcct), numRUN, numSSUSP, numUSUSP, 
-	     numRESERVE,numPEND, (struct hData *)NULL, 
+
+
+    updUAcct(jp, jp->uPtr, &(qp->uAcct), numRUN, numSSUSP, numUSUSP,
+	     numRESERVE,numPEND, (struct hData *)NULL,
 	     NULL, (void *) qp);
 
 
     FOR_EACH_USER_ANCESTOR_UGRP(jp->uPtr, grp) {
-	
-	updUAcct(jp, grp, &(qp->uAcct), numRUN, numSSUSP, numUSUSP, 
+
+	updUAcct(jp, grp, &(qp->uAcct), numRUN, numSSUSP, numUSUSP,
 		 numRESERVE, numPEND, (struct hData *) NULL,
 		 NULL, (void *)qp);
-	
+
     } END_FOR_EACH_USER_ANCESTOR_UGRP;
 
-    
+
     if (!newJob) {
-        updHAcct (jp, qp, NULL, &(qp->hAcct), numRUN, numSSUSP, 
+        updHAcct (jp, qp, NULL, &(qp->hAcct), numRUN, numSSUSP,
 		  numUSUSP, numRESERVE, NULL, (void *)qp);
     }
 
     return;
-} 
+}
 
 static void
-updUAcct (struct jData *jData, 
+updUAcct (struct jData *jData,
 	  struct uData *up,
-	  struct hTab **uAcct, 
-	  int  numRUN, 
-	  int numSSUSP, 
-	  int numUSUSP, 
-	  int numRESERVE, 
-	  int numPEND, 
+	  struct hTab **uAcct,
+	  int  numRUN,
+	  int numSSUSP,
+	  int numUSUSP,
+	  int numRESERVE,
+	  int numPEND,
 	  struct hData *hp,
-	  void (*onNewEntry)(struct userAcct *, void *), 
+	  void (*onNewEntry)(struct userAcct *, void *),
 	  void *extra)
 
 {
@@ -419,38 +419,38 @@ updUAcct (struct jData *jData,
         addValue (&foundU->numRESERVE, numRESERVE, jData, fname, "numRESERVE");
         addValue (&foundU->numPEND, numPEND, jData, fname, "numPEND");
 	if (numRESERVE != 0 && !(jData->jStatus & JOB_STAT_PEND)) {
-	    addValue (&foundU->numNonPrmptRsv, numRESERVE, jData, fname, 
+	    addValue (&foundU->numNonPrmptRsv, numRESERVE, jData, fname,
                       "numNonPrmptRsv");
-	} 
+	}
 	if (logclass & LC_JLIMIT)
 	    ls_syslog(LOG_DEBUG3, "%s: job=%s host/queue=%s user=%s RUN=%d SSUSP=%d USUSP=%d RESERVE=%d PEND=%d numNonPrmptRsv=%d", fname, lsb_jobid2str(jData->jobId), ((hp == NULL)? jData->qPtr->queue:hp->host), jData->uPtr->user, foundU->numRUN, foundU->numSSUSP, foundU->numUSUSP, foundU->numRESERVE, foundU->numPEND, foundU->numNonPrmptRsv);
     }
-    
-    else if (numRUN != 0 || numSSUSP != 0 ||  numUSUSP != 0 
+
+    else if (numRUN != 0 || numSSUSP != 0 ||  numUSUSP != 0
              || numRESERVE != 0 || numPEND != 0) {
-	foundU = addUAcct(uAcct, up, numRUN, 
+	foundU = addUAcct(uAcct, up, numRUN,
 			  numSSUSP, numUSUSP, numRESERVE, numPEND);
 	foundU->userId = jData->userId;
-	
-	if (onNewEntry != NULL) 
+
+	if (onNewEntry != NULL)
 	    (*onNewEntry)(foundU, extra);
 
-	if (logclass & LC_JLIMIT) 
+	if (logclass & LC_JLIMIT)
 	    ls_syslog(LOG_DEBUG3, "\
-%s: New uAcct for job=%s host/queue=%s user=%s RUN=%d SSUSP=%d USUSP=%d RESERVE=%d, PEND=%d", 
-		      fname, 
-		      lsb_jobid2str(jData->jobId), 
-		      ((hp == NULL)? 
-		       jData->qPtr->queue:hp->host), 
-		      ((jData->uPtr == NULL)? 
-		       jData->userName:jData->uPtr->user), 
-		      foundU->numRUN, 
-		      foundU->numSSUSP, 
-		      foundU->numUSUSP, 
-		      foundU->numRESERVE, 
+%s: New uAcct for job=%s host/queue=%s user=%s RUN=%d SSUSP=%d USUSP=%d RESERVE=%d, PEND=%d",
+		      fname,
+		      lsb_jobid2str(jData->jobId),
+		      ((hp == NULL)?
+		       jData->qPtr->queue:hp->host),
+		      ((jData->uPtr == NULL)?
+		       jData->userName:jData->uPtr->user),
+		      foundU->numRUN,
+		      foundU->numSSUSP,
+		      foundU->numUSUSP,
+		      foundU->numRESERVE,
 		      foundU->numPEND);
     } else {
-	
+
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7006,
 	    "%s: expected one of (numRUN, numSSUSP, numUSUSP, numRESERVE and numPEND) to be non-ZERO, but they are all ZERO"), /* catgets 7006 */
 		  fname);
@@ -458,7 +458,7 @@ updUAcct (struct jData *jData,
     }
 
     if (hp == NULL) {
-	
+
         numSlots = qp->uJobLimit - foundU->numRUN - foundU->numSSUSP
                                  - foundU->numUSUSP - foundU->numRESERVE;
         SET_REASON(numSlots <= 0, foundU->reason, PEND_QUE_USR_JLIMIT);
@@ -466,7 +466,7 @@ updUAcct (struct jData *jData,
 	    ls_syslog(LOG_DEBUG3, "%s: Q's JL/U reached; job=%s queue=%s user=%s", fname, lsb_jobid2str(jData->jobId), jData->qPtr->queue, jData->uPtr->user);
 
     } else {
-	
+
 	    numSlots = hp->uJobLimit - foundU->numRUN - foundU->numSSUSP
 		       - foundU->numUSUSP - foundU->numRESERVE;
 	    SET_REASON(numSlots <= 0, up->reasonTb[1][hp->hostId],
@@ -474,73 +474,79 @@ updUAcct (struct jData *jData,
 	    if (numSlots <= 0 && (logclass & LC_JLIMIT))
 		ls_syslog(LOG_DEBUG3, "%s: H's JL/U reached; job=%s host=%s user=%s", fname, lsb_jobid2str(jData->jobId), hp->host, jData->uPtr->user);
     }
-} 
+}
 
+/* addUAcct()
+ */
 static struct userAcct *
-addUAcct (struct hTab **uAcct, struct uData *up,
-        int numRUN, int numSSUSP, int numUSUSP, int numRESERVE, int numPEND)
+addUAcct(struct hTab **uAcct,
+         struct uData *up,
+         int numRUN,
+         int numSSUSP,
+         int numUSUSP,
+         int numRESERVE,
+         int numPEND)
 {
-    struct hEnt *newEnt;
-    int new;
-    struct userAcct *foundU;
+    struct hEnt       *ent;
+    struct userAcct   *acct;
 
     if (logclass &(LC_JLIMIT))
-        ls_syslog(LOG_DEBUG2, "addUAcct: New userAcct for user %s", up->user);
+        ls_syslog(LOG_DEBUG2, "\
+addUAcct: New userAcct for user %s", up->user);
 
     if (*uAcct == NULL) {
-        *uAcct = (struct hTab *) my_malloc(sizeof(struct hTab), "addUAcct");
-        h_initTab_(*uAcct, 4);
+        *uAcct = my_calloc(1, sizeof(struct hTab), "addUAcct");
+        h_initTab_(*uAcct, 11);
     }
 
-    foundU = (struct userAcct *) my_calloc (1, sizeof(struct userAcct), 
-                                            "addUAcct");
-    newEnt = h_addEnt_(*uAcct, up->user, &new);
-    newEnt->hData = (int *)foundU;          
-    foundU->uData = up;
-    foundU->numRUN = numRUN;     
-    foundU->numSSUSP = numSSUSP;
-    foundU->numUSUSP = numUSUSP;
-    foundU->numRESERVE = numRESERVE;
-    foundU->numPEND = numPEND;
-    foundU->numAvailSUSP = 0;    
-    foundU->numNonPrmptRsv = 0;    
-    foundU->reason = 0;
+    acct = my_calloc (1, sizeof(struct userAcct), "addUAcct");
 
-    
-    foundU->numRunFromLastSession = 0;
-    foundU->numVisitedInSession   = 0;
-    foundU->numPendJobsInSession  = 0;
-    foundU->skipAccount           = FALSE;
+    ent = h_addEnt_(*uAcct, up->user, NULL);
+    ent->hData = acct;
 
-    return foundU;
-} 
+    acct->uData = up;
+    acct->numRUN = numRUN;
+    acct->numSSUSP = numSSUSP;
+    acct->numUSUSP = numUSUSP;
+    acct->numRESERVE = numRESERVE;
+    acct->numPEND = numPEND;
+    acct->numAvailSUSP = 0;
+    acct->numNonPrmptRsv = 0;
+    acct->reason = 0;
+    acct->numRunFromLastSession = 0;
+    acct->numVisitedInSession   = 0;
+    acct->numPendJobsInSession  = 0;
+    acct->skipAccount           = FALSE;
+
+    return acct;
+}
 
 struct userAcct *
 getUAcct (struct hTab *uAcct, struct uData *up)
 {
     hEnt   *uAcctEnt;
 
-    if (uAcct == (hTab *)NULL || up == (struct uData *)NULL)
-	return (struct userAcct *)NULL;
+    if (uAcct == NULL || up == NULL)
+	return NULL;
 
     uAcctEnt = h_getEnt_(uAcct, up->user);
     if (uAcctEnt != NULL)
-        return((struct userAcct *)uAcctEnt->hData);   
+        return((struct userAcct *)uAcctEnt->hData);
     else
-        return (struct userAcct *)NULL;
+        return NULL;
 
-} 
+}
 
 
 static void
-updHAcct (struct jData *jData, 
-	  struct qData *qp, 
-	  struct uData *up, 
-          struct hTab **hAcct, 
-	  int numRUN, 
-	  int numSSUSP, 
-	  int numUSUSP, 
-          int numRESERVE, 
+updHAcct (struct jData *jData,
+	  struct qData *qp,
+	  struct uData *up,
+          struct hTab **hAcct,
+	  int numRUN,
+	  int numSSUSP,
+	  int numUSUSP,
+          int numRESERVE,
 	  void (*onNewEntry)(struct hostAcct *, void *),
 	  void *extra)
 {
@@ -550,7 +556,7 @@ updHAcct (struct jData *jData,
     int i, numSlots;
     float pJobLimit;
 
-    if (jData->hPtr == NULL) 
+    if (jData->hPtr == NULL)
         return;
 
     if (*hAcct == NULL) {
@@ -558,7 +564,7 @@ updHAcct (struct jData *jData,
         h_initTab_(*hAcct, 4);
     }
 
-    
+
     if (qp != NULL)
 	qp->flags &= ~QUEUE_UPDATE_USABLE;
 
@@ -574,17 +580,17 @@ updHAcct (struct jData *jData,
 	    addOneAbs (&foundH->numRESERVE, numRESERVE, FALSE);
 	    if (numRESERVE != 0 && !(jData->jStatus & JOB_STAT_PEND)) {
                 addOneAbs (&foundH->numNonPrmptRsv, numRESERVE, FALSE);
-            } 
+            }
 	    if (logclass & LC_JLIMIT)
 		ls_syslog(LOG_DEBUG3, "%s: job=%s user/queue=%s host=%s RUN=%d SSUSP=%d USUSP=%d RESERVE=%d NonPrmptRsv=%d", fname, lsb_jobid2str(jData->jobId), ((qp != NULL)? qp->queue:up->user), hp->host, foundH->numRUN, foundH->numSSUSP, foundH->numUSUSP, foundH->numRESERVE, foundH->numNonPrmptRsv);
         }
-	
-	else if (numRUN > 0 || numSSUSP > 0 || numUSUSP > 0 
+
+	else if (numRUN > 0 || numSSUSP > 0 || numUSUSP > 0
                             || numRESERVE > 0) {
-	    foundH = addHAcct(hAcct, hp, numRUN, numSSUSP, numUSUSP, 
+	    foundH = addHAcct(hAcct, hp, numRUN, numSSUSP, numUSUSP,
                               numRESERVE);
 
-	    if (onNewEntry != NULL) 
+	    if (onNewEntry != NULL)
 		(*onNewEntry)(foundH, extra);
 
 	    if (logclass & LC_JLIMIT)
@@ -593,15 +599,15 @@ updHAcct (struct jData *jData,
         }
 
         if (qp != NULL) {
-	    
+
             int svReason = qp->reasonTb[1][hp->hostId];
 	    qp->flags &= ~QUEUE_UPDATE_USABLE;
             numSlots = pJobLimitOk(hp, foundH, qp->pJobLimit);
-            if (numSlots <= 0 
-                 && !(hp->hStatus & HOST_STAT_UNREACH) 
+            if (numSlots <= 0
+                 && !(hp->hStatus & HOST_STAT_UNREACH)
                  && ! (hp->hStatus & HOST_STAT_UNAVAIL)
                  && ! LS_ISUNAVAIL (hp->limStatus)) {
-                
+
 		SET_REASON(numSlots <= 0,
 			   qp->reasonTb[1][hp->hostId], PEND_QUE_PROC_JLIMIT);
                 CHECKQUSABLE (qp, svReason, qp->reasonTb[1][hp->hostId]);
@@ -624,7 +630,7 @@ updHAcct (struct jData *jData,
 		    ls_syslog(LOG_DEBUG2, "%s: Clear reason <%d>; job=%s host=%s queue=%s", fname, svReason, lsb_jobid2str(jData->jobId), hp->host, qp->queue);
             }
 
-            if (qp->hJobLimit == INFINIT_INT 
+            if (qp->hJobLimit == INFINIT_INT
                 && qp->pJobLimit == INFINIT_FLOAT)
                 pJobLimit = INFINIT_FLOAT;
             else if (qp->hJobLimit == INFINIT_INT)
@@ -633,38 +639,38 @@ updHAcct (struct jData *jData,
                 pJobLimit = (qp->pJobLimit < (float)qp->hJobLimit) ?
                                  qp->pJobLimit : (float)qp->hJobLimit;
         } else {
-	    
+
 		numSlots = pJobLimitOk(hp, foundH, up->pJobLimit);
                 if (up->flags & USER_GROUP) {
-                    
+
                     if (numSlots <= 0
                         && !(hp->hStatus & HOST_STAT_UNREACH)
                         && ! (hp->hStatus & HOST_STAT_UNAVAIL)
                         && ! LS_ISUNAVAIL (hp->limStatus)) {
 		        SET_REASON(numSlots <= 0,
-				   up->reasonTb[1][hp->hostId], 
+				   up->reasonTb[1][hp->hostId],
 				   PEND_UGRP_PROC_JLIMIT);
-                
+
 		    } else if (numSlots > 0) {
-		    
+
 			CLEAR_REASON(up->reasonTb[1][hp->hostId],
 				     PEND_UGRP_PROC_JLIMIT);
 		    }
 
-                } else { 
+                } else {
                     if (numSlots <= 0
                         && !(hp->hStatus & HOST_STAT_UNREACH)
                         && ! (hp->hStatus & HOST_STAT_UNAVAIL)
                         && ! LS_ISUNAVAIL (hp->limStatus)) {
 		        SET_REASON(numSlots <= 0,
-				   up->reasonTb[1][hp->hostId], 
+				   up->reasonTb[1][hp->hostId],
 				   PEND_USER_PROC_JLIMIT);
 
 		    } else if (numSlots > 0) {
-			
+
 			CLEAR_REASON(up->reasonTb[1][hp->hostId],
 				     PEND_USER_PROC_JLIMIT);
-			
+
 		    }
 		}
 
@@ -674,25 +680,25 @@ updHAcct (struct jData *jData,
 		    && ! LS_ISUNAVAIL (hp->limStatus)) {
 
 		    ls_syslog(LOG_DEBUG2, "\
-%s: U/G's JL/P reached; job=%s host=%s user=%s", 
-			      fname, lsb_jobid2str(jData->jobId), 
+%s: U/G's JL/P reached; job=%s host=%s user=%s",
+			      fname, lsb_jobid2str(jData->jobId),
 			      hp->host, up->user);
 
                 } else if (numSlots > 0 && (logclass & LC_JLIMIT)) {
-		    
+
 		    ls_syslog(LOG_DEBUG,"\
 %s: U/G's JL/P cleared up; job=%s host=%s user=%s",
 			      fname, lsb_jobid2str(jData->jobId),
 			      hp->host, up->user);
 		}
         }
-    } 
+    }
     if (qp != NULL && (qp->flags & QUEUE_UPDATE_USABLE)) {
-       
+
         getQUsable (qp);
         qp->flags &= ~QUEUE_UPDATE_USABLE;
     }
-} 
+}
 
 struct hostAcct *
 getHAcct (struct hTab *hAcct, struct hData *hp)
@@ -704,65 +710,72 @@ getHAcct (struct hTab *hAcct, struct hData *hp)
 
     hAcctEnt = h_getEnt_(hAcct, hp->host);
     if (hAcctEnt != NULL)
-        return((struct hostAcct *) hAcctEnt->hData);   
+        return((struct hostAcct *) hAcctEnt->hData);
     else
         return NULL;
 
-} 
+}
 
-
+/* addHAcct()
+ */
 struct hostAcct *
-addHAcct (struct hTab **hAcct, struct hData *hp,
-          int numRUN, int numSSUSP, int numUSUSP, int numRESERVE)
+addHAcct(struct hTab **hAcct,
+         struct hData *hp,
+         int numRUN,
+         int numSSUSP,
+         int numUSUSP,
+         int numRESERVE)
 {
-    struct hEnt *newEnt;
-    int new;
-    struct hostAcct *foundH;
+    struct hEnt       *ent;
+    int               new;
+    struct hostAcct   *acct;
 
     if (logclass &(LC_JLIMIT))
-        ls_syslog(LOG_DEBUG2, "addHAcct: New hostAcct for host %s", hp->host);
+        ls_syslog(LOG_DEBUG2, "\
+addHAcct: New hostAcct for host %s", hp->host);
 
     if (*hAcct == NULL) {
-        *hAcct = (struct hTab *) my_malloc(sizeof(struct hTab), "addHAcct");
-        h_initTab_(*hAcct, 4);
+        *hAcct = my_calloc(1, sizeof(struct hTab), "addHAcct");
+        h_initTab_(*hAcct, 11);
     }
 
-    foundH = (struct hostAcct *) my_malloc (sizeof(struct hostAcct), 
-                                            "addHAcct");
-    newEnt = h_addEnt_(*hAcct, hp->host, &new);
-    newEnt->hData = (int *)foundH;            
-    foundH->hPtr = hp;
-    foundH->numRUN = 0;
-    foundH->numSSUSP = 0;
-    foundH->numUSUSP = 0;
-    foundH->numRESERVE = 0;
-    addOneAbs (&foundH->numRUN, numRUN, FALSE);
-    addOneAbs (&foundH->numSSUSP, numSSUSP, FALSE);
-    addOneAbs (&foundH->numUSUSP, numUSUSP, FALSE);
-    addOneAbs (&foundH->numRESERVE, numRESERVE, FALSE);
-    foundH->numAvailSUSP = 0;      
-    foundH->numNonPrmptRsv = 0;      
-    return foundH;
-} 
+    acct = my_calloc(1, sizeof(struct hostAcct), "addHAcct");
+
+    ent = h_addEnt_(*hAcct, hp->host, &new);
+    ent->hData = acct;
+    acct->hPtr = hp;
+    acct->numRUN = 0;
+    acct->numSSUSP = 0;
+    acct->numUSUSP = 0;
+    acct->numRESERVE = 0;
+    addOneAbs (&acct->numRUN, numRUN, FALSE);
+    addOneAbs (&acct->numSSUSP, numSSUSP, FALSE);
+    addOneAbs (&acct->numUSUSP, numUSUSP, FALSE);
+    addOneAbs (&acct->numRESERVE, numRESERVE, FALSE);
+    acct->numAvailSUSP = 0;
+    acct->numNonPrmptRsv = 0;
+
+    return acct;
+}
 
 static void
 addOneAbs (int *num, int addedNum, int clean)
 {
-  
+
     if (clean == TRUE)
        *num = 0;
     if (addedNum > 0)
        (*num)++;
     else if (addedNum < 0)
        (*num)--;
-} 
+}
 
 void
 updUserData (struct jData *jData, int numJobs, int numPEND,
              int numRUN, int numSSUSP, int numUSUSP, int numRESERVE)
 {
     static char fname[] = "updUserData";
-    struct uData *up, *ugp; 
+    struct uData *up, *ugp;
     static struct uData **grpPtr = NULL;
     int i, numSlots, numNew;
     int newJob;
@@ -772,7 +785,7 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
                             sizeof(struct uData *), "updUserData");
     }
 
-    
+
     if (jData->uPtr == NULL) {
         if (mSchedStage!=M_STAGE_REPLAY)
 	    ls_syslog (LOG_DEBUG, "updUserData: uData pointer of job <%s> is NULL", lsb_jobid2str(jData->jobId));
@@ -782,8 +795,8 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
     up->flags &= ~USER_GROUP;
     updUserData1 (jData, up, numJobs, numPEND, numRUN,
                   numSSUSP, numUSUSP, numRESERVE);
-    
-    newJob = (numRUN == 0 && numSSUSP == 0 && numUSUSP == 0 
+
+    newJob = (numRUN == 0 && numSSUSP == 0 && numUSUSP == 0
                                            && numRESERVE == 0);
     if (!newJob) {
         int svReason = up->reasonTb[1][0];
@@ -793,7 +806,7 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
 	    numSlots = up->maxJobs - up->numRUN - up->numSSUSP
 	  	               - up->numUSUSP - up->numRESERVE;
 	if (up->reasonTb[1][0] == INFINIT_INT)
-	    up->reasonTb[1][0] = 0;    
+	    up->reasonTb[1][0] = 0;
         SET_REASON(numSlots <= 0, up->reasonTb[1][0], PEND_USER_JOB_LIMIT);
         if (logclass & (LC_PEND | LC_JLIMIT)) {
             if (numSlots <= 0) {
@@ -808,17 +821,17 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
 
     if (numofugroups <= 0) {
 	up->numSlots = numSlots;
-	goto Exit;   
+	goto Exit;
     }
 
-    
-    numNew = 0; 
+
+    numNew = 0;
     if (!(up->flags & USER_INIT)) {
 	for (i = 0; i < numofugroups; i++) {
 	    if (!gMember(jData->userName, usergroups[i]))
-		continue;                       
+		continue;
 	    if ((ugp = getUserData(usergroups[i]->group)) == NULL)
-		continue;                       
+		continue;
 	    ugp->gData = usergroups[i];
 	    grpPtr[numNew++] = ugp;
         }
@@ -835,16 +848,16 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
 	up->flags |= USER_INIT;
     }
 
-    
+
     for (i = 0; i < up->numGrpPtr; i++) {
 	ugp = up->gPtr[i];
         if (ugp == NULL)
 	    continue;
 	ugp->flags |= USER_GROUP;
-	updUserData1 (jData, ugp, numJobs, numPEND,   
+	updUserData1 (jData, ugp, numJobs, numPEND,
                       numRUN, numSSUSP, numUSUSP, numRESERVE);
 
-	
+
         if (!newJob) {
 	    int num;
             int svReason = ugp->reasonTb[1][0];
@@ -855,12 +868,12 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
                                    - ugp->numUSUSP - ugp->numRESERVE;
             numSlots = MIN(num, numSlots);
 	    if (ugp->reasonTb[1][0] == INFINIT_INT)
-		ugp->reasonTb[1][0] = 0;    
+		ugp->reasonTb[1][0] = 0;
 	    SET_REASON(num <= 0, ugp->reasonTb[1][0], PEND_UGRP_JOB_LIMIT);
 	    if (logclass & (LC_PEND | LC_JLIMIT)) {
 		if (num <= 0)
 		    ls_syslog(LOG_DEBUG2, "%s: Set reason <%d>; job=%s group=%s numJobs=%d maxJobs=%d numPEND=%d", fname, ugp->reasonTb[1][0], lsb_jobid2str(jData->jobId), ugp->user, ugp->numJobs, ugp->maxJobs, ugp->numPEND);
-		else 
+		else
 		if (svReason == PEND_UGRP_JOB_LIMIT
                      && (logclass & (LC_PEND | LC_JLIMIT)))
 		    ls_syslog(LOG_DEBUG2, "%s: Clear reason <%d> job=%s group=%s numJobs=%d maxJobs=%d numPEND=%d", fname, PEND_UGRP_JOB_LIMIT, lsb_jobid2str(jData->jobId), ugp->user, ugp->numJobs, ugp->maxJobs, ugp->numPEND);
@@ -872,18 +885,18 @@ updUserData (struct jData *jData, int numJobs, int numPEND,
 
 Exit:
     return;
-} 
+}
 
 static void
-updUserData1 (struct jData *jData, struct uData *up, int numJobs, 
-              int numPEND, int numRUN, int numSSUSP, int numUSUSP, 
+updUserData1 (struct jData *jData, struct uData *up, int numJobs,
+              int numPEND, int numRUN, int numSSUSP, int numUSUSP,
               int numRESERVE)
 {
     static char       fname[] = "updUserData1";
     bool_t            newJob;
 
 
-    
+
     addValue (&up->numJobs, numJobs, jData, fname, "numJobs");
     addValue (&up->numPEND, numPEND, jData, fname, "numPEND");
     addValue (&up->numRUN, numRUN, jData, fname, "numRUN");
@@ -893,29 +906,29 @@ updUserData1 (struct jData *jData, struct uData *up, int numJobs,
 
     if (logclass & LC_JLIMIT)
 	ls_syslog(LOG_DEBUG3, "\
-%s: job=%s user/group=%s PEND=%d RUN=%d SSUSP=%d USUSP=%d RESERVE=%d", 
-		  fname, lsb_jobid2str(jData->jobId), up->user, 
-		  up->numPEND, up->numRUN, up->numSSUSP, 
+%s: job=%s user/group=%s PEND=%d RUN=%d SSUSP=%d USUSP=%d RESERVE=%d",
+		  fname, lsb_jobid2str(jData->jobId), up->user,
+		  up->numPEND, up->numRUN, up->numSSUSP,
 		  up->numUSUSP, up->numRESERVE);
 
-    newJob = (   numRUN == 0 
-	      && numSSUSP == 0 
-	      && numUSUSP == 0 
+    newJob = (   numRUN == 0
+	      && numSSUSP == 0
+	      && numUSUSP == 0
               && numRESERVE == 0);
-    
-    if (   !  newJob 
-        && up->pJobLimit < INFINIT_FLOAT) 
-    {            
-	
-	updHAcct(jData, NULL, up, &(up->hAcct), numRUN, numSSUSP, 
-		 numUSUSP, numRESERVE, 
+
+    if (   !  newJob
+        && up->pJobLimit < INFINIT_FLOAT)
+    {
+
+	updHAcct(jData, NULL, up, &(up->hAcct), numRUN, numSSUSP,
+		 numUSUSP, numRESERVE,
 		 (void (*)(struct hostAcct *, void *))NULL, NULL);
     }
 
-} 
+}
 
 static void
-updHostData (char updHPart, struct jData *jData, int numJobs, int numRUN, 
+updHostData (char updHPart, struct jData *jData, int numJobs, int numRUN,
              int numSSUSP, int numUSUSP, int numRESERVE)
 {
     static char fname[] = "updHostData";
@@ -924,17 +937,17 @@ updHostData (char updHPart, struct jData *jData, int numJobs, int numRUN,
     for (i = 0; i < jData->numHostPtr; i++) {
         struct hData *hp = jData->hPtr[i];
 	if (hp == NULL)
-	    break;                                            
+	    break;
 
 	if (jData->hPtr[i]->hStatus & HOST_STAT_REMOTE)
 	    continue;
 
         if (hp->uJobLimit < INFINIT_INT
-	    && (numRUN != 0 || numSSUSP != 0 || numUSUSP != 0 
+	    && (numRUN != 0 || numSSUSP != 0 || numUSUSP != 0
                             || numRESERVE != 0)) {
-	    updUAcct (jData, jData->uPtr, &(hp->uAcct), numRUN, numSSUSP, 
-                      numUSUSP, numRESERVE, 0, jData->hPtr[i], 
-		      (void (*)(struct userAcct *, void *)) NULL, NULL); 
+	    updUAcct (jData, jData->uPtr, &(hp->uAcct), numRUN, numSSUSP,
+                      numUSUSP, numRESERVE, 0, jData->hPtr[i],
+		      (void (*)(struct userAcct *, void *)) NULL, NULL);
         }
         addValue (&hp->numJobs, numJobs, jData, fname, "numJobs");
         addValue (&hp->numRUN, numRUN, jData, fname, "numRUN");
@@ -944,7 +957,7 @@ updHostData (char updHPart, struct jData *jData, int numJobs, int numRUN,
         if (logclass & LC_JLIMIT)
 	    ls_syslog(LOG_DEBUG3, "%s: job=%s host=%s RUN=%d SSUSP=%d USUSP=%d RESERVE=%d", fname, lsb_jobid2str(jData->jobId), hp->host, hp->numRUN, hp->numSSUSP, hp->numUSUSP, hp->numRESERVE);
 
-        
+
         if (hp->numJobs >= hp->maxJobs) {
             hp->hStatus |= HOST_STAT_FULL;
                 hReasonTb[1][hp->hostId] = PEND_HOST_JOB_LIMIT;
@@ -955,26 +968,26 @@ updHostData (char updHPart, struct jData *jData, int numJobs, int numRUN,
 	    struct qData *qp;
 
             hp->hStatus &= ~HOST_STAT_FULL;
-		if ((logclass & (LC_PEND | LC_JLIMIT)) 
+		if ((logclass & (LC_PEND | LC_JLIMIT))
                     && hReasonTb[1][hp->hostId] == PEND_HOST_JOB_LIMIT) {
 		    ls_syslog(LOG_DEBUG2, "%s: Clear reason <%d>; job=%s host=%s numJobs=%d maxJobs=%d", fname, hReasonTb[1][hp->hostId], lsb_jobid2str(jData->jobId), hp->host, hp->numJobs, hp->maxJobs);
                 }
 		CLEAR_REASON(hReasonTb[1][hp->hostId], PEND_HOST_JOB_LIMIT);
-	    
-	    for (qp = qDataList->forw; qp != qDataList; qp = qp->forw) 
+
+	    for (qp = qDataList->forw; qp != qDataList; qp = qp->forw)
 		CLEAR_REASON(qp->reasonTb[1][hp->hostId], PEND_HOST_JOB_LIMIT);
 	}
 
-        
+
         if (hp->numJobs <= 0)
             hp->hStatus &= ~HOST_STAT_EXCLUSIVE;
 
-        
-        if (!updHPart)
-            continue;                        
 
-    }	 
-} 
+        if (!updHPart)
+            continue;
+
+    }
+}
 
 static void
 addValue (int *currentValue, int num, struct jData *jp, char *fname,
@@ -988,7 +1001,7 @@ addValue (int *currentValue, int num, struct jData *jp, char *fname,
 	"%s: %s is negative; job=%s queue=%s currentValue=%d, num=%d"), fname, counter, lsb_jobid2str(jp->jobId), jp->qPtr->queue, *currentValue, num); /* catgets 7009 */
      *currentValue = 0;
 
-} 
+}
 
 struct uData *
 getUserData (char *user)
@@ -999,9 +1012,9 @@ getUserData (char *user)
 
     userEnt = h_getEnt_(&uDataList, user);
     if (userEnt != NULL)
-	return ((struct uData *) userEnt->hData);   
+	return ((struct uData *) userEnt->hData);
 
-    
+
     userEnt = h_getEnt_(&uDataList, "default");
     if (userEnt != NULL) {
         defUser = (struct uData *) userEnt->hData;
@@ -1015,7 +1028,7 @@ getUserData (char *user)
 	return ((struct uData *) NULL);
     }
 
-    
+
     uData = addUserData(user, INFINIT_INT, INFINIT_FLOAT,
 		     "mbatchd/getUserData", FALSE, FALSE);
     if (uData != NULL)
@@ -1025,7 +1038,7 @@ getUserData (char *user)
 	    user);
     return ((struct uData *) NULL);
 
-} 
+}
 
 
 int
@@ -1039,12 +1052,12 @@ checkUsers (struct infoReq *req, struct userInfoReply *reply)
 
     reply->numUsers = 0;
 
-    if (req->numNames == 0) {               
+    if (req->numNames == 0) {
 	hashEntryPtr = h_firstEnt_(&uDataList, &hashSearchPtr);
 	while (hashEntryPtr) {
 	    uData = (struct uData *) hashEntryPtr->hData;
 
-	    
+
 	    if (uData->flags & USER_OTHERS) {
 		hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 	        continue;
@@ -1052,7 +1065,7 @@ checkUsers (struct infoReq *req, struct userInfoReply *reply)
 
 	    uInfo = &(reply->users[reply->numUsers]);
 	    uInfo->user = uData->user;
-            if (uData->pJobLimit >= INFINIT_FLOAT) 
+            if (uData->pJobLimit >= INFINIT_FLOAT)
                 uInfo->procJobLimit = INFINIT_FLOAT;
             else{
 		uInfo->procJobLimit = uData->pJobLimit;
@@ -1070,34 +1083,34 @@ checkUsers (struct infoReq *req, struct userInfoReply *reply)
 	    hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 	}
 	if (reply->numUsers == 0)
-	    return (LSBE_NO_USER);                     
+	    return (LSBE_NO_USER);
 	return (LSBE_NO_ERROR);
     }
 
-    if ((defUser = getUserData ("default")) == NULL) 
-        return (LSBE_NO_USER);                         
+    if ((defUser = getUserData ("default")) == NULL)
+        return (LSBE_NO_USER);
 
-    for (i = 0; i < req->numNames; i++) {           
+    for (i = 0; i < req->numNames; i++) {
         hashEntryPtr = h_getEnt_(&uDataList, req->names[i]);
         if (hashEntryPtr != NULL) {
             uData = (struct uData *)hashEntryPtr->hData;
         } else {
-            if (getpwlsfuser_ (req->names[i]) == NULL) {  
+            if (getpwlsfuser_ (req->names[i]) == NULL) {
                 for (j = 0; j < numofugroups; j++) {
                     if (strcmp (req->names[i], usergroups[j]->group))
-                        continue;              
+                        continue;
                     found = TRUE;
                     break;
                 }
             }
-            uData = defUser;                        
+            uData = defUser;
         }
 	uInfo = &(reply->users[reply->numUsers]);
         if (uData == defUser)
             uInfo->user = req->names[i];
         else
 	    uInfo->user = uData->user;
-        if (found) {                     
+        if (found) {
             uInfo->maxJobs = INFINIT_INT;
             uInfo->procJobLimit = INFINIT_FLOAT;
         } else {
@@ -1107,7 +1120,7 @@ checkUsers (struct infoReq *req, struct userInfoReply *reply)
             else
 		uInfo->procJobLimit = uData->pJobLimit;
         }
-	uInfo->numStartJobs = uData->numJobs  
+	uInfo->numStartJobs = uData->numJobs
 				- uData->numPEND - uData->numRESERVE;
 	uInfo->numJobs = uData->numJobs;
 	uInfo->numPEND = uData->numPEND;
@@ -1120,10 +1133,10 @@ checkUsers (struct infoReq *req, struct userInfoReply *reply)
     }
     return (LSBE_NO_ERROR);
 
-} 
+}
 
 struct uData *
-addUserData (char *username, int maxjobs, float pJobLimit, 
+addUserData (char *username, int maxjobs, float pJobLimit,
          char *filename, int override, int config)
 {
     static char fname[] = "addUserData";
@@ -1136,14 +1149,14 @@ addUserData (char *username, int maxjobs, float pJobLimit,
         ls_syslog(LOG_DEBUG2, "addUserData: New uData for user/group %s with maxJobs=%d pJobLimit=%f", username, maxjobs, pJobLimit);
 
     if (first) {
-        h_initTab_(&uDataList, 64);
+        h_initTab_(&uDataList, 61);
         first = FALSE;
     }
     userEnt = h_addEnt_(&uDataList, username, &new);
     if (new) {
-        uData = (struct uData *) my_calloc(1, 
-				    sizeof(struct uData), 
-				    "addUserData");
+        uData = my_calloc(1,
+                          sizeof(struct uData),
+                          "addUserData");
 
 	initUData (uData);
     } else if (override) {
@@ -1153,8 +1166,8 @@ addUserData (char *username, int maxjobs, float pJobLimit,
         if (filename)
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7013,
 		"%s: %s: User <%s> is multiply defined; retaining old definition"), /* catgets 7013 */
-		fname, 
-		filename, 
+		fname,
+		filename,
 		username);
         return (struct uData *)userEnt->hData;
     }
@@ -1162,12 +1175,12 @@ addUserData (char *username, int maxjobs, float pJobLimit,
 	uData->flags |= USER_UPDATE;
 
     uData->user = safeSave(username);
-    uData->pJobLimit = pJobLimit;      
-    uData->maxJobs   = maxjobs;        
+    uData->pJobLimit = pJobLimit;
+    uData->maxJobs   = maxjobs;
 
     uData->uDataIndex = UDATA_TABLE_NUM_ELEMENTS(uDataPtrTb);
 
-    
+
     uDataTableAddEntry(uDataPtrTb, uData);
 
     userEnt->hData = (int *) uData;
@@ -1185,7 +1198,7 @@ addUserData (char *username, int maxjobs, float pJobLimit,
 
 	setAddElement(allUsersSet, (void *)uData);
 
-	
+
 	BITSET_ITERATOR_ZERO_OUT(&iter);
 	setIteratorAttach(&iter, uGrpAllSet, fname);
 	for (allUserGrp = (struct uData *)setIteratorBegin(&iter);
@@ -1196,43 +1209,43 @@ addUserData (char *username, int maxjobs, float pJobLimit,
 	    if (uData->parents == NULL) {
 		memset(strBuf, 0, 128);
 		sprintf(strBuf, "%s's parents set", uData->user);
-		uData->parents = setCreate(MAX_GROUPS, 
-					   getIndexByuData, 
+		uData->parents = setCreate(MAX_GROUPS,
+					   getIndexByuData,
 					   getuDataByIndex ,
 					   strBuf);
 		if (uData->parents == NULL) {
-		    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_EMSG_S, 
+		    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_EMSG_S,
 			fname, "setCreate", strBuf, setPerror(bitseterrno));
 		    mbdDie(MASTER_MEM);
 		}
 	    }
-	    
+
 	    if (uData->ancestors == NULL) {
 		memset(strBuf, 0, 128);
 		sprintf(strBuf, "%s's ancestors set", uData->user);
-		uData->ancestors = setCreate(MAX_GROUPS, 
-					     getIndexByuData, 
+		uData->ancestors = setCreate(MAX_GROUPS,
+					     getIndexByuData,
 					     getuDataByIndex ,
 					     strBuf);
 		if (uData->ancestors == NULL) {
-		    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_EMSG_S, 
+		    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_EMSG_S,
 			fname, "setCreate", strBuf, setPerror(bitseterrno));
 		    mbdDie(MASTER_MEM);
 		}
 	    }
-	    
+
 	    setAddElement(uData->parents, (void *)allUserGrp);
 	    setAddElement(uData->ancestors, (void *)allUserGrp);
-	    
-	    
+
+
 	    if (allUserGrp->ancestors != NULL)
-		setOperate(uData->ancestors, allUserGrp->ancestors, 
+		setOperate(uData->ancestors, allUserGrp->ancestors,
 			   LS_SET_UNION);
 	}
     }
     return uData;
 
-} 
+}
 
 void
 checkParams (struct infoReq *req, struct parameterInfo *reply)
@@ -1258,27 +1271,27 @@ checkParams (struct infoReq *req, struct parameterInfo *reply)
     reply->jobTerminateInterval = jobTerminateInterval;
     reply->maxJobArraySize = maxJobArraySize;
 
-    if (pjobSpoolDir) { 
+    if (pjobSpoolDir) {
        reply->pjobSpoolDir = pjobSpoolDir;
     } else {
        reply->pjobSpoolDir = "";
-    } 
+    }
 
     reply->maxUserPriority = maxUserPriority;
     reply->jobPriorityValue = jobPriorityValue;
     reply->jobPriorityTime = jobPriorityTime;
 
-    
-    
+
+
     reply->jobDepLastSub = jobDepLastSub;
     reply->sharedResourceUpdFactor = sharedResourceUpdFactor;
-    
+
     reply->maxJobId = maxJobId;
     reply->maxAcctArchiveNum = maxAcctArchiveNum;
     reply->acctArchiveInDays = acctArchiveInDays;
     reply->acctArchiveInSize = acctArchiveInSize;
 
-} 
+}
 
 void
 mbdDie (int sig)
@@ -1290,22 +1303,22 @@ mbdDie (int sig)
 
     sigemptyset(&newmask);
     sigaddset(&newmask, SIGCHLD);
-    sigaddset(&newmask, SIGTERM);        
+    sigaddset(&newmask, SIGTERM);
     sigaddset(&newmask, SIGINT);
     sigprocmask(SIG_BLOCK, &newmask, NULL);
 
-    
-    
-    
+
+
+
 
     for (list = 0; list < NJLIST; list++) {
-	if (jDataList[list] != NULL) {   
-	    for (jpbw = jDataList[list]->back; jpbw != jDataList[list]; 
+	if (jDataList[list] != NULL) {
+	    for (jpbw = jDataList[list]->back; jpbw != jDataList[list];
 						       jpbw=jpbw->back) {
                 if (!(jpbw->pendEvent.notSwitched
 		      || jpbw->pendEvent.sig != SIG_NULL
 		      || jpbw->pendEvent.sig1 != SIG_NULL
-		      || jpbw->pendEvent.notModified)) 
+		      || jpbw->pendEvent.notModified))
                     continue;
                 if (IS_FINISH(jpbw->jStatus) && (getZombieJob(jpbw->jobId)) == NULL)
                     continue;
@@ -1315,17 +1328,17 @@ mbdDie (int sig)
     }
     log_mbdDie(sig);
 
-    
+
     if (gethostname(myhostp, MAXHOSTNAMELEN) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, "mbdDie", "gethostname");
 	strcpy(myhostp, "localhost");
     }
 
-    
+
 
     die (sig);
 
-} 
+}
 
 int
 isManager (char *lsfUserName)
@@ -1338,7 +1351,7 @@ isManager (char *lsfUserName)
             return (TRUE);
     }
     return (FALSE);
-} 
+}
 
 
 int
@@ -1346,8 +1359,8 @@ isAuthManagerExt(struct lsfAuth *auth)
 {
 
     int crossPlatforms;
-    
-    
+
+
     if (auth->options >= 0) {
 	if (auth->options & AUTH_HOST_UX)
 	    crossPlatforms = FALSE;
@@ -1357,38 +1370,38 @@ isAuthManagerExt(struct lsfAuth *auth)
 	    return FALSE;
     }
 
-    
+
     return (isManager(auth->lsfUserName));
 
-} 
+}
 
-int 
+int
 isAuthManager(struct lsfAuth *auth)
 {
 
     if (mSchedStage == M_STAGE_REPLAY)
         return(TRUE);
-    
+
     return (isAuthManagerExt(auth));
 }
-  
+
 char *
 getDefaultProject(void)
 {
 
     static char szDefaultProjName[MAX_LSB_NAME_LEN];
 
-    
+
     if (lsfDefaultProject) {
 	strcpy(szDefaultProjName, lsfDefaultProject);
 	return(szDefaultProjName);
     }
 
     strcpy(szDefaultProjName, "default");
-    
+
     return(szDefaultProjName);
 
-} 
+}
 
 void
 updResCounters(struct jData *jData, int newStatus)
@@ -1406,16 +1419,16 @@ updResCounters(struct jData *jData, int newStatus)
 
     switch (MASK_STATUS (jData->jStatus & ~JOB_STAT_UNKWN)) {
     case JOB_STAT_SSUSP:
-        if (!(jData->jStatus & JOB_STAT_RESERVE) 
+        if (!(jData->jStatus & JOB_STAT_RESERVE)
 	    && (newStatus & JOB_STAT_RESERVE) && IS_START (newStatus)) {
-            
+
             updQaccount (jData, 0, 0, 0, -num, 0, num);
             updUserData(jData, 0, 0, 0, -num, 0, num);
             updHostData(TRUE, jData, 0, 0, -1, 0, 1);
         }  else if ((jData->jStatus & JOB_STAT_RESERVE) &&
-		    !(newStatus & JOB_STAT_RESERVE) && 
-                    (IS_START (newStatus) || (newStatus & JOB_STAT_PEND))) { 
-            
+		    !(newStatus & JOB_STAT_RESERVE) &&
+                    (IS_START (newStatus) || (newStatus & JOB_STAT_PEND))) {
+
             updQaccount (jData, 0, 0, 0, num, 0, -num);
             updUserData(jData, 0, 0, 0, num, 0, -num);
             updHostData(TRUE, jData, 0, 0, 1, 0, -1);
@@ -1431,15 +1444,15 @@ updResCounters(struct jData *jData, int newStatus)
         }
 	break;
     case JOB_STAT_USUSP:
-        if (!(jData->jStatus & JOB_STAT_RESERVE) 
+        if (!(jData->jStatus & JOB_STAT_RESERVE)
 	    && (newStatus & JOB_STAT_RESERVE) && IS_START (newStatus)) {
-            
+
             updQaccount (jData, 0, 0, 0, 0, -num, num);
             updUserData(jData, 0, 0, 0, 0, -num,  num);
             updHostData(TRUE, jData, 0, 0, 0, -1, 1);
         }  else if ((jData->jStatus & JOB_STAT_RESERVE)
-            && !(newStatus & JOB_STAT_RESERVE) && IS_START (newStatus)) { 
-            
+            && !(newStatus & JOB_STAT_RESERVE) && IS_START (newStatus)) {
+
             updQaccount (jData, 0, 0, 0, 0, num, -num);
             updUserData(jData, 0, 0, 0, 0, num, -num);
             updHostData(TRUE, jData, 0, 0, 0, 1, -1);
@@ -1450,15 +1463,15 @@ updResCounters(struct jData *jData, int newStatus)
             updHostData(TRUE, jData, -1, 0, 0, 0, -1);
         } else {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7016,
-		"%s: Job <%s> transited from %x to %x"), 
+		"%s: Job <%s> transited from %x to %x"),
 		fname, lsb_jobid2str(jData->jobId), jData->jStatus, newStatus);
         }
 	break;
     case JOB_STAT_PEND:
     case JOB_STAT_PSUSP:
-       if ((jData->jStatus & JOB_STAT_RESERVE) 
+       if ((jData->jStatus & JOB_STAT_RESERVE)
 		  && !(newStatus & JOB_STAT_RESERVE) && IS_PEND (newStatus)) {
-            
+
             updQaccount (jData, 0, num, 0, 0, 0, -num);
             updHostData(TRUE, jData, -1, 0, 0, 0, -1);
             updUserData(jData, 0, num, 0, 0, 0, -num);
@@ -1471,7 +1484,7 @@ updResCounters(struct jData *jData, int newStatus)
             updUserData(jData, 0, -num, 0, 0, 0, num);
 	    proxyHRsvJLAddEntry(jData);
 	    proxyRsvJLAddEntry(jData);
-        } else if (IS_PEND (jData->jStatus) 
+        } else if (IS_PEND (jData->jStatus)
 	      && (jData->jStatus & JOB_STAT_RESERVE) && IS_FINISH(newStatus)) {
             updQaccount (jData, -numReq, -numReq+num, 0, 0, 0, -num);
             updHostData(TRUE, jData, -1, 0, 0, 0, -1);
@@ -1480,12 +1493,12 @@ updResCounters(struct jData *jData, int newStatus)
 	    proxyRsvJLRemoveEntry(jData);
         } else {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7016,
-		"%s: Job <%s> transited from %x to %x"), 
+		"%s: Job <%s> transited from %x to %x"),
 		fname, lsb_jobid2str(jData->jobId), jData->jStatus, newStatus);
         }
 	break;
     }
-} 
+}
 
 static void
 initUData (struct uData *uData)
@@ -1498,8 +1511,8 @@ initUData (struct uData *uData)
     uData->pJobLimit = INFINIT_FLOAT;
     uData->hAcct = NULL;
     uData->flags = 0;
-    uData->numJobs   = 0;              
-    uData->numPEND   = 0;              
+    uData->numJobs   = 0;
+    uData->numPEND   = 0;
     uData->numRUN    = 0;
     uData->numSSUSP  = 0;
     uData->numUSUSP  = 0;
@@ -1515,43 +1528,43 @@ initUData (struct uData *uData)
     for (i = 0; i <= numLsfHosts + 1; i++) {
         uData->reasonTb[0][i] = 0;
         uData->reasonTb[1][i] = 0;
-    } 
-    
-    uData->uDataIndex  = -1;      
-    uData->children    = NULL; 
-    uData->descendants = NULL; 
-    uData->parents     = NULL;     
-    uData->ancestors   = NULL;   
+    }
+
+    uData->uDataIndex  = -1;
+    uData->children    = NULL;
+    uData->descendants = NULL;
+    uData->parents     = NULL;
+    uData->ancestors   = NULL;
 
     uData->pxySJL = NULL;
 
-} 
+}
 
 void
 updHostLeftRusageMem(struct jData *jobP, int order)
 {
-    static  char fname[] = "updHostLeftRusageMem"; 
+    static  char fname[] = "updHostLeftRusageMem";
     int     numHost;
     struct  resVal *resValPtr;
     float   resMem;
 
     if (logclass & (LC_TRACE))
 	ls_syslog(LOG_DEBUG, "%s: Enter this function ...", fname);
-  
+
     resValPtr = getReserveValues (jobP->shared->resValPtr, jobP->qPtr->resValPtr);
     if (resValPtr != NULL) {
         resMem = resValPtr->val[MEM];
 
         if (resMem < INFINIT_LOAD && resMem > -INFINIT_LOAD) {
-            
+
 
              if (resValPtr->duration != INFINIT_INT)
- 	         
+
 		 return;
 
             for (numHost = 0; numHost < jobP->numHostPtr; numHost++) {
                 if (jobP->hPtr[numHost]->leftRusageMem == INFINIT_LOAD){
-		     
+
 		     int i;
 		     getLsfHostInfo(FALSE);
 		     for (i = 0; i < numLsfHosts; i++) {
@@ -1571,10 +1584,10 @@ updHostLeftRusageMem(struct jData *jobP, int order)
             }
         }
     }
-} 
+}
 
 
-LS_LONG_INT 
+LS_LONG_INT
 getFileSystemFree(char *path)
 {
     static char fname[] = "getFileSystemFree";
@@ -1586,4 +1599,4 @@ getFileSystemFree(char *path)
     }
     return (buf.f_bavail * buf.f_frsize);
 
-} 
+}
