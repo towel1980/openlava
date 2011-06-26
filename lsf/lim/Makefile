@@ -42,8 +42,8 @@ $(LSFLIB):
 	cd ${@D}; $(MAKE)
 
 install: $(LIM_TGT)
-	mkdir -p $(LAVA_SBINDIR) ; \
-	install -m 755 $(LIM_TGT) $(LAVA_SBINDIR)
+	mkdir -p $(OPENLAVA_SBINDIR); \
+	install -m 755 $(LIM_TGT) $(OPENLAVA_SBINDIR)
 
 clean: 
 	rm -f $(COMCLEAN) $(LIM_TGT)

@@ -27,7 +27,7 @@
 
 #include <malloc.h>
 #include "../../lsf/intlib/jidx.h"
-#include "../../lsf/lib/lib.rcp.h" 
+#include "../../lsf/lib/lib.rcp.h"
 #include "../../lsf/lib/mls.h"
 
 #include "../daemons/daemons.h"
@@ -53,9 +53,9 @@ static int mysetLimits(struct jobSpecs *jobSpecsPtr);
 static int send_results (struct jobCard *);
 static int sendNotification(struct jobCard *);
 static int setPGid(struct jobCard *jc);
-static char *getLoginShell(char *jfDada, char *jobFile, 
+static char *getLoginShell(char *jfDada, char *jobFile,
                            struct hostent *hp, int readFile);
-static int createTmpJobFile(struct jobSpecs *jobSpecsPtr, 
+static int createTmpJobFile(struct jobSpecs *jobSpecsPtr,
                             struct hostent *hp, char *stdinFile);
 static void runQPre (struct jobCard *, char ** variables);
 static int  selectPreExecEnvVariables( char * line, char ** variables );
@@ -72,29 +72,27 @@ static int getJobVersion (struct jobSpecs *);
 extern void osConvertPath_(char *pathname);
 extern int sbdlog_newstatus (struct jobCard *jp);
 extern void copyJUsage(struct jRusage *to, struct jRusage *from);
-extern int jRunSuspendAct(struct jobCard *jp, int sigValue, int jState, 
+extern int jRunSuspendAct(struct jobCard *jp, int sigValue, int jState,
                           int reasons, int subReasons, logType logFlag);
-extern int resumeJob (struct jobCard *jp, int sigValue, 
+extern int resumeJob (struct jobCard *jp, int sigValue,
                           int suspendReasons, logType logFlag);
 static int sbdStartupStopJob (struct jobCard *jp, int reasons, int subReasons);
 
 static int chPrePostUser(struct jobCard *jp);
 static void sbdChildCloseChan (int execptChan);
 static int REShasPTYfix(char *);
-static void setJobArrayEnv(char *, int); 
+static void setJobArrayEnv(char *, int);
 extern int getpwnamRetry;
 struct passwd *my_getpwnam(const char *name, char *caller);
 extern int lsbMemEnforce;
-extern char *yybuff; 
+extern char *yybuff;
 extern int lsbJobCpuLimit;
 extern int lsbJobMemLimit;
 
 static void updateJUsage(struct jobCard *, const struct jRusage *);
 static void copyPidInfo(struct jobCard *, const struct jRusage *);
-static void writePidInfoFile(const struct jobCard *, 
+static void writePidInfoFile(const struct jobCard *,
 			     const struct jRusage *);
-
-int sbdParent(char *, struct jobCard *, int);
 extern void ls_closelog_ext(void);
 extern int cpHostent(struct hostent *, const struct hostent *);
 
@@ -107,7 +105,7 @@ my_getpwnam(const char *name, char *caller)
 
     while (((pw = getpwlsfuser_(name)) == NULL) && (counter < getpwnamRetry)) {
         if (logclass & LC_EXEC)
-            ls_syslog(LOG_DEBUG1, "%s: getpwlsfuser_(%s) failed %d times:%m", 
+            ls_syslog(LOG_DEBUG1, "%s: getpwlsfuser_(%s) failed %d times:%m",
                               caller, name, counter);
         counter ++;
         millisleep_(1000);
@@ -124,10 +122,10 @@ sbdChildCloseChan (int exceptChan)
     if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG1,"sbdChildCloseChan: Entering...");
 
-    
+
     for(cliPtr=clientList->forw; cliPtr != clientList; cliPtr=nextClient) {
         nextClient = cliPtr->forw;
-        
+
         if (cliPtr->chanfd != exceptChan)
             shutDownClient(cliPtr);
     }
@@ -151,27 +149,27 @@ job_exec (struct jobCard *jobCardPtr, int chfd)
 
     jobSpecsPtr->reasons = 0;
     jobSpecsPtr->subreasons = 0;
-    
+
     pid = fork();
 
     if (pid < 0) {
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jobSpecsPtr->jobId), "fork");
         return ERR_FORK_FAIL;
     }
 
-    if (pid == 0) {  
+    if (pid == 0) {
 	closeBatchSocket();
 	sbdChildCloseChan (chfd);
 	execJob(jobCardPtr, chfd);
-        exit(-1);   
+        exit(-1);
     }
 
-    
-    
+
+
     jobSpecsPtr->jobPid = pid;
-   
-    
+
+
 
     if (jobSpecsPtr->options & SUB_RESTART)
         jobSpecsPtr->jobPGid = 0;
@@ -183,30 +181,30 @@ job_exec (struct jobCard *jobCardPtr, int chfd)
     jobCardPtr->needReportRU = FALSE;
     return ERR_NO_ERROR;
 
-} 
+}
 
 
- 
+
 static int
 sendNotification(struct jobCard *jobCardPtr)
 {
     static char fname[] = "sendNotification";
-    struct jobSpecs *jobSpecsPtr = &(jobCardPtr->jobSpecs);    
+    struct jobSpecs *jobSpecsPtr = &(jobCardPtr->jobSpecs);
     FILE *mail;
     char myhostnm[MAXHOSTNAMELEN];
     int  k;
     char *temp1;
 
-    
-    
-    if (jobSpecsPtr->options & SUB_MAIL_USER) 
+
+
+    if (jobSpecsPtr->options & SUB_MAIL_USER)
         mail = smail(jobSpecsPtr->mailUser, jobSpecsPtr->fromHost);
     else
         mail = smail(jobSpecsPtr->userName, jobSpecsPtr->fromHost);
 
-    
+
     if (gethostname(myhostnm, MAXHOSTNAMELEN) < 0) {
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jobSpecsPtr->jobId), "gethostname");
 	STRNCPY(myhostnm, "localhost", sizeof(myhostnm));
     }
@@ -238,10 +236,10 @@ sendNotification(struct jobCard *jobCardPtr)
     fprintf(mail, _i18n_msg_get(ls_catd , NL_SETN, 408,
 	"Notification reported at %s"), /* catgets 408 */
 	_i18n_ctime(ls_catd, CTIME_FORMAT_DEFAULT, &now));
-    
+
     mclose(mail);
     return 0;
-} 
+}
 
 
 static int
@@ -251,7 +249,7 @@ freePreExecEnvVariables( char ** variables )
     int returnValue = -1;
 
     if (variables == NULL) {
-        goto Done; 
+        goto Done;
     }
 
     j = 0;
@@ -260,18 +258,18 @@ freePreExecEnvVariables( char ** variables )
         variables[ j ] = NULL;
         j++;
     }
-    returnValue = 0; 
+    returnValue = 0;
 
 Done:
     return ( returnValue );
 
-} 
+}
 
 
 static int
 selectPreExecEnvVariables( char * line, char ** variables )
 {
-    int returnValue = -1; 
+    int returnValue = -1;
     char     buf[MAXLINELEN + 1];
     char     var[MAXLINELEN + 1];
     char *   pBeg;
@@ -282,11 +280,11 @@ selectPreExecEnvVariables( char * line, char ** variables )
     if (   ( line == NULL      )
         || ( variables == NULL )
        ) {
-        goto Done; 
+        goto Done;
     }
 
     if ( strlen( line ) > sizeof(buf) ) {
-       returnValue = 1; 
+       returnValue = 1;
        strncpy( buf, line, sizeof(buf) );
        buf[MAXLINELEN] = '\0';
     } else {
@@ -295,7 +293,7 @@ selectPreExecEnvVariables( char * line, char ** variables )
 
     pBeg = (char *) &buf;
 
-    
+
     j = 0;
     while (   (variables[ j ] != NULL)
            && ( j <=MAX_PREEXEC_ENVS )
@@ -312,73 +310,73 @@ selectPreExecEnvVariables( char * line, char ** variables )
         }
         variables [ j ] = NULL;
 
-        
+
         if ( (pBeg = strchr( pBeg, '=' )) !=NULL ) {
 
-            
+
             pVarBeg = pBeg;
-            while (    ( pVarBeg[0] != ' ' )  
-                    && ( pVarBeg[0] != '\t')  
-                    && ( pVarBeg[0] != '\r')  
-                    && ( pVarBeg[0] != '\n')  
-                    && ( pVarBeg[0] != '\"')  
-                    && ( pVarBeg[0] != '\'')  
-                    && ( pVarBeg[0] != ';')   
-                    && ( pVarBeg[0] != ',')   
+            while (    ( pVarBeg[0] != ' ' )
+                    && ( pVarBeg[0] != '\t')
+                    && ( pVarBeg[0] != '\r')
+                    && ( pVarBeg[0] != '\n')
+                    && ( pVarBeg[0] != '\"')
+                    && ( pVarBeg[0] != '\'')
+                    && ( pVarBeg[0] != ';')
+                    && ( pVarBeg[0] != ',')
                     && ( pVarBeg != (char *) &buf )
                   ) {
                   pVarBeg--;
                   if ( pVarBeg[0] == '=') {
                       pVarBeg++;
-                      break; 
+                      break;
                   }
             }
             if ( pVarBeg != (char *) &buf ) {
-                pVarBeg++; 
+                pVarBeg++;
             }
 
             if ( pVarBeg == pBeg ) {
                 pBeg++;
-                continue;  
+                continue;
             }
 
-            pBeg++; 
+            pBeg++;
 
             if ( strlen(pBeg) == 0  ) {
-                 continue; 
+                 continue;
             }
 
-            
+
             if ( pBeg[0] == '"' ) {
                 pBeg++;
                 pVarEnd = strchr( pBeg,  '"' );
 
                 if ( pVarEnd == NULL ) {
-                    if( returnValue != 1) { 
-                        returnValue = -2; 
+                    if( returnValue != 1) {
+                        returnValue = -2;
                     }
                     goto Done;
                 }
-                pVarEnd++; 
+                pVarEnd++;
 
-            } else { 
-                
+            } else {
+
                 pVarEnd = pBeg;
                 while (    ( strlen(pVarEnd) != 0 )
-                        && ( pVarEnd[0] != ' ' ) 
-                        && ( pVarEnd[0] != '\t') 
-                        && ( pVarEnd[0] != '\r') 
-                        && ( pVarEnd[0] != '\n') 
-                        && ( pVarEnd[0] != '\"') 
-                        && ( pVarEnd[0] != '\'') 
-                        && ( pVarEnd[0] != ';')  
-                        && ( pVarEnd[0] != ',')  
+                        && ( pVarEnd[0] != ' ' )
+                        && ( pVarEnd[0] != '\t')
+                        && ( pVarEnd[0] != '\r')
+                        && ( pVarEnd[0] != '\n')
+                        && ( pVarEnd[0] != '\"')
+                        && ( pVarEnd[0] != '\'')
+                        && ( pVarEnd[0] != ';')
+                        && ( pVarEnd[0] != ',')
                       ) {
                     pVarEnd++;
-                } 
+                }
             }
 
-            if ( pVarEnd != pBeg ) { 
+            if ( pVarEnd != pBeg ) {
                 strncpy( var, pVarBeg, pVarEnd - pVarBeg );
                 var[ pVarEnd - pVarBeg ] = '\0';
                 variables[ j ] =  (char * ) malloc( pVarEnd - pVarBeg + 1 );
@@ -393,36 +391,36 @@ selectPreExecEnvVariables( char * line, char ** variables )
             pVarEnd++;
             pBeg = pVarEnd;
             pVarBeg = pVarEnd;
-        } 
-    } 
+        }
+    }
 
     if (      (pBeg != NULL       )
            && (strlen( pBeg) == 0 )
        ) {
         if (returnValue != 1) {
-            returnValue = 0; 
+            returnValue = 0;
         }
     }
 
 Done:
     return( returnValue );
 
-}   
+}
 
 
 static int
 editCmntBackSlash( char *line )
 {
-    int retValue = -1; 
+    int retValue = -1;
     char * prolongPtr = NULL;
     char * commentPtr = NULL;
     char * pRest      = NULL;
 
     if ( !line ) {
-        goto Done; 
+        goto Done;
     }
 
-    
+
     commentPtr = strchr( line, '#' );
 
     while ( commentPtr != NULL) {
@@ -434,7 +432,7 @@ editCmntBackSlash( char *line )
             pRest = (char *) &commentPtr[0];
             pRest++;
 
-            
+
             while (   ( strlen(pRest) > 0 )
                    && ( pRest[0] != '\r'  )
                    && ( pRest[0] != '\n'  )
@@ -450,31 +448,31 @@ editCmntBackSlash( char *line )
                 pRest++;
             }
 
-        } 
+        }
         strcat( commentPtr, pRest );
         commentPtr = strchr( line, '#' );
     }
 
-    
+
     prolongPtr = strchr( line, '\\' );
- 
+
     while ( prolongPtr != NULL ) {
 
         if ( strlen( prolongPtr ) > 0 ) {
 
-            prolongPtr[ 0 ] = '\0'; 
+            prolongPtr[ 0 ] = '\0';
             prolongPtr++;
 
-            
-            while ( 
+
+            while (
                        ( strlen(prolongPtr) != 0 )
-                    && ( prolongPtr[0] != '\r') 
-                    && ( prolongPtr[0] != '\n') 
+                    && ( prolongPtr[0] != '\r')
+                    && ( prolongPtr[0] != '\n')
                   ) {
                 prolongPtr++;
-            } 
+            }
 
-            
+
             if (   ( strlen(prolongPtr) != 0 )
                 && (    ( prolongPtr[0] == '\r' )
                      || ( prolongPtr[0] == '\n' )
@@ -490,7 +488,7 @@ editCmntBackSlash( char *line )
                 prolongPtr++;
             }
 
-            
+
             strcat( line, prolongPtr );
         }
 
@@ -500,8 +498,8 @@ editCmntBackSlash( char *line )
 Done:
     return( retValue );
 
-} 
- 
+}
+
 
 void
 getJobTmpDir( char * tmpDirName, struct jobCard *jobCardPtr )
@@ -509,8 +507,8 @@ getJobTmpDir( char * tmpDirName, struct jobCard *jobCardPtr )
     char jobId[16];
     struct jobSpecs *jobSpecsPtr=  &(jobCardPtr->jobSpecs);
 
-    
-    strcpy( tmpDirName, lsTmpDir_) ; 
+
+    strcpy( tmpDirName, lsTmpDir_) ;
     strcat( tmpDirName, "/" );
     sprintf( jobId, "%s", lsb_jobidinstr(jobSpecsPtr->jobId) );
     strcat( tmpDirName, jobId );
@@ -524,28 +522,28 @@ createJobTmpDir(struct jobCard *jobCardPtr)
     char tmpDirName[MAXFILENAMELEN];
     mode_t previousUmask;
 
-    
+
     getJobTmpDir( (char *) tmpDirName, jobCardPtr );
-    
-    previousUmask = umask(077);  
-    
-    if (   ( mkdir(tmpDirName, 0700) == -1    ) 
+
+    previousUmask = umask(077);
+
+    if (   ( mkdir(tmpDirName, 0700) == -1    )
          &&( errno                   != EEXIST) ) {
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5415,
                 "%s: Unable to create the job level tmp directory <%s> for job <%s>"), /* catgets 5415 */
                 fname, tmpDirName, lsb_jobid2str(jobCardPtr->jobSpecs.jobId));
-        tmpDirName[0] = 0; 
+        tmpDirName[0] = 0;
     }
-    
-    umask(previousUmask); 
-    
-    
+
+    umask(previousUmask);
+
+
     if (daemonParams[LSB_SET_TMPDIR].paramValue != NULL) {
         if ( (tmpDirName[0] !=0) && !strcasecmp(daemonParams[LSB_SET_TMPDIR].paramValue, "y") ) {
             putEnv("TMPDIR", tmpDirName );
         }
     }
-} 
+}
 
 static void
 execJob(struct jobCard *jobCardPtr, int chfd)
@@ -563,13 +561,13 @@ execJob(struct jobCard *jobCardPtr, int chfd)
     struct LSFHeader replyHdr;
 
     static char * pLSB_EXEC_HOSTCWDS = NULL;
-    
-    char * variables[MAX_PREEXEC_ENVS]; 
+
+    char * variables[MAX_PREEXEC_ENVS];
     char targetHost[MAXHOSTNAMELEN];
     char localHost[MAXHOSTNAMELEN];
     const char * officialHostNamePtr = NULL;
 
-    
+
     jobSpecsPtr->jobPid = getpid();
     jobSpecsPtr->jobPGid = jobSpecsPtr->jobPid;
     jobCardPtr->stdinFile = NULL;
@@ -577,29 +575,29 @@ execJob(struct jobCard *jobCardPtr, int chfd)
 	variables[i] = '\0';
 
     if ((rcvJobFile(chfd, &jf)) == -1) {
-        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
         lsb_jobid2str(jobSpecsPtr->jobId), "rcvjobfile_");
 	    jobSetupStatus(JOB_STAT_PEND, PEND_JOB_NO_FILE, jobCardPtr);
     }
-   
-    
+
+
 
     if ( (daemonParams[LSB_BSUBI_OLD].paramValue ||
 	!PURE_INTERACTIVE(jobSpecsPtr))) {
 
-	
+
 	xdrmem_create(&xdrs, buf, MSGSIZE, XDR_DECODE);
 	if (readDecodeHdr_(chfd, buf, chanRead_, &xdrs, &replyHdr) < 0) {
 	    if (logclass & LC_EXEC)
 		ls_syslog(LOG_DEBUG,
 			  "%s: Fail to get go-ahead from mbatchd; abort job <%s>",
 			  fname, lsb_jobid2str(jobSpecsPtr->jobId));
-	    
+
 	    jobSetupStatus(JOB_STAT_PEND, PEND_JOB_START_FAIL, jobCardPtr);
 	}
-    
+
 	xdr_destroy(&xdrs);
-    
+
 	chanClose_(chfd);
     }
 
@@ -608,77 +606,77 @@ execJob(struct jobCard *jobCardPtr, int chfd)
 		  "%s: Got job start ok from mbatchd for job <%s>",
 		  fname, lsb_jobid2str(jobSpecsPtr->jobId));
 
-    
-    
+
+
     if (acctMapTo(jobCardPtr) < 0)  {
         jobSetupStatus(JOB_STAT_PEND, PEND_NO_MAPPING, jobCardPtr);
     }
 
     if ((jobCardPtr->jobSpecs.jobPGid = setPGid(jobCardPtr)) < 0)
 	jobSetupStatus(JOB_STAT_PEND, PEND_JOB_EXEC_INIT, jobCardPtr);
-    
-    putEnv(LS_EXEC_T, "START");    
 
-    
-     
-    if (setJobEnv(jobCardPtr) < 0) { 	
+    putEnv(LS_EXEC_T, "START");
+
+
+
+    if (setJobEnv(jobCardPtr) < 0) {
         ls_syslog(LOG_DEBUG, "%s: setJobEnv() failed for job <%s>", fname, lsb_jobid2str(jobSpecsPtr->jobId));
 	jobSetupStatus(JOB_STAT_PEND, PEND_JOB_ENV, jobCardPtr);
     }
 
-    
+
     (void) umask(jobCardPtr->jobSpecs.umask);
 
-    
+
     runQPre (jobCardPtr, variables );
 
-    
+
     pLSB_EXEC_HOSTCWDS = getenv( "LSB_EXEC_HOSTCWDS" );
 
     if (   ( pLSB_EXEC_HOSTCWDS != NULL            )
         && ( strcmp( pLSB_EXEC_HOSTCWDS, "" ) != 0 )
-       ) { 
+       ) {
 
-        
+
         char * pBeg, * pEnd;
 
         pBeg = strstr( pLSB_EXEC_HOSTCWDS, "//" );
 
         if ( pBeg == NULL) {
-            
+
             strcpy(jobCardPtr->jobSpecs.execCwd, pLSB_EXEC_HOSTCWDS);
         } else {
-            
+
             pBeg += strlen( "//" );
 
-            
+
             pEnd = strchr( pBeg, '/' );
 
-            
+
 
             if ( pEnd ) {
-                
+
                 int len = (pEnd - pBeg) < sizeof(targetHost) ? pEnd - pBeg :
                                           sizeof(targetHost)-1;
                 strncpy(targetHost, pBeg, len );
                 targetHost[ len ] ='\0';
                 strcpy(jobCardPtr->jobSpecs.execCwd, pEnd);
             } else {
-                
+
                 targetHost[0] = '\0';
                 strcpy( jobCardPtr->jobSpecs.execCwd, pBeg );
             }
         }
 
-        
 
-        
+
+
         officialHostNamePtr = ls_getmyhostname();
 
-        
+
         if (officialHostNamePtr) {
             strcpy( localHost, officialHostNamePtr );
- 
+
             if (targetHost[0] == 0) {
                 officialHostNamePtr = NULL;
             } else {
@@ -691,103 +689,103 @@ execJob(struct jobCard *jobCardPtr, int chfd)
                     ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5451,
                      "%s: queue pre-exec migration host <%s> is not a local host <%s>, ignored. Job <%d>") /*catgets 5451*/
                     ,fname, targetHost, localHost, jobSpecsPtr->jobId );
-                } 
-            } 
-        } 
+                }
+            }
+        }
 
-        
-    } 
+
+    }
     else{
-        
-        
+
+
         if((jobCardPtr->jobSpecs.execCwd[0] == '/') &&
        	   (jobCardPtr->jobSpecs.execCwd[1] == '/' )&&
            (strlen(jobCardPtr->jobSpecs.execCwd)>2)
-        	   
-          )	
-          
+
+          )
+
        	{
-       	    char *pBeg, *pEnd;    
-       	    
+       	    char *pBeg, *pEnd;
+
        	    pBeg = jobCardPtr->jobSpecs.execCwd +2;
 
-	    
+
        	    pEnd = strchr( pBeg, '/' );
-       	    
-       	    
+
+
        	    if(pEnd){
        	    	int len  ;
        	    	char *hostname;
-       	    	
+
        	    	len = pEnd - pBeg ;
-       	    	
+
        	    	hostname = malloc(len+1);
-       	    	
+
        	    	if(hostname!=NULL){
        	    	    int i;
        	    	    char *ptrHostname = pBeg;
-       	    	    
-        	    	    
+
+
        	    	    for(i=0;i<len; i++){
        	    	        hostname[i] = *ptrHostname++;
        	    	    }
        	    	    hostname[len] = 0;
-        	    	    
-       	    	    if(getHostOfficialByName_(hostname)){ 
+
+       	    	    if(getHostOfficialByName_(hostname)){
        	    	        strcpy(jobCardPtr->jobSpecs.execCwd, pEnd);
        	    	    }
-       	    	    
+
         	    free(hostname);
-        	           
-       	    	} 
-        	    	
-       	    } 
-        	    
-       	}  
-        
-        	
-    } 
- 
+
+       	    	}
+
+       	    }
+
+       	}
+
+
+    }
+
     freePreExecEnvVariables( variables );
 
-    
+
     nice(NICE_LEAST);
-    
+
     if (!debug)
 	nice(NICE_MIDDLE);
     nice(0);
-    
-    errno = 0; 	
+
+    errno = 0;
     if (nice(jobCardPtr->jobSpecs.nice) == -1 && errno != 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "nice", 
+	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "nice",
 	    jobSpecsPtr->nice);
     }
 
     if (setLimits(jobSpecsPtr) < 0)
 	jobSetupStatus(JOB_STAT_PEND, PEND_JOB_EXEC_INIT, jobCardPtr);
 
-    
+
     if ( jobSpecsPtr->lsfLimits[LSF_RLIMIT_FSIZE].rlim_maxl != 0xffffffff ||
 	 jobSpecsPtr->lsfLimits[LSF_RLIMIT_FSIZE].rlim_maxh != 0x7fffffff ||
 	 jobSpecsPtr->lsfLimits[LSF_RLIMIT_FSIZE].rlim_curl != 0xffffffff ||
 	 jobSpecsPtr->lsfLimits[LSF_RLIMIT_FSIZE].rlim_curh != 0x7fffffff) {
-	ls_closelog_ext(); 
+	ls_closelog_ext();
     }
     if (setIds(jobCardPtr) < 0) {
 	jobSetupStatus(JOB_STAT_PEND, PEND_JOB_EXEC_INIT, jobCardPtr);
     }
 
-    
+
 #if 0
     if (acctMapOk(jobCardPtr) < 0)
 	jobSetupStatus(JOB_STAT_PEND, PEND_RMT_PERMISSION, jobCardPtr);
 #endif
-    
-    
+
+
     if ((fromHp = (struct hostent *)getHostEntryByName_(jobSpecsPtr->fromHost)) == NULL) {
 	jobSetupStatus(JOB_STAT_PEND, PEND_JOB_EXEC_INIT, jobCardPtr);
     }
- 
+
     cpHostent(&fromHpBuf, fromHp);
 
     if ((logclass & LC_EXEC) && jobSpecsPtr->jobSpoolDir[0] != '\0') {
@@ -795,7 +793,7 @@ execJob(struct jobCard *jobCardPtr, int chfd)
 	          "%s: the JobSpoolDir for the job is %s \n",
 		  fname, jobSpecsPtr->jobSpoolDir);
     }
-    
+
     if (initPaths(jobCardPtr, &fromHpBuf, &jf) < 0) {
         jobSetupStatus(JOB_STAT_PEND, PEND_JOB_PATHS, jobCardPtr);
     }
@@ -804,31 +802,31 @@ execJob(struct jobCard *jobCardPtr, int chfd)
         (void) Signal_(i, SIG_DFL);
 
     (void) Signal_(SIGHUP, SIG_IGN);
-    
+
     sigemptyset(&newmask);
     sigprocmask(SIG_SETMASK, &newmask, NULL);
-    
+
            /* unblock all signals */
     (void) alarm(0);
 
     closeExceptFD(-1);
 
-    
+
     createJobTmpDir(jobCardPtr);
 
     if (jobSpecsPtr->options & SUB_PRE_EXEC)
 	runUPre(jobCardPtr);
 
     if ((jobSpecsPtr->options & SUB_LOGIN_SHELL) || UID_MAPPED(jobCardPtr)) {
-        
+
         if (createTmpJobFile(jobSpecsPtr, &fromHpBuf, jobCardPtr->stdinFile) < 0)
 	    jobSetupStatus(JOB_STAT_PEND, PEND_JOB_NO_FILE, jobCardPtr);
     }
-    
-    
+
+
     if (!(jobCardPtr->jobSpecs.options & SUB_RESTART)) {
 
-	
+
 	if (!(!daemonParams[LSB_BSUBI_OLD].paramValue &&
 	      PURE_INTERACTIVE(&jobCardPtr->jobSpecs) &&
 	      !UID_MAPPED(jobCardPtr))) {
@@ -837,20 +835,20 @@ execJob(struct jobCard *jobCardPtr, int chfd)
     }
 
     if (jobCardPtr->jobSpecs.options & SUB_NOTIFY_BEGIN)
-	sendNotification(jobCardPtr);    
+	sendNotification(jobCardPtr);
 
     if (jobSpecsPtr->options & SUB_RESTART)
 	execRestart(jobCardPtr, &fromHpBuf);
     else {
         char *jobArgv[4], **execArgv;
         char tmpJobFile[MAXLINELEN];
-	
-        
+
+
         if (!(jobSpecsPtr->options & SUB_LOGIN_SHELL) &&
              !UID_MAPPED(jobCardPtr))
         {
-	    
-	
+
+
             sprintf(tmpJobFile,"%s%s",jobSpecsPtr->jobFile, JOBFILEEXT);
             osConvertPath_(tmpJobFile);
             jobArgv[0] = tmpJobFile;
@@ -858,10 +856,10 @@ execJob(struct jobCard *jobCardPtr, int chfd)
 
 	    execArgv = execArgs(jobSpecsPtr, jobArgv);
 
-            if (logclass & (LC_TRACE | LC_EXEC)) 
+            if (logclass & (LC_TRACE | LC_EXEC))
 		ls_syslog(LOG_DEBUG, "%s: job <%s> execArgv[0] is %s, execArg[1] is %s", fname, lsb_jobid2str(jobSpecsPtr->jobId), execArgv[0], execArgv[1]);
 
-	    
+
 	    if ((jobSpecsPtr->options & SUB_INTERACTIVE) &&
 		(jobSpecsPtr->options & SUB_PTY))  {
 		chuser(batchId);
@@ -877,18 +875,18 @@ execJob(struct jobCard *jobCardPtr, int chfd)
         } else {
 	    if ((jobSpecsPtr->options & SUB_INTERACTIVE) &&
 		(jobSpecsPtr->options & SUB_PTY)) {
-		
+
 		chuser(batchId);
 		lsfSetUid(jobSpecsPtr->execUid);
 	    }
 
             if (jobSpecsPtr->options & SUB_LOGIN_SHELL) {
-		if (jobSpecsPtr->loginShell != NULL 
+		if (jobSpecsPtr->loginShell != NULL
 			  && jobSpecsPtr->loginShell[0] != '\0')
-                    
+
                     shellPath = jobSpecsPtr->loginShell;
                 else
-                    shellPath = getLoginShell(NULL, 
+                    shellPath = getLoginShell(NULL,
 				 jobSpecsPtr->jobFile, &fromHpBuf, 1);
             } else
                 shellPath = "/bin/sh";
@@ -896,19 +894,19 @@ execJob(struct jobCard *jobCardPtr, int chfd)
             if (logclass & LC_EXEC)
                 ls_syslog(LOG_DEBUG2,"%s: options=%x sock=%d shellPath=%s",
 		    fname, jobSpecsPtr->options, chanSock_(chfd), shellPath);
- 
-            
-            putEnv("PATH", "/bin:/usr/bin/:/usr/mbin:/local/bin:/usr/local:/usr/ucb");
-    
 
-            
+
+            putEnv("PATH", "/bin:/usr/bin/:/usr/mbin:/local/bin:/usr/local:/usr/ucb");
+
+
+
             (void) chdir (jobSpecsPtr->execHome);
- 
+
             if (shellPath != NULL) {
                 putEnv("SHELL",shellPath);
-                
+
                 jobArgv[0] = "-";
-                
+
                 jobArgv[1] = NULL;
                 lsfExecv(shellPath, jobArgv);
 
@@ -925,7 +923,7 @@ execJob(struct jobCard *jobCardPtr, int chfd)
     }
     exit(-1);
 
-} 
+}
 
 
 
@@ -936,7 +934,7 @@ execArgs(struct jobSpecs *jp, char **execArgv)
     static char portStr[10];
     static char *argv[64];
     static char debugStr[10];
-    
+
     argv[i++] = getDaemonPath_("/res",daemonParams[LSF_SERVERDIR].paramValue);
     if (debug) {
 	sprintf(debugStr, "-%d", debug);
@@ -948,9 +946,9 @@ execArgs(struct jobSpecs *jp, char **execArgv)
 	i++;
 	argv[i] = env_dir;
 	i++;
-    }        
-    
-    
+    }
+
+
     if (jp->options & SUB_INTERACTIVE) {
 	argv[i++] = "-p";
 	sprintf(portStr, "%d", jp->niosPort);
@@ -963,11 +961,11 @@ execArgs(struct jobSpecs *jp, char **execArgv)
 	if (jp->options & SUB_OUT_FILE)
 	    argv[i++] = "-o";
 	if ((jp->options & SUB_ERR_FILE) || (jp->options & SUB_OUT_FILE))
-	    argv[i++] = "-e";	    
+	    argv[i++] = "-e";
     }
-    
+
     argv[i++] = "-m";
-    argv[i++] = jp->fromHost;    
+    argv[i++] = jp->fromHost;
     for (; *execArgv; execArgv++) {
 	argv[i++] = *execArgv;
     }
@@ -975,7 +973,7 @@ execArgs(struct jobSpecs *jp, char **execArgv)
     argv[i] = NULL;
 
     return (argv);
-} 
+}
 
 
 void
@@ -987,10 +985,10 @@ resetEnv(void)
 
     env[0] = NULL;
     environ = env;
-} 
+}
 
- 
-int 
+
+int
 setJobEnv(struct jobCard *jp)
 {
     static char fname[] = "setJobEnv()";
@@ -1007,31 +1005,31 @@ setJobEnv(struct jobCard *jp)
 	ls_syslog(LOG_DEBUG, "setJobEnv: Job <%s> numEnv %d ...",
 		  lsb_jobid2str(jp->jobSpecs.jobId), jp->jobSpecs.numEnv);
 
-    
+
     if ((tz = getenv("TZ")))
         strcpy(tzsave, tz);
-    
+
     if ((eexecT = getenv(LS_EXEC_T)))
 	strcpy(eexecTStr, eexecT);
-   
-    
-    if ((eauthAuxData = getenv ("LSF_EAUTH_AUX_DATA")) != NULL) {  
+
+
+    if ((eauthAuxData = getenv ("LSF_EAUTH_AUX_DATA")) != NULL) {
         if (logclass & LC_TRACE) {
-            ls_syslog(LOG_DEBUG, "%s: LSF_EAUTH_AUX_DATA=%s", 
+            ls_syslog(LOG_DEBUG, "%s: LSF_EAUTH_AUX_DATA=%s",
                       fname, eauthAuxData);
         }
         strcpy (eauthAuxDataStr, eauthAuxData);
     }
 
-    
+
     resetEnv();
 
-    
+
     for (i = 0; i < jp->jobSpecs.numEnv; i++) {
 	if ((sp = strchr (jp->jobSpecs.env[i], '=')) == NULL)
             continue;
-        
-        if ( (jp->jobSpecs.options & SUB_LOGIN_SHELL) 
+
+        if ( (jp->jobSpecs.options & SUB_LOGIN_SHELL)
 	     && (strstr(jp->jobSpecs.env[i], "LSB_ACCT_MAP") == NULL)
              && (strstr(jp->jobSpecs.env[i], "LSF_VERSION") == NULL)
              && (strstr(jp->jobSpecs.env[i], "LSB_UNIXGROUP") == NULL)
@@ -1040,7 +1038,7 @@ setJobEnv(struct jobCard *jp)
              && (strstr(jp->jobSpecs.env[i], "LOGNAME") == NULL)
              && (strstr(jp->jobSpecs.env[i], "LSF_CUR_SECURITY_LABEL") == NULL)
              && (strstr(jp->jobSpecs.env[i], "LSF_JOB_SECURITY_LABEL") == NULL)) {
-             
+
             if (!(jp->jobSpecs.options & SUB_INTERACTIVE))
 		continue;
 	    if ((strstr (jp->jobSpecs.env[i], "TERMCAP") == NULL)
@@ -1057,7 +1055,7 @@ setJobEnv(struct jobCard *jp)
 	*sp = '=';
     }
 
-    
+
 
     if (tz)
         putEnv("TZ", tzsave);
@@ -1068,25 +1066,25 @@ setJobEnv(struct jobCard *jp)
     putEnv ("LSB_JOBINDEX", val);
 
 
-    
-    if (atoi(val) != 0) { 
-			  
+
+    if (atoi(val) != 0) {
+
           setJobArrayEnv(jp->jobSpecs.jobName, LSB_ARRAY_IDX(jp->jobSpecs.jobId));
     }
 
     sprintf(val, "%s", jp->jobSpecs.jobFile);
     putEnv("LSB_JOBFILENAME", val);
     if (strlen(jp->jobSpecs.chkpntDir) == 0) {
-        
-        if ( jp->jobSpecs.jobSpoolDir[0] == '\0' ) {   
-	    sprintf(shellFile, "%s/.lsbatch/%s", 
-		    jp->jobSpecs.execHome, 
+
+        if ( jp->jobSpecs.jobSpoolDir[0] == '\0' ) {
+	    sprintf(shellFile, "%s/.lsbatch/%s",
+		    jp->jobSpecs.execHome,
 		    jp->jobSpecs.jobFile);
 	} else {
-	    sprintf(shellFile, "%s/%s", 
+	    sprintf(shellFile, "%s/%s",
 			       jp->jobSpecs.jobSpoolDir,
 			       jp->jobSpecs.jobFile);
-        } 
+        }
      } else {
         sprintf(shellFile, "%s/%s", jp->jobSpecs.chkpntDir, jp->jobSpecs.jobFile);
     }
@@ -1095,17 +1093,17 @@ setJobEnv(struct jobCard *jp)
 	char chkDir[MAXFILENAMELEN];
 	char cwd[MAXFILENAMELEN];
 	char *strPtr;
-	
-	
-        
-	
+
+
+
+
         if (((strPtr = strrchr(jp->jobSpecs.chkpntDir, '/')) != NULL)
             && (islongint_(strPtr+1))) {
             if (jp->jobSpecs.chkpntDir[0] == '/') {
-                
+
 		if(jp->jobSpecs.options & SUB_RESTART) {
                     *strPtr = '\0';
-                    sprintf(chkDir, "%s/%s", 
+                    sprintf(chkDir, "%s/%s",
 		        jp->jobSpecs.chkpntDir,
 	    	        lsb_jobidinstr(jp->jobSpecs.jobId));
                     *strPtr = '/';
@@ -1113,21 +1111,21 @@ setJobEnv(struct jobCard *jp)
 		    sprintf(chkDir, "%s",jp->jobSpecs.chkpntDir);
 		}
 	    } else {
-                
-    		
+
+
     	 	if (jp->jobSpecs.cwd[0] == '/') {
          	    strcpy(cwd, jp->jobSpecs.cwd);
     	 	} else {
              	    if (jp->jobSpecs.cwd[0] == '\0')
             	 	strcpy(cwd, jp->jobSpecs.subHomeDir);
 		    else
-            	 	sprintf(cwd, "%s/%s", jp->jobSpecs.subHomeDir, 
+            	 	sprintf(cwd, "%s/%s", jp->jobSpecs.subHomeDir,
 			    jp->jobSpecs.cwd);
     	 	}
                 if (jp->jobSpecs.options & SUB_RESTART) {
                     *strPtr = '\0';
-                    sprintf(chkDir, "%s/%s/%s", 
-		        cwd, 
+                    sprintf(chkDir, "%s/%s/%s",
+		        cwd,
 		        jp->jobSpecs.chkpntDir,
 	    	        lsb_jobidinstr(jp->jobSpecs.jobId));
                     *strPtr = '/';
@@ -1155,7 +1153,7 @@ setJobEnv(struct jobCard *jp)
 
     putEnv("LSB_TRAPSIGS", val);
 
-#define MAX_LSB_HOSTS_LEN 4096    
+#define MAX_LSB_HOSTS_LEN 4096
     if (jp->jobSpecs.numToHosts <= (MAX_LSB_HOSTS_LEN/2))  {
        hosts = (char *) my_malloc(jp->jobSpecs.numToHosts * MAXHOSTNAMELEN, "setJobEnv");
        hosts[0] = '\0';
@@ -1170,12 +1168,12 @@ setJobEnv(struct jobCard *jp)
        free(hosts);
 
     }
-    
+
     if ((jp->jobSpecs.options & SUB_OUT_FILE)) {
         sprintf(val, "%s", jp->jobSpecs.outFile);
         putEnv("LSB_OUTPUTFILE", val);
     }
-    
+
     if ((jp->jobSpecs.options & SUB_ERR_FILE)) {
         sprintf(val, "%s", jp->jobSpecs.errFile);
         putEnv("LSB_ERRORFILE", val);
@@ -1184,7 +1182,7 @@ setJobEnv(struct jobCard *jp)
 
     {
         NAMELIST *hostList;
-        hostList = lsb_compressStrList(jp->jobSpecs.toHosts, 
+        hostList = lsb_compressStrList(jp->jobSpecs.toHosts,
                                        jp->jobSpecs.numToHosts);
         putEnv("LSB_MCPU_HOSTS",
                lsb_printNameList(hostList, PRINT_MCPU_HOSTS));
@@ -1220,7 +1218,7 @@ setJobEnv(struct jobCard *jp)
     if (jp->jobSpecs.options & SUB_INTERACTIVE)
 	putEnv("LSB_INTERACTIVE", "Y");
 
-    
+
     if ((getenv("WINDIR") != NULL) || (getenv("windir") != NULL)) {
         char tmppath[MAXPATHLEN];
 
@@ -1231,8 +1229,8 @@ setJobEnv(struct jobCard *jp)
         }
         putEnv("PATH",tmppath);
     } else {
-        
-        
+
+
         char *tmppath = NULL;
         int len;
 	char *envpath;
@@ -1240,8 +1238,8 @@ setJobEnv(struct jobCard *jp)
 
   	if (daemonParams[LSF_BINDIR].paramValue != NULL) {
             envpath = getenv("PATH");
-            if (envpath != NULL) { 
-		
+            if (envpath != NULL) {
+
 		len = strlen(daemonParams[LSF_BINDIR].paramValue);
 		cc  = strncmp(envpath,daemonParams[LSF_BINDIR].paramValue,len);
 		if (cc != 0)
@@ -1264,7 +1262,7 @@ setJobEnv(struct jobCard *jp)
 		FREEUP(tmppath);
 	    }else {
 		putEnv("PATH", envpath);
-	    }           
+	    }
 	}
     }
 
@@ -1275,14 +1273,14 @@ setJobEnv(struct jobCard *jp)
 	putEnv("LS_SUBCWD", jp->jobSpecs.cwd);
     } else {
 	char cwd[MAXFILENAMELEN];
-	
+
 	sprintf(cwd, "%s/%s", jp->jobSpecs.subHomeDir, jp->jobSpecs.cwd);
 	putEnv("LS_SUBCWD", cwd);
     }
 
     putEnv("LSB_SUB_HOST", jp->jobSpecs.fromHost);
 
-     
+
     putEnv("LSF_ENVDIR",env_dir);
 
     if (daemonParams[LSF_SERVERDIR].paramValue != NULL) {
@@ -1298,9 +1296,9 @@ setJobEnv(struct jobCard *jp)
 
 	sprintf(path, "%s/%s", daemonParams[LSF_LIBDIR].paramValue, "uid");
         putEnv("XLSF_UIDDIR", path);
-    } 
-   
- 
+    }
+
+
     if (eauthAuxData != NULL) {
        putEnv("LSF_EAUTH_AUX_DATA", eauthAuxDataStr);
     }
@@ -1328,9 +1326,9 @@ setJobEnv(struct jobCard *jp)
 #endif
     return (0);
 
-} 
+}
 
-    
+
 static int
 setLimits(struct jobSpecs *jobSpecsPtr)
 {
@@ -1341,19 +1339,19 @@ static int
 mysetLimits(struct jobSpecs *jobSpecsPtr)
 {
     struct rlimit rlimit;
-    static char fname[] = "mysetLimits";	
+    static char fname[] = "mysetLimits";
 
 #ifdef  RLIMIT_CPU
- 
-	
 
-        
+
+
+
         if ( (lsbJobCpuLimit != 1 ) ||
 	    (jobSpecsPtr->lsfLimits[LSF_RLIMIT_CPU].rlim_maxl == 0xffffffff &&
              jobSpecsPtr->lsfLimits[LSF_RLIMIT_CPU].rlim_maxh == 0x7fffffff &&
              jobSpecsPtr->lsfLimits[LSF_RLIMIT_CPU].rlim_curl == 0xffffffff &&
              jobSpecsPtr->lsfLimits[LSF_RLIMIT_CPU].rlim_curh == 0x7fffffff))
-        {	    
+        {
 	    rlimitDecode_(&jobSpecsPtr->lsfLimits[LSF_RLIMIT_CPU],
 			  &rlimit, LSF_RLIMIT_CPU);
 
@@ -1361,15 +1359,15 @@ mysetLimits(struct jobSpecs *jobSpecsPtr)
 		if (!debug)
 		    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5406,
 						     "%s: setrlimit(RLIMIT_CPU) failed for job <%s>: %m: soft %ld hard %ld"), /* catgets 5406 */
-			      fname, 
-			      lsb_jobid2str(jobSpecsPtr->jobId), 
-			      (long)rlimit.rlim_cur, 
+			      fname,
+			      lsb_jobid2str(jobSpecsPtr->jobId),
+			      (long)rlimit.rlim_cur,
 			      rlimit.rlim_max);
 	    }
 	}
-#endif  
+#endif
 
-	
+
 #ifdef  RLIMIT_FSIZE
     rlimitDecode_(&jobSpecsPtr->lsfLimits[LSF_RLIMIT_FSIZE],
 		     &rlimit, LSF_RLIMIT_FSIZE);
@@ -1377,9 +1375,9 @@ mysetLimits(struct jobSpecs *jobSpecsPtr)
 	if (! debug)
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5407,
 		"%s: setrlimit(RLIMIT_FSIZE) failed for job <%s>: %m: soft %ld hard %ld"), /* catgets 5407 */
-		fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), 
-		(long)rlimit.rlim_cur, 
+		fname,
+		lsb_jobid2str(jobSpecsPtr->jobId),
+		(long)rlimit.rlim_cur,
 		rlimit.rlim_max);
     }
 #endif
@@ -1391,12 +1389,12 @@ mysetLimits(struct jobSpecs *jobSpecsPtr)
 	if (! debug)
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5409,
 		"%s: setrlimit(RLIMIT_DATA) failed for job <%s>: %m: soft %ld hard %ld"), /* catgets 5409 */
-		fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), 
-		(long)rlimit.rlim_cur, 
+		fname,
+		lsb_jobid2str(jobSpecsPtr->jobId),
+		(long)rlimit.rlim_cur,
 		rlimit.rlim_max);
     }
-#endif 
+#endif
 
 #ifdef  RLIMIT_STACK
     rlimitDecode_(&jobSpecsPtr->lsfLimits[LSF_RLIMIT_STACK],
@@ -1405,12 +1403,12 @@ mysetLimits(struct jobSpecs *jobSpecsPtr)
 	if (! debug)
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5410,
 		"%s: setrlimit(RLIMIT_STACK) failed for job <%s>: %m: soft %ld hard %ld"), /* catgets 5410 */
-		fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), 
-		(long)rlimit.rlim_cur, 
+		fname,
+		lsb_jobid2str(jobSpecsPtr->jobId),
+		(long)rlimit.rlim_cur,
 		rlimit.rlim_max);
     }
-#endif 
+#endif
 
 #ifdef RLIMIT_CORE
     rlimitDecode_(&jobSpecsPtr->lsfLimits[LSF_RLIMIT_CORE],
@@ -1419,9 +1417,9 @@ mysetLimits(struct jobSpecs *jobSpecsPtr)
 	if (! debug)
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5411,
 		"%s: setrlimit(RLIMIT_CORE) failed for job <%s>: %m: soft %ld hard %ld"), /* catgets 5411 */
-		fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), 
-		(long)rlimit.rlim_cur, 
+		fname,
+		lsb_jobid2str(jobSpecsPtr->jobId),
+		(long)rlimit.rlim_cur,
 		rlimit.rlim_max);
     }
 #endif
@@ -1436,16 +1434,16 @@ mysetLimits(struct jobSpecs *jobSpecsPtr)
 	    if (! debug)
 	        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5412,
 		    "%s: setrlimit(RLIMIT_RSS) failed for job <%s>: %m: soft %ld hard %ld"),  /* catgets 5412 */
-		fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), 
-		(int)rlimit.rlim_cur, 
+		fname,
+		lsb_jobid2str(jobSpecsPtr->jobId),
+		(int)rlimit.rlim_cur,
 		rlimit.rlim_max);
         }
     }
 #endif
 
     return (0);
-}  
+}
 
 int
 job_finish (struct jobCard *jobCard, int report)
@@ -1455,25 +1453,25 @@ job_finish (struct jobCard *jobCard, int report)
 
 
     if (logclass & LC_EXEC)
-	ls_syslog(LOG_DEBUG, 
+	ls_syslog(LOG_DEBUG,
 		  "%s: Entering ... jobId<%s> status<0x%x>", fname,
 		  lsb_jobid2str(jobCard->jobSpecs.jobId),
 		  jobCard->jobSpecs.jStatus);
 
-    
-    if (report && jobCard->jobSpecs.actPid) 
+
+    if (report && jobCard->jobSpecs.actPid)
 	return (-1);
 
-    
-    
+
+
     unlockHosts (jobCard, jobCard->jobSpecs.numToHosts);
 
-    
-    if (report 
+
+    if (report
 	&& status_job (BATCH_STATUS_JOB, jobCard, jobCard->jobSpecs.jStatus,
 		       (jobCard->jobSpecs.startTime > bootTime) ?
 		       ERR_NO_ERROR : ERR_HOST_BOOT) < 0) {
-        jobCard->notReported++;           
+        jobCard->notReported++;
         return (-1);
     }
     if ((jobCard->jobSpecs.jStatus & JOB_STAT_PEND) &&
@@ -1482,28 +1480,28 @@ job_finish (struct jobCard *jobCard, int report)
 	deallocJobCard(jobCard);
 	return (0);
     }
-    
+
     if ( !jobCard->postJobStarted ) {
         pid = fork();
 
 	if (pid < 0) {
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 		      lsb_jobid2str(jobCard->jobSpecs.jobId), "fork");
-	    jobCard->notReported++;           
+	    jobCard->notReported++;
 	    return (-1);
 	}
-	
+
 	if (pid == 0) {
-	    
+
             closeBatchSocket();
 	    finishJob(jobCard);
 	    return(0);
 	}
 
-	
+
 	if (jobCard->userJobSucc == TRUE) {
-	    
-	    
+
+
 	    jobCard->postJobStarted = 1;
 	    jobCard->jobSpecs.jobPid = pid;
 	    jobCard->jobSpecs.jobPGid = pid;
@@ -1511,13 +1509,13 @@ job_finish (struct jobCard *jobCard, int report)
 	    return(0);
 	}
     }
-    
+
 
     deallocJobCard(jobCard);
-    
+
     return (0);
-} 
-    
+}
+
 void
 unlockHosts (struct jobCard *jp, int num)
 {
@@ -1529,40 +1527,40 @@ unlockHosts (struct jobCard *jp, int num)
 
     if (jp->jobSpecs.jAttrib & Q_ATTRIB_EXCLUSIVE) {
         for (i = 0; i < num; i++) {
-	    if (i > 0 && strcmp (jp->jobSpecs.toHosts[i], 
+	    if (i > 0 && strcmp (jp->jobSpecs.toHosts[i],
 			      jp->jobSpecs.toHosts[i-1]) == 0)
-	        
+
 	        continue;
-	    if (unlockHost_(jp->jobSpecs.toHosts[i]) < 0 
+	    if (unlockHost_(jp->jobSpecs.toHosts[i]) < 0
                 && lserrno != LSE_LIM_NLOCKED)
-		ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		    lsb_jobid2str(jp->jobSpecs.jobId), 
+		ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		    lsb_jobid2str(jp->jobSpecs.jobId),
 		    "unlockHost_",
 		    jp->jobSpecs.toHosts[i]);
         }
 	jp->jobSpecs.jAttrib &= ~Q_ATTRIB_EXCLUSIVE;
     }
 
-}  
+}
 
 static int
 finishJob(struct jobCard *jobCard)
 {
     static char fname[]="finishJob";
     int doSendResults;
-    int hasError = 0; 
-    
+    int hasError = 0;
+
     char tmpDirName[MAXFILENAMELEN];
 
     doSendResults = (!jobCard->mbdRestarted &&
 		     !(jobCard->jobSpecs.jStatus & JOB_STAT_PEND));
 
-    putEnv(LS_EXEC_T, "END");    
+    putEnv(LS_EXEC_T, "END");
 
 
     if (postJobSetup(jobCard) == -1 && doSendResults) {
 	chuser(batchId);
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jobCard->jobSpecs.jobId), "postJobSetup");
 	lsb_merr1(_i18n_msg_get(ls_catd , NL_SETN, 412,
 	    "Unable to setup user's environment to report results for job %s\n"), /* catgets 412 */
@@ -1570,20 +1568,20 @@ finishJob(struct jobCard *jobCard)
 	exit(-1);
     }
 
-    
-    
+
+
 
     getJobTmpDir( (char *) tmpDirName, jobCard );
 
-    if ( rmDirAndFilesEx( tmpDirName, 1  ) != 0 ) {        
+    if ( rmDirAndFilesEx( tmpDirName, 1  ) != 0 ) {
         ls_syslog(LOG_DEBUG,
             "%s: Fail to  delete TMPDIR=%s directory for job <%s>",
             fname, tmpDirName, lsb_jobid2str(jobCard->jobSpecs.jobId));
     }
 
-    
+
     if (doSendResults) {
-	if ( send_results(jobCard) != 0 ) {  
+	if ( send_results(jobCard) != 0 ) {
 	hasError = -1;
 	ls_syslog(LOG_ERR, I18N(5500,"Has error send result for job<%s>"), /* catgets 5500 */
 		  lsb_jobid2str(jobCard->jobSpecs.jobId));
@@ -1595,14 +1593,14 @@ finishJob(struct jobCard *jobCard)
 		  lsb_jobid2str(jobCard->jobSpecs.jobId));
     }
 
-    
+
     if (jobCard->jobSpecs.reasons & EXIT_REQUEUE) {
         jobCard->jobSpecs.reasons &= ~EXIT_REQUEUE;
     }
-    
-    if ((!jobCard->mbdRestarted) 
+
+    if ((!jobCard->mbdRestarted)
 	    && (!((jobCard->jobSpecs.reasons ==  PEND_QUE_PRE_FAIL)
-            &&(jobCard->jobSpecs.jStatus == JOB_STAT_PEND)))) { 
+            &&(jobCard->jobSpecs.jStatus == JOB_STAT_PEND)))) {
 	if ( rmJobBufFiles(jobCard) != 0 ) {
 	    hasError = -1;
 	    ls_syslog(LOG_ERR,I18N(5502, "Has error to remove buffer file for job<%s>"),/* catgets 5502 */
@@ -1611,28 +1609,28 @@ finishJob(struct jobCard *jobCard)
     }
 
     exit(hasError);
-    return 0; 
-} 
+    return 0;
+}
 
 
 
-void 
+void
 status_report (void)
 {
     static char fname[] = "status_report()";
     struct jobCard *jp, *next;
     static char mailed = TRUE;
     int rep, allReported = TRUE;
-    
+
     if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG2,"status_report: Entering..");
 
     for (jp = jobQueHead->back; (jp != jobQueHead); jp = next) {
-	next = jp->back;                              
-        
+	next = jp->back;
+
         if (!IS_START(jp->jobSpecs.jStatus)
-            && !(jp->jobSpecs.jStatus & JOB_STAT_PEND) 
-            && !IS_FINISH(jp->jobSpecs.jStatus) 
+            && !(jp->jobSpecs.jStatus & JOB_STAT_PEND)
+            && !IS_FINISH(jp->jobSpecs.jStatus)
 	    && !IS_POST_FINISH(jp->jobSpecs.jStatus) ) {
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5418,
 		"%s: Illegal job status <%d> of job <%s> found; re-life"), /* catgets 5418 */
@@ -1645,37 +1643,37 @@ status_report (void)
 
 	if (jp->notReported < 0)
 	    continue;
-	
-	
+
+
 	if (jp->missing)
 	    continue;
-	
+
         if (!jp->notReported && !jp->needReportRU)
             continue;
-	
-	if ((now >= jp->jobSpecs.startTime)            
-            && (now < jp->jobSpecs.startTime + 10))  
+
+	if ((now >= jp->jobSpecs.startTime)
+            && (now < jp->jobSpecs.startTime + 10))
 	    continue;
                  /* don't retry other jobs either */
 
         if (IS_START(jp->jobSpecs.jStatus)) {
 	    mbdReqType reqType;
-	    
+
 	    if (!jp->notReported && jp->needReportRU)
 		reqType = BATCH_RUSAGE_JOB;
 	    else
 		reqType = BATCH_STATUS_JOB;
-		
+
 	    rep = status_job (reqType, jp, jp->jobSpecs.jStatus,
 			      ERR_NO_ERROR);
 
 	    if (reqType == BATCH_STATUS_JOB) {
-		if (rep >= 0) {    
+		if (rep >= 0) {
 		    if (jp->notReported > 0)
-			jp->notReported = 0;      
+			jp->notReported = 0;
 		} else {
 		    allReported = FALSE;
-		    jp->notReported++;        
+		    jp->notReported++;
 		    if (jp->notReported == 40 && !mailed) {
 			mailed = TRUE;
 			lsb_merr(_i18n_printf(_i18n_msg_get(ls_catd , NL_SETN, 411,
@@ -1685,47 +1683,47 @@ status_report (void)
 		}
 	    }
 	}
-   } 
+   }
 
-    
+
     if (allReported == TRUE)
         mailed = FALSE;
 
-} 
+}
 
 void
 rmvJobStarterStr(char *line, char *jobStarter)
-{ 
+{
     static char *header=NULL, *tailer=NULL;
     static int header_len = 0;
     char *cmd;
     if (jobStarter == NULL || jobStarter[0] == '\0')
-	return; 
-    if (header == NULL) { 
+	return;
+    if (header == NULL) {
         header = jobStarter;
         if ((tailer = strstr(jobStarter, JOB_STARTER_KEYWORD)) != NULL) {
-            
-	    *tailer = '\0'; 
-	    
+
+	    *tailer = '\0';
+
 	    tailer += strlen (JOB_STARTER_KEYWORD);
-	    
+
         }
         header_len = strlen (header);
     }
-    if (strncmp(line, header, header_len) != 0) 
-	
+    if (strncmp(line, header, header_len) != 0)
+
 	return;
     if (tailer != NULL) {
 	if ((cmd = strstr (line, tailer)) !=NULL) {
-	    
-	    *cmd = '\n'; 
+
+	    *cmd = '\n';
 	    *(cmd+1) = '\0';
-        } 
+        }
     }
-    cmd = line + strlen(header);  
-    while (*cmd == ' ' && *cmd != '\0') cmd++; 
+    cmd = line + strlen(header);
+    while (*cmd == ' ' && *cmd != '\0') cmd++;
     memmove (line, cmd, (strlen(cmd)+1)*sizeof(char));
-} 
+}
 
 
 static int
@@ -1744,7 +1742,7 @@ isLink(char * filename)
        }
     }
 
-    if (logclass & LC_TRACE) { 
+    if (logclass & LC_TRACE) {
         if( filename ) {
             ls_syslog(LOG_DEBUG1,
                      "%s: filename:%s, lstatReturnValue:%d, returnValue:%d",
@@ -1773,26 +1771,26 @@ shouldCopyFromLsbatch(struct jobCard *jp,
 
         char filename[MAXFILENAMELEN];
 
-       
+
        if( jp->jobSpecs.options & SUB_OUT_FILE ) {
            sprintf(filename, "%s.out", jp->jobSpecs.jobFile);
 
-           
+
            if( isLink(filename) ) {
                *cpyStdoutFromLsbatch = FALSE;
            }
-       } 
+       }
 
-       
+
        if( jp->jobSpecs.options & SUB_ERR_FILE ) {
            sprintf(filename, "%s.err", jp->jobSpecs.jobFile);
 
-           
+
            if( isLink(filename) ) {
                *cpyStderrFromLsbatch = FALSE;
            }
 
-       } 
+       }
     }
 
     if (logclass & LC_TRACE) {
@@ -1828,8 +1826,8 @@ send_results (struct jobCard *jp)
     char rcpMsg[MSGSIZE];
     LS_WAIT_T w_status;
     float cpuTime = jp->cpuTime;
-    char xfile = FALSE; 
-    int hasError=0; 
+    char xfile = FALSE;
+    int hasError=0;
     char outputIsDirectory = FALSE;
     char errIsDirectory  = FALSE;
     char outputFileName[MAXFILENAMELEN];
@@ -1847,7 +1845,7 @@ send_results (struct jobCard *jp)
 
     shouldCopyFromLsbatch(jp, &copyStdoutFromLsbatch, &copyStderrFromLsbatch);
 
-    
+
     outfileStat.st_size = -1;
     if ( !(jp->jobSpecs.options & SUB_OUT_FILE)) {
 
@@ -1860,28 +1858,28 @@ send_results (struct jobCard *jp)
     }
 
     sprintf(mailSizeStr, "%jd", outfileStat.st_size);
-    
+
     if (daemonParams[LSB_MAILSIZE_LIMIT].paramValue != NULL) {
         mailSizeLimit = atol(daemonParams[LSB_MAILSIZE_LIMIT].paramValue);
-	
+
 	if (mailSizeLimit <= 0) {
 	    ls_syslog(LOG_ERR,
 	       I18N(5414, "%s: Illegal value for LSB_MAILSIZE_LIMIT, ignoring"), /* catgets 5414 */
 		      fname);
 	}
     }
-    
+
     LS_STATUS(w_status) = jp->w_status;
-    
+
     ps[0] = '\0';
 
     if ((myhostnm = ls_getmyhostname()) == NULL) {
-        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jp->jobSpecs.jobId), "ls_getmyhostname");
 	myhostnm = "localhost";
     }
 
-    if (jp->w_status) 
+    if (jp->w_status)
         result = putstr_(I18N_Exited);
     else
         result = putstr_(I18N_Done);
@@ -1889,24 +1887,24 @@ send_results (struct jobCard *jp)
     hp = (struct hostent *)getHostEntryByName_(jp->jobSpecs.fromHost);
 
     if (jp->jobSpecs.options & SUB_INTERACTIVE) {
-	
+
 	if (!(jp->jobSpecs.options & SUB_OUT_FILE)) {
 	    strcpy(jp->jobSpecs.outFile, LSDEVNULL);
 	    jp->jobSpecs.options |= SUB_OUT_FILE;
 	}
     }
-	
-    if (jp->jobSpecs.options & SUB_OUT_FILE) { 
+
+    if (jp->jobSpecs.options & SUB_OUT_FILE) {
 	char chr;
 	int lastSlash = FALSE;
 	int outDirOk = FALSE;
 
-        
+
 	chr = jp->jobSpecs.outFile[strlen(jp->jobSpecs.outFile) - 1];
 
         if (chr == '/' || chr == '\\' ) {
-            outputIsDirectory = TRUE;     
-            lastSlash = TRUE;     
+            outputIsDirectory = TRUE;
+            lastSlash = TRUE;
 	}
 
         if (stat(jp->jobSpecs.outFile, &stb) == 0 && S_ISDIR(stb.st_mode)) {
@@ -1915,15 +1913,15 @@ send_results (struct jobCard *jp)
         }
 
         if ( !outputIsDirectory ) {
-             
+
             strcpy( outputFileName, jp->jobSpecs.outFile );
 	    outDirOk = TRUE;
         } else {
-             
 
-            strcpy( outputFileName, jp->jobSpecs.outFile ); 
+
+            strcpy( outputFileName, jp->jobSpecs.outFile );
             if ( !outDirOk ) {
-                
+
 		if ( mkdir(outputFileName, 0700) == 0) {
 		    outDirOk = TRUE;
 		}
@@ -1933,11 +1931,11 @@ send_results (struct jobCard *jp)
                 strcat( outputFileName, "/" );
 	    }
             sprintf(jobIdFile, "%s.out", lsb_jobidinstr(jp->jobSpecs.jobId) );
-            
+
             strcat( outputFileName, jobIdFile );
         }
 
-           
+
         if (outDirOk ) {
             output = myfopen_(outputFileName, "a", hp);
 	}
@@ -1958,7 +1956,7 @@ send_results (struct jobCard *jp)
 
             strcat(ps, line);
             withps = TRUE;
-	    
+
 	    sprintf(mailSizeStr, "%s", "y");
 	    putEnv("LSB_OUTPUT_TARGETFAILED", mailSizeStr);
 	    sprintf(mailSizeStr, "%s.out", jp->jobSpecs.jobFile);
@@ -1968,36 +1966,36 @@ send_results (struct jobCard *jp)
 	    }
             sprintf(mailSizeStr, "%jd", outfileStat.st_size);
 	    putEnv("LSB_MAILSIZE", mailSizeStr);
-            if (jp->jobSpecs.options & SUB_MAIL_USER) 
-                output = (mail = smail(jp->jobSpecs.mailUser, 
+            if (jp->jobSpecs.options & SUB_MAIL_USER)
+                output = (mail = smail(jp->jobSpecs.mailUser,
                         jp->jobSpecs.fromHost));
             else
                 output = (mail = smail(jp->jobSpecs.userName,
                         jp->jobSpecs.fromHost));
         }
-    } else { 
-        
+    } else {
+
         putEnv("LSB_MAILSIZE", mailSizeStr);
-        if (jp->jobSpecs.options & SUB_MAIL_USER) 
+        if (jp->jobSpecs.options & SUB_MAIL_USER)
 	    output = (mail=smail(jp->jobSpecs.mailUser,
 				 jp->jobSpecs.fromHost));
 	else
 	    output = (mail=smail(jp->jobSpecs.userName,
 				 jp->jobSpecs.fromHost));
     }
-    
-    if (jp->jobSpecs.options & SUB_NOTIFY_END) { 
-        if (jp->jobSpecs.options & SUB_MAIL_USER) 
+
+    if (jp->jobSpecs.options & SUB_NOTIFY_END) {
+        if (jp->jobSpecs.options & SUB_MAIL_USER)
 	    notif = (output == mail) ? output :
 	        smail(jp->jobSpecs.mailUser, jp->jobSpecs.fromHost);
 	else
 	    notif = (output == mail) ? output :
 	        smail(jp->jobSpecs.userName, jp->jobSpecs.fromHost);
     } else {
-        if (jp->jobSpecs.options & SUB_INTERACTIVE) { 
+        if (jp->jobSpecs.options & SUB_INTERACTIVE) {
            notif = myfopen_( LSDEVNULL, "a", hp);
 
-	   
+
     	   sendWarning = TRUE;
 
         } else {
@@ -2006,21 +2004,21 @@ send_results (struct jobCard *jp)
     }
 
     if (notif == output) {
-	
+
 	sendWarning = TRUE;
     }
 
-    if (jp->jobSpecs.options & SUB_ERR_FILE) { 
+    if (jp->jobSpecs.options & SUB_ERR_FILE) {
 	char chr;
 	int lastSlash = FALSE;
 	int errDirOk = FALSE;
 
-        
+
 	chr = jp->jobSpecs.errFile[strlen(jp->jobSpecs.errFile) - 1];
 
         if (chr == '/' || chr == '\\' ) {
-            errIsDirectory = TRUE;     
-            lastSlash = TRUE;     
+            errIsDirectory = TRUE;
+            lastSlash = TRUE;
 	}
 
         if (stat(jp->jobSpecs.errFile, &stb) == 0 && S_ISDIR(stb.st_mode)) {
@@ -2028,32 +2026,32 @@ send_results (struct jobCard *jp)
 	    errDirOk = TRUE;
         }
 
-        
+
         if ( !errIsDirectory ) {
-             
+
             strcpy( errFileName, jp->jobSpecs.errFile );
             errDirOk = TRUE;
         } else {
-             
 
-            strcpy( errFileName, jp->jobSpecs.errFile );  
+
+            strcpy( errFileName, jp->jobSpecs.errFile );
             if ( !errDirOk ) {
-                
+
                 if ( mkdir(errFileName, 0700) == 0) {
                     errDirOk = TRUE;
                 }
             }
-            
+
             if ( !lastSlash ) {
                 strcat( errFileName, "/" );
             }
             sprintf(jobIdFile, "%s.err", lsb_jobidinstr(jp->jobSpecs.jobId) );
-            
+
             strcat( errFileName, jobIdFile );
         }
 
-        
-        
+
+
         if ((errout = myfopen_(errFileName, "a", hp)) == NULL) {
 	    sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 415,
 		    "Fail to open stderr file %s: %s.\nThe stderr output is included in this report.\n"), /* catgets 415 */
@@ -2063,12 +2061,12 @@ send_results (struct jobCard *jp)
 	    errout = notif;
 	    errFileError = TRUE;
 	}
-    } else { 
+    } else {
 	errout = output;
     }
 
-    
-    
+
+
 
     if ( !copyStdoutFromLsbatch
         && (output==notif)
@@ -2083,37 +2081,37 @@ send_results (struct jobCard *jp)
 	myhostnm);
 
     submitJid = SUBMIT_JID(jp);
-	
+
 	sprintf(jobIdStr, "%s", lsb_jobid2str(submitJid));
-    
+
     fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 417,
-	"Subject: Job %s: <%s> %s\n"), /* catgets 417 */ 
-        jobIdStr, 
+	"Subject: Job %s: <%s> %s\n"), /* catgets 417 */
+        jobIdStr,
 	jp->jobSpecs.jobName, result);
-    free(result); 
+    free(result);
     fprintf(notif, "\n");
     fprintf(notif,  _i18n_msg_get(ls_catd , NL_SETN, 418,
 	"Job <%s> was submitted from host <%s> by user <%s>.\n"), /* catgets 418 */
         jp->jobSpecs.jobName, jp->jobSpecs.fromHost,
 	jp->jobSpecs.userName);
-    
-    if (jp->jobSpecs.numToHosts <= 1) 
+
+    if (jp->jobSpecs.numToHosts <= 1)
         fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 420,
         "Job was executed on host(s) <%s>, in queue <%s>, as user <%s>.\n"), /* catgets 420 */
         myhostnm, jp->jobSpecs.queue, jp->execUsername);
     else {
         NAMELIST *hostList;
 	char str[MAXLINELEN];
-        hostList = lsb_compressStrList(jp->jobSpecs.toHosts, 
+        hostList = lsb_compressStrList(jp->jobSpecs.toHosts,
                                        jp->jobSpecs.numToHosts);
-       
-	sprintf(str, "%d*%s", hostList->counter[0], hostList->names[0]); 
+
+	sprintf(str, "%d*%s", hostList->counter[0], hostList->names[0]);
         fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 420,
     	"Job was executed on host(s) <%s>, in queue <%s>, as user <%s>.\n"), /* catgets 420 */
     	str, jp->jobSpecs.queue, jp->execUsername);
 
         for (k=1; k < hostList->listSize; k++)
-   	    fprintf(notif, "                            <%d*%s>\n", 
+   	    fprintf(notif, "                            <%d*%s>\n",
 		    hostList->counter[k], hostList->names[k]);
     }
     if (jp->jobSpecs.execHome[0] == '\0')
@@ -2131,7 +2129,7 @@ send_results (struct jobCard *jp)
 	fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 424,
 	    "<%s> was used as the working directory.\n"), /* catgets 424 */
 	    jp->jobSpecs.execCwd);
-    
+
     if (jp->jobSpecs.startTime != 0)
 	sp = putstr_(_i18n_ctime(ls_catd, CTIME_FORMAT_DEFAULT,
 	    &jp->jobSpecs.startTime));
@@ -2141,8 +2139,8 @@ send_results (struct jobCard *jp)
 
     fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 426,
 	"Started at %s"), sp); /* catgets 426 */
-    free(sp); 
-    now = time(0);                             
+    free(sp);
+    now = time(0);
     fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 487,
 	"Results reported at %s"), /* catgets 487 */
 	_i18n_ctime(ls_catd, CTIME_FORMAT_DEFAULT, &now));
@@ -2151,9 +2149,9 @@ send_results (struct jobCard *jp)
 	fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 427,
 	    "Cannot open your job file: %s\n"), /* catgets 427 */
 	    fileName);
-    } else {  
+    } else {
         while (fgets(line, MAXLINELEN, fp) != NULL) {
-            if (!strcmp(line, CMDSTART)) 
+            if (!strcmp(line, CMDSTART))
 	    {
                 break;
 	    }
@@ -2169,26 +2167,26 @@ send_results (struct jobCard *jp)
 		"Your job looked like:")), /* catgets 429 */
 		notif);
             fputs("\n------------------------------------------------------------\n", notif);
-	    
-	    fprintf(notif, "# LSBATCH: %s\n", 
+
+	    fprintf(notif, "# LSBATCH: %s\n",
 		    I18N(430, "User input"));  /* catgets 430 */
 	    k = 0;
-	    
+
 	    while (fgets(line, MAXLINELEN, fp)!= NULL) {
 		if (strstr(line, "# LOGIN_SHELL") != NULL)
                     continue;
 		if (strstr(line, "SCRIPT_\n") != NULL) {
                     if (find == FALSE) {
-                        
+
                         find = TRUE;
                         continue;
                      }
-                     
-                     break;  
+
+                     break;
                 }
 
 		if (strstr(line, "ExitStat=$") != 0) {
-		    break;	
+		    break;
 		} else {
 		    if (++k > 50)
 		    {
@@ -2197,26 +2195,26 @@ send_results (struct jobCard *jp)
 		       break;
 		    }
 		    if (k == 1)
-		        
+
 		        rmvJobStarterStr(line, jobStarter);
 		    ls_syslog(LOG_DEBUG, "Job Command: %s",
 			      jp->jobSpecs.command);
 		    ls_syslog(LOG_DEBUG, "Job line: %s",
 			      line);
-		    
-  		    if ( ( k == 1 )  
+
+  		    if ( ( k == 1 )
   			 && (jp->jobSpecs.options2 & SUB2_JOB_CMD_SPOOL ) ) {
 			char *pSep=NULL;
-			if ( ( pSep = strchr(jp->jobSpecs.command, ';') ) 
+			if ( ( pSep = strchr(jp->jobSpecs.command, ';') )
 			     == NULL ) {
-			    
+
 			    strcpy(line, jp->jobSpecs.command);
-			}		    
+			}
 			else {
 			    strncpy( line, jp->jobSpecs.command,
-				     (pSep - jp->jobSpecs.command) ); 
-			}    
-			strcat( line, "\n"); 
+				     (pSep - jp->jobSpecs.command) );
+			}
+			strcat( line, "\n");
 		    }
 		    fputs(line, notif);
 		}
@@ -2232,7 +2230,7 @@ send_results (struct jobCard *jp)
 		"Successfully completed")); /* catgets 431 */
 	else {
 	    if (WIFSIGNALED(w_status)) {
-		int sig = WTERMSIG(w_status);	    
+		int sig = WTERMSIG(w_status);
 		if(sig > LSF_NSIG)
 		    fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 432,
 			"Exited with unknown status 0%o"), /* catgets 432 */
@@ -2243,10 +2241,10 @@ send_results (struct jobCard *jp)
 
 		    char *temp1;
 
-		    temp1 = putstr_( _i18n_msg_get(ls_catd, NL_SETN, 
-			sys_siglist_ID[sig], 
+		    temp1 = putstr_( _i18n_msg_get(ls_catd, NL_SETN,
+			sys_siglist_ID[sig],
 			(char *)sys_siglist[sig]));
-		    
+
 		    fprintf(notif, _i18n_msg_get(ls_catd, NL_SETN, 433,
 			"Exited with signal termination: %s"), /* catgets 433 */
 			temp1);
@@ -2268,27 +2266,27 @@ send_results (struct jobCard *jp)
 	    }
 	}
     } else {
-	
-	fprintf(notif, I18N_Exited);
-    } 
 
-    if (jp->jobSpecs.lastCpuTime + cpuTime > MIN_CPU_TIME) { 
+	fprintf(notif, I18N_Exited);
+    }
+
+    if (jp->jobSpecs.lastCpuTime + cpuTime > MIN_CPU_TIME) {
         fprintf(notif, ".\n\n%s\n\n", _i18n_msg_get(ls_catd , NL_SETN, 437,
 	    "Resource usage summary:")); /* catgets 437 */
-        
+
         fprintf(notif, "    %s   :%10.2f ",
 	    _i18n_msg_get(ls_catd , NL_SETN, 438,
 	    "CPU time"), /* catgets 438 */
             (cpuTime + jp->jobSpecs.lastCpuTime));
-                       
+
         fprintf(notif, "%s.\n", I18N_sec);
-			
-        if (jp->maxRusage.mem > 1024) 
+
+        if (jp->maxRusage.mem > 1024)
             fprintf(notif, "    %s :%10d MB\n",
 		_i18n_msg_get(ls_catd , NL_SETN, 439,
-		"Max Memory"), /* catgets 439 */ 
+		"Max Memory"), /* catgets 439 */
                 (jp->maxRusage.mem + 512) / 1024);
-        else 
+        else
             if (jp->maxRusage.mem > 0)
                 fprintf(notif, "    %s :%10d KB\n",
 		    _i18n_msg_get(ls_catd , NL_SETN, 439,
@@ -2298,20 +2296,20 @@ send_results (struct jobCard *jp)
         if (jp->maxRusage.swap > 1024)
 	    fprintf(notif, "    %s   :%10d MB\n\n",
 		_i18n_msg_get(ls_catd , NL_SETN, 441,
-		"Max Swap"), /* catgets 441 */ 
+		"Max Swap"), /* catgets 441 */
                 (jp->maxRusage.swap + 512) / 1024);
-        else 
+        else
             if (jp->maxRusage.swap > 0)
                 fprintf(notif, "    %s   :%10d KB\n\n",
 		    _i18n_msg_get(ls_catd , NL_SETN, 441,
 		    "Max Swap"),
                     jp->maxRusage.swap);
-        if (jp->maxRusage.npids > 0) 
+        if (jp->maxRusage.npids > 0)
             fprintf(notif, "    %s  :%10d\n",
 		_i18n_msg_get(ls_catd , NL_SETN, 443,
 		"Max Processes"), /* catgets 443 */
                 jp->maxRusage.npids);
-    } 
+    }
 
     if ( !copyStdoutFromLsbatch
         && (output==notif)
@@ -2322,9 +2320,9 @@ send_results (struct jobCard *jp)
            "The output (if any) is above this job summary."));/*catgets 582 */
     }
 
-    
+
     if (notif != output && strcmp(jp->jobSpecs.outFile, "/dev/null")) {
-        if (errout == output) 
+        if (errout == output)
 	    sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 444,
 		"Read file <%s> for stdout and stderr ouput of this job.\n"), jp->jobSpecs.outFile); /* catgets 444 */
         else
@@ -2333,10 +2331,10 @@ send_results (struct jobCard *jp)
 	strcat(ps, line);
 	withps = TRUE;
     }
-    
-    
 
-    
+
+
+
     if (!((jp->jobSpecs.options & SUB_OUT_FILE)
          && !strcmp(jp->jobSpecs.outFile,"/dev/null"))
          && copyStdoutFromLsbatch) {
@@ -2346,19 +2344,19 @@ send_results (struct jobCard *jp)
 		"Unable to read output data from the stdout buffer file <%s>: your job was probably aborted prematurely.\n"), fileName); /* catgets 446 */
 	    strcat(ps, line);
 	    withps = TRUE;
-        } else { 
-	    
+        } else {
+
 	    if ( (output == mail) && (mailSizeLimit > 0)
 		 && (outfileStat.st_size > mailSizeLimit*1024)) {
-	        
+
 		fprintf(output, "\n");
 		fprintf(output, I18N(479,
 			"Output is larger than limit of %ld KB set by administrator.\n"),  /* catgets 479 */
 			mailSizeLimit);
 	        fprintf(output, I18N(480, "Output will be saved at %s.out.\n"), /* catgets 480 */
-			jp->jobSpecs.jobFile); 
+			jp->jobSpecs.jobFile);
 
-		
+
 		jp->jobSpecs.jAttrib |= JOB_SAVE_OUTPUT;
 	    } else {
 	        if (output == notif) {
@@ -2367,51 +2365,51 @@ send_results (struct jobCard *jp)
 		}
                 while ((nItems = fread(line, sizeof(char), MAXLINELEN, fp))) {
 	 	    if (fwrite(line, sizeof(char), nItems, output) == 0) {
-		        
+
 		        sprintf(line,
 			    "\nWARNING: writing output file %s failed for job %s\nError message: %s", lsb_jobid2str(SUBMIT_JID(jp)),
 			jp->jobSpecs.outFile, strerror(errno));
 
 		        if (sendWarning) {
-		 	    
+
 
 			    if (jp->jobSpecs.options & SUB_MAIL_USER) {
-			        merr_user(jp->jobSpecs.mailUser, 
-			    	          jp->jobSpecs.fromHost, line, 
+			        merr_user(jp->jobSpecs.mailUser,
+			    	          jp->jobSpecs.fromHost, line,
 				          I18N_Warning);
 			    } else {
-			        merr_user(jp->jobSpecs.userName, 
-			    	          jp->jobSpecs.fromHost, 
-				          line, 
+			        merr_user(jp->jobSpecs.userName,
+			    	          jp->jobSpecs.fromHost,
+				          line,
 				          I18N_Warning);
 			    }
 		        } else {
-			    
+
 			    fprintf(notif, line);
 		        }
 
-		       
+
 		        break;
-		    } 
-	        } 
+		    }
+	        }
             }
             FCLOSEUP(&fp);
         }
     }
-    
-    
-    
+
+
+
     if (!(jp->jobSpecs.options & SUB_ERR_FILE)) {
-    
+
         sprintf(fileName, "%s.err", jp->jobSpecs.jobFile);
 	if ((fp = myfopen_(fileName, "r", hp)) != NULL) {
 	    while ((nItems = fread(line, sizeof(char), MAXLINELEN, fp))) {
 		fwrite(line, sizeof(char), nItems, errout);
 	    }
 	    FCLOSEUP(&fp);
-	} 
+	}
     } else if (strcmp(jp->jobSpecs.errFile, "/dev/null")) {
-	 
+
         sprintf(fileName, "%s.err", jp->jobSpecs.jobFile);
         if (copyStderrFromLsbatch && (fp= myfopen_(fileName,"r",hp))== NULL) {
 	    sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 448,
@@ -2435,31 +2433,31 @@ send_results (struct jobCard *jp)
 		fwrite(line, sizeof(char), nItems, errout);
 	    }
 	    FCLOSEUP(&fp);
-	} 
-    } 
-
-    
+	}
+    }
 
 
-    
+
+
+
     fflush(output);
     fflush(errout);
     fflush(notif);
 
-    
-    ofileHost[0] = '\0'; 
+
+    ofileHost[0] = '\0';
     if (jp->jobSpecs.nxf && output != mail && notif == output) {
 	char *host;
 	fstat(fileno(output), &ostat);
-	if ((host = ls_getmnthost(jp->jobSpecs.outFile))) 
+	if ((host = ls_getmnthost(jp->jobSpecs.outFile)))
 	    strcpy(ofileHost, host);
     }
     ofIdx = -1;
-	
+
     for (i = 0; i < jp->jobSpecs.nxf; i++) {
 	struct stat st;
 	char *host;
-	
+
 	if (jp->jobSpecs.xf[i].options & XF_OP_EXEC2SUB) {
 
 	    if (ofileHost[0] != '\0' &&
@@ -2469,7 +2467,7 @@ send_results (struct jobCard *jp)
 		    ostat.st_dev == st.st_dev &&
 		    ostat.st_ino == st.st_ino &&
 		    !strcmp(host, ofileHost)) {
-		    ofIdx = i; 
+		    ofIdx = i;
 		    continue;
 		}
 	    }
@@ -2482,7 +2480,7 @@ send_results (struct jobCard *jp)
 		    sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 451,
 			"Copy file <%s> to <%s> on submission host <%s>: %s.\n"), /* catgets 451 */
 			jp->jobSpecs.xf[i].execFn,
-			jp->jobSpecs.xf[i].subFn, 
+			jp->jobSpecs.xf[i].subFn,
 			jp->jobSpecs.fromHost,
 			rcpMsg);
 		    strcat(ps, line);
@@ -2493,26 +2491,26 @@ send_results (struct jobCard *jp)
 
 	    sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 452,
 		"Unable to copy file <%s> to <%s> on submission host <%s>: %s.\n"), /* catgets 452 */
-		jp->jobSpecs.xf[i].execFn, 
+		jp->jobSpecs.xf[i].execFn,
 		jp->jobSpecs.xf[i].subFn,
-		jp->jobSpecs.fromHost, 
+		jp->jobSpecs.fromHost,
 		rcpMsg);
-	    hasError = -1; 
+	    hasError = -1;
 	    strcat(ps, line);
 	    withps = TRUE;
 	}
-    } 
+    }
     if (withps) {
-	if (notif == output) 
+	if (notif == output)
 	    fprintf(notif, "\n\nPS:\n\n%s\n", ps);
 	else
 	    fprintf(notif, "\n%s\n", ps);
     }
 
-    
-    
+
+
     if( !errorOpeningOutputFile && (output==notif) &&  ferror(output) ) {
-        
+
         sprintf(line,
                "\nWARNING: writing to output file %s failed for job %s\nError message: %s",
                jp->jobSpecs.outFile,
@@ -2531,33 +2529,33 @@ send_results (struct jobCard *jp)
         }
     }
 
-    
+
     mclose(output);
     if (errout != output)
 	mclose(errout);
     if (notif != output)
 	mclose(notif);
 
-    if (ofIdx >= 0) { 
+    if (ofIdx >= 0) {
 	if (rcpFile(&jp->jobSpecs, jp->jobSpecs.xf+ofIdx,
 		    jp->jobSpecs.fromHost, XF_OP_EXEC2SUB, rcpMsg) < 0) {
 	    sprintf(ps, _i18n_msg_get(ls_catd , NL_SETN, 454,
 		"We are unable to copy your output file <%s> to <%s> on submission host <%s> for job <%s>: %s.\n\n"), /* catgets 454 */
 		jp->jobSpecs.xf[ofIdx].execFn,
-		jp->jobSpecs.xf[ofIdx].subFn, 
+		jp->jobSpecs.xf[ofIdx].subFn,
 		jp->jobSpecs.fromHost,
-		lsb_jobid2str(SUBMIT_JID(jp)), 
+		lsb_jobid2str(SUBMIT_JID(jp)),
 		rcpMsg);
-	    hasError = -1; 
-		
-	    if (jp->jobSpecs.options & SUB_MAIL_USER) 
-		merr_user(jp->jobSpecs.mailUser, 
-		    jp->jobSpecs.fromHost, ps, 
+	    hasError = -1;
+
+	    if (jp->jobSpecs.options & SUB_MAIL_USER)
+		merr_user(jp->jobSpecs.mailUser,
+		    jp->jobSpecs.fromHost, ps,
 		    I18N_Warning);
 	    else
-		merr_user(jp->jobSpecs.userName, 
-		    jp->jobSpecs.fromHost, 
-		    ps, 
+		merr_user(jp->jobSpecs.userName,
+		    jp->jobSpecs.fromHost,
+		    ps,
 		    I18N_Warning);
 	} else {
 	    if (rcpMsg[0] != '\0') {
@@ -2565,17 +2563,17 @@ send_results (struct jobCard *jp)
 		    "%s: Copy output file <%s> to <%s> on submission host <%s> for job <%s>: %s"), /* catgets 456 */
 		    fname,
 	 	    jp->jobSpecs.xf[ofIdx].execFn,
-		    jp->jobSpecs.xf[ofIdx].subFn, 
+		    jp->jobSpecs.xf[ofIdx].subFn,
 		    jp->jobSpecs.fromHost,
-		    lsb_jobid2str(SUBMIT_JID(jp)), 
-		    rcpMsg);			  
+		    lsb_jobid2str(SUBMIT_JID(jp)),
+		    rcpMsg);
                 sbdSyslog(LOG_DEBUG, line);
 	    }
 	}
-    } 
+    }
 
     return (hasError);
-} 
+}
 
 struct jobCard *
 addJob (struct jobSpecs *jobSpecs, int mbdVersion)
@@ -2590,12 +2588,12 @@ addJob (struct jobSpecs *jobSpecs, int mbdVersion)
     memcpy((char *) &jp->jobSpecs, jobSpecs, sizeof(struct jobSpecs));
 
     if (jobSpecs->execUsername[0] == '\0') {
-	
+
 	jp->execGid = 0;
 	jp->execUsername[0] = '\0';
         jp->jobSpecs.execUid   = -1;
     } else {
-        
+
 
         if ((pw = getpwlsfuser_(jobSpecs->execUsername)) == NULL ||
             pw->pw_name == NULL) {
@@ -2608,27 +2606,27 @@ addJob (struct jobSpecs *jobSpecs, int mbdVersion)
         jp->execGid = pw->pw_gid;
         strcpy(jp->execUsername, jobSpecs->execUsername);
 
-	
+
         jp->jobSpecs.execUid   = pw->pw_uid;
     }
 
-    
-    if (mbdVersion < 3) 
+
+    if (mbdVersion < 3)
 	jp->execJobFlag = JOB_EXEC_STARTED;
     else {
 	if (jp->jobSpecs.execHome[0] != '\0')
-	    jp->execJobFlag = JOB_EXEC_STARTED;	    
+	    jp->execJobFlag = JOB_EXEC_STARTED;
 	else
 	    jp->execJobFlag = 0;
     }
-    
-    
+
+
     if (jp->jobSpecs.preCmd && jp->jobSpecs.preCmd[0] != '\0' &&
 	(jp->jobSpecs.execHome[0] != '\0' || jp->jobSpecs.execCwd[0] != '\0'))
 	jp->execJobFlag |= JOB_EXEC_QPRE_OK | JOB_EXEC_QPRE_KNOWN;
-	
 
-    jp->jobSpecs.actValue = jobSpecs->actValue; 
+
+    jp->jobSpecs.actValue = jobSpecs->actValue;
 
     cc = initJobCard(jp, jobSpecs, &reply);
     if (cc < 0) {
@@ -2641,7 +2639,7 @@ addJob (struct jobSpecs *jobSpecs, int mbdVersion)
         if (lockHosts (jp) < 0) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5421,
 		"%s: lockHosts() failed for job <%s>; Host used by the job will not be locked"), fname, lsb_jobid2str(jp->jobSpecs.jobId)); /* catgets 5421 */
-        }         
+        }
     renewJobStat (jp);
 
 
@@ -2649,17 +2647,17 @@ addJob (struct jobSpecs *jobSpecs, int mbdVersion)
        if (reniceJob(jp) < 0)
    	  ls_syslog(LOG_DEBUG, "%s: renice job <%s> failed",
 		  fname, lsb_jobid2str(jp->jobSpecs.jobId));
-    }	
+    }
 
-    
+
     jp->runTime = jobSpecs->runTime;
 
     if (jp->runTime < 0) {
         jp->runTime = 0;
     }
-    
+
     return jp;
-} 	
+}
 
 void
 renewJobStat (struct jobCard *jp)
@@ -2668,49 +2666,49 @@ renewJobStat (struct jobCard *jp)
     int mbdJobStatus;
     int mbdReasons;
     int mbdSubReasons;
-    int sbdLogFound = 0; 
+    int sbdLogFound = 0;
 
-    
+
     mbdJobStatus = jp->jobSpecs.jStatus;
     mbdReasons = jp->jobSpecs.reasons;
     mbdSubReasons = jp->jobSpecs.subreasons;
 
-     
+
     sbdLogFound = sbdread_jobstatus (jp);
-    
+
     k = 0;
-    
+
     if (jp->jobSpecs.actPid) {
-	
+
 	kill(-jp->jobSpecs.actPid, SIGCONT);
 	k = jobsig(jp, SIGCONT, FALSE);
-    } else { 
-  
-        
+    } else {
+
+
         if (mbdJobStatus & JOB_STAT_EXIT) {
 
-	    
-	    
-	    
+
+
+
 	    if ((mbdReasons & EXIT_RESTART)
-                || ((mbdReasons == EXIT_ZOMBIE) 
+                || ((mbdReasons == EXIT_ZOMBIE)
                      &&  !(jp->jobSpecs.options & SUB_CHKPNTABLE)
-                     && (jp->jobSpecs.options & SUB_RERUNNABLE))) {            
+                     && (jp->jobSpecs.options & SUB_RERUNNABLE))) {
 		jp->mbdRestarted = TRUE;
             }
 	    if (jp->jobSpecs.jobPid == 0) {
-		
+
 		jp->jobSpecs.jStatus = mbdJobStatus;
 		return;
 	    }
             jobSigStart (jp, SIG_TERM_OTHER, 0, 0, SIGLOG);
         } else {
-            if ( sbdLogFound == 0) { 
-                
+            if ( sbdLogFound == 0) {
+
                 switch (MASK_STATUS(jp->jobSpecs.jStatus)) {
                     case JOB_STAT_PEND:
                         k = 0;
-                        
+
                         if (!(mbdJobStatus & JOB_STAT_PEND))
                             jp->notReported++;
                         break;
@@ -2723,21 +2721,21 @@ renewJobStat (struct jobCard *jp)
 
                     case JOB_STAT_SSUSP:
                     case JOB_STAT_USUSP:
-                        
-                        k = sbdStartupStopJob(jp, jp->jobSpecs.reasons, 
+
+                        k = sbdStartupStopJob(jp, jp->jobSpecs.reasons,
                                                   jp->jobSpecs.subreasons);
-                         
+
                         if (!(IS_SUSP (mbdJobStatus)))
                             jp->notReported++;
                         break;
 
-                } 
- 
-            } else {                 
+                }
 
-                
+            } else {
+
+
                 switch (MASK_STATUS(mbdJobStatus)) {
-                    case JOB_STAT_PEND: 
+                    case JOB_STAT_PEND:
                         k = 0;
                         break;
                     case JOB_STAT_RUN:
@@ -2750,14 +2748,14 @@ renewJobStat (struct jobCard *jp)
                         k = sbdStartupStopJob (jp, mbdReasons, mbdSubReasons);
                         break;
 
-                }  
-            }             
+                }
+            }
         }
    }
 
-    if (k < 0)               
+    if (k < 0)
         jobGone (jp);
-} 
+}
 
 
 static int
@@ -2772,18 +2770,18 @@ sbdStartupStopJob (struct jobCard *jp, int reasons, int subReasons)
     else if (reasons & LOAD_REASONS)
         sigValue = SIG_SUSP_LOAD;
     else if (reasons & OTHER_REASONS)
-        sigValue = SIG_SUSP_OTHER; 
+        sigValue = SIG_SUSP_OTHER;
 
-    if (sigValue == 0) 
-        return (0); 
+    if (sigValue == 0)
+        return (0);
 
-    reasons |= SUSP_SBD_STARTUP; 
-     
+    reasons |= SUSP_SBD_STARTUP;
+
     return (jRunSuspendAct(jp, sigValue,
             ((reasons & SUSP_USER_STOP) ? JOB_STAT_USUSP : JOB_STAT_SSUSP),
             reasons, subReasons, NO_SIGLOG));
 
-} 
+}
 
 void
 jobGone (struct jobCard *jp)
@@ -2792,17 +2790,17 @@ jobGone (struct jobCard *jp)
 	ls_syslog(LOG_DEBUG,
 		  "jobGone: Checking if job %s pid %d gone, jp->w_status=%d",
 		  lsb_jobid2str(jp->jobSpecs.jobId), jp->jobSpecs.jobPid, jp->w_status);
-    
-    
-    
-    if (!jp->missing) { 
+
+
+
+    if (!jp->missing) {
 	jp->missing = TRUE;
-	need_checkfinish = TRUE;         
+	need_checkfinish = TRUE;
 	if (jp->notReported > 0)
 	    jp->notReported = 0;
     } else {
-	if (getJobVersion (&jp->jobSpecs) < 4) { 
-	    
+	if (getJobVersion (&jp->jobSpecs) < 4) {
+
 	    if (jp->exitPid == 0) {
 		if ( jp->postJobStarted == 0 ) {
 		    jobFileExitStatus(jp);
@@ -2812,17 +2810,17 @@ jobGone (struct jobCard *jp)
 		return;
 	} else {
 	    jp->exitPid = -1;
-	    
+
 	    if ( jp->postJobStarted == 0 ) {
-		jobFinishRusage(jp); 
+		jobFinishRusage(jp);
 	    }
 	}
 	if (jp->jobSpecs.actPid == 0 && jp->exitPid == -1) {
-	    
+
 	    if (requeueJob(jp) == TRUE) {
 		SBD_SET_STATE(jp, JOB_STAT_PEND);
 		jp->jobSpecs.reasons = PEND_SBD_JOB_REQUEUE;
-	    } 
+	    }
 	    else {
 		if ( jp->postJobStarted != 0 ) {
                     if (jp->w_status) {
@@ -2842,7 +2840,7 @@ jobGone (struct jobCard *jp)
 		}
 	    }
 	}
-	jp->notReported++;           
+	jp->notReported++;
     }
 }
 
@@ -2858,25 +2856,25 @@ refreshJob (struct jobSpecs *jobSpecs)
 	if (jp->jobSpecs.jobId != jobSpecs->jobId)
 	    continue;
 
-	
+
 	jp->jobSpecs.reasons = jobSpecs->reasons;
 	jp->jobSpecs.subreasons = jobSpecs->subreasons;
-	
-        
+
+
         if (!(jp->postJobStarted) && (jp->jobSpecs.jStatus != jobSpecs->jStatus)) {
-	    
+
 	    jp->jobSpecs.jStatus = (jobSpecs->jStatus & ~JOB_STAT_MIG) |
 		(jp->jobSpecs.jStatus & JOB_STAT_MIG);
 
 	    renewJobStat (jp);
-	}	
+	}
 	strcpy (jp->jobSpecs.queue, jobSpecs->queue);
         strcpy (jp->jobSpecs.resumeCond, jobSpecs->resumeCond);
         strcpy (jp->jobSpecs.stopCond, jobSpecs->stopCond);
         strcpy (jp->jobSpecs.suspendActCmd, jobSpecs->suspendActCmd);
         strcpy (jp->jobSpecs.resumeActCmd, jobSpecs->resumeActCmd);
         strcpy (jp->jobSpecs.terminateActCmd, jobSpecs->terminateActCmd);
-	    
+
         for (i=0; i < LSB_SIG_NUM; i++)
             jp->jobSpecs.sigMap[i] = jobSpecs->sigMap[i];
 
@@ -2886,8 +2884,8 @@ refreshJob (struct jobSpecs *jobSpecs)
 	jp->jobSpecs.chkPeriod = jobSpecs->chkPeriod;
 
 
-        freeToHostsEtc (&jp->jobSpecs);              
-        saveSpecs (&jp->jobSpecs, jobSpecs);    
+        freeToHostsEtc (&jp->jobSpecs);
+        saveSpecs (&jp->jobSpecs, jobSpecs);
 
 	jp->jobSpecs.jAttrib = jobSpecs->jAttrib;
 	if (jp->jobSpecs.jAttrib & Q_ATTRIB_EXCLUSIVE) {
@@ -2897,8 +2895,8 @@ refreshJob (struct jobSpecs *jobSpecs)
             }
         }
 	for (j = 0; j < LSF_RLIM_NLIMITS; j++)
-	    memcpy((char *) &jp->jobSpecs.lsfLimits[j], 
-		    (char *)&jobSpecs->lsfLimits[j], 
+	    memcpy((char *) &jp->jobSpecs.lsfLimits[j],
+		    (char *)&jobSpecs->lsfLimits[j],
 		    sizeof (struct lsfLimit));
         setRunLimit (jp, FALSE);
 
@@ -2907,7 +2905,7 @@ refreshJob (struct jobSpecs *jobSpecs)
 	    cp = jobSpecs->windows;
 	    while ((word = getNextWord_(&cp)) != NULL) {
 		if (addWindow(word, jp->week, "refreshJobs jobSpecs") < 0) {
-		    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
+		    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
 			lsb_jobid2str(jp->jobSpecs.jobId), "addWindow", word);
 		    lsb_merr(_i18n_msg_get(ls_catd , NL_SETN, 458,
 			"Got garbage job bill from mbatchd on restart: die\n")); /* catgets 458 */
@@ -2920,32 +2918,32 @@ refreshJob (struct jobSpecs *jobSpecs)
         lsbFreeResVal (&jp->resumeCondVal);
         if (jobSpecs->resumeCond && jobSpecs->resumeCond[0] != '\0') {
             if ((jp->resumeCondVal = checkThresholdCond (jobSpecs->resumeCond))
-                                                                  == NULL) 
-                ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
+                                                                  == NULL)
+                ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
 		    lsb_jobid2str(jp->jobSpecs.jobId), "checkThresholdCond", "resumeCond");
-        }  
+        }
 
         lsbFreeResVal (&jp->stopCondVal);
         if (jobSpecs->stopCond  && jobSpecs->stopCond[0] != '\0') {
             if ((jp->stopCondVal = checkThresholdCond (jobSpecs->stopCond))
-                                                                      == NULL) 
-                ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
+                                                                      == NULL)
+                ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
 		    lsb_jobid2str(jp->jobSpecs.jobId), "checkThresholdCond", "stopCond");
         }
 
-	
+
 	jp->needReportRU = TRUE;
-	
+
         if (!(daemonParams[LSB_RENICE_NEVER_AT_RESTART].paramValue)) {
 	   if (reniceJob(jp) < 0)
 	       ls_syslog(LOG_DEBUG, "refreshJob: reniceJob job <%s> failed",
 		      lsb_jobid2str(jp->jobSpecs.jobId));
-        }	
+        }
     }
-} 
+}
 
 
-void 
+void
 inJobLink (struct jobCard *jp)
 {
     struct jobCard *jobp;
@@ -2958,9 +2956,9 @@ inJobLink (struct jobCard *jp)
                      && (jp->jobSpecs.startTime - jobp->jobSpecs.startTime) >= 0)
              break;
     }
-    inList ((struct  listEntry *)jobp, (struct listEntry *)jp); 
+    inList ((struct  listEntry *)jobp, (struct listEntry *)jp);
 
-} 
+}
 
 int
 setIds(struct jobCard *jobCardPtr)
@@ -2969,67 +2967,67 @@ setIds(struct jobCard *jobCardPtr)
     struct jobSpecs *jobSpecsPtr = &(jobCardPtr->jobSpecs);
     char *tGname, *sGname = NULL;
     struct group *grEntry;
-   
+
     if (! debug) {
-	
+
         if (initgroups(jobCardPtr->execUsername, jobCardPtr->execGid) < 0) {
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), "initgroups", 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		lsb_jobid2str(jobSpecsPtr->jobId), "initgroups",
 		jobCardPtr->execUsername);
 	    return (-1);
         }
 
-        
+
         if (setgid(jobCardPtr->execGid) < 0) {
-            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_D_M, fname, 
+            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_D_M, fname,
 		lsb_jobid2str(jobSpecsPtr->jobId), "setgid",
 		(int) jobCardPtr->execGid);
 	    return (-1);
         }
 
-	
+
         if ((tGname = getenv("LSB_UNIXGROUP"))) {
 	    if (logclass & ( LC_TRACE | LC_EXEC) )
 	        ls_syslog(LOG_DEBUG, "got the LSB_UNIXGROUP=%s", tGname);
 
-            if (tGname != NULL ) { 
+            if (tGname != NULL ) {
 	        sGname = putstr_(tGname);
                 if ((grEntry = getgrnam(sGname)) == NULL) {
 		    ls_syslog(LOG_DEBUG,
-			 "setIds: Job <%s> getgrnam(%s) failed: ", 
+			 "setIds: Job <%s> getgrnam(%s) failed: ",
 			 lsb_jobid2str(jobSpecsPtr->jobId), sGname);
                 } else {
-	        
+
 	            char **memp = grEntry->gr_mem;
 	            while (memp != NULL && *memp != NULL) {
 		        if (strcmp(*memp, jobCardPtr->execUsername) == 0) {
-		            
-		            
+
+
 		            if (setgid(grEntry->gr_gid) < 0) {
-		                ls_syslog(LOG_DEBUG, 
+		                ls_syslog(LOG_DEBUG,
 			        "setIds: Job <%s> setgid(%d) for LSB_UNIXGROUP=%s  failed: %m", lsb_jobid2str(jobSpecsPtr->jobId), (int)grEntry->gr_gid, sGname);
                             } else {
-                                
+
                                 jobCardPtr->execGid = grEntry->gr_gid;
                             }
                             break;
-                        } 
+                        }
 		        memp++;
                     }
 		}
 
-	        
+
 		FREEUP(sGname);
-            } 
+            }
         }
 
-	
+
 	if ((jobSpecsPtr->options & SUB_INTERACTIVE) &&
 	    (jobSpecsPtr->options & SUB_PTY)) {
 	    chuser(jobSpecsPtr->execUid);
 	} else if (lsfSetUid(jobSpecsPtr->execUid) < 0) {
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		lsb_jobid2str(jobSpecsPtr->jobId), "setuid", 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		lsb_jobid2str(jobSpecsPtr->jobId), "setuid",
 		jobCardPtr->execUsername);
 	    return (-1);
         }
@@ -3039,7 +3037,7 @@ setIds(struct jobCard *jobCardPtr)
 		      lsb_jobid2str(jobSpecsPtr->jobId), getuid(), geteuid());
     }
     return (0);
-} 
+}
 
 
 void
@@ -3047,82 +3045,82 @@ deallocJobCard(struct jobCard *jobCard)
 {
     static char fname[] = "deallocJobCard()";
     char fileBuf[MAXFILENAMELEN];
-    
+
     sprintf(fileBuf, "%s/.%s.%s.fail", LSTMPDIR, jobCard->jobSpecs.jobFile,
 	    lsb_jobidinstr(jobCard->jobSpecs.jobId));
-    
+
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
     sprintf(fileBuf, "%s/.%s.%s.chk", LSTMPDIR, jobCard->jobSpecs.jobFile,
 	    lsb_jobidinstr(jobCard->jobSpecs.jobId));
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
     sprintf(fileBuf, "%s/.%s.%s.resume", LSTMPDIR, jobCard->jobSpecs.jobFile,
             lsb_jobidinstr(jobCard->jobSpecs.jobId));
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
     sprintf(fileBuf, "%s/.%s.%s.suspend", LSTMPDIR, jobCard->jobSpecs.jobFile,
             lsb_jobidinstr(jobCard->jobSpecs.jobId));
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
     sprintf(fileBuf, "%s/.%s.%s.terminate", LSTMPDIR, jobCard->jobSpecs.jobFile,
             lsb_jobidinstr(jobCard->jobSpecs.jobId));
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
     sprintf(fileBuf, "%s/.%s.acct", LSTMPDIR, jobCard->jobSpecs.jobFile);
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
-    sprintf(fileBuf, "%s/.%s.%d.stt", 
+    sprintf(fileBuf, "%s/.%s.%d.stt",
 	    LSTMPDIR,
 	    lsb_jobidinstr(jobCard->jobSpecs.jobId),
 	    jobCard->jobSpecs.jobPid);
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
     sprintf(fileBuf, "%s/.%s.sbd/jobstatus.%s", LSTMPDIR, clusterName, lsb_jobidinstr(jobCard->jobSpecs.jobId));
 
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
-    
+
     sprintf(fileBuf, "/tmp/.sbd/%s.rusage", jobCard->jobSpecs.jobFile);
     if (logclass & LC_MPI) {
         ls_syslog(LOG_DEBUG3, "deallocJobCard: unlink(%s) for MPI job <%s>: %m",
 	          fileBuf, lsb_jobid2str(jobCard->jobSpecs.jobId));
     }
     if (unlink(fileBuf) < 0 && errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "unlink",
 	    fileBuf);
 
@@ -3145,7 +3143,7 @@ deallocJobCard(struct jobCard *jobCard)
 
     if (jobCard->mbdRusage.npids > 0) {
         FREEUP(jobCard->mbdRusage.pidInfo);
-    }    
+    }
 
     if (jobCard->client) {
 	shutDownClient(jobCard->client);
@@ -3153,10 +3151,10 @@ deallocJobCard(struct jobCard *jobCard)
 
     lsbFreeResVal (&jobCard->resumeCondVal);
     lsbFreeResVal (&jobCard->stopCondVal);
- 
+
     free (jobCard);
     jobcnt--;
-} 
+}
 
 void
 freeToHostsEtc (struct jobSpecs *jobSpecs)
@@ -3175,7 +3173,7 @@ freeToHostsEtc (struct jobSpecs *jobSpecs)
 
     if (jobSpecs->nxf)
 	FREEUP(jobSpecs->xf);
-   
+
     if (jobSpecs->numEnv > 0) {
         for (i = 0; i < jobSpecs->numEnv; i++)
             FREEUP (jobSpecs->env[i]);
@@ -3190,8 +3188,8 @@ freeToHostsEtc (struct jobSpecs *jobSpecs)
    FREEUP (jobSpecs->loginShell);
    FREEUP (jobSpecs->schedHostType);
    FREEUP (jobSpecs->execHosts);
- 
-} 
+
+}
 
 void
 saveSpecs (struct jobSpecs *jobSpecs, struct jobSpecs *specs)
@@ -3218,14 +3216,14 @@ saveSpecs (struct jobSpecs *jobSpecs, struct jobSpecs *specs)
     jobSpecs->nxf = specs->nxf;
 
     if (specs->numEnv > 0) {
-        jobSpecs->env = (char **) 
-                 my_calloc (specs->numEnv, sizeof(char *), fname); 
-        for (i = 0; i < specs->numEnv; i++) 
+        jobSpecs->env = (char **)
+                 my_calloc (specs->numEnv, sizeof(char *), fname);
+        for (i = 0; i < specs->numEnv; i++)
             jobSpecs->env[i] = safeSave (specs->env[i]);
         jobSpecs->numEnv = specs->numEnv;
     } else {
         jobSpecs->numEnv = 0;
-        jobSpecs->env = NULL; 
+        jobSpecs->env = NULL;
     }
 
     jobSpecs->eexec.len = specs->eexec.len;
@@ -3241,39 +3239,39 @@ saveSpecs (struct jobSpecs *jobSpecs, struct jobSpecs *specs)
     if (specs->execHosts != NULL)
         jobSpecs->execHosts = safeSave (specs->execHosts);
 
-} 
+}
 
 
- 
+
 void
 setRunLimit (struct jobCard *jp, int initRunTime)
 {
     if (jp->jobSpecs.lsfLimits[LSF_RLIMIT_RUN].rlim_curh != 0) {
-        
-	
+
+
 	jp->jobSpecs.lsfLimits[LSF_RLIMIT_RUN].rlim_curl = 0x7fffffff;
-    }   
+    }
 
     if (initRunTime)
 	jp->runTime = 0;
     return;
 
-} 
+}
 
 static int
 setPGid(struct jobCard *jc)
 {
     static char fname[] = "setPGid()";
-    
-    
+
+
     if (setpgid(0, getpid()) <0) {
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jc->jobSpecs.jobId), "setpgid");
 	return (-1);
     }
-    
+
     return (getpid());
-} 
+}
 
 
 
@@ -3292,7 +3290,7 @@ getLoginShell (char *jfData, char *jobFile, struct hostent *hp, int readFile)
            return (NULL);
         if ((sp = strstr(jfData, "\n# LOGIN_SHELL ")) == NULL)
            return (NULL);
-        
+
         sp += strlen("\n# LOGIN_SHELL ");
         while (*sp != '\n') {
             shellPath[i] = *sp;
@@ -3302,7 +3300,7 @@ getLoginShell (char *jfData, char *jobFile, struct hostent *hp, int readFile)
         return (shellPath);
     }
 
-    
+
     if ((fp = myfopen_(jobFile, "r", hp)) == NULL) {
         fprintf(stderr, _i18n_msg_get(ls_catd , NL_SETN, 459,
 	    "Cannot open your job file: %s\n"), /* catgets 459 */
@@ -3321,10 +3319,10 @@ getLoginShell (char *jfData, char *jobFile, struct hostent *hp, int readFile)
 	    "Corrupted jobfile <%s>\n"), /* catgets 460 */
 	    jobFile);
         exit (-1);
-    } 
+    }
 
     if (fgets(line, MAXLINELEN, fp) != NULL) {
-        
+
         if ((sp = strstr(line, "# LOGIN_SHELL ")) == NULL) {
             FCLOSEUP(&fp);
             return (NULL);
@@ -3340,11 +3338,11 @@ getLoginShell (char *jfData, char *jobFile, struct hostent *hp, int readFile)
     }
     FCLOSEUP(&fp);
     return (NULL);
-    
-} 
+
+}
 
 static int
-createTmpJobFile(struct jobSpecs *jobSpecsPtr, struct hostent *hp, 
+createTmpJobFile(struct jobSpecs *jobSpecsPtr, struct hostent *hp,
                  char *stdinFile)
 {
     static char fname[] = "createTmpJobFile";
@@ -3359,11 +3357,11 @@ createTmpJobFile(struct jobSpecs *jobSpecsPtr, struct hostent *hp,
 	sprintf(errMsg, "%s: entering, jobFile=<%s>", fname, jobSpecsPtr->jobFile);
 	sbdSyslog(LOG_DEBUG3, errMsg);
     }
-    
+
     sprintf(path, "%s.tmp", jobSpecsPtr->jobFile);
     if ((fd = myopen_(path, O_CREAT | O_TRUNC | O_WRONLY,
                       0600, hp)) == -1) {
-        sprintf(cmdBuf, I18N_JOB_FAIL_S_S_M, fname, 
+        sprintf(cmdBuf, I18N_JOB_FAIL_S_S_M, fname,
 	    lsb_jobid2str(jobSpecsPtr->jobId), "myopen_",
 	    path);
         goto Error;
@@ -3371,25 +3369,25 @@ createTmpJobFile(struct jobSpecs *jobSpecsPtr, struct hostent *hp,
     if (stdinFile == NULL)
         stdinFile = "/dev/null";
 
-    
+
     sprintf(cmdBuf, "cd %s", jobSpecsPtr->execCwd);
 
     argv[0] = jobSpecsPtr->jobFile;
     argv[1] = NULL;
-    
+
     execArgv = execArgs(jobSpecsPtr, argv);
 
 
-    
+
     size = 2 * (strlen(jobSpecsPtr->jobFile) + strlen(stdinFile))
 	+ strlen(cmdBuf) + 25;
-    
+
     for (i = 0; execArgv[i]; i++)
 	size += 2 * (strlen(execArgv[i]) + 1);
 
     sp = malloc (size);
     if (sp == NULL) {
-	sprintf(cmdBuf, I18N_JOB_FAIL_S_M, fname, 
+	sprintf(cmdBuf, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jobSpecsPtr->jobId), "malloc");
 	goto Error;
     }
@@ -3428,11 +3426,11 @@ createTmpJobFile(struct jobSpecs *jobSpecsPtr, struct hostent *hp,
 
     sprintf(path, "%s.tmp", jobSpecsPtr->jobFile);
     if ((fd = myopen_(path, O_RDONLY, 0600, hp)) == -1) {
-        sprintf(cmdBuf, I18N_JOB_FAIL_S_S_M, fname, 
+        sprintf(cmdBuf, I18N_JOB_FAIL_S_S_M, fname,
 	    lsb_jobid2str(jobSpecsPtr->jobId), "myopen_", path);
         goto Error;
     }
-    
+
     if (dup2(fd, 0) == -1) {
         sprintf(cmdBuf, I18N_FUNC_D_FAIL_M, fname, "dup2",
             fd);
@@ -3455,10 +3453,10 @@ createTmpJobFile(struct jobSpecs *jobSpecsPtr, struct hostent *hp,
 
     return (-1);
 
-} 
+}
 
 
-int 
+int
 acctMapTo(struct jobCard *jobCard)
 {
     static char fname[]="acctMapTo";
@@ -3470,16 +3468,16 @@ acctMapTo(struct jobCard *jobCard)
     char myhost, mycluster;
 
     if(jobCard->jobSpecs.userId == PC_LSF_CUGID) {
-	
+
         goto trySubUser;
     }
 
     for (i = 0; i < jobCard->jobSpecs.numEnv; i++) {
         if (logclass & LC_EXEC)
-            ls_syslog(LOG_DEBUG2,"%s: Job <%s>, env[%d]=%s" ,fname, 
+            ls_syslog(LOG_DEBUG2,"%s: Job <%s>, env[%d]=%s" ,fname,
 		      lsb_jobid2str(jobCard->jobSpecs.jobId),
 		      i, jobCard->jobSpecs.env[i]);
-        if ((sp = strstr(jobCard->jobSpecs.env[i], "LSB_ACCT_MAP=")) == NULL) 
+        if ((sp = strstr(jobCard->jobSpecs.env[i], "LSB_ACCT_MAP=")) == NULL)
             continue;
         break;
     }
@@ -3491,7 +3489,7 @@ acctMapTo(struct jobCard *jobCard)
 
     if (sp != NULL) {
 	if (strlen(sp) == 13) {
-	    
+
 	    sp = NULL;
 	}
     }
@@ -3502,14 +3500,14 @@ acctMapTo(struct jobCard *jobCard)
         goto trySubUser;
     }
 
-    sp += 13;  
+    sp += 13;
     i = 0;
     while (*sp != '\n' && *sp != '\0' && i < MAXLINELEN) {
         line[i++] = *sp++;
     }
     line[i] = '\0';
     sp = line;
-    
+
     if (logclass & LC_EXEC)
         ls_syslog(LOG_DEBUG1,"%s: Job <%s>, using map <%s>",fname, lsb_jobid2str(jobCard->jobSpecs.jobId), line);
 
@@ -3518,7 +3516,7 @@ acctMapTo(struct jobCard *jobCard)
            ls_syslog(LOG_DEBUG2,"%s: checking <%s> <%s>",fname,clusorhost, user);
         sp += ccount + 1;
 
-	
+
 	if ( strcmp(clusterName, clusorhost) == 0
 	     || strcmp("+", clusorhost) == 0) {
 	    mycluster = 1;
@@ -3532,8 +3530,8 @@ acctMapTo(struct jobCard *jobCard)
                 myhost = FALSE;
         }
 
-        
-        if (!mycluster && !myhost) { 
+
+        if (!mycluster && !myhost) {
             if (logclass & LC_EXEC)
                ls_syslog(LOG_DEBUG2,"%s: <%s> not local cluster or host name",fname,clusorhost);
             continue;
@@ -3551,7 +3549,7 @@ acctMapTo(struct jobCard *jobCard)
         jobCard->jobSpecs.execUid   = pw->pw_uid;
         jobCard->execGid = pw->pw_gid;
 
-        
+
         if (myhost)
            break;
     }
@@ -3563,17 +3561,17 @@ acctMapTo(struct jobCard *jobCard)
     }
 
 trySubUser:
-    
+
     if ((pw =  my_getpwnam(jobCard->jobSpecs.userName, "acctMapTo/trySubUser")) == NULL) {
-        
+
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5441,
 	    "%s: No valid user name found for job <%s>, userName <%s>. getpwnam() failed:%m"), /* catgets 5441 */
             fname,
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    jobCard->jobSpecs.userName);
     } else {
         if(jobCard->jobSpecs.userId == PC_LSF_CUGID) {
-	    
+
 	    ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5497, "%s: User %s is from a PC client host %s, will use uid %d on SBD host")),  /* catgets 5497 */
 		   fname, jobCard->jobSpecs.userName,
 		   jobCard->jobSpecs.fromHost, pw->pw_uid);
@@ -3586,7 +3584,7 @@ trySubUser:
     }
     return (-1);
 
-} 
+}
 
 
 
@@ -3605,7 +3603,7 @@ acctMapOk(struct jobCard *jobCard)
 
     if(jobCard->jobSpecs.userId == PC_LSF_CUGID &&
        strcmp(jobCard->jobSpecs.userName, jobCard->execUsername) == 0) {
-	
+
 	return (0);
     }
 
@@ -3616,20 +3614,20 @@ acctMapOk(struct jobCard *jobCard)
     if ((pw = getpwdirlsfuser_(jobCard->jobSpecs.execUsername)) == NULL) {
         sprintf(errMsg, I18N_JOB_FAIL_S_S_M,
 	    fname,
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "getpwdirlsfuser_",
 	    jobCard->jobSpecs.execUsername);
 	sbdSyslog(LOG_ERR, errMsg);
         return (-1);
     }
-    
+
     strcpy(hostfn, pw->pw_dir);
     strcat(hostfn,"/.lsfhosts");
 
     if ((fp=fopen(hostfn, "r")) == NULL) {
 	sprintf(errMsg, I18N_JOB_FAIL_S_S_M,
 	    fname,
-	    lsb_jobid2str(jobCard->jobSpecs.jobId), 
+	    lsb_jobid2str(jobCard->jobSpecs.jobId),
 	    "fopen",
 	    hostfn);
 	sbdSyslog(LOG_ERR, errMsg);
@@ -3642,12 +3640,12 @@ acctMapOk(struct jobCard *jobCard)
 	    "%s: Job <%s> file <%s> is not owned or writable only by the user, file uid <%d>, file mode <%03o>, userId <%d>"), /* catgets 470 */
 	    fname,
 	    lsb_jobid2str(jobCard->jobSpecs.jobId),
-	    hostfn, 
-	    (int)statbuf.st_uid, 
-	    (unsigned int)statbuf.st_mode, 
+	    hostfn,
+	    (int)statbuf.st_uid,
+	    (unsigned int)statbuf.st_mode,
 	    (int)pw->pw_uid);
 	sbdSyslog(LOG_ERR, errMsg);
-        FCLOSEUP(&fp);	
+        FCLOSEUP(&fp);
         goto error;
     }
 
@@ -3656,45 +3654,45 @@ acctMapOk(struct jobCard *jobCard)
 	if (num < 2 || (num==3 && (strcmp(dir, "send") == 0 ||
                                    strcmp(dir,"recv")  != 0)))
              continue;
-         if (strcmp(user, "+") == 0 || 
+         if (strcmp(user, "+") == 0 ||
 	     strcmp (user, jobCard->jobSpecs.userName) == 0) {
-            
+
             if (strcmp (jobCard->jobSpecs.clusterName, clusorhost) == 0 ||
 		strcmp(clusorhost,"+") == 0)
                 return (0);
             if ((officialName=getHostOfficialByName_(clusorhost)) == NULL)
-                continue; 
+                continue;
             if (equalHost_(jobCard->jobSpecs.fromHost, officialName))
                 return (0);
 	}
     }
-    
+
     sprintf(errMsg, _i18n_msg_get(ls_catd , NL_SETN, 471,
 	"%s: Job <%s> no authorization for user name <%s> from cluster/host <%s/%s> in file <%s>"), /* catgets 471 */
 	fname,
 	lsb_jobid2str(jobCard->jobSpecs.jobId), jobCard->jobSpecs.userName,
 	clusterName, jobCard->jobSpecs.fromHost, hostfn);
     sbdSyslog(LOG_ERR, errMsg);
-    
+
 error:
     sprintf (msg, _i18n_msg_get(ls_catd , NL_SETN, 472,
        "We are unable to start your job %s <%s>.\nThe error is: %s"), /* catgets 472 */
         lsb_jobid2str(SUBMIT_JID(jobCard)), jobCard->jobSpecs.command, errMsg);
-    
+
     if (jobCard->jobSpecs.options & SUB_MAIL_USER)
         merr_user (jobCard->jobSpecs.mailUser, jobCard->jobSpecs.fromHost, msg,
 	    I18N_error);
     else
-        merr_user (jobCard->jobSpecs.userName, jobCard->jobSpecs.fromHost, msg, 
+        merr_user (jobCard->jobSpecs.userName, jobCard->jobSpecs.fromHost, msg,
 	    I18N_error);
      return (-1);
-     
-
-} 
 
 
- 
-static void 
+}
+
+
+
+static void
 runQPre (struct jobCard *jp, char ** variables)
 {
     static char *fname = "runQPre";
@@ -3707,21 +3705,21 @@ runQPre (struct jobCard *jp, char ** variables)
     FILE *   fp;
     char *   sp;
 
-    
-    char tmpStr[MAXLINELEN]; 
 
-    if (!jp->jobSpecs.preCmd || jp->jobSpecs.preCmd[0] == '\0') 
+    char tmpStr[MAXLINELEN];
+
+    if (!jp->jobSpecs.preCmd || jp->jobSpecs.preCmd[0] == '\0')
         return;
 
     if ( socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0) {
          ls_syslog(LOG_ERR, I18N(5503,"pipe() error")); /* catgets 5503 */
     }
-    
-    
+
+
     (void) Signal_(SIGCHLD, SIG_DFL);
 
     if ((pid = fork()) == 0) {
-	
+
 	sigset_t newmask;
         char *myargv[6];
         int maxfds = sysconf(_SC_OPEN_MAX);
@@ -3738,42 +3736,42 @@ runQPre (struct jobCard *jp, char ** variables)
 
 	chdir("/tmp");
 
-        for (i = 1; i < NSIG; i++)       
+        for (i = 1; i < NSIG; i++)
             Signal_(i, SIG_DFL);
-	
+
 	sigemptyset(&newmask);
-	sigprocmask(SIG_SETMASK, &newmask, NULL);	
-	
+	sigprocmask(SIG_SETMASK, &newmask, NULL);
+
 	alarm(0);
-	
-        
+
+
 	strcpy(tmpStr, "/bin:/usr/bin:/sbin:/usr/sbin:");
         if (daemonParams[LSF_BINDIR].paramValue != NULL) {
           if (strlen(daemonParams[LSF_BINDIR].paramValue) < (MAXLINELEN-31)){
-            
+
 	    strcat(tmpStr, daemonParams[LSF_BINDIR].paramValue);
 	  }
 	}
 	putEnv("PATH", tmpStr);
 
 
-	
-	
+
+
 	i = open ("/dev/null", O_RDWR, 0);
 	dup2(i, 0);
 	dup2(i, 2);
 
-        close( fd[0] ); 
+        close( fd[0] );
         if ( fd[1] != STDOUT_FILENO ) {
             if ( dup2( fd[1], STDOUT_FILENO) != STDOUT_FILENO ) {
                  ls_syslog(LOG_ERR,I18N(5504, "dup2 error to stdout\n"));  /* catgets 5504 */
             } else {
-                close( fd[1] ); 
+                close( fd[1] );
             }
         }
 
-	
-	for (i = 3; i < maxfds; i++) 
+
+	for (i = 3; i < maxfds; i++)
 	    close(i);
 
 	myargv[0] = "/bin/sh";
@@ -3781,73 +3779,73 @@ runQPre (struct jobCard *jp, char ** variables)
 	myargv[2] = jp->jobSpecs.preCmd;
 	myargv[3] = NULL;
 
-        
+
         if (
                ( jp->jobSpecs.execCwd    != NULL  )
             && ( strlen(jp->jobSpecs.execCwd) >=2 )
             && ( jp->jobSpecs.execCwd[0] == '/'   )
             && ( jp->jobSpecs.execCwd[1] == '/'   )
            ) {
-            
+
             putEnv("LSB_EXEC_HOSTCWDS", jp->jobSpecs.execCwd );
         } else {
-            
+
             putEnv("LSB_EXEC_HOSTCWDS", "");
         }
-	
+
         lsfExecvp ("/bin/sh", myargv);
 	sprintf(errMsg, _i18n_msg_get(ls_catd , NL_SETN, 474,
 	    "%s: queue's pre-exec command <%s> failed for job <%s>: %s"), /* catgets 474 */
-	    fname, 
-	    jp->jobSpecs.preCmd, 
+	    fname,
+	    jp->jobSpecs.preCmd,
 	    lsb_jobid2str(jp->jobSpecs.jobId),
 	    strerror(errno));
 	sbdSyslog(LOG_ERR, errMsg);
         exit (-1);
     }
-    
 
-    close( fd[1] ); 
+
+    close( fd[1] );
 
     if (pid < 0) {
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5446,
 	    "%s: Fork to run pre-exec for job <%s> failed: %m"), /* catgets 5446 */
 	    fname, lsb_jobid2str(jp->jobSpecs.jobId));
-	
+
 	jobSetupStatus(JOB_STAT_PEND, PEND_QUE_PRE_FAIL, jp);
     }
 
-    
 
-    
+
+
 
     variables[0] = NULL;
 
-    
+
     readBuf[0] = '\0';
     fp = fdopen( fd[0], "r" );
     if ( fp == NULL ) {
         ls_syslog( LOG_ERR, I18N(5506,"  fp = fdopen( fd[0] returned NULL!" )); /* catgets 5506 */
     }
-    
+
     lineFromChild[0] = '\0';
 
-    
+
     while(  ( sp = fgets(readBuf, sizeof(readBuf), fp)) != NULL  ) {
-  
+
         if ( strlen( readBuf ) + strlen(lineFromChild) <
                                  sizeof(lineFromChild)   ) {
             strcat( lineFromChild, readBuf );
         }
 
         if ( strchr( readBuf, '\\' ) != 0 ) {
-          continue; 
+          continue;
         }
 
-        
+
         editCmntBackSlash( (char *) &lineFromChild );
 
-        
+
         if ( selectPreExecEnvVariables( (char *) &lineFromChild
                                  ,variables ) == -2  ) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5450,
@@ -3855,20 +3853,20 @@ runQPre (struct jobCard *jp, char ** variables)
              ,fname, lsb_jobid2str(jp->jobSpecs.jobId), lineFromChild );
         }
         lineFromChild[ 0 ] = '\0';
-    
-    } 
 
-    
+    }
+
+
     if ( ferror(fp) ) {
       ls_syslog( LOG_ERR, I18N(5507,"runQPre: error in getting pre_exec output from child" )); /* catgets 5507 */
     }
 
-    
+
     if( getenv("LSB_EXEC_HOSTCWDS") != NULL ) {
             putEnv("LSB_EXEC_HOSTCWDS", "");
     }
 
-    
+
     i = 0;
     while( variables[ i ] != NULL ) {
         char buf[MAXLINELEN];
@@ -3877,20 +3875,20 @@ runQPre (struct jobCard *jp, char ** variables)
         strcpy(buf, variables[ i ]);
 
         if ( (pVariableValue = strchr(buf, '=') ) != NULL )  {
-            buf[ pVariableValue - buf ] = '\0'; 
-            pVariableValue++; 
+            buf[ pVariableValue - buf ] = '\0';
+            pVariableValue++;
             putEnv( buf, pVariableValue );
         }
         i++;
-    } 
- 
+    }
+
     collectPreStatus(jp, pid, "runQPre");
     jp->execJobFlag |= JOB_EXEC_QPRE_OK;
 
-} 
+}
 
 
- 
+
 int
 runQPost (struct jobCard *jp)
 {
@@ -3900,8 +3898,8 @@ runQPost (struct jobCard *jp)
     char *myargv[6];
     sigset_t newmask;
 
-    
-    char tmpStr[MAXLINELEN]; 
+
+    char tmpStr[MAXLINELEN];
 
 
     if (logclass & LC_TRACE) {
@@ -3914,45 +3912,45 @@ runQPost (struct jobCard *jp)
 	chuser(jp->jobSpecs.execUid);
     }
 
-    
-    if (!jp->jobSpecs.postCmd || jp->jobSpecs.postCmd[0] == '\0') 
+
+    if (!jp->jobSpecs.postCmd || jp->jobSpecs.postCmd[0] == '\0')
         return 0;
-    
-    
-    
-    
-    
+
+
+
+
+
 
     if (jp->jobSpecs.preCmd && jp->jobSpecs.preCmd[0] != '\0') {
 
-	
-	if (!(jp->execJobFlag & JOB_EXEC_QPRE_KNOWN) && 
+
+	if (!(jp->execJobFlag & JOB_EXEC_QPRE_KNOWN) &&
 	   !(daemonParams[LSB_QPOST_EXEC_ENFORCE].paramValue) ) {
 	    chuser(batchId);
 	    if (logclass & LC_EXEC)
 		ls_syslog(LOG_DEBUG, "runQPost: qpost is not run for job <%s> because status of qpre is not known",
 			  lsb_jobid2str(jp->jobSpecs.jobId));
-	    lsb_merr2(_i18n_msg_get(ls_catd , NL_SETN, 475, 
+	    lsb_merr2(_i18n_msg_get(ls_catd , NL_SETN, 475,
 		"The queue's post-exec command is not run for job <%s> because the exit status of the queue's pre-exec is not known.  Please run <%s> manually if necessary.\n"), /* catgets 475 */
 		lsb_jobid2str(jp->jobSpecs.jobId), jp->jobSpecs.postCmd);
 	    chuser(jp->jobSpecs.execUid);
 	    return -1;
 	}
 
-	
-	if (!(jp->execJobFlag & JOB_EXEC_QPRE_OK) && 
+
+	if (!(jp->execJobFlag & JOB_EXEC_QPRE_OK) &&
 	   !(daemonParams[LSB_QPOST_EXEC_ENFORCE].paramValue) ) {
-	    chuser(batchId);	    
+	    chuser(batchId);
 	    if (logclass & LC_EXEC)
 		ls_syslog(LOG_DEBUG, "runQPost: qpost is not run for job <%s> because qpre failed", lsb_jobid2str(jp->jobSpecs.jobId));
-	    chuser(jp->jobSpecs.execUid);	    
+	    chuser(jp->jobSpecs.execUid);
 	    return -1;
 	}
     }
 
     if ((pid = fork()) == -1) {
 	chuser(batchId);
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jp->jobSpecs.jobId), "fork");
 	chuser(jp->jobSpecs.execUid);
         lsb_merr2(_i18n_msg_get(ls_catd , NL_SETN, 476,
@@ -3965,14 +3963,14 @@ runQPost (struct jobCard *jp)
 	LS_WAIT_T childStatus;
 	if (waitpid(pid, &childStatus, 0) < 0) {
 	    chuser(batchId);
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_D_M, fname, 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_D_M, fname,
 		lsb_jobid2str(jp->jobSpecs.jobId), "waitpid", pid);
 	    chuser(jp->jobSpecs.execUid);
 	    return -1;
 	}
-	
-	 
-	if ( WIFEXITED(childStatus) 
+
+
+	if ( WIFEXITED(childStatus)
 	     && (WEXITSTATUS(childStatus) != 0 ) ) {
 	    ls_syslog(LOG_DEBUG, "post job<%s> process exit with code <%d>",
 		      lsb_jobid2str(jp->jobSpecs.jobId),
@@ -3986,8 +3984,8 @@ runQPost (struct jobCard *jp)
 	}
 	return 0;
     }
-	
-    
+
+
     closeBatchSocket();
     chdir("/tmp");
     chuser(batchId);
@@ -3997,48 +3995,48 @@ runQPost (struct jobCard *jp)
 	    fname, lsb_jobid2str(jp->jobSpecs.jobId), "chPrePostUser");
 	exit(-1);
     }
-    
+
     chdir("/tmp");
 
-    for (i = 1; i < NSIG; i++)       
+    for (i = 1; i < NSIG; i++)
 	Signal_(i, SIG_DFL);
 
     sigemptyset(&newmask);
-    sigprocmask(SIG_SETMASK, &newmask, NULL);    
-    
+    sigprocmask(SIG_SETMASK, &newmask, NULL);
+
     alarm(0);
-	
-    
+
+
     strcpy(tmpStr, "/bin:/usr/bin:/sbin:/usr/sbin:");
     if (daemonParams[LSF_BINDIR].paramValue != NULL) {
       if (strlen(daemonParams[LSF_BINDIR].paramValue) < (MAXLINELEN-31)){
-        
+
         strcat(tmpStr, daemonParams[LSF_BINDIR].paramValue);
       }
     }
     putEnv("PATH", tmpStr);
-	
-    
+
+
     i = open ("/dev/null", O_RDWR, 0);
     dup2(i, 0);
     dup2(i, 1);
     dup2(i, 2);
 
-    
+
     maxfds = sysconf(_SC_OPEN_MAX);
     for (i = 3; i < maxfds; i++) {
         close(i);
     }
-    
+
     sprintf (val, "%d", jp->w_status);
     putEnv ("LSB_JOBEXIT_STAT", val);
 
-    
+
     if ((jp->jobSpecs.jStatus & JOB_STAT_PEND)
         || (jp->jobSpecs.reasons & EXIT_REQUEUE)){
         putEnv("LSB_JOBPEND", " ");
     }
- 
+
     myargv[0] = "/bin/sh";
     myargv[1] = "-c";
     myargv[2] = jp->jobSpecs.postCmd;
@@ -4050,14 +4048,14 @@ runQPost (struct jobCard *jp)
 
     sprintf(val, _i18n_msg_get(ls_catd , NL_SETN, 477,
 	"%s: queue's post-exec command <%s> failed for job <%s>: %s"), /* catgets 477 */
-	fname, 
-	jp->jobSpecs.postCmd, 
+	fname,
+	jp->jobSpecs.postCmd,
 	lsb_jobid2str(jp->jobSpecs.jobId),
 	strerror(errno));
     sbdSyslog(LOG_ERR, val);
 
     exit(-1);
-} 
+}
 
 
 static int
@@ -4073,15 +4071,15 @@ chPrePostUser(struct jobCard *jp)
         userName = jp->execUsername;
     }
 
-    
-    
+
+
     if (initgroups(userName, gid) < 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_D_FAIL_M, fname,
                 "initgroups", userName, gid);
     }
 
 
-    
+
     if (setgid(gid) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,
 	    "setgid", gid);
@@ -4094,8 +4092,8 @@ chPrePostUser(struct jobCard *jp)
     }
 
     return (0);
-} 
-    
+}
+
 
 int
 postJobSetup(struct jobCard *jp)
@@ -4103,40 +4101,40 @@ postJobSetup(struct jobCard *jp)
     static char fname[] = "postJobSetup";
     struct hostent *hp;
     char userName[MAXLINELEN];
-   
+
     closeBatchSocket();
     sbdChildCloseChan (-1);
-	
+
     Signal_(SIGCHLD, SIG_DFL);
     Signal_(SIGTERM, SIG_IGN);
     Signal_(SIGINT,  SIG_IGN);
-    
-    
-    
+
+
+
     if (setsid() == -1) {
-        
+
         if (getpid() != getpgrp()) {
             ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
                 lsb_jobid2str(jp->jobSpecs.jobId), "setsid");
         }
-	
+
     }
-    
+
     if (setJobEnv (jp) < 0) {
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jp->jobSpecs.jobId), "setJobEnv");
 	return (-1);
     }
 
     if (jp->jobSpecs.execUsername[0] == '\0') {
-	
+
 	if (acctMapTo(jp) < 0) {
 	    ls_syslog(LOG_DEBUG, "%s: acctMapTo() failed for job <%s>",
 		      fname, lsb_jobid2str(jp->jobSpecs.jobId));
 	    return (-1);
 	}
-	
-        
+
+
         putEnv ("LSFUSER", jp->execUsername);
 
     if (getOSUserName_(jp->execUsername, userName, MAXLINELEN) == 0) {
@@ -4146,7 +4144,7 @@ postJobSetup(struct jobCard *jp)
     }
 
 	chuser(jp->jobSpecs.execUid);
-	
+
 	if (acctMapOk(jp) < 0) {
 	    ls_syslog(LOG_DEBUG, "%s: acctMapOk() failed for job <%s>",
 		      fname, lsb_jobid2str(jp->jobSpecs.jobId));
@@ -4157,31 +4155,31 @@ postJobSetup(struct jobCard *jp)
     }
 
     if ((hp = (struct hostent *)getHostEntryByName_(jp->jobSpecs.fromHost)) == NULL)
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
 	    lsb_jobid2str(jp->jobSpecs.jobId), "getHostEntryByName_",
 	    jp->jobSpecs.fromHost);
 
     if (!debug) {
-	
+
 	if (initgroups(jp->execUsername, jp->execGid) < 0)
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
 		lsb_jobid2str(jp->jobSpecs.jobId), "initgroups",
 		jp->execUsername);
 
 	if (setgid(jp->execGid) < 0)
 	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_D_M, fname,
-		fname, lsb_jobid2str(jp->jobSpecs.jobId), 
+		fname, lsb_jobid2str(jp->jobSpecs.jobId),
 		"setgid", (int)jp->execGid);
     }
-    
+
     chuser(jp->jobSpecs.execUid);
 
     if (initPaths(jp, hp, NULL) < 0) {
-	if (!(jp->jobSpecs.jStatus & JOB_STAT_PRE_EXEC) 
+	if (!(jp->jobSpecs.jStatus & JOB_STAT_PRE_EXEC)
 	       && jp->jobSpecs.reasons != PEND_QUE_PRE_FAIL) {
-	    
+
 	    chuser(batchId);
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
 		lsb_jobid2str(jp->jobSpecs.jobId), "initPaths");
             chuser(jp->jobSpecs.execUid);
         }
@@ -4189,7 +4187,7 @@ postJobSetup(struct jobCard *jp)
     }
 
     return (0);
-} 
+}
 
 
 void
@@ -4200,17 +4198,17 @@ runUPre(struct jobCard *jp)
     char errMsg[MAXLINELEN];
 
     if ((pid = fork()) < 0) {
-	sprintf(errMsg, I18N_JOB_FAIL_S_M, fname, 
+	sprintf(errMsg, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jp->jobSpecs.jobId), "fork");
 	sbdSyslog(LOG_ERR, errMsg);
 	jobSetupStatus(JOB_STAT_PEND, PEND_SBD_NO_PROCESS, jp);
     }
 
     if (pid == 0) {
-	
+
         closeBatchSocket();
 	if (getuid() == batchId) {
-	    
+
 	    chuser(batchId);
 	    lsfSetUid(jp->jobSpecs.execUid);
 	}
@@ -4218,14 +4216,14 @@ runUPre(struct jobCard *jp)
 
 	for (i = 1; i < NSIG; i++)
 	    (void) Signal_(i, SIG_DFL);
-	
+
 	(void) Signal_(SIGHUP, SIG_IGN);
-	
-	
+
+
 	lsfExecLog(jp->jobSpecs.preExecCmd);
 
 	execl("/bin/sh", "/bin/sh", "-c", jp->jobSpecs.preExecCmd, NULL);
-	sprintf(errMsg, I18N_JOB_FAIL_S_M, fname, 
+	sprintf(errMsg, I18N_JOB_FAIL_S_M, fname,
 	    lsb_jobid2str(jp->jobSpecs.jobId), "execl");
 	sbdSyslog(LOG_ERR, errMsg);
 	sbdSyslog(LOG_ERR, jp->jobSpecs.preExecCmd);
@@ -4235,10 +4233,10 @@ runUPre(struct jobCard *jp)
     collectPreStatus(jp, pid, "runUPre");
 
     jp->jobSpecs.jStatus &= ~JOB_STAT_PRE_EXEC;
-} 
+}
 
 
- 
+
 static void
 collectPreStatus(struct jobCard *jp, int pid, char *context)
 {
@@ -4246,12 +4244,12 @@ collectPreStatus(struct jobCard *jp, int pid, char *context)
     int id;
     LS_WAIT_T status;
     struct lsfRusage lsfRusage;
-    struct rusage   rusage;    
-    char errMsg[MAXLINELEN];    
+    struct rusage   rusage;
+    char errMsg[MAXLINELEN];
 
     while ((id = wait3(&status, 0, &rusage)) != pid) {
 	if (id < 0) {
-	    sprintf(errMsg, I18N_JOB_FAIL_S_D_M, fname, 
+	    sprintf(errMsg, I18N_JOB_FAIL_S_D_M, fname,
 		lsb_jobid2str(jp->jobSpecs.jobId), "wait3", pid);
 	    sbdSyslog(LOG_ERR, errMsg);
 	    jobSetupStatus(JOB_STAT_PEND, PEND_JOB_EXEC_INIT, jp);
@@ -4267,13 +4265,13 @@ collectPreStatus(struct jobCard *jp, int pid, char *context)
             ls_syslog(LOG_DEBUG, "collectPreStatus: %s: job <%s> status <%d>",
 		      context, lsb_jobid2str(jp->jobSpecs.jobId),
 		      LS_STATUS(status));
-	
-        ls_ruunix2lsf (&rusage, &lsfRusage);             
+
+        ls_ruunix2lsf (&rusage, &lsfRusage);
 	jp->w_status = LS_STATUS(status);
 	jp->cpuTime = lsfRusage.ru_utime + lsfRusage.ru_stime;
 	memcpy ((char *) &jp->lsfRusage, (char *) &lsfRusage,
-		sizeof(struct lsfRusage));	     	
-	
+		sizeof(struct lsfRusage));
+
 	if ((WIFEXITED(status) && WEXITSTATUS(status) == LSB_PRE_ABORT) ||
 	    WIFSIGNALED(status)  )
 	    jobSetupStatus(JOB_STAT_EXIT, 0, jp);
@@ -4282,12 +4280,12 @@ collectPreStatus(struct jobCard *jp, int pid, char *context)
 	        jobSetupStatus(JOB_STAT_PEND, PEND_JOB_PRE_EXEC, jp);
             else
 	        jobSetupStatus(JOB_STAT_PEND, PEND_QUE_PRE_FAIL, jp);
-        }		
+        }
     }
-} 
+}
 
- 
-static int 
+
+static int
 requeueJob (struct jobCard *jp)
 {
     static char fname[]="requeueJob";
@@ -4299,17 +4297,17 @@ requeueJob (struct jobCard *jp)
     LS_STATUS(status) = jp->w_status;
     w_status = WEXITSTATUS(status);
 
-    if (logclass & LC_TRACE) 
+    if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG, "%s: Exit status for job <%s> is <%d>, normal termination is <%d>, jp->w_status <%d>, requeue exit status is <%s>",
 		  fname, lsb_jobid2str(jp->jobSpecs.jobId),
 		  w_status, WIFEXITED(status),
 		  jp->w_status, jp->jobSpecs.requeueEValues);
-    
+
     if (!WIFEXITED(status)  ||
 	!jp->jobSpecs.requeueEValues || jp->jobSpecs.requeueEValues[0]
 	== '\0')
 	return (FALSE);
-    
+
     sp = jp->jobSpecs.requeueEValues;
 
     while ((cp = getNextWord_(&sp)) != NULL) {
@@ -4319,10 +4317,10 @@ requeueJob (struct jobCard *jp)
          return(TRUE);
     }
     return (FALSE);
-} 
+}
 
 
-	
+
 int
 reniceJob(struct jobCard *jp)
 {
@@ -4334,20 +4332,20 @@ reniceJob(struct jobCard *jp)
 		  "%s: Job <%s> nice value %d",
 		  fname, lsb_jobid2str(jp->jobSpecs.jobId), jp->jobSpecs.nice);
 
-	
-	
+
+
 
     if (jp->runRusage.npgids == 0) {
 	if (jp->jobSpecs.jobPGid == 0) {
-	    
+
 	    who = jp->jobSpecs.jobPid;
 	    which = PRIO_PROCESS;
 	} else {
 	    which = PRIO_PGRP;
 	    who = jp->jobSpecs.jobPGid;
 	}
-	
-	
+
+
 	if (setpriority(which, who, jp->jobSpecs.nice) == -1) {
 	    ls_syslog(LOG_DEBUG,
 		      "%s: prio_pgrp which %d who %d nice %d for job %s: %m",
@@ -4355,12 +4353,12 @@ reniceJob(struct jobCard *jp)
 		      lsb_jobid2str(jp->jobSpecs.jobId));
 	    which = PRIO_PROCESS;
 	    who = jp->jobSpecs.jobPid;
-	
+
 	    if (setpriority(which, who, jp->jobSpecs.nice) == -1) {
 		ls_syslog(LOG_DEBUG,
 			  "%s: prio_process which %d who %d nice %d for job %s: %m",
 			  fname, which, who, jp->jobSpecs.nice,
-			  lsb_jobid2str(jp->jobSpecs.jobId));	
+			  lsb_jobid2str(jp->jobSpecs.jobId));
 		return (-1);
 	    }
 	}
@@ -4377,7 +4375,7 @@ reniceJob(struct jobCard *jp)
     }
 
     return (0);
-} 
+}
 
 
 int
@@ -4390,10 +4388,10 @@ updateRUsageFromSuper(struct jobCard *jp, char *mbuf)
     if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG, "%s: Entering this routine ...", fname);
 
-    
+
 
     ret = sscanf(mbuf, "%d%d%d%d%d%n",
-		 &jusage.mem, &jusage.swap, &jusage.utime, 
+		 &jusage.mem, &jusage.swap, &jusage.utime,
 		 &jusage.stime, &jusage.npids, &cnt);
 
     if ( ret != 5 ) {
@@ -4407,16 +4405,16 @@ updateRUsageFromSuper(struct jobCard *jp, char *mbuf)
 
     if (jusage.npids > 0) {
         FREEUP(jusage.pidInfo);
-        jusage.pidInfo = (struct pidInfo *) 
-                          my_malloc(jusage.npids * sizeof(struct pidInfo), 
+        jusage.pidInfo = (struct pidInfo *)
+                          my_malloc(jusage.npids * sizeof(struct pidInfo),
                           fname);
 
-    
+
 
     for (i = 0; i < jusage.npids; i++) {
-        if ((ret = sscanf(mbuf, "%d%d%d%d%n", 
+        if ((ret = sscanf(mbuf, "%d%d%d%d%n",
                           &jusage.pidInfo[i].pid, &jusage.pidInfo[i].ppid,
-                          &jusage.pidInfo[i].pgid, &jusage.pidInfo[i].jobid, 
+                          &jusage.pidInfo[i].pgid, &jusage.pidInfo[i].jobid,
                           &cnt)) != 4) {
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5463,
                     "%s: sscanf() %s for job <%s> i=%d, ret=%d failed: %m"), /* catgets 5463 */
@@ -4430,7 +4428,7 @@ updateRUsageFromSuper(struct jobCard *jp, char *mbuf)
 
     if ((ret = sscanf(mbuf, "%d%n", &jusage.npgids, &cnt)) != 1) {
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5463,
-	    "%s: sscanf() %s for job <%s> i=%d, ret=%d failed: %m"), 
+	    "%s: sscanf() %s for job <%s> i=%d, ret=%d failed: %m"),
 	    fname, "npgids", lsb_jobid2str(jp->jobSpecs.jobId), 0, ret);
 	FREEUP(jusage.pidInfo);
 	return LSBE_NO_JOB;
@@ -4441,7 +4439,7 @@ updateRUsageFromSuper(struct jobCard *jp, char *mbuf)
 	FREEUP(jusage.pgid);
 	jusage.pgid = (int *) my_malloc(jusage.npgids * sizeof(int), fname);
 
-    
+
 
 	for (i = 0; i < jusage.npgids; i++) {
 	    if ((ret = sscanf(mbuf, "%d%n", &jusage.pgid[i], &cnt)) != 1) {
@@ -4455,9 +4453,9 @@ updateRUsageFromSuper(struct jobCard *jp, char *mbuf)
 	    mbuf += cnt + 1;
 	}
     }
-    
-    
-    updateJUsage(jp, &jusage);  
+
+
+    updateJUsage(jp, &jusage);
 
     if (logclass & (LC_TRACE| LC_EXEC)) {
         ls_syslog(LOG_DEBUG,
@@ -4469,15 +4467,15 @@ updateRUsageFromSuper(struct jobCard *jp, char *mbuf)
             ls_syslog(LOG_DEBUG, "... pgid[%d]=%d", i, jp->runRusage.pgid[i]);
     }
 
-	
+
     return LSBE_NO_ERROR;
 
-} 
+}
 
 static void
 updateJUsage(struct jobCard *jPtr, const struct jRusage *jRusage)
 {
-    static char      fname[] = "updateJUsage";    
+    static char      fname[] = "updateJUsage";
 
     if (logclass & LC_EXEC) {
 	ls_syslog(LOG_DEBUG,"\
@@ -4500,24 +4498,24 @@ updateJUsage(struct jobCard *jPtr, const struct jRusage *jRusage)
 
     if (jPtr->newPam == TRUE) {
 
-        
+
         if (jPtr->runRusage.utime == -1
             && jPtr->runRusage.stime == -1) {
             jPtr->runRusage.utime = jPtr->runRusage.stime = 0;
         }
-	
-	
+
+
 	jPtr->runRusage.utime  +=  jRusage->utime;
 	jPtr->runRusage.stime  +=  jRusage->stime;
-	
+
     } else {
-	
-	
+
+
 	jPtr->runRusage.utime += (jRusage->utime - jPtr->wrkRusage.utime);
 	jPtr->runRusage.stime += (jRusage->stime - jPtr->wrkRusage.stime);
     }
 
-    
+
 
     jPtr->runRusage.mem =  MAX(jPtr->runRusage.mem,
 			       jRusage->mem);
@@ -4532,39 +4530,39 @@ updateJUsage(struct jobCard *jPtr, const struct jRusage *jRusage)
 		  jPtr->runRusage.swap);
     }
 
-    
+
     jPtr->wrkRusage.utime  = jRusage->utime;
     jPtr->wrkRusage.stime  = jRusage->stime;
 
-    
+
     copyPidInfo(jPtr, jRusage);
 
-    
+
     if (jPtr->newPam == TRUE) {
 	writePidInfoFile(jPtr, jRusage);
     }
-    
-    
+
+
     jPtr->newPam = FALSE;
 
-} 
+}
 
 static void
 copyPidInfo(struct jobCard *jPtr, const struct jRusage *jRusage)
 {
     static char    fname[] = "copyPidInfo";
 
-    
+
     FREEUP(jPtr->runRusage.pidInfo);
     jPtr->runRusage.npids = 0;
     FREEUP(jPtr->runRusage.pgid);
     jPtr->runRusage.npgids = 0;
 
-    
+
     if (jRusage->npids > 0) {
-	
-	jPtr->runRusage.pidInfo = 
-	    (struct pidInfo *)my_calloc(jRusage->npids, 
+
+	jPtr->runRusage.pidInfo =
+	    (struct pidInfo *)my_calloc(jRusage->npids,
 					sizeof(struct pidInfo),
 					fname);
 	if (jPtr->runRusage.pidInfo == NULL) {
@@ -4574,18 +4572,18 @@ copyPidInfo(struct jobCard *jPtr, const struct jRusage *jRusage)
 	        (jRusage->npids)*(sizeof(struct pidInfo)));/* catgets 5500 */
 	    return;
 	}
-	
-	
+
+
 	jPtr->runRusage.npids = jRusage->npids;
 	memcpy(jPtr->runRusage.pidInfo,
 	       jRusage->pidInfo,
 	       (jRusage->npids)*(sizeof(struct pidInfo)));
     }
 
-    
+
     if (jRusage->npgids > 0) {
-	
-	jPtr->runRusage.pgid = 
+
+	jPtr->runRusage.pgid =
 	    (int *)my_calloc(jRusage->npgids,
 			     sizeof(int),
 			     fname);
@@ -4596,18 +4594,18 @@ copyPidInfo(struct jobCard *jPtr, const struct jRusage *jRusage)
                 (jRusage->npgids)*(sizeof(int)));/* catgets 5501 */
 	    return;
 	}
-	
-	
+
+
 	jPtr->runRusage.npgids = jRusage->npgids;
 	memcpy(jPtr->runRusage.pgid,
 	       jRusage->pgid,
 	       (jRusage->npgids)*(sizeof(int)));
     }
 
-} 
+}
 
 static void
-writePidInfoFile(const struct jobCard    *jPtr, 
+writePidInfoFile(const struct jobCard    *jPtr,
 		 const struct jRusage    *jRusage)
 {
     static char    fname[] = "writePidInfoFile";
@@ -4621,7 +4619,7 @@ writePidInfoFile(const struct jobCard    *jPtr,
     } else {
 	sprintf(buf, "%s/.%s.pidInfo", LSTMPDIR, jPtr->jobSpecs.jobFile);
     }
-    
+
     fp = fopen(buf, "w");
     if (fp == NULL) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5502,
@@ -4629,20 +4627,20 @@ writePidInfoFile(const struct jobCard    *jPtr,
                 fname, buf); /* catgets 5502 */
 	return;
     }
-    
+
     for (i = 0; i < jRusage->npids; i++) {
 	fprintf(fp, "%d %d %d\n",
 		jRusage->pidInfo[i].pid,
 		jRusage->pidInfo[i].ppid,
-		jRusage->pidInfo[i].pgid);	
+		jRusage->pidInfo[i].pgid);
     }
 
     FCLOSEUP(&fp);
 
-} 
+}
 
 
- 
+
 static void
 jobFinishRusage(struct jobCard *jp)
 {
@@ -4653,21 +4651,21 @@ jobFinishRusage(struct jobCard *jp)
     struct lsfAcctRec *rec;
     int lineNum = 0;
     FILE *fp;
-    
+
     if (logclass & LC_TRACE)
 	ls_syslog(LOG_DEBUG, "%s: Entering this routine ...", fname);
 
     if (!jp->collectedChild) {
-	
+
 	LS_WAIT_T wStatus;
-	
+
 	LS_STATUS(wStatus) = 0xff00;
 	jp->w_status = LS_STATUS(wStatus);
     }
 
-    
-	
-    
+
+
+
     getJobTmpDir( (char *) tmpDirName, jp );
 
     if (jp->jobSpecs.jobFile[0] == '/') {
@@ -4695,12 +4693,12 @@ jobFinishRusage(struct jobCard *jp)
     		LS_WAIT_T w_status;
 		LS_STATUS(w_status) = rec->exitStatus;
 	        ls_syslog(LOG_DEBUG, I18N(5495, "%s: Job <%s> status <%d> exitcode <%d>"),/*catgets 5495*/
-		          fname, lsb_jobid2str(jp->jobSpecs.jobId), 
-			  rec->exitStatus, 
+		          fname, lsb_jobid2str(jp->jobSpecs.jobId),
+			  rec->exitStatus,
 			  WEXITSTATUS(w_status));
 	    }
             if (jp->collectedChild) {
-               
+
                if (jp->lsfRusage.ru_utime > rec->lsfRu.ru_utime)
                    rec->lsfRu.ru_utime = jp->lsfRusage.ru_utime;
                if (jp->lsfRusage.ru_stime > rec->lsfRu.ru_stime)
@@ -4718,9 +4716,301 @@ jobFinishRusage(struct jobCard *jp)
 	jp->lsfRusage.ru_stime = jp->runRusage.stime;
 
     jp->cpuTime = jp->lsfRusage.ru_utime + jp->lsfRusage.ru_stime;
-    
-} 
 
+}
+
+int
+initJobCard(struct jobCard *jp, struct jobSpecs *jobSpecs, int *reply)
+{
+    static char fname[] = "initJobCard";
+    char *cp, *word;
+    int j;
+
+
+    jp->resumeCondVal = NULL;
+    jp->stopCondVal = NULL;
+
+    cp = jp->jobSpecs.windows;
+    for (j = 0; j < 8; j++)
+	jp->week[j] = NULL;
+    while ((word = getNextWord_(&cp)) != NULL) {
+	if (addWindow (word, jp->week, "addJob jobSpecs") < 0) {
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		lsb_jobid2str(jobSpecs->jobId), "addWindow",
+                word);
+	    freeWeek(jp->week);
+            *reply = ERR_BAD_REQ;
+	    return (-1);
+	}
+    }
+    if (jobSpecs->resumeCond && jobSpecs->resumeCond[0] != '\0') {
+        if ((jp->resumeCondVal = checkThresholdCond (jobSpecs->resumeCond))
+                                                                  == NULL)  {
+            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		      lsb_jobid2str(jp->jobSpecs.jobId),
+		      "checkThresholdCond", "resumeCond");
+	    freeWeek(jp->week);
+            *reply = ERR_BAD_REQ;
+	    return (-1);
+	}
+    }
+
+    if (jobSpecs->stopCond && jobSpecs->stopCond[0] != '\0') {
+        if ((jp->stopCondVal = checkThresholdCond (jobSpecs->stopCond))
+                                                                  == NULL) {
+            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		      lsb_jobid2str(jp->jobSpecs.jobId),
+		      "checkThresholdCond", "stopCond");
+	    freeWeek(jp->week);
+            *reply = ERR_BAD_REQ;
+	    return (-1);
+	}
+    }
+
+
+    setRunLimit (jp, TRUE);
+    jp->windEdge = now;
+    jp->active = FALSE;
+    jp->windWarnTime = 0;
+    jp->w_status = 0;
+    jp->cpuTime = 0.0;
+    jp->notReported = 0;
+    jp->exitPid = 0;
+    jp->missing = FALSE;
+    jp->needReportRU = FALSE;
+    jp->mbdRestarted = FALSE;
+    jp->lastChkpntTime = now;
+
+    jp->migCnt = 1;
+
+    jp->cleanupPid = 0;
+    jp->collectedChild = FALSE;
+
+    cleanLsfRusage (&jp->lsfRusage);
+    jp->client = NULL;
+    jp->regOpFlag = 0;
+    jp->jSupStatus = -1;
+    initJRusage(&jp->runRusage);
+    initJRusage(&jp->mbdRusage);
+    initJRusage(&jp->maxRusage);
+    jp->lastStatusMbdTime = now;
+    jp->actStatus = ACT_NO;
+
+    jp->jobSpecs.execHosts = NULL;
+
+
+    ls_syslog(LOG_DEBUG, "options2=%x ", jobSpecs->options2);
+
+    jp->crossPlatforms = -1;
+    if (jobSpecs->options2 >= 0) {
+        if (jobSpecs->options2 & SUB2_HOST_UX)
+            jp->crossPlatforms = FALSE;
+        else
+            jp->crossPlatforms = TRUE;
+
+    }
+
+
+    saveSpecs (&jp->jobSpecs, jobSpecs);
+    jobcnt++;
+    inJobLink (jp);
+    jp->spooledExec = NULL;
+
+    jp->postJobStarted = 0;
+    jp->userJobSucc = FALSE;
+
+    return (0);
+}
+
+void
+saveThresholds (struct jobSpecs *jobSpecs, struct thresholds *thresholds)
+{
+    static char fname[] = "saveThresholds";
+    int i, j;
+
+
+    jobSpecs->thresholds.loadSched = (float **)
+               my_calloc(thresholds->nThresholds, sizeof(float *), fname);
+    jobSpecs->thresholds.loadStop = (float **)
+               my_calloc(thresholds->nThresholds, sizeof(float *), fname);
+    for (i = 0; i < thresholds->nThresholds; i++) {
+        jobSpecs->thresholds.loadSched[i] = (float *)
+                   my_calloc(thresholds->nIdx, sizeof (float), fname);
+        jobSpecs->thresholds.loadStop[i] = (float *)
+                   my_calloc(thresholds->nIdx, sizeof (float), fname);
+    }
+    for (i = 0; i < thresholds->nThresholds; i++) {
+        for (j = 0; j < thresholds->nIdx; j++) {
+            jobSpecs->thresholds.loadSched[i][j] = thresholds->loadSched[i][j];
+            jobSpecs->thresholds.loadStop[i][j] = thresholds->loadStop[i][j];
+        }
+    }
+
+    jobSpecs->thresholds.nIdx = thresholds->nIdx;
+    jobSpecs->thresholds.nThresholds = thresholds->nThresholds;
+
+}
+void
+freeThresholds (struct thresholds *thresholds)
+{
+    int i;
+
+    if (thresholds->nThresholds <= 0)
+        return;
+    for (i = 0; i < thresholds->nThresholds; i++) {
+        FREEUP (thresholds->loadSched[i]);
+        FREEUP (thresholds->loadStop[i]);
+    }
+    FREEUP (thresholds->loadSched);
+    FREEUP (thresholds->loadStop);
+    thresholds->nIdx = 0;
+    thresholds->nThresholds = 0;
+
+}
+
+static void
+initJRusage(struct jRusage *jRusage)
+{
+    jRusage->mem = -1;
+    jRusage->swap = -1;
+    jRusage->utime = -1;
+    jRusage->stime = -1;
+    jRusage->npids = 0;
+    jRusage-> pidInfo = NULL;
+    jRusage->npgids = 0;
+    jRusage->pgid = NULL;
+}
+
+
+static int
+getJobVersion (struct jobSpecs *jobSpecs)
+{
+    int i, version;
+    char *sp;
+
+
+    if (jobSpecs->numEnv <= 0)
+
+	return (2);
+
+    for (i = 0; i < jobSpecs->numEnv; i++) {
+	if ((sp = strstr (jobSpecs->env[i], "LSF_VERSION=")) == NULL)
+	    continue;
+        sp += strlen("LSF_VERSION=");
+	version = atoi (sp);
+        if (logclass & LC_EXEC)
+	    ls_syslog(LOG_DEBUG3,"getJobVersion: LSF_VERSION of job <%s> is <%d>", lsb_jobid2str(jobSpecs->jobId), version);
+	if (version <= 0)
+	    return (-1);
+        return (version);
+    }
+    return (3);
+
+}
+
+int
+lockHosts (struct jobCard *jp)
+{
+    static char fname[] = "lockHosts";
+    int i;
+
+
+    if (!(jp->jobSpecs.jAttrib & Q_ATTRIB_EXCLUSIVE))
+        return 0;
+
+    for (i = 0; i < jp->jobSpecs.numToHosts; i++) {
+        if (i > 0 && strcmp (jp->jobSpecs.toHosts[i],
+                              jp->jobSpecs.toHosts[i-1]) == 0)
+
+            continue;
+        if (lockHost_(0, jp->jobSpecs.toHosts[i]) < 0
+                            && lserrno != LSE_LIM_ALOCKED) {
+            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname,
+		"lockHost_",
+		"jp->jobSpecs.toHosts[i]");
+            unlockHosts (jp, i);
+            return (-1);
+        }
+    }
+    return (0);
+}
+
+
+static int
+REShasPTYfix(char *resPath)
+{
+    FILE *fp;
+    char str[256], cmd[MAXFILENAMELEN + 32];
+
+    sprintf(cmd, "%s -PTY_FIX", resPath);
+
+    if ((fp = popen(cmd, "r")) == NULL)
+	return FALSE;
+
+    if (fscanf(fp, "%s", str) != 1) {
+	pclose(fp);
+	return (FALSE);
+    }
+
+    pclose(fp);
+
+    if (strcmp(str, "PTY_FIX"))
+	return (FALSE);
+
+    return (TRUE);
+
+}
+
+static void
+setJobArrayEnv(char *jobName, int jobIndex)
+{
+    static char fname[] = "setJobArrayEnv";
+    struct idxList *idxList = NULL, *idx;
+    char   *index,  val[MAXLINELEN];
+    int found = FALSE;
+    int maxJLimit = 0;
+
+    index = strchr(jobName, '[');
+    if (!index)
+        return;
+    yybuff = index;
+    if (idxparse(&idxList, &maxJLimit)) {
+	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "idxparse", index);
+	return;
+    }
+
+    for (idx = idxList; idx; idx = idx->next) {
+        int nstep;
+
+        if ((jobIndex >= idx->start) && (jobIndex <= idx->end)) {
+	    nstep = (jobIndex - idx->start)/idx->step;
+            if ((idx->start + nstep * idx->step) == jobIndex) {
+		 found = TRUE;
+		 break;
+            }
+        }
+    }
+    if (found) {
+	sprintf(val, "%d", idx->step);
+	putEnv("LSB_JOBINDEX_STEP", val);
+	sprintf(val, "%d", idx->end);
+	putEnv("LSB_JOBINDEX_END", val);
+    } else
+	ls_syslog(LOG_ERR, I18N(5400,
+	    "%s: Job %d not found in job index list"),/* catgets 5400 */
+	    fname, jobIndex);
+    while (idxList) {
+	idx = idxList->next;
+	FREEUP(idxList);
+	idxList = idx;
+    }
+    return;
+}
+
+#if 0
+/* This code is unsused because lava did not support
+ * daemon wrap.
+ */
 int
 sbdParent(char *mode, struct jobCard *jCard, int chfd)
 {
@@ -4735,8 +5025,8 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
     XDR xdrs;
     FILE *jobEnvfp;
     char *jobEnvFile;
-    struct linger linstr = {1, 5};    
-    
+    struct linger linstr = {1, 5};
+
     if (logclass & LC_TRACE)
 	ls_syslog(LOG_DEBUG, "%s: Entering...", fname);
 
@@ -4750,7 +5040,7 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
     }
 
     if (logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG, "%s: job <%s> mode <%s> hpipe[0]=%d, hpipe[1]=%d, wrapPipe[0]=%d, wrapPipe[1]=%d, mbdHandle=%d", 
+        ls_syslog(LOG_DEBUG, "%s: job <%s> mode <%s> hpipe[0]=%d, hpipe[1]=%d, wrapPipe[0]=%d, wrapPipe[1]=%d, mbdHandle=%d",
         fname, lsb_jobidinstr(jCard->jobSpecs.jobId), mode,
         hpipe[0], hpipe[1], wrapPipe[0], wrapPipe[1], chanSock_(chfd));
 
@@ -4761,20 +5051,21 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
     }
     cc = 0;
 
-    jobEnvFile = tempnam ("/tmp", NULL);
-    if (jobEnvFile != NULL) {
-        ls_syslog(LOG_DEBUG, I18N(5524,"jobEnvFile is:%s"), /* catgets 5524 */
-                  jobEnvFile);
- 
-        
+    jobEnvFile = tempnam("/tmp", NULL);
+    if (jobEnvFile == NULL) {
+        ls_syslog(LOG_WARNING, "\
+%s: failed creating temporary file in /tmp", fname);
+    } else {
+
+        ls_syslog(LOG_DEBUG, "\
+%s: temporary job file %s created", fname, jobEnvFile);
+
         jobEnvfp = fopen (jobEnvFile, "w");
         if (jobEnvfp == NULL) {
-            ls_syslog(LOG_WARNING,
-                      I18N(5525, "Cannot dump environment to file %s."), /* catgets 5525 */
-                      jobEnvFile);
+            ls_syslog(LOG_WARNING, "\
+%s: cannot open %s" jobEnvFile);
         } else {
- 
-            
+
             putEnv("LSF_JOBENV_FILE", jobEnvFile);
             for (i = 0; i < jCard->jobSpecs.numEnv; i++) {
                 fprintf(jobEnvfp, "%s\n", jCard->jobSpecs.env[i]);
@@ -4782,31 +5073,29 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
             fclose(jobEnvfp);
         }
         free(jobEnvFile);
-    } else {
-        ls_syslog(LOG_WARNING,
-                  I18N(5526, "Could not create temporary file in /tmp") /*catgets 5526 */
-                 );
     }
 
-
-    sbdChildArgs[cc++]=getDaemonPath_("/daemons.wrap", daemonParams[LSF_SERVERDIR].paramValue);
+    sbdChildArgs[cc++]
+        = getDaemonPath_("/daemons.wrap",
+                         daemonParams[LSF_SERVERDIR].paramValue);
     putEnv("LSF_EXEC", "sbatchd");
     sbdChildArgs[cc++]= "-d";
     sbdChildArgs[cc++]= env_dir;
     sbdChildArgs[cc++]= mode;
     sbdChildArgs[cc++]= hndlbuf;
     if (debug) {
-       sbdChildArgs[cc++]= (debug == 2) ? "-2":"-1";
-    } 
+        sbdChildArgs[cc++]= (debug == 2) ? "-2":"-1";
+    }
     sbdChildArgs[cc++] = NULL;
 
     if (logclass & LC_EXEC)
-       ls_syslog(LOG_DEBUG,"%s: Before fork/exec hndlbuf=%s sbdChildArgs[0]=%s",fname,hndlbuf, sbdChildArgs[0]);
+       ls_syslog(LOG_DEBUG, "\
+%s: Before fork/exec hndlbuf=%s sbdChildArgs[0]=%s",
+                 fname, hndlbuf, sbdChildArgs[0]);
 
-    
     if (getenv("LSB_MANAGER") == NULL)
 	putEnv("LSB_MANAGER", lsbManager);
-    
+
     if (getenv("LSB_SETDCEPAG") == NULL)
 	putEnv("LSB_SETDCEPAG", "Y");
 
@@ -4820,43 +5109,30 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
 	return(pid);
     }
 
-    if (pid == 0) {	
+    if (pid == 0) {
 
-#ifdef INTER_DAEMON_AUTH
-	
-	{
-            char val[MAXLINELEN];
-            sprintf(val, "%d", LSB_ARRAY_JOBID(jCard->jobSpecs.jobId));
-            putEnv("LSB_JOBID", val);
-            sprintf(val, "%d", LSB_ARRAY_IDX(jCard->jobSpecs.jobId));
-            putEnv ("LSB_JOBINDEX", val);
-
-	}
-#endif 
-    
 	close(hpipe[0]);
         close (wrapPipe[0]);
-	
+
         if (dup2(wrapPipe[1], 0) == -1) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "dup2");
             exit (-1);
         }
 	close(wrapPipe[1]);
-	
-	
+
+
 	closeBatchSocket();
 
-        
-        sbdChildCloseChan(chfd);        
+        sbdChildCloseChan(chfd);
 
 	lsfExecv(sbdChildArgs[0], sbdChildArgs);
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "execv");
 	exit(-1);
     }
 
-    
+
     if (logclass & LC_TRACE)
-	ls_syslog(LOG_DEBUG, "%s: job <%s> forked sbd child pid=%d", 
+	ls_syslog(LOG_DEBUG, "%s: job <%s> forked sbd child pid=%d",
                     fname, lsb_jobidinstr(jCard->jobSpecs.jobId), pid);
 
     close(hpipe[1]);
@@ -4864,27 +5140,27 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
     if (jCard->jobSpecs.eexec.len > 0) {
         int cc1;
 
-        setsockopt(wrapPipe[0], SOL_SOCKET, SO_LINGER, (char *)&linstr, 
+        setsockopt(wrapPipe[0], SOL_SOCKET, SO_LINGER, (char *)&linstr,
                    sizeof(linstr));
-        if ((cc1 = b_write_fix(wrapPipe[0], jCard->jobSpecs.eexec.data, 
+        if ((cc1 = b_write_fix(wrapPipe[0], jCard->jobSpecs.eexec.data,
                jCard->jobSpecs.eexec.len)) != jCard->jobSpecs.eexec.len) {
-            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		      lsb_jobid2str(jCard->jobSpecs.jobId), 
+            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
+		      lsb_jobid2str(jCard->jobSpecs.jobId),
 		      "b_write_fix", "wrapPipe");
             close(wrapPipe[0]);
             close(hpipe[0]);
             return (-1);
         }
-    } 
+    }
     close(wrapPipe[0]);
     if (chfd > 0) {
         jCard->servSocket = chanSock_(batchSock);
     }
 
-    
+
     jCard->clusterName = clusterName;
- 
-    
+
+
     buflen = sizeofJobCard(jCard);
 
     buf = (char *) malloc (buflen);
@@ -4931,7 +5207,7 @@ sbdParent(char *mode, struct jobCard *jCard, int chfd)
     close(hpipe[0]);
     return(pid);
 
-} 
+}
 
 void
 sbdChild(char *mode, char *arg)
@@ -4947,7 +5223,7 @@ sbdChild(char *mode, char *arg)
     struct jobCard     jCard;
     int                chfd;
     char               *jobEnvFile;
-   
+
     daemon_doinit();
 
     getLogClass_(daemonParams[LSB_DEBUG_SBD].paramValue,
@@ -4955,7 +5231,7 @@ sbdChild(char *mode, char *arg)
 
     openChildLog("sbatchdc", daemonParams[LSF_LOGDIR].paramValue,
                  (debug > 1), &(daemonParams[LSF_LOG_MASK].paramValue));
-    
+
     if (getenv("LSB_MANAGER") == NULL) {
 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5490,
 	    "%s: LSB_MANAGER environment variable not set, protocol problem between parent and child sbd"), fname); /* catgets 5490 */
@@ -4971,16 +5247,16 @@ ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5490,
                       jobEnvFile);
         }
     }
-    
+
     sp = strchr(arg,':');
-    sp[0]='\0'; 
+    sp[0]='\0';
     sp++;
     sbdHandle = atoi(arg);
     mbdHandle = atoi(sp);
 
     if (logclass & LC_EXEC)
        ls_syslog(LOG_DEBUG,"%s: sbdHandle=%d mbdHandle=%d",fname,sbdHandle, mbdHandle);
-   
+
     if (b_read_fix(sbdHandle, (char *)&len, sizeof(len)) != sizeof(len)) {
        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "b_read_fix_len");
         exit(-1);
@@ -4999,7 +5275,7 @@ ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5490,
 
     if (logclass & LC_EXEC)
         ls_syslog(LOG_DEBUG,"%s: read data for job card",fname);
-    
+
     xdrmem_create(&xdrs, buf, len, XDR_DECODE);
     hdr.version = LSF_VERSION;
 
@@ -5013,22 +5289,22 @@ ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5490,
     if (!xdr_jobCard(&xdrs, &jCard, &hdr)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_jobCard");
         exit(-1);
-    } 
-   
+    }
+
     if (logclass & LC_EXEC) {
         ls_syslog(LOG_DEBUG,"sbdChild: succesfully XDRed job card");
         ls_syslog(LOG_DEBUG,"sbdChild: the JOB_SPOOL_DIR is %s", jCard.jobSpecs.jobSpoolDir);
     }
 
     clusterName = jCard.clusterName;
-    close(jCard.servSocket); 
+    close(jCard.servSocket);
 
     if (strcmp(mode,"-s") == 0) {
         chfd = chanOpenSock_(mbdHandle, CHAN_OP_RAW);
         if (chfd < 0) {
            fprintf(stderr, I18N_FUNC_FAIL_ENO_D,
                    fname,
-                   "chanOpenSock_", 
+                   "chanOpenSock_",
                    errno);
            exit(-1);
         }
@@ -5047,22 +5323,22 @@ ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5490,
         } else {
             putEnv(LS_EXEC_T, "JOB_CONTROLS");
         }
-        
+
         if (postJobSetup(&jCard) < 0) {
-            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, 
+            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname,
                       lsb_jobid2str(jCard.jobSpecs.jobId), "postJobSetup");
             exit(-1);
         }
-        
-        if ((jCard.jobSpecs.actValue == SIG_CHKPNT) || 
+
+        if ((jCard.jobSpecs.actValue == SIG_CHKPNT) ||
             (jCard.jobSpecs.actValue == SIG_CHKPNT_COPY)) {
             if (jCard.jobSpecs.actValue == SIG_CHKPNT_COPY) {
                 jCard.actFlags |= LSB_CHKPNT_COPY;
             }
             exeChkpnt(&jCard, jCard.actFlags, jCard.exitFile);
-        } else if ((strcmp(jCard.actCmd, "SIG_CHKPNT") == 0) || 
+        } else if ((strcmp(jCard.actCmd, "SIG_CHKPNT") == 0) ||
                    (strcmp(jCard.actCmd, "SIG_CHKPNT_COPY") == 0)) {
-            
+
             if (isSigTerm(jCard.jobSpecs.actValue)==TRUE) {
                 exeChkpnt(&jCard, LSB_CHKPNT_KILL, jCard.exitFile);
             } else {
@@ -5075,296 +5351,8 @@ ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5490,
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5496,
 	    "%s: invalid mode"),fname); /* catgets 5496 */
     }
- 
+
     exit(0);
-} 
+}
 
-
-int
-initJobCard(struct jobCard *jp, struct jobSpecs *jobSpecs, int *reply)
-{
-    static char fname[] = "initJobCard";
-    char *cp, *word;
-    int j;
- 
-    
-    jp->resumeCondVal = NULL;
-    jp->stopCondVal = NULL;
-
-    cp = jp->jobSpecs.windows;
-    for (j = 0; j < 8; j++)
-	jp->week[j] = NULL;
-    while ((word = getNextWord_(&cp)) != NULL) {
-	if (addWindow (word, jp->week, "addJob jobSpecs") < 0) {
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		lsb_jobid2str(jobSpecs->jobId), "addWindow",
-                word);
-	    freeWeek(jp->week);	    
-            *reply = ERR_BAD_REQ;
-	    return (-1);
-	}
-    }
-    if (jobSpecs->resumeCond && jobSpecs->resumeCond[0] != '\0') {
-        if ((jp->resumeCondVal = checkThresholdCond (jobSpecs->resumeCond))
-                                                                  == NULL)  {
-            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		      lsb_jobid2str(jp->jobSpecs.jobId), 
-		      "checkThresholdCond", "resumeCond");
-	    freeWeek(jp->week);
-            *reply = ERR_BAD_REQ;
-	    return (-1);
-	}
-    } 
-
-    if (jobSpecs->stopCond && jobSpecs->stopCond[0] != '\0') {
-        if ((jp->stopCondVal = checkThresholdCond (jobSpecs->stopCond))
-                                                                  == NULL) {
-            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname, 
-		      lsb_jobid2str(jp->jobSpecs.jobId),
-		      "checkThresholdCond", "stopCond");
-	    freeWeek(jp->week);	    
-            *reply = ERR_BAD_REQ;
-	    return (-1);
-	}
-    }
-
-    
-    setRunLimit (jp, TRUE);
-    jp->windEdge = now;
-    jp->active = FALSE;
-    jp->windWarnTime = 0;
-    jp->w_status = 0;
-    jp->cpuTime = 0.0;
-    jp->notReported = 0;
-    jp->exitPid = 0;
-    jp->missing = FALSE;
-    jp->needReportRU = FALSE;
-    jp->mbdRestarted = FALSE;
-    jp->lastChkpntTime = now; 
-
-    jp->migCnt = 1; 
-
-    jp->cleanupPid = 0;
-    jp->collectedChild = FALSE;
-
-    cleanLsfRusage (&jp->lsfRusage);
-    jp->client = NULL;
-    jp->regOpFlag = 0;
-    jp->jSupStatus = -1;
-    initJRusage(&jp->runRusage);
-    initJRusage(&jp->mbdRusage);
-    initJRusage(&jp->maxRusage);
-    jp->lastStatusMbdTime = now;
-    jp->actStatus = ACT_NO;
-   
-    jp->jobSpecs.execHosts = NULL;
-
-    
-    ls_syslog(LOG_DEBUG, "options2=%x ", jobSpecs->options2);
-
-    jp->crossPlatforms = -1;
-    if (jobSpecs->options2 >= 0) {
-        if (jobSpecs->options2 & SUB2_HOST_UX)
-            jp->crossPlatforms = FALSE;
-        else
-            jp->crossPlatforms = TRUE;
-
-    }
-
-    
-    saveSpecs (&jp->jobSpecs, jobSpecs);    
-    jobcnt++;
-    inJobLink (jp);	    
-    jp->spooledExec = NULL;
-    
-    jp->postJobStarted = 0;
-    jp->userJobSucc = FALSE;
-
-    return (0);
-} 
-
-void
-saveThresholds (struct jobSpecs *jobSpecs, struct thresholds *thresholds)
-{
-    static char fname[] = "saveThresholds";
-    int i, j;
-    
-    
-    jobSpecs->thresholds.loadSched = (float **) 
-               my_calloc(thresholds->nThresholds, sizeof(float *), fname);
-    jobSpecs->thresholds.loadStop = (float **) 
-               my_calloc(thresholds->nThresholds, sizeof(float *), fname);
-    for (i = 0; i < thresholds->nThresholds; i++) {
-        jobSpecs->thresholds.loadSched[i] = (float *) 
-                   my_calloc(thresholds->nIdx, sizeof (float), fname);
-        jobSpecs->thresholds.loadStop[i] = (float *) 
-                   my_calloc(thresholds->nIdx, sizeof (float), fname);
-    }
-    for (i = 0; i < thresholds->nThresholds; i++) {
-        for (j = 0; j < thresholds->nIdx; j++) {
-            jobSpecs->thresholds.loadSched[i][j] = thresholds->loadSched[i][j];
-            jobSpecs->thresholds.loadStop[i][j] = thresholds->loadStop[i][j];
-        }
-    }
-    
-    jobSpecs->thresholds.nIdx = thresholds->nIdx;
-    jobSpecs->thresholds.nThresholds = thresholds->nThresholds;
-
-} 
-void
-freeThresholds (struct thresholds *thresholds)
-{
-    int i;
-    
-    if (thresholds->nThresholds <= 0)
-        return;
-    for (i = 0; i < thresholds->nThresholds; i++) {
-        FREEUP (thresholds->loadSched[i]); 
-        FREEUP (thresholds->loadStop[i]); 
-    }
-    FREEUP (thresholds->loadSched);
-    FREEUP (thresholds->loadStop);
-    thresholds->nIdx = 0;
-    thresholds->nThresholds = 0;
-
-} 
-
-static void
-initJRusage(struct jRusage *jRusage)
-{
-    jRusage->mem = -1;
-    jRusage->swap = -1;
-    jRusage->utime = -1;
-    jRusage->stime = -1;
-    jRusage->npids = 0;
-    jRusage-> pidInfo = NULL;
-    jRusage->npgids = 0;
-    jRusage->pgid = NULL;
-} 
-
-    
-static int 
-getJobVersion (struct jobSpecs *jobSpecs)
-{
-    int i, version;
-    char *sp;
- 
-    
-    if (jobSpecs->numEnv <= 0) 
-	
-	return (2);  
-    
-    for (i = 0; i < jobSpecs->numEnv; i++) {
-	if ((sp = strstr (jobSpecs->env[i], "LSF_VERSION=")) == NULL)
-	    continue;
-        sp += strlen("LSF_VERSION=");
-	version = atoi (sp);
-        if (logclass & LC_EXEC)
-	    ls_syslog(LOG_DEBUG3,"getJobVersion: LSF_VERSION of job <%s> is <%d>", lsb_jobid2str(jobSpecs->jobId), version);
-	if (version <= 0)
-	    return (-1);
-        return (version);
-    }
-    return (3);    
-
-}  
-
-int 
-lockHosts (struct jobCard *jp)
-{
-    static char fname[] = "lockHosts";
-    int i;
- 
-    
-    if (!(jp->jobSpecs.jAttrib & Q_ATTRIB_EXCLUSIVE))
-        return 0;
-
-    for (i = 0; i < jp->jobSpecs.numToHosts; i++) {
-        if (i > 0 && strcmp (jp->jobSpecs.toHosts[i],
-                              jp->jobSpecs.toHosts[i-1]) == 0)
-            
-            continue;
-        if (lockHost_(0, jp->jobSpecs.toHosts[i]) < 0
-                            && lserrno != LSE_LIM_ALOCKED) {
-            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, 
-		"lockHost_", 
-		"jp->jobSpecs.toHosts[i]");
-            unlockHosts (jp, i);
-            return (-1);
-        }
-    }
-    return (0);
-} 
-
-
-static int
-REShasPTYfix(char *resPath)
-{
-    FILE *fp;
-    char str[256], cmd[MAXFILENAMELEN + 32];
-
-    sprintf(cmd, "%s -PTY_FIX", resPath);
-
-    if ((fp = popen(cmd, "r")) == NULL)
-	return FALSE;
-
-    if (fscanf(fp, "%s", str) != 1) {
-	pclose(fp);
-	return (FALSE);
-    }
-
-    pclose(fp);
-
-    if (strcmp(str, "PTY_FIX")) 
-	return (FALSE); 
-
-    return (TRUE);
-
-} 
-
-static void 
-setJobArrayEnv(char *jobName, int jobIndex)
-{
-    static char fname[] = "setJobArrayEnv"; 
-    struct idxList *idxList = NULL, *idx;
-    char   *index,  val[MAXLINELEN];
-    int found = FALSE;
-    int maxJLimit = 0;
-
-    index = strchr(jobName, '[');
-    if (!index)  
-        return;
-    yybuff = index;
-    if (idxparse(&idxList, &maxJLimit)) {
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "idxparse", index);
-	return;
-    }
-    
-    for (idx = idxList; idx; idx = idx->next) {
-        int nstep;
-
-        if ((jobIndex >= idx->start) && (jobIndex <= idx->end)) {
-	    nstep = (jobIndex - idx->start)/idx->step;
-            if ((idx->start + nstep * idx->step) == jobIndex) {
-		 found = TRUE;
-		 break;
-            }
-        }
-    }
-    if (found) {
-	sprintf(val, "%d", idx->step);
-	putEnv("LSB_JOBINDEX_STEP", val);
-	sprintf(val, "%d", idx->end);
-	putEnv("LSB_JOBINDEX_END", val);
-    } else
-	ls_syslog(LOG_ERR, I18N(5400, 
-	    "%s: Job %d not found in job index list"),/* catgets 5400 */
-	    fname, jobIndex); 
-    while (idxList) { 
-	idx = idxList->next;
-	FREEUP(idxList);
-	idxList = idx;
-    }
-    return;
-} 
-
+#endif

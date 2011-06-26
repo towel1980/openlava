@@ -30,40 +30,40 @@ all: $(CMDS)
 	$(CC) $(CFLAGS) $(OUTF) -c $<
 
 lsplace: lsplace.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsplace.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsplace.o $(LIBS) $(OUTF)
 
 lseligible: lseligible.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lseligible.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lseligible.o $(LIBS) $(OUTF)
 
 lsload:	lsload.o load.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsload.o load.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsload.o load.o $(LIBS) $(OUTF)
 
 lsloadadj: lsloadadj.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsloadadj.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsloadadj.o $(LIBS) $(OUTF)
 
 lsid:	lsid.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsid.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsid.o $(LIBS) $(OUTF)
 
 lslockhost:	lslockhost.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lslockhost.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lslockhost.o $(LIBS) $(OUTF)
 
 lsunlockhost:	lsunlockhost.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsunlockhost.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsunlockhost.o $(LIBS) $(OUTF)
 
 lshosts: lshosts.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lshosts.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lshosts.o $(LIBS) $(OUTF)
 
 lsinfo:	lsinfo.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsinfo.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsinfo.o $(LIBS) $(OUTF)
 
 lsmon: lsmon.o load.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsmon.o load.o $(LIBS) -lncurses $(OUTF)
+	$(CC)  $(CFLAGS) lsmon.o load.o $(LIBS) -lncurses $(OUTF)
 
 lsacct: lsacct.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsacct.o $(LIBS) $(OUTF)
+	$(CC)  $(CFLAGS) lsacct.o $(LIBS) $(OUTF)
 
 lsrcp:	lsrcp.o $(LIBS)
-	$(CC) $(LDFLAGS) $(CFLAGS) lsrcp.o $(LIBS) $(BSDLIB) $(OUTF)
+	$(CC)  $(CFLAGS) lsrcp.o $(LIBS) $(BSDLIB) $(OUTF)
 
 $(INTLIB):
 	cd ${@D}; $(MAKE)

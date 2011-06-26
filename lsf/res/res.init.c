@@ -33,7 +33,7 @@
 
 #define RES_TIMEOUT_DEFAULT 	60
 
-#define NL_SETN		29	
+#define NL_SETN		29
 
 #include <malloc.h>
 #include <errno.h>
@@ -51,7 +51,7 @@ initConn2NIOS(void)
 {
     static char fname[] = "initConn2NIOS";
 
-    
+
     conn2NIOS.task_duped = (int *) calloc(sysconf(_SC_OPEN_MAX), sizeof(int));
     if (!conn2NIOS.task_duped) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "calloc");
@@ -84,45 +84,45 @@ init_res(void)
     if (logclass & (LC_TRACE | LC_HANG))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
-    
+
 
     if (!sbdMode) {
 	if (! debug) {
-	    
+
 	    if (geteuid() || getuid()) {
 		fprintf(stderr, "RES should be run as root.\n");
 		fflush(stderr);
 		resExit_(1);
 	    }
 
-	    
+
 
 	    chdir("/tmp");
 	}
 
-	
+
 
 	if (debug <= 1) {
 
 	    daemonize_();
 
-	    
+
 
 	    ls_openlog("res", resParams[LSF_LOGDIR].paramValue, 0,
 		       resParams[LSF_LOG_MASK].paramValue);
 
 
-	    
+
 	    umask(0);
 
-	    
 
-	    
-	    
+
+
+
 	    nice(NICE_LEAST);
-	}    
+	}
     }
-	
+
     if ((Myhost = ls_getmyhostname()) == NULL ) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_getmyhostname");
 	resExit_(-1);
@@ -132,7 +132,7 @@ init_res(void)
     if (isatty(0)) {
         tcgetattr(0, &defaultTty.attr);
 
-        defaultTty.ws.ws_row = 24;  
+        defaultTty.ws.ws_row = 24;
 	defaultTty.ws.ws_col = 80;
         defaultTty.ws.ws_xpixel = defaultTty.ws.ws_ypixel = 0;
     } else {
@@ -142,7 +142,7 @@ init_res(void)
     }
 
     if (!sbdMode) {
-	
+
 	init_AcceptSock();
     }
 
@@ -171,26 +171,26 @@ init_res(void)
         resExit_(-1);
     }
 
-    
 
-    
+
+
     ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5346, "Daemon started")));   /* catgets 5346 */
-    
+
     initResLog();
 
-} 
+}
 
-
+/* init_AcceptSock()
+ */
 static void
 init_AcceptSock(void)
 {
-    static char fname[] ="init_AcceptSock";
-    struct servent *sv;
-    struct sockaddr_in  svaddr;
-    int len;
-    int one = 1;
-    struct hostent *hp;
-
+    static char          fname[] ="init_AcceptSock()";
+    struct servent       *sv;
+    struct sockaddr_in   svaddr;
+    socklen_t            len;
+    int                  one = 1;
+    struct hostent       *hp;
 
     memset((char*)&svaddr, 0, sizeof(svaddr));
     if ((accept_sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -199,11 +199,11 @@ init_AcceptSock(void)
     }
 
     setsockopt(accept_sock, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-		sizeof (int));
+               sizeof (int));
 
     if (io_nonblock_(accept_sock) < 0)
-	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "io_nonblock_", 
-	            accept_sock);
+	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "io_nonblock_",
+                  accept_sock);
 
     fcntl(accept_sock, F_SETFD, (fcntl(accept_sock, F_GETFD) | FD_CLOEXEC));
 
@@ -212,7 +212,7 @@ init_AcceptSock(void)
 	if ((svaddr.sin_port = atoi(resParams[LSF_RES_PORT].paramValue)) == 0)
 	{
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5307,
-		"%s: LSF_RES_PORT in lsf.conf (%s) must be positive integer; exiting"), fname, resParams[LSF_RES_PORT].paramValue); /* catgets 5307 */
+                                             "%s: LSF_RES_PORT in lsf.conf (%s) must be positive integer; exiting"), fname, resParams[LSF_RES_PORT].paramValue); /* catgets 5307 */
 	    resExit_(1);
 	}
 	svaddr.sin_port = htons(svaddr.sin_port);
@@ -221,7 +221,7 @@ init_AcceptSock(void)
     } else {
         if ((sv = getservbyname("res", "tcp")) == NULL) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5309,
-		"%s: res/tcp: unknown service, exiting"), fname); /* catgets 5309 */
+                                             "%s: res/tcp: unknown service, exiting"), fname); /* catgets 5309 */
             resExit_(1);
         }
         svaddr.sin_port   = sv->s_port;
@@ -230,8 +230,8 @@ init_AcceptSock(void)
     svaddr.sin_family = AF_INET;
     svaddr.sin_addr.s_addr = INADDR_ANY;
     if (Bind_(accept_sock, (struct sockaddr *)&svaddr, sizeof(svaddr)) < 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "accept_sock", 
-	    ntohs(svaddr.sin_port));
+	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "accept_sock",
+                  ntohs(svaddr.sin_port));
         resExit_(1);
     }
 
@@ -240,7 +240,7 @@ init_AcceptSock(void)
         resExit_(1);
     }
 
-    
+
     if ((ctrlSock = TcpCreate_(TRUE, 0)) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "TcpCreate_");
         resExit_(1);
@@ -252,16 +252,16 @@ init_AcceptSock(void)
     memset((char *) &ctrlAddr, 0, sizeof(ctrlAddr));
     if (getsockname(ctrlSock, (struct sockaddr *) &ctrlAddr, &len) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "getsockname",
-	    ctrlSock);
+                  ctrlSock);
 	resExit_(-1);
     }
 
-    
+
     if ((hp = (struct hostent *)getHostEntryByName_(Myhost)))
 	memcpy((char *) &ctrlAddr.sin_addr, (char *)hp->h_addr,
 	       (int)hp->h_length);
 
-} 
+}
 
 #define LOOP_ADDR       0x7F000001
 
@@ -271,13 +271,13 @@ initChildRes(char *envdir)
     static char fname[]="initChildRes";
     int i, maxfds;
 
-    
+
 
     getLogClass_(resParams[LSF_DEBUG_RES].paramValue,
                  resParams[LSF_TIME_RES].paramValue);
 
     openChildLog("res", resParams[LSF_LOGDIR].paramValue,
-        (debug > 1), &(resParams[LSF_LOG_MASK].paramValue));
+                 (debug > 1), &(resParams[LSF_LOG_MASK].paramValue));
 
     if ((Myhost = ls_getmyhostname()) == NULL ) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "ls_getmyhostname");
@@ -290,8 +290,8 @@ initChildRes(char *envdir)
     }
     children = (struct child **) calloc(sysconf(_SC_OPEN_MAX), sizeof(struct children *));
     if (!children) {
-       ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "calloc");
-       resExit_(-1);
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "calloc");
+        resExit_(-1);
     }
     maxfds = sysconf(_SC_OPEN_MAX);
 
@@ -307,12 +307,12 @@ initChildRes(char *envdir)
     }
 
 
-} 
+}
 
 
 int
 resParent(int s, struct passwd *pw, struct lsfAuth *auth,
-                struct resConnect *connReq, struct hostent *hostp)
+          struct resConnect *connReq, struct hostent *hostp)
 {
     static char fname[]="resParent";
     int cc;
@@ -332,19 +332,19 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
     } else {
         argv[0] = "res";
     }
-            
-    
+
+
     childInfo.resConnect = connReq;
     childInfo.lsfAuth    = auth;
     childInfo.pw         = pw;
     childInfo.host       = hostp;
     childInfo.parentPort = ctrlAddr.sin_port;
     childInfo.currentRESSN = currentRESSN;
-    
-    
+
+
     if(resLogOn == 1) {
         char strLogCpuTime[32];
-        
+
         sprintf(strLogCpuTime, "%d", resLogcpuTime);
 	putEnv("LSF_RES_LOGON", "1");
 	putEnv("LSF_RES_CPUTIME", strLogCpuTime );
@@ -354,7 +354,7 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
     }else if( resLogOn == -1){
 	putEnv("LSF_RES_LOGON", "-1");
     }
-    
+
     xdrmem_create(&xdrs, buf, 2*MSGSIZE, XDR_ENCODE);
     memset((void *)&hdr, 0, sizeof(struct LSFHeader));
     hdr.version = LSF_VERSION;
@@ -391,7 +391,7 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
         argv[cc++] = NULL;
     }
 
-    
+
     if (getenv("LSF_SETDCEPAG") == NULL)
 	putEnv("LSF_SETDCEPAG", "Y");
 
@@ -408,18 +408,18 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
     if (pid == 0) {
         if (logclass & LC_TRACE) {
             if (debug) {
-	        ls_syslog(LOG_DEBUG2, "%s: executing %s %s %s %s %s %s ", 
-		  fname, argv[0], argv[1], argv[2], argv[3], argv[4],
-                  argv[5]);
+	        ls_syslog(LOG_DEBUG2, "%s: executing %s %s %s %s %s %s ",
+                          fname, argv[0], argv[1], argv[2], argv[3], argv[4],
+                          argv[5]);
             } else {
-	        ls_syslog(LOG_DEBUG2, "%s: executing %s %s %s %s %s ", 
-		  fname, argv[0], argv[1], argv[2], argv[3], argv[4]);
+	        ls_syslog(LOG_DEBUG2, "%s: executing %s %s %s %s %s ",
+                          fname, argv[0], argv[1], argv[2], argv[3], argv[4]);
             }
         }
 	close (hpipe[0]);
         close (wrapPipe[0]);
 
-	
+
         if (dup2(wrapPipe[1], 0) == -1) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "dup2");
             exit (-1);
@@ -434,19 +434,19 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
     close(wrapPipe[1]);
 
     if (connReq->eexec.len > 0) {
-         int cc1;
+        int cc1;
         if ((cc1 = b_write_fix(wrapPipe[0], connReq->eexec.data,
-              connReq->eexec.len)) != connReq->eexec.len) {
+                               connReq->eexec.len)) != connReq->eexec.len) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5333,
-                 "%s: Falied in sending data to wrap for user <%s>, length = %d, cc=1%d: %m"), fname, pw->pw_name,  connReq->eexec.len, cc1) /* catgets 5333 */
-;
+                                             "%s: Falied in sending data to wrap for user <%s>, length = %d, cc=1%d: %m"), fname, pw->pw_name,  connReq->eexec.len, cc1) /* catgets 5333 */
+                ;
             close(wrapPipe[0]);
             close(hpipe[0]);
             return (-1);
         }
     }
     close (wrapPipe[0]);
-    
+
     if (write(hpipe[0], (char *)&len, sizeof(len)) != sizeof(len)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "write");
         xdr_destroy(&xdrs);
@@ -463,7 +463,7 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
     xdr_destroy(&xdrs);
     close(hpipe[0]);
     return(0);
-} 
+}
 
 
 void
@@ -483,17 +483,17 @@ resChild( char *arg, char *envdir)
     char *nullist[1];
 
     initChildRes(envdir);
- 
-    
+
+
     sp = strchr(arg,':');
     sp[0]='\0';
     sp++;
-    resHandle= atoi(arg);		
-    clientHandle = atoi(sp);		
+    resHandle= atoi(arg);
+    clientHandle = atoi(sp);
 
 
-    
-    
+
+
     if (b_read_fix(resHandle, (char *) &len, sizeof(len)) != sizeof(len)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "b_read_fix");
         resExit_(-1);
@@ -509,7 +509,7 @@ resChild( char *arg, char *envdir)
     }
 
     CLOSE_IT(resHandle);
-    
+
     childInfo.pw     = &pw;
     childInfo.host   = &hp;
     childInfo.resConnect = &connReq;
@@ -527,8 +527,8 @@ resChild( char *arg, char *envdir)
     ctrlAddr.sin_port = childInfo.parentPort;
     currentRESSN = childInfo.currentRESSN;
 
-    
-    
+
+
     if( getenv("LSF_RES_LOGON") ) {
 	if( strcmp(getenv("LSF_RES_LOGON"), "1") == 0 ){
             resLogOn = 1;
@@ -541,17 +541,15 @@ resChild( char *arg, char *envdir)
         } else if( strcmp(getenv("LSF_RES_LOGON"), "0") ==0 ){
 	    resLogOn = 0;
         } else if( strcmp(getenv("LSF_RES_LOGON"), "-1") ==0 ){
-            resLogOn = -1;	
+            resLogOn = -1;
 	}
-    } 
+    }
 
     nullist[0]=NULL;
     hp.h_aliases = nullist;
 
-    childAcceptConn(clientHandle, &pw, &auth, &connReq, &hp); 
+    childAcceptConn(clientHandle, &pw, &auth, &connReq, &hp);
 
-    
+
     free(buf);
-} 
-
-
+}

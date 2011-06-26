@@ -24,5 +24,4 @@ TCLLIB = /usr/local/lib/libtcl8.4.a
 CC = gcc -g -Wall $(DATE)
 AR = ar
 LD = ld
-LDFLAGS = -Wl
 EXTERN_LDFLAGS = cru $(LIB)

@@ -1123,81 +1123,55 @@ child_handler: pim (pid=%d) died", pid);
 
 } /* child_handler() */
 
-
 int
 initSock(int checkMode)
 {
-    static char fname[] = "initSock()";
-    struct sockaddr_in  limTcpSockId;
-    struct servent *sv;
-    int Error = 0;
-    int size;
+    static char          fname[] = "initSock()";
+    struct sockaddr_in   limTcpSockId;
+    socklen_t            size;
 
-
-
-
-    if (limParams[LSF_LIM_PORT].paramValue) {
-        if ((lim_port = atoi(limParams[LSF_LIM_PORT].paramValue)) <= 0) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5009,
-                                             "%s: LSF_LIM_PORT <%s> must be a positive number"), /* catgets 5009 */
-                      fname, limParams[LSF_LIM_PORT].paramValue);
-            Error = -1;
-        }
-    } else if ((lim_debug) || (checkMode)) {
-        lim_port  = LIM_PORT;
-    } else {
-#  if defined(_COMPANY_X_)
-        if ((lim_port = get_port_number(LIM_SERVICE, (char *)NULL)) < 0) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5010,
-                                             "%s: LIM service not registered. See LSF Guide for help"), fname); /* catgets 5010 */
-            Error = -1;
-        }
-#  else
-        if ((sv = getservbyname("lim", "udp")) == NULL) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5011,
-                                             "%s: Service lim/udp is unknown. Read LSF Guide for help"), fname); /* catgets 5011 */
-            Error = -1;
-        } else {
-            lim_port = ntohs(sv->s_port);
-        }
-#  endif
+    if (limParams[LSF_LIM_PORT].paramValue == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: fatal error LSF_LIM_PORT is not defined in lsf.conf", fname);
+        return -1;
     }
 
+    if ((lim_port = atoi(limParams[LSF_LIM_PORT].paramValue)) <= 0) {
+        ls_syslog(LOG_ERR, "\
+%s: LSF_LIM_PORT <%s> must be a positive number",
+            fname, limParams[LSF_LIM_PORT].paramValue);
+            return -1;
+    }
 
-
-
-    if (! Error) {
-        limSock = chanServSocket_(SOCK_DGRAM, lim_port, -1,  0);
-        if (limSock < 0) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5012,
-                                             "%s: unable to create datagram service socket using port %d ; another LIM running?: %M "), fname, lim_port); /* catgets 5012 */
-            Error = -1;
-        }
+    limSock = chanServSocket_(SOCK_DGRAM, lim_port, -1,  0);
+    if (limSock < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: unable to create datagram socket port %d; another LIM running?: %M ",
+                  fname, lim_port);
+        return -1;
     }
 
     lim_port = htons(lim_port);
 
-
-    if (! Error) {
-
-        limTcpSock = chanServSocket_(SOCK_STREAM, 0, 10, 0);
-        if (limTcpSock < 0) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "chanServSocket_");
-            Error = -1;
-        }
-
-        size = sizeof(limTcpSockId);
-        if (!Error &&
-            (getsockname(chanSock_(limTcpSock), (struct sockaddr *)&limTcpSockId, &size)<0)) {
-
-            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "getsockname",
-                      limTcpSock);
-            Error = -1;
-        }
-        lim_tcp_port = limTcpSockId.sin_port;
+    limTcpSock = chanServSocket_(SOCK_STREAM, 0, 10, 0);
+    if (limTcpSock < 0) {
+        ls_syslog(LOG_ERR, "%s: chanServSocket_() failed %M", fname);
+        return -1;
     }
 
-    return Error;
+    size = sizeof(limTcpSockId);
+    if (getsockname(chanSock_(limTcpSock),
+                    (struct sockaddr *)&limTcpSockId,
+                    &size) < 0) {
+
+        ls_syslog(LOG_ERR, "\
+%s: getsockname(%d) failed %M", fname, limTcpSock);
+        return -1;
+    }
+
+    lim_tcp_port = limTcpSockId.sin_port;
+
+    return 0;
 }
 
 void

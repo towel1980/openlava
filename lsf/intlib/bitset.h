@@ -28,39 +28,39 @@ typedef struct _bitsetEvent         LS_BITSET_EVENT_T;
 
 
 typedef struct {
-    char *setDescription;      
-    unsigned int *bitmask;     
-    unsigned int setSize;      
-    unsigned int setWidth;     
-    unsigned int setNumElements;      
-    bool_t allowObservers;            
-    LIST_T *observers;                
-    int (*getIndexByObject)(void *);  
-    void *(*getObjectByIndex)(int);   
+    char *setDescription;
+    unsigned int *bitmask;
+    unsigned int setSize;
+    unsigned int setWidth;
+    unsigned int setNumElements;
+    bool_t allowObservers;
+    LIST_T *observers;
+    int (*getIndexByObject)(void *);
+    void *(*getObjectByIndex)(int);
 } LS_BITSET_T;
 
 typedef struct {
-    LS_BITSET_T *this;             
-    unsigned int setCurrentBit;    
-    unsigned int setSize;          
+    LS_BITSET_T *set;
+    unsigned int setCurrentBit;
+    unsigned int setSize;
 } LS_BITSET_ITERATOR_T;
 
 typedef enum _bitsetEventType {
-    LS_BITSET_EVENT_ENTER, 
-    LS_BITSET_EVENT_LEAVE,   
+    LS_BITSET_EVENT_ENTER,
+    LS_BITSET_EVENT_LEAVE,
     LS_BITSET_EVENT_NULL
 } LS_BITSET_EVENT_TYPE_T;
 
 struct _bitsetEvent {
-    LS_BITSET_EVENT_TYPE_T     type;          
-    void                       *entry;         
+    LS_BITSET_EVENT_TYPE_T     type;
+    void                       *entry;
 };
 
-typedef bool_t  (*LS_BITSET_ENTRY_SELECT_OP_T)(void *extra, 
+typedef bool_t  (*LS_BITSET_ENTRY_SELECT_OP_T)(void *extra,
 					       LS_BITSET_EVENT_T *);
 
 
-typedef int     (*LS_BITSET_EVENT_CALLBACK_FUNC_T)(LS_BITSET_T *set, 
+typedef int     (*LS_BITSET_EVENT_CALLBACK_FUNC_T)(LS_BITSET_T *set,
 						   void *extra,
 						   LS_BITSET_EVENT_T *event);
 
@@ -78,10 +78,10 @@ typedef struct _bitsetObserver{
 #define BITSET_ITERATOR_ZERO_OUT(Iter) \
     memset((void *)(Iter), 0, sizeof(LS_BITSET_ITERATOR_T));
 
-enum setSize {                   
+enum setSize {
     SET_SIZE_DEFAULT,
     SET_SIZE_CONST,
-    SET_SIZE_VAR 
+    SET_SIZE_VAR
 };
 
 enum bitState {
@@ -105,7 +105,7 @@ enum bitState {
 
 #define SET_GET_WORD(position) (position/WORDLENGTH)
 
-#define SET_GET_BIT_IN_WORD(position) (position % WORDLENGTH); 
+#define SET_GET_BIT_IN_WORD(position) (position % WORDLENGTH);
 
 #define SET_IS_VALID(set) (set != NULL)
 
@@ -121,7 +121,7 @@ enum _lsBitSetErrno_ {
      LS_BITSET_ERR_LAST
 };
 
-extern LS_BITSET_T *setCreate(const int, int (*getIndexByObject)(void *), 
+extern LS_BITSET_T *setCreate(const int, int (*getIndexByObject)(void *),
 		 void *(*getObjectByIndex)(int), char *);
 extern LS_BITSET_T *simpleSetCreate(const int, char *);
 extern int setDestroy(LS_BITSET_T *);
@@ -145,16 +145,16 @@ extern bool_t setAllowObservers(LS_BITSET_T *);
 extern LS_BITSET_OBSERVER_T *setObserverCreate(char *name, void *extra,
 					 LS_BITSET_ENTRY_SELECT_OP_T select,
 					 ...);
-extern int setObserverAttach(LS_BITSET_OBSERVER_T *observer, 
+extern int setObserverAttach(LS_BITSET_OBSERVER_T *observer,
 			     LS_BITSET_T *set);
 extern int setNotifyObservers(LS_BITSET_T *set, LS_BITSET_EVENT_T *event);
 extern int setDumpSet(LS_BITSET_T *, char *);
 extern char *setPerror(int);
 extern LS_BITSET_T *setEnlarge(LS_BITSET_T *, unsigned int);
 extern void setOperate(LS_BITSET_T *, LS_BITSET_T *, int);
-extern void setCat(LS_BITSET_T *, char *, int, char * (*)(void *, void *), 
+extern void setCat(LS_BITSET_T *, char *, int, char * (*)(void *, void *),
 		    void *);
 
 extern int  getNum1BitsInWord(unsigned int *word);
 
-#endif 
+#endif

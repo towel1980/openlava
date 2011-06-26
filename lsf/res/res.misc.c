@@ -21,26 +21,28 @@
 #include "res.h"
 #include "../lim/limout.h"
 
-#define NL_SETN		29	
+#define NL_SETN		29
 
 bool_t
-xdr_resChildInfo(XDR  *xdrs, struct resChildInfo *childInfo, struct LSFHeader *hdr)
+xdr_resChildInfo(XDR  *xdrs,
+                 struct resChildInfo *childInfo,
+                 struct LSFHeader *hdr)
 {
-   if (!xdr_lsfAuth(xdrs, childInfo->lsfAuth, hdr) ||
-       !xdr_resConnect(xdrs, childInfo->resConnect, hdr))
+   if (!xdr_lsfAuth(xdrs, childInfo->lsfAuth, hdr)
+       || !xdr_resConnect(xdrs, childInfo->resConnect, hdr))
       return(FALSE);
 
-   if (!xdr_var_string(xdrs, &childInfo->pw->pw_name) ||
-       !xdr_var_string(xdrs, &childInfo->pw->pw_dir)  ||
-       !xdr_var_string(xdrs, &childInfo->pw->pw_shell) ||
-       !xdr_int(xdrs, &childInfo->pw->pw_uid) ||
-       !xdr_int(xdrs, &childInfo->pw->pw_gid))
+   if (!xdr_var_string(xdrs, &childInfo->pw->pw_name)
+       || !xdr_var_string(xdrs, &childInfo->pw->pw_dir)
+       || !xdr_var_string(xdrs, &childInfo->pw->pw_shell)
+       || !xdr_int(xdrs, (int *)&childInfo->pw->pw_uid)
+       || !xdr_int(xdrs, (int *)&childInfo->pw->pw_gid)) {
        return(FALSE);
+   }
 
    if (!xdr_var_string(xdrs, &childInfo->host->h_name))
-      return(FALSE); 
+      return(FALSE);
 
-   
    if (xdrs->x_op == XDR_DECODE)
       childInfo->host->h_aliases = NULL;
 

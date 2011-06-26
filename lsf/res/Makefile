@@ -49,6 +49,8 @@ install: $(RES_TGT)
 
 clean:
 	rm -f $(COMCLEAN) $(RES_TGT)
+etags:
+	etags *.[hc] ../*.h ../lib/*.[hc] ../intlib/*.[hc]
 #
 # These dependencies are maintained by hand (for now)
 res.o:	res.h ../lim/limout.h resout.h ../lsf.h ../intlib/intlib.h \
