@@ -8,7 +8,7 @@ include $(TOP)/Make.misc
 
 OPENLAVA_BASE_CONFIG_FILES = lsf.conf lsf.shared lsf.cluster.openlava \
                          lsf.task 
-OPENLAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues lsb.hosts 
+OPENLAVA_BATCH_CONFIG_FILES = lsb.params lsb.users lsb.queues lsb.hosts
 OPENLAVA_STARTUP_SCRIPT = openlava
 OPENLAVA_SHELL_INIT_SCRIPTS = openlava.sh openlava.csh
 OPENLAVA_SLAVE_SETUP_SCRIPT = openlava.setup

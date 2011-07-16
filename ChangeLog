@@ -1,3 +1,7 @@
+2011-07-16  David Bigagli  <david@localhost.localdomain>
+
+	* Added lsb.hosts 
+
 2011-06-16  David Bigagli  <david@davidbigagli.com>
 
 	* Makefiles changed all variables to run install from LAVA
