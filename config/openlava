@@ -1,12 +1,20 @@
 #!/bin/sh
 
-#
 # Start and stop openlava daemons
 # Run by hand or install in /etc/init.d
 # and make a symbolic link from rc3.d to it.
 #
 # The following is for the Linux chkconfig utlility
 # chkconfig: 35 99 01
+# description: openlava
+
+### BEGIN INIT INFO
+# Provides: openlava
+# Required-Start: $local_fs $remote_fs $syslog
+# Required-Stop: $local_fs $remote_fs $syslog
+# Short-Description: openlava
+# Description: openlava
+### END INIT INFO
 
 # This is the root of openlava installation
 # change it if installed somewhere else.

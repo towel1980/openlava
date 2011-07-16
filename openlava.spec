@@ -17,15 +17,15 @@
 # $Id$
 # 
 
-%define _lavaversion 1.0
-%define _lavatop /opt/openlava-%{_lavaversion}
+%define _openlavaversion 1.0
+%define _openlavatop /opt/openlava-%{_openlavaversion}
 %define _clustername openlava
-%define _libdir %{_lavatop}/lib
-%define _bindir %{_lavatop}/bin
-%define _sbindir %{_lavatop}/etc
-%define _mandir %{_lavatop}/man
-%define _logdir %{_lavatop}/log
-%define _includedir %{_lavatop}/include/lsf
+%define _libdir %{_openlavatop}/lib
+%define _bindir %{_openlavatop}/bin
+%define _sbindir %{_openlavatop}/etc
+%define _mandir %{_openlavatop}/man
+%define _logdir %{_openlavatop}/log
+%define _includedir %{_openlavatop}/include/lsf
 
 Summary: OpenLava(tm) Batch Scheduling and management
 Name: openlava
@@ -77,6 +77,14 @@ make
 # Install binaries, daemons
 make install INSTALL_PREFIX=$RPM_BUILD_ROOT
 
+# overwrite files with templates
+install -m 644 $RPM_BUILD_DIR/openlava/rpms/lsf.cluster.openlava $RPM_BUILD_ROOT%{_openlavatop}/conf
+install -m 644 $RPM_BUILD_DIR/openlava/rpms/lsf.conf $RPM_BUILD_ROOT%{_openlavatop}/conf
+install -m 644 $RPM_BUILD_DIR/openlava/rpms/lsf.shared $RPM_BUILD_ROOT%{_openlavatop}/conf
+install -m 755 $RPM_BUILD_DIR/openlava/rpms/openlava $RPM_BUILD_ROOT%{_openlavatop}/etc
+install -m 755 $RPM_BUILD_DIR/openlava/rpms/openlava.sh $RPM_BUILD_ROOT%{_openlavatop}/etc
+install -m 755 $RPM_BUILD_DIR/openlava/rpms/openlava.csh $RPM_BUILD_ROOT%{_openlavatop}/etc
+
 ##
 ## PRE
 ##
@@ -95,7 +103,7 @@ make install INSTALL_PREFIX=$RPM_BUILD_ROOT
 ##
 ## set variables
 ##
-_lavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
+_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
 _symlink=${RPM_INSTALL_PREFIX}/openlava
 
 ##
@@ -105,24 +113,24 @@ if [ x"${OPENLAVA_CLUSTER_NAME}" = x ]; then
 	_clustername=%{_clustername}
 else
 	_clustername=${OPENLAVA_CLUSTER_NAME}
-	mv ${_lavatop}/work/openlava ${_lavatop}/work/${_clustername}
-	mv ${_lavatop}/conf/lsbatch/openlava ${_lavatop}/conf/lsbatch/${_clustername}
-	mv ${_lavatop}/conf/lsf.cluster.openlava ${_lavatop}/conf/lsf.cluster.${_clustername}
+	mv ${_openlavatop}/work/openlava ${_openlavatop}/work/${_clustername}
+	mv ${_openlavatop}/conf/lsbatch/openlava ${_openlavatop}/conf/lsbatch/${_clustername}
+	mv ${_openlavatop}/conf/lsf.cluster.openlava ${_openlavatop}/conf/lsf.cluster.${_clustername}
 fi
  
 ##
 ## create the symbolic link
 ##
-ln -sf ${_lavatop} ${_symlink}
+ln -sf ${_openlavatop} ${_symlink}
 
 ##
-## customize the lava.sh file
+## customize the openlava.sh file
 ##
 sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.sh
 sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.csh
 
 ##
-## customize the /etc/init.d/lava file
+## customize the openlava startup file
 ##
 sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava
 
@@ -168,16 +176,42 @@ fi
 ##
 %postun
 
+# lets clean up everything else
+_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
+_symlink=${RPM_INSTALL_PREFIX}/openlava
+_savedir=openlava.$$
+
+mkdir -p ${_savedir}
+mv -f ${_openlavatop}/log/* ${_savedir} >/dev/null 2>&1
+mv -f ${_openlavatop}/conf/* ${_savedir} >dev/null 2>&1
+mv -f ${_openlavatop}/work/openlava/logdir/lsb.acct ${_savedir} >/dev/null 2>&1
+mv -f ${_openlavatop}/work/openlava/logdir/lsb.events ${_savedir} >/dev/null 2>&1
+
+# remove the scripts
+rm -f /etc/init.d/openlava
+rm -f /etc/profile.d/openlava.*
+
+tar cvzf ${_savedir}.tar.gz ${_savedir} >/dev/null 2>&1
+rm -rf ${_savedir}
+mv -f ${_savedir}.tar.gz /tmp
+
+echo
+echo "Thank you for using openlava!" 
+echo "Your openlava configuration and log files have been saved to /tmp/${_savedir}.tar.gz"
+
+rm -rf ${_openlavatop}
+rm -f ${_symlink} 
+
 ##
 ## FILES
 ##
 %files
 %defattr(-,root,root)
-#%{_lavatop}/%{_lavaversion}/misc
-%attr(0755,root,root) %{_lavatop}/etc/openlava
-%{_lavatop}/etc/openlava.sh
-%{_lavatop}/etc/openlava.csh
-%{_lavatop}/etc/openlava.setup
+#%{_openlavatop}/%{_openlavaversion}/misc
+%attr(0755,root,root) %{_openlavatop}/etc/openlava
+%{_openlavatop}/etc/openlava.sh
+%{_openlavatop}/etc/openlava.csh
+%{_openlavatop}/etc/openlava.setup
 %{_sbindir}/eauth
 %{_sbindir}/echkpnt
 %{_sbindir}/erestart
@@ -211,10 +245,10 @@ fi
 %{_bindir}/bswitch
 %{_bindir}/btop
 %{_bindir}/busers
-#%{_bindir}/lam-mpirun
-#%{_bindir}/mpich-mpirun
-#%{_bindir}/mpich2-mpiexec
-#%{_bindir}/openmpi-mpirun
+%{_bindir}/lam-mpirun
+%{_bindir}/mpich-mpirun
+%{_bindir}/mpich2-mpiexec
+%{_bindir}/openmpi-mpirun
 #%{_bindir}/mvapich2-mpiexec
 #%{_bindir}/mvapich1-mpirun
 %{_bindir}/lsacct
@@ -300,19 +334,44 @@ fi
 %doc COPYING
 
 %defattr(0644,openlava,openlava)
-%config(noreplace) %{_lavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.params
-%config(noreplace) %{_lavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.queues
-%config(noreplace) %{_lavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.users
-%config(noreplace) %{_lavatop}/conf/lsf.shared
-%config(noreplace) %{_lavatop}/conf/lsf.conf
-%config(noreplace) %{_lavatop}/conf/lsf.cluster.%{_clustername}
-%config(noreplace) %{_lavatop}/conf/lsf.task
-%config(noreplace) %{_lavatop}/conf/README
-%config(noreplace) %{_lavatop}/conf/COPYING
-%attr(-,openlava,openlava) %{_lavatop}/work/*
+%config(noreplace) %{_openlavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.params
+%config(noreplace) %{_openlavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.queues
+%config(noreplace) %{_openlavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.hosts
+%config(noreplace) %{_openlavatop}/conf/lsbatch/%{_clustername}/configdir/lsb.users
+%config(noreplace) %{_openlavatop}/conf/lsf.shared
+%config(noreplace) %{_openlavatop}/conf/lsf.conf
+%config(noreplace) %{_openlavatop}/conf/lsf.cluster.%{_clustername}
+%config(noreplace) %{_openlavatop}/conf/lsf.task
+%config(noreplace) %{_openlavatop}/conf/README
+%config(noreplace) %{_openlavatop}/conf/COPYING
+%attr(-,openlava,openlava) %{_openlavatop}/work/*
 %attr(-,openlava,openlava) %dir %{_logdir}
 
 %changelog
+* Thu Jul 14 2011 Robert Stober <robert@openlava.net> 1.0-1
+- Enhanced support for RPM uninstall. rpm -e openlava
+- will now stop the openlava daemons and then completely
+- remove openlava. 
+- openlava configuration files and log files are saved to
+- /tmp/openlava.$$.tar.gz
+- Uninstallation supports shared and non-shared file system
+- installations
+* Sat Jul 9 2011 Robert Stober <robert@openlava.net> 1.0-1
+- Added the following files so that they're installed by the RPM:
+- lsb.hosts
+- openmpi-mpirun
+- mpich-mpirun
+- lam-mpirun
+- mpich2-mpiexec
+- The RPM installer now uses the template files that are in the
+- scripts directory instead of the standard files that are installed
+- by make:
+- lsf.cluster.openlava  
+- lsf.conf  
+- lsf.shared  
+- openlava  
+- openlava.csh  
+- openlava.sh
 * Thu Jun 16 2011 Robert Stober <robert@openlava.net> 1.0-1
 - Changed name of openlava startup script from "lava" to "openlava"
 - Changed the name of the linux service from "lava" to openlava in
