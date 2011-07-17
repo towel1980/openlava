@@ -1,15 +1,19 @@
-2011-07-17  David Bigagli  <david@davidbigagli.com>
+2011-07-17  David Bigagli  <david@openlava.net>
+
+	* lib.table.c: Added getClosestPrime() function to
+	always size and resize tables as primies.
 
 	* lsbatch/daemons/mbd.init.c (addHost):
 	Set the number of CPUs on batch host to be its MXJ.
 	If MXJ is not confgiured than use the number of physical
 	CPUs as provided by openlava base.
 
-2011-07-16  David Bigagli  <david@localhost.localdomain>
+
+2011-07-16  David Bigagli  <david@openlava.net>
 
 	* Added lsb.hosts
 
-2011-06-16  David Bigagli  <david@davidbigagli.com>
+2011-06-16  David Bigagli  <david@openlava.net>
 
 	* Makefiles changed all variables to run install from LAVA
 	to OPENLAVA.
@@ -17,7 +21,7 @@
 	* config/Makefile added a command to install COPYING and README files
 	to the LAVA_ROOT/conf directory
 
-2011-06-07  David Bigagli  <david@davidbigagli.com>
+2011-06-07  David Bigagli  <david@openlava.net>
 
 	* lava startup script was rewritten, simplified and introduce
 	the possibility to run daemons in single user mode.
@@ -31,7 +35,7 @@
 	and changed the make install to also install the lava sturtup script.
 
 
-2011-05-02  David Bigagli  <david@davidbigagli.com>
+2011-05-02  David Bigagli  <david@openlava.net>
 
 	* Makefile(s): Removed PREFIX variable from all make files and
 	introduced Lava specific installation variables in Make.misc.
@@ -42,7 +46,7 @@
 	by default and modified the shared libraries to use standard .so
 	suffix instead of .So.
 
-2011-04-24  David Bigagli  <david@davidbigagli.com>
+2011-04-24  David Bigagli  <david@openlava.net>
 
 	* ChangeLog: Created this file.
 

@@ -1,4 +1,5 @@
-/* $Id: lib.table.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava Foundation
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,10 +22,16 @@
 #include "lproto.h"
 #include "lib.table.h"
 
-static hEnt           *h_findEnt(const char *key, struct hLinks *hList);
-static unsigned int   getAddr(hTab *tabPtr, const char *key);
-static void           resetTab(hTab *tabPtr);
+static hEnt           *h_findEnt(const char *, struct hLinks *);
+static unsigned int   getAddr(hTab *, const char *);
+static void           resetTab(hTab *);
 static int            getClosestPrime(int);
+
+static int   primes[] =
+{
+    101, 1009, 5009, 10007, 20011, 50021, 100003,
+    200003, 500009, 1030637
+};
 
 /* insList_()
  * Add the elemPtr in the list at destPtr address.
@@ -42,7 +49,7 @@ void
 remList_(struct hLinks *elemPtr)
 {
 
-    if (elemPtr == (struct hLinks *) NULL || elemPtr == elemPtr->bwPtr
+    if (elemPtr == NULL || elemPtr == elemPtr->bwPtr
         || !elemPtr) {
         return;
     }
@@ -83,26 +90,31 @@ h_initTab_(hTab *tabPtr, int numSlots)
 void
 h_freeTab_(hTab *tabPtr, void (*freeFunc)(void *))
 {
-    struct hLinks *hTabEnd, *slotPtr;
-    hEnt    *hEntPtr;
+    struct hLinks   *hTabEnd;
+    struct hLinks   *slotPtr;
+    hEnt            *hEntPtr;
 
     slotPtr = tabPtr->slotPtr;
     hTabEnd = &(slotPtr[tabPtr->size]);
 
     for ( ;slotPtr < hTabEnd; slotPtr++) {
+
         while ( slotPtr != slotPtr->bwPtr ) {
+
             hEntPtr = (hEnt *) slotPtr->bwPtr;
             remList_((struct hLinks *) hEntPtr);
             FREEUP(hEntPtr->keyname);
-            if (hEntPtr->hData != (int *)NULL) {
+
+            if (hEntPtr->hData != NULL) {
                 if (freeFunc != NULL)
                     (*freeFunc)((void *)hEntPtr->hData);
                 else {
-                    free((char *) hEntPtr->hData);
-                    hEntPtr->hData = (int *) NULL;
+                    free(hEntPtr->hData);
+                    hEntPtr->hData = NULL;
                 }
             }
-            free((char *) hEntPtr);
+
+            free(hEntPtr);
         }
     }
 
@@ -183,7 +195,8 @@ void
 h_delEnt_(hTab *tabPtr, hEnt *hEntPtr)
 {
 
-    if (hEntPtr != (hEnt *) NULL) {
+    if (hEntPtr != NULL) {
+
         remList_((struct hLinks *) hEntPtr);
         free(hEntPtr->keyname);
         if (hEntPtr->hData != (int *)NULL)
@@ -242,7 +255,9 @@ h_nextEnt_(sTab *sPtr)
 
     hEntPtr = sPtr->hEntPtr;
 
-    while (hEntPtr == (hEnt *) NULL || (struct hLinks *) hEntPtr == sPtr->hList) {
+    while (hEntPtr == NULL
+           || (struct hLinks *) hEntPtr == sPtr->hList) {
+
         if (sPtr->nIndex >= sPtr->tabPtr->size)
             return((hEnt *) NULL);
         hList = &(sPtr->tabPtr->slotPtr[sPtr->nIndex]);
@@ -252,6 +267,7 @@ h_nextEnt_(sTab *sPtr)
             sPtr->hList = hList;
             break;
         }
+
     }
 
     sPtr->hEntPtr = (hEnt *) ((struct hLinks *) hEntPtr)->bwPtr;
@@ -344,7 +360,9 @@ h_freeRefTab_(hTab *tabPtr)
     hTabEnd = &(slotPtr[tabPtr->size]);
 
     for ( ;slotPtr < hTabEnd; slotPtr++) {
-        while ( slotPtr != slotPtr->bwPtr ) {
+
+        while (slotPtr != slotPtr->bwPtr) {
+
             hEntPtr = (hEnt *) slotPtr->bwPtr;
             remList_((struct hLinks *) hEntPtr);
             FREEUP(hEntPtr->keyname);
@@ -352,8 +370,8 @@ h_freeRefTab_(hTab *tabPtr)
         }
     }
 
-    free((char *) tabPtr->slotPtr);
-    tabPtr->slotPtr = (struct hLinks *) NULL;
+    free(tabPtr->slotPtr);
+    tabPtr->slotPtr = NULL;
     tabPtr->numEnts = 0;
 
 }
@@ -364,5 +382,16 @@ h_freeRefTab_(hTab *tabPtr)
 static int
 getClosestPrime(int x)
 {
-    return(x);
+    int   cc;
+    int   n;
+
+    n = sizeof(primes)/sizeof(primes[0]);
+
+    for (cc = 0; cc < n; cc++) {
+
+        if (x < primes[cc])
+            return primes[cc];
+    }
+
+    return primes[n - 1];
 }
