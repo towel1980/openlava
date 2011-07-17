@@ -201,7 +201,7 @@ freeHostInstances (void)
     hEnt *hashEntryPtr;
     struct hData *hData;
 
-    hashEntryPtr = h_firstEnt_(&hDataList, &hashSearchPtr);
+    hashEntryPtr = h_firstEnt_(&hostTab, &hashSearchPtr);
     while (hashEntryPtr) {
         hData = (struct hData *) hashEntryPtr->hData;
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);
@@ -224,7 +224,7 @@ initHostInstances (int num)
     hEnt *hashEntryPtr;
     struct hData *hData;
 
-    hashEntryPtr = h_firstEnt_(&hDataList, &hashSearchPtr);
+    hashEntryPtr = h_firstEnt_(&hostTab, &hashSearchPtr);
     while (hashEntryPtr) {
         hData = (struct hData *) hashEntryPtr->hData;
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);

@@ -109,7 +109,7 @@ long   schedSeqNo = 0;
 struct hData **hDataPtrTb = NULL;   
 UDATA_TABLE_T * uDataPtrTb;          
 struct hTab uDataList;		   
-struct hTab hDataList;		   
+struct hTab hostTab;		   
 
 
 struct qData *qDataList = NULL;           

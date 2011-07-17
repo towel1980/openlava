@@ -3574,7 +3574,7 @@ log_mbdStart(void)
             break;
         }
     }
-    if (h_getEnt_(&hDataList, "lost_and_found") != NULL) {
+    if (h_getEnt_(&hostTab, "lost_and_found") != NULL) {
         num_hosts--;
     }
     logPtr->eventLog.mbdStartLog.numQueues = num_queues;

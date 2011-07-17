@@ -897,7 +897,7 @@ typedef enum profCounterType {
 extern struct jData           *jDataList[];   
 extern struct migJob          *migJobList;    
 extern struct qData           *qDataList;     
-extern struct hTab            hDataList;      
+extern struct hTab            hostTab;      
 extern struct hData           **hDataPtrTb;   
 extern UDATA_TABLE_T          *uDataPtrTb;    
 extern struct hTab            uDataList;      
