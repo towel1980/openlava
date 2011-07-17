@@ -1,6 +1,13 @@
+2011-07-17  David Bigagli  <david@davidbigagli.com>
+
+	* lsbatch/daemons/mbd.init.c (addHost):
+	Set the number of CPUs on batch host to be its MXJ.
+	If MXJ is not confgiured than use the number of physical
+	CPUs as provided by openlava base.
+
 2011-07-16  David Bigagli  <david@localhost.localdomain>
 
-	* Added lsb.hosts 
+	* Added lsb.hosts
 
 2011-06-16  David Bigagli  <david@davidbigagli.com>
 
