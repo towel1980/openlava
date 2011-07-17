@@ -838,43 +838,54 @@ addHost(struct hostInfo *lsf,
         }
         hPtr->hStatus &= ~HOST_STAT_REMOTE;
         freeHData (hPtr, FALSE);
+
     } else {
         return;
     }
 
-    /* Let's inherit the lsf host base data.
+    /* In the case of lost and found host
+     * we don't have lsf host data
      */
-    hPtr->host = safeSave (lsf->hostName);
-    hPtr->cpuFactor = lsf->cpuFactor;
-    hPtr->hostType = safeSave (lsf->hostType);
-
-    /* Save the number of CPUs later on we will
-     * overwrite it if MXJ is set for this host.
-     */
-    if (lsf->maxCpus > 0) {
-        hPtr->numCPUs = lsf->maxCpus;
-    } else {
-        ls_syslog(LOG_DEBUG, "\
-%s: numCPUs <%d> of host <%s> is not greater than 0; assuming as 1", fname, lsf->maxCpus, lsf->hostName);
-        hPtr->numCPUs = 1;
+    if (lsf == NULL) {
+        hPtr->host = safeSave(thPtr->host);
     }
 
-    hPtr->hostModel = safeSave (lsf->hostModel);
-    hPtr->maxMem    = lsf->maxMem;
-
-    if (lsf->maxMem != 0)
-        hPtr->leftRusageMem = (float) lsf->maxMem;
-
-    hPtr->maxSwap    = lsf->maxSwap;
-    hPtr->maxTmp    = lsf->maxTmp;
-    hPtr->nDisks    = lsf->nDisks;
-    hPtr->resBitMaps  = getResMaps(lsf->nRes, lsf->resources);
-
-    /* Fill up the hostent structure that is not used
-     * anywhere anyway...
+    /* Let's inherit the lsf host base data.
      */
-    hPtr->hostEnt.h_name = putstr_(hPtr->host);
-    hPtr->hostEnt.h_aliases = NULL;
+    if (lsf) {
+        hPtr->host = safeSave (lsf->hostName);
+        hPtr->cpuFactor = lsf->cpuFactor;
+        hPtr->hostType = safeSave (lsf->hostType);
+
+        /* Save the number of CPUs later on we will
+         * overwrite it if MXJ is set for this host.
+         */
+        if (lsf->maxCpus > 0) {
+            hPtr->numCPUs = lsf->maxCpus;
+        } else {
+            ls_syslog(LOG_DEBUG, "\
+%s: numCPUs <%d> of host <%s> is not greater than 0; assuming as 1",
+                      fname, lsf->maxCpus, lsf->hostName);
+            hPtr->numCPUs = 1;
+        }
+
+        hPtr->hostModel = safeSave (lsf->hostModel);
+        hPtr->maxMem    = lsf->maxMem;
+
+        if (lsf->maxMem != 0)
+            hPtr->leftRusageMem = (float) lsf->maxMem;
+
+        hPtr->maxSwap    = lsf->maxSwap;
+        hPtr->maxTmp    = lsf->maxTmp;
+        hPtr->nDisks    = lsf->nDisks;
+        hPtr->resBitMaps  = getResMaps(lsf->nRes, lsf->resources);
+
+        /* Fill up the hostent structure that is not used
+         * anywhere anyway...
+         */
+        hPtr->hostEnt.h_name = putstr_(hPtr->host);
+        hPtr->hostEnt.h_aliases = NULL;
+    }
 
     hPtr->uJobLimit = thPtr->uJobLimit;
     hPtr->maxJobs   = thPtr->maxJobs;
@@ -1684,11 +1695,11 @@ lostFoundQueue(void)
 }
 
 struct hData *
-lostFoundHost (void)
+lostFoundHost(void)
 {
-    static char fname[] = "lostFoundHost()";
-    struct hData *lost;
-    struct hData hp;
+    static char    fname[] = "lostFoundHost()";
+    struct hData   *lost;
+    struct hData   hp;
 
     initHData (&hp);
     hp.host = LOST_AND_FOUND;
@@ -1696,10 +1707,12 @@ lostFoundHost (void)
     hp.uJobLimit = 0;
     hp.maxJobs =  0;
 
-    addHost (NULL, &hp, "lostFoundHost", FALSE);
+    addHost(NULL, &hp, "lostFoundHost", FALSE);
     checkHWindow ();
-    lost = getHostData (LOST_AND_FOUND);
+
+    lost = getHostData(LOST_AND_FOUND);
     lost->hStatus = HOST_STAT_DISABLED;
+
     if (lost == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M,
                   fname, "getHostData",
@@ -1710,7 +1723,6 @@ lostFoundHost (void)
             lsb_CheckError = FATAL_ERR;
     }
     return (lost);
-
 }
 
 void
