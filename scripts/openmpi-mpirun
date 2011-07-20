@@ -1,10 +1,11 @@
 #!/bin/sh
 #
+#  Copyright (c) 2011 Platform Computing
 #  Copyright (c) 2007 Platform Computing
 #
 # This script is a wrapper for openmpi mpirun
 # it generates the machine file based on the hosts
-# given to it by Lava.
+# given to it by openlava.
 #
 
 usage() {

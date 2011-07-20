@@ -1,8 +1,9 @@
 #
+# Copyright (C) 2011 openlava foundation
 #
-##
-
-
+# Install configuration files
+# and scripts to configure hosts.
+#
 TOP = ../
 include $(TOP)/Make.misc
 

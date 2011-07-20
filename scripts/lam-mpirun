@@ -1,10 +1,11 @@
 #!/bin/sh
 #
+#  Copyright (c) 2011 openlava foundation
 #  Copyright (c) 2007 Platform Computing
 #
 # This script is a wrapper for the LAM mpirun
 # it generates the machine file based on the hosts
-# given to it by Lava, and runs lamboot with that
+# given to it by openlava, and runs lamboot with that
 # list.  After calling mpirun it will run lamhalt.
 #
 

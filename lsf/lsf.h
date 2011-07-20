@@ -1,4 +1,5 @@
-/* $Id: lsf.h 397 2007-11-26 19:04:00Z mblack $
+/*
+ *  Copyright (C) 2011 openlava foundation
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify

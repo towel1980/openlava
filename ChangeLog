@@ -1,3 +1,9 @@
+2011-07-20  David Bigagli  <david@openlava.net>
+
+	* scripts/Makefile: added the installation
+	of scripts that manage the integration with
+	mpi and openmpi.
+
 2011-07-17  David Bigagli  <david@openlava.net>
 
 	* lib.table.c: Added getClosestPrime() function to

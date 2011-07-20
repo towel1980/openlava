@@ -1,4 +1,6 @@
-# $Id: Make.misc,v 1.7 2007/08/03 23:39:32 jchan Exp $
+#
+# Copyright (C) 2011 openlava foundation
+#
 # Shared rules included in all Makefiles
 # Sub-makefiles must define TOP to .. or ../.. to refer to this top
 # level directory
@@ -23,20 +25,6 @@ export OPENLAVA_MANDIR = $(OPENLAVA_TOP)/man
 export OPENLAVA_LOGDIR = $(OPENLAVA_TOP)/log
 export OPENLAVA_CONFDIR = $(OPENLAVA_TOP)/conf
 export OPENLAVA_WORKDIR = $(OPENLAVA_TOP)/work
-
-# For UNIX
-# DATE = '-DREL_DATE="Jun 2 2000"'
-#
-BASE = base
-BATCH = batch
-
-#Following definitions are to handle differences between NT and UNIX
-#naming conventions. They are overridden in the Make.def.nt for NT.
-CP = cp
-RM = rm -f
-PIM = pim
-SYMBLINK = ln -s
-LIBTCL = libtcl
 
 COMCLEAN = *.o *.So *.[Bb][Aa][Kk] core .\#*
 OUTF = -o $@

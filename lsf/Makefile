@@ -1,4 +1,5 @@
-# $Id: Makefile,v 1.9 2007/08/15 22:18:49 tmizan Exp $
+
+# Copyright (C) 2011 openlava foundation
 
 TOP = ..
 include $(TOP)/Make.misc

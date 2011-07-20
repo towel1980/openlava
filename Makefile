@@ -1,4 +1,6 @@
 #
+# Copyright (C) 2011 openlava foundation
+#
 # Main Makefile. 
 #
 

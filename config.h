@@ -1,4 +1,5 @@
-/* $Id: config.h 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,16 +30,16 @@
 typedef void (*SIGFUNCTYPE)(int);
 
 
-#define LIM_PORT        36000  
-#define RES_PORT        36002  
+#define LIM_PORT        36000
+#define RES_PORT        36002
 
 
 #ifndef FALSE
 # define FALSE	(0)
-#endif  
+#endif
 #ifndef TRUE
 # define TRUE	(1)
-#endif 
+#endif
 
 #ifndef MSGSIZE
 # define MSGSIZE		8192
@@ -58,14 +59,14 @@ extern char *getwd(char *);
 #ifndef WCOREDUMP
 #ifdef LS_WAIT_INT
 #define WCOREDUMP(x)    ((x) & 0200)
-#else 
+#else
 #define WCOREDUMP(x) (x).w_coredump
-#endif 
-#endif 
+#endif
+#endif
 
 #ifndef FD_SET
 typedef long    fd_mask;
-# define NFDBITS	(sizeof(fd_mask) * NBBY) 
+# define NFDBITS	(sizeof(fd_mask) * NBBY)
 # define FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1 << ((n) % NFDBITS)))
 # define FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1 << ((n) % NFDBITS)))
 # define FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1 << ((n) % NFDBITS)))
@@ -73,7 +74,7 @@ typedef long    fd_mask;
 # define FD_ZERO(p)     memset((char *)(p), 0, sizeof(*(p)))
 #endif
 
-#define BSD_NICE	
+#define BSD_NICE
 
 #ifdef __linux__
 extern int strcasecmp(const char *s1, const char *s2);
@@ -84,7 +85,7 @@ extern void endgrent(void);
 extern int gethostname(char *name, size_t len);
 extern int nice( int val );
 extern int linux_getopt( int nargc, char *const *nargv, const char *ostr );
-#endif       
+#endif
 
 #define getpwuiddir getpwuid
 #define getpwnamdir getpwnam
@@ -105,4 +106,4 @@ typedef struct stat LS_STAT_T;
 
 #define LSF_NSIG NSIG
 
-#endif    
+#endif
