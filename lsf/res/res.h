@@ -24,7 +24,7 @@
 #include <rpc/xdr.h>
 
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../intlib/intlibout.h"
 #include "../lib/lproto.h"
 #include "../lib/lib.osal.h"

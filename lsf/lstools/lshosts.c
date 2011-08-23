@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../lib/lproto.h"
 #include "../intlib/intlibout.h"
 

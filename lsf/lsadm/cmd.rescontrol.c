@@ -22,7 +22,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../lib/lsi18n.h"
 #include "../lib/mls.h"
 

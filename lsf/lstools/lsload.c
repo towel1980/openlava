@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../lib/lib.table.h"
 #include "../lib/lproto.h"
 #include "../intlib/intlibout.h"

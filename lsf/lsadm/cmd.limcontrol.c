@@ -25,7 +25,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../lsf.h"
 #include "../intlib/intlibout.h"
 #include "../lib/lsi18n.h" 

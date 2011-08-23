@@ -21,7 +21,7 @@
 
 #include "../lsf.h"
 #include "../lib/lsi18n.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 
 #define NL_SETN 27  
 

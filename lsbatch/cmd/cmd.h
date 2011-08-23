@@ -25,7 +25,7 @@
 #include "../../lsf/lsf.h"
 #include "../../lsf/lib/lib.hdr.h"
 #include "../lsbatch.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../../lsf/lib/lproto.h"
 #include "../../lsf/lib/lib.table.h"
 #include "../../lsf/lib/mls.h"

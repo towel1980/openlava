@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../lib/lib.table.h"
 #include "../lib/lproto.h"
 

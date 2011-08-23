@@ -33,7 +33,7 @@
 #include "../../lsf/intlib/intlibout.h"
 #include "../../lsf/lib/lib.table.h"
 #include "../lsbatch.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 
 #include "../../lsf/lib/lib.queue.h"
 #include "daemonout.h"

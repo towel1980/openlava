@@ -35,7 +35,7 @@
 #include <mntent.h>
 
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 extern const char *getHostOfficialByName_ (const char *);
 
 char *ls_getmnthost(char *file)

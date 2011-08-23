@@ -28,7 +28,7 @@
 #include "../../lsf/lib/lproto.h"
 
 #include "../lsbatch.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../daemons/daemonout.h"
 #include <sys/types.h>
 #include <unistd.h>

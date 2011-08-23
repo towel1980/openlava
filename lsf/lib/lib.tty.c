@@ -23,7 +23,7 @@
 
 #define NL_SETN   23    
 
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 
 static void ttymode_(int mode, int ind, int enableIntSus);
 

@@ -23,7 +23,7 @@
 #include "../lsf.h"
 #include "../lib/lproto.h"
 #include "../lib/lsi18n.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 
 static void usage(char *);
 static void print_long(struct resItem *);

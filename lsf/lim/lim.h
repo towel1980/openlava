@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #include "../lsf.h"
-#include "../../config.h"
+#include "../../openlavaconfig.h"
 #include "../intlib/intlibout.h"
 #include "../lib/lproto.h"
 #include "limout.h"
