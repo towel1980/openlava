@@ -1,14 +1,10 @@
 #
 # Copyright (C) openlava foundation
 #
-CC = gcc -g
-HOSTTYPE=LINUX64
 INCLUDES = -I$(top_srcdir)/lsf
-AM_CFLAGS = -Wall -DNO_SIGALARM -D$(HOSTTYPE) -DHOST_TYPE_STRING=\"$(HOSTTYPE)\"
+AM_CPPFLAGS = -DNO_SIGALARM -D$(HOSTTYPE) -DHOST_TYPE_STRING=\"$(HOSTTYPE)\"
 
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
+HOSTTYPE=LINUX64
 
 sbin_PROGRAMS = lim
 lim_SOURCES  = \

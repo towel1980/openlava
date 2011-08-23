@@ -1,14 +1,7 @@
 #
 # Copyright (C) openlava foundation
 #
-CC = gcc -g
 INCLUDES = -I$(top_srcdir)/lsf
-AM_CFLAGS = -Wall
-
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
-
 
 bin_PROGRAMS = lsacct lseligible lshosts lsid lsinfo lsloadadj lsload lsmon lsplace lsrcp
 

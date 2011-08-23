@@ -1,13 +1,8 @@
 #
 # Copyright (C) openlava foundation
 #
-CC = gcc -g
-INCLUDES = -I$(top_srcdir)/lsf
-AM_CFLAGS = -Wall
 
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
+INCLUDES = -I$(top_srcdir)/lsf
 
 sbin_PROGRAMS = pim
 pim_SOURCES  = pim.main.c  pim.os.c

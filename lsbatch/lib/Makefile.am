@@ -1,16 +1,9 @@
 #
 # Copyright (C) 2011 openlava foundation
 #
-
-CC = gcc -g
 INCLUDES = -I$(top_srcdir)/lsf -I$(top_srcdir)/lsf/lib \
            -I$(top_srcdir)/lsbatch -I./
-AM_CFLAGS = -Wall 
-AM_LDFLAGS = $(top_srcdir)/lsf/intlib/liblsfint.a
-
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
+#AM_LDFLAGS = $(top_srcdir)/lsf/intlib/liblsfint.a
 
 lib_LIBRARIES = liblsbatch.a
 

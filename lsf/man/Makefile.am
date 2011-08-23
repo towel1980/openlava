@@ -4,4 +4,3 @@
 
 SUBDIRS = man1 man5 man8
 
-.PHONY: $(SUBDIRS)

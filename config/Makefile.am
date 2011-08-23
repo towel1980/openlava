@@ -13,7 +13,7 @@ conf_DATA = lsf.conf lsf.cluster.openlava lsf.shared lsf.task \
 etcdir = $(prefix)/etc
 etc_DATA = openlava openlava.sh openlava.csh
 
-# Create the workng directory where the working files are
+# Create the working directory where the working files are
 # kept.
 install-data-local:
 	mkdir -p $(prefix)/work

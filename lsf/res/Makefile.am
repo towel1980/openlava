@@ -1,13 +1,7 @@
 #
 # Copyright (C) openlava foundation
 #
-CC = gcc -g
 INCLUDES = -I$(top_srcdir)/lsf
-AM_CFLAGS = -Wall
-
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
 
 sbin_PROGRAMS = res nios
 res_SOURCES  = \

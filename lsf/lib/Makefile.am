@@ -1,14 +1,7 @@
 #
 # Copyright (C) 2011 openlava foundation
 #
-
-CC = gcc -g
 INCLUDES = -I../
-AM_CFLAGS = -Wall 
-
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
 
 lib_LIBRARIES = liblsf.a
 

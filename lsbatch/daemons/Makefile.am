@@ -1,14 +1,8 @@
 #
 # Copyright (C) openlava foundation
 #
-CC = gcc -g
 INCLUDES = -I$(top_srcdir)/lsf  -I$(top_srcdir)/lsf/lib \
            -I$(top_srcdir)/lsbatch  -I$(top_srcdir)/lsbatch/lib -I./
-AM_CFLAGS = -Wall
-
-SUFFIXES = .c
-.c.o:
-	$(CC) $(AM_CFLAGS) -c $<
 
 sbin_PROGRAMS = mbatchd sbatchd
 mbatchd_SOURCES  = \
