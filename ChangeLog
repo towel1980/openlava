@@ -1,3 +1,7 @@
+2011-08-23  David Bigagli  <david@openlava.net>
+
+	* GNU build system. Switched openlava from home made makefiles to the GNU build system.
+
 2011-07-20  David Bigagli  <david@openlava.net>
 
 	* scripts/Makefile: added the installation
