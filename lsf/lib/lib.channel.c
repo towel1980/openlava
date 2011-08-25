@@ -30,7 +30,7 @@
 
 #define INVALID_HANDLE  -1
 
-#define NL_SETN   23    
+#define NL_SETN   23
 
 #define CLOSEIT(i) { \
 	CLOSESOCKET(channels[i].handle); \
@@ -68,7 +68,7 @@ chanInit_()
 
     chanMaxSize = sysconf(_SC_OPEN_MAX);
 
-    if (chanMaxSize < 0) 
+    if (chanMaxSize < 0)
         chanMaxSize = DEFAULT_MAX_CHANNELS;
 
     divAmount = ((chanMaxSize > 1000) ? 100 : 10);
@@ -77,19 +77,19 @@ chanInit_()
         chanGrowSize = chanMaxSize / divAmount;
     else
         chanGrowSize = DEFAULT_MAX_CHANNELS;
- 
+
     channels = (struct chanData *)malloc(sizeof(struct chanData) * chanGrowSize);
     if (channels == NULL)
         return (-1);
 
-    memset((struct chanData *)channels, 0, sizeof(struct chanData *) 
+    memset((struct chanData *)channels, 0, sizeof(struct chanData *)
             * chanGrowSize);
 
     chanAllocSize = chanGrowSize;
     chanIndex = 0;
     return (0);
 
-} 
+}
 
 int
 chanServSocket_(int type, u_short port, int backlog, int options)
@@ -114,13 +114,13 @@ chanServSocket_(int type, u_short port, int backlog, int options)
     sin.sin_port        = htons(port);
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
 
-  
+
 
     if (options & CHAN_OP_SOREUSE) {
         int one = 1;
 
         setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-                sizeof (int));
+                   sizeof (int));
     }
 
     if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
@@ -144,7 +144,7 @@ chanServSocket_(int type, u_short port, int backlog, int options)
     else
       channels[ch].type  = CH_TYPE_PASSIVE;
     return(ch);
-} 
+}
 
 int
 chanClientSocket_(int domain, int type, int options)
@@ -169,7 +169,7 @@ chanClientSocket_(int domain, int type, int options)
        channels[ch].type = CH_TYPE_TCP;
     else
        channels[ch].type = CH_TYPE_UDP;
-   
+
     s0 = socket(domain, type, 0);
 
     if (SOCK_INVALID(s0)) {
@@ -195,7 +195,7 @@ chanClientSocket_(int domain, int type, int options)
         if (port < IPPORT_RESERVED/2) {
             port = IPPORT_RESERVED - 1;
         }
-    } 
+    }
 
 
     s0= channels[ch].handle;
@@ -210,9 +210,9 @@ chanClientSocket_(int domain, int type, int options)
         } else
             cliaddr.sin_port = htons(0);
 
-        if (bind(s0, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0) 
+        if (bind(s0, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0)
             break;
-        
+
 
         if (!(options & CHAN_OP_PPORT)) {
 
@@ -223,7 +223,7 @@ chanClientSocket_(int domain, int type, int options)
                 if (bind(s0, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0)
                     break;
 	    }
-         
+
             chanClose_(ch);
             lserrno = LSE_SOCK_SYS;
             return (-1);
@@ -234,8 +234,8 @@ chanClientSocket_(int domain, int type, int options)
             return (-1);
         }
 
-        
-        if ((options & CHAN_OP_PPORT) && port < IPPORT_RESERVED/2) 
+
+        if ((options & CHAN_OP_PPORT) && port < IPPORT_RESERVED/2)
             port = IPPORT_RESERVED - 1;
     }
 
@@ -248,21 +248,21 @@ chanClientSocket_(int domain, int type, int options)
 
 # if defined(FD_CLOEXEC)
     fcntl(s0, F_SETFD, (fcntl(s0, F_GETFD) | FD_CLOEXEC));
-# else 
+# else
 #  if defined(FIOCLEX)
     (void)ioctl(s0, FIOCLEX, (char *)NULL);
 #  endif
-# endif 
+# endif
 
     return(ch);
 
-} 
+}
 
 int
 chanAccept_(int chfd, struct sockaddr_in *from)
 {
     int         s;
-    socklen_t   len; 
+    socklen_t   len;
 
     if (channels[chfd].type != CH_TYPE_PASSIVE) {
         lserrno = LSE_INTERNAL;
@@ -278,31 +278,31 @@ chanAccept_(int chfd, struct sockaddr_in *from)
 
     return(chanOpenSock_(s, CHAN_OP_NONBLOCK));
 
-} 
+}
 
 void
 chanInactivate_(int chfd)
 {
     if (chfd < 0 || chfd > chanMaxSize)
         return;
- 
+
     if (channels[chfd].state != CH_INACTIVE) {
         channels[chfd].prestate = channels[chfd].state;
         channels[chfd].state = CH_INACTIVE;
     }
 }
- 
+
 void
 chanActivate_(int chfd)
 {
     if (chfd < 0 || chfd > chanMaxSize)
         return;
- 
+
     if (channels[chfd].state == CH_INACTIVE) {
         channels[chfd].state = channels[chfd].prestate;
     }
 }
- 
+
 int
 chanConnect_(int chfd, struct sockaddr_in *peer, int timeout, int options)
 {
@@ -312,14 +312,14 @@ chanConnect_(int chfd, struct sockaddr_in *peer, int timeout, int options)
         lserrno = LSE_INTERNAL;
         return(-1);
     }
- 
+
    if (logclass & (LC_COMM | LC_TRACE))
       ls_syslog(LOG_DEBUG2,"chanConnect_: Connecting chan=%d to peer %s timeout %d",chfd, sockAdd2Str_(peer), timeout);
 
     if (channels[chfd].type == CH_TYPE_UDP) {
-        cc = connect(channels[chfd].handle, (struct sockaddr *) peer, 
+        cc = connect(channels[chfd].handle, (struct sockaddr *) peer,
                     sizeof(struct sockaddr_in));
-        if (SOCK_CALL_FAIL(cc)) { 
+        if (SOCK_CALL_FAIL(cc)) {
             lserrno = LSE_CONN_SYS;
             return(-1);
         }
@@ -328,7 +328,7 @@ chanConnect_(int chfd, struct sockaddr_in *peer, int timeout, int options)
     }
 
     if (timeout >= 0) {
-        if (b_connect_(channels[chfd].handle, (struct sockaddr *) peer, 
+        if (b_connect_(channels[chfd].handle, (struct sockaddr *) peer,
                       sizeof(struct sockaddr_in), timeout/1000) < 0) {
             if (errno == ETIMEDOUT)
 		lserrno = LSE_TIME_OUT;
@@ -340,20 +340,20 @@ chanConnect_(int chfd, struct sockaddr_in *peer, int timeout, int options)
         return(0);
     }
     channels[chfd].state = CH_CONN;
-    return(0); 
+    return(0);
 
-} 
+}
 
 int
 chanSendDgram_(int chfd, char *buf, int len, struct sockaddr_in *peer)
 {
    int s, cc;
 
-   s=channels[chfd].handle; 
-   
+   s=channels[chfd].handle;
+
    if (logclass & (LC_COMM | LC_TRACE))
       ls_syslog(LOG_DEBUG3,"chanSendDgram_: Sending message size=%d peer=%s chan=%d",len,sockAdd2Str_(peer), chfd);
-       
+
    if (channels[chfd].type != CH_TYPE_UDP) {
        lserrno = LSE_INTERNAL;
        return(-1);
@@ -367,30 +367,30 @@ chanSendDgram_(int chfd, char *buf, int len, struct sockaddr_in *peer)
 
    if (SOCK_CALL_FAIL(cc)) {
        lserrno = LSE_MSG_SYS;
-       return(-1); 
+       return(-1);
    }
-   
+
    return(0);
-} 
+}
 
 /* chanRcvDgram_()
  */
 int
-chanRcvDgram_(int chfd, 
-              char *buf, 
-              int len, 
-              struct sockaddr_in *peer, 
+chanRcvDgram_(int chfd,
+              char *buf,
+              int len,
+              struct sockaddr_in *peer,
               int timeout)
 {
     int sock;
-    struct timeval timeval, *timep=NULL; 
+    struct timeval timeval, *timep=NULL;
     int nReady, cc;
     socklen_t   peersize;
 
     peersize = sizeof(struct sockaddr_in);
-    sock=channels[chfd].handle; 
+    sock=channels[chfd].handle;
 
-    if (channels[chfd].type != CH_TYPE_UDP) { 
+    if (channels[chfd].type != CH_TYPE_UDP) {
        lserrno = LSE_INTERNAL;
        return(-1);
     }
@@ -403,11 +403,11 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
         if (channels[chfd].state == CH_CONN)
             cc = recv(sock, buf, len, 0);
         else
-            cc = recvfrom(sock, 
-                          buf, 
-                          len, 
-                          0, 
-                          (struct sockaddr *)peer, 
+            cc = recvfrom(sock,
+                          buf,
+                          len,
+                          0,
+                          (struct sockaddr *)peer,
                           &peersize);
         if (SOCK_CALL_FAIL(cc)) {
            lserrno = LSE_MSG_SYS;
@@ -415,7 +415,7 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
         }
         return(0);
     }
-    
+
     if (timeout > 0) {
        timeval.tv_sec  = timeout/1000;
        timeval.tv_usec = timeout - timeval.tv_sec*1000;
@@ -429,7 +429,7 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
             lserrno = LSE_SELECT_SYS;
             return(-1);
         } else if (nReady == 0) {
-            
+
             lserrno = LSE_TIME_OUT;
             return(-1);
         } else {
@@ -450,11 +450,11 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
 
     return(0);
 
-} /* chanRcvDgram_() */ 
+} /* chanRcvDgram_() */
 
 /* chanOpen_()
  */
-int 
+int
 chanOpen_(u_int iaddr, u_short port, int options)
 {
     int i,cc, oldOpt, newOpt = 0;
@@ -471,7 +471,7 @@ chanOpen_(u_int iaddr, u_short port, int options)
     addr.sin_family = AF_INET;
     memcpy((char *) &addr.sin_addr, (char *) &iaddr, sizeof(u_int));
     addr.sin_port = port;
-    
+
     if (options & CHAN_OP_PPORT) {
         newOpt |= LS_CSO_PRIVILEGE_PORT;
     }
@@ -507,10 +507,10 @@ chanOpen: connect() failed, laddr=%s, addr=%s"),/*catgets 5003*/
                           sockAdd2Str_((struct sockaddr_in *)&laddr),
                           sockAdd2Str_((struct sockaddr_in *)&addr));
             }
-            
+
             CLOSEIT(i);
             cherrno = CHANE_SYSCALL;
-            return (-1);       
+            return (-1);
         }
         channels[i].state = CH_PRECONN;
         return(i);
@@ -565,13 +565,13 @@ chanOpenSock_(int s, int options)
         return(-1);
     }
     return(i);
-} 
+}
 
 int
 chanClose_(int chfd)
 {
     struct Buffer *buf, *nextbuf;
-    long maxfds; 
+    long maxfds;
 
 
     maxfds = sysconf(_SC_OPEN_MAX);
@@ -587,18 +587,18 @@ chanClose_(int chfd)
     }
     close(channels[chfd].handle);
 
-    if (channels[chfd].send  
+    if (channels[chfd].send
 	 && channels[chfd].send != channels[chfd].send->forw) {
-       for (buf = channels[chfd].send->forw; 
+       for (buf = channels[chfd].send->forw;
 		      buf != channels[chfd].send; buf = nextbuf) {
             nextbuf = buf->forw;
             FREEUP(buf->data);
             FREEUP(buf);
-        }   
+        }
     }
     if (channels[chfd].recv
 	 && channels[chfd].recv != channels[chfd].recv->forw) {
-        for (buf = channels[chfd].recv->forw; 
+        for (buf = channels[chfd].recv->forw;
 			    buf != channels[chfd].recv; buf = nextbuf) {
             nextbuf = buf->forw;
             FREEUP(buf->data);
@@ -612,7 +612,7 @@ chanClose_(int chfd)
     channels[chfd].send  = (struct Buffer *)NULL;
     channels[chfd].recv  = (struct Buffer *)NULL;
     return(0);
-} 
+}
 
 void
 chanCloseAll_(void)
@@ -623,27 +623,27 @@ chanCloseAll_(void)
        if (channels[i].state != CH_FREE)
            chanClose_(i);
 
-} 
+}
 
 void
 chanCloseAllBut_(int chfd)
 {
     int i;
- 
+
     for (i=0; i < chanIndex;  i++)
        if ((channels[i].state != CH_FREE) && (i != chfd))
            chanClose_(i);
 }
- 
+
 int
 chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *timeout)
 {
     int i, nReady, maxfds;
-    static char fname[] = "chanSelect_"; 
-  
+    static char fname[] = "chanSelect_";
+
     FD_ZERO(&sockmask->wmask);
     FD_ZERO(&sockmask->emask);
-           
+
     for(i=0; i < chanIndex; i++) {
         if (channels[i].state == CH_INACTIVE)
             continue;
@@ -651,22 +651,22 @@ chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *time
         if (channels[i].handle == INVALID_HANDLE)
             continue;
         if (channels[i].state == CH_FREE) {
-             ls_syslog(LOG_ERR,(_i18n_msg_get(ls_catd,NL_SETN,5001, 
+             ls_syslog(LOG_ERR,(_i18n_msg_get(ls_catd,NL_SETN,5001,
 	     "%s: channel %d has socket %d but in %s state!")),/* catgets 5001 */
-	      fname, i,channels[i].handle, "CH_FREE"); 
+	      fname, i,channels[i].handle, "CH_FREE");
              continue;
-        } 
-  
-        if (channels[i].type == CH_TYPE_UDP && 
+        }
+
+        if (channels[i].type == CH_TYPE_UDP &&
             channels[i].state != CH_WAIT)
             continue;
 
 	if (logclass & LC_COMM)
 	    ls_syslog(LOG_DEBUG3,"chanSelect_: Considering channel %d handle %d state %d type %d", i, channels[i].handle, (int) channels[i].state, (int) channels[i].type);
 
-        if (channels[i].type == CH_TYPE_TCP && 
+        if (channels[i].type == CH_TYPE_TCP &&
             channels[i].state != CH_PRECONN &&
-            !channels[i].recv && 
+            !channels[i].recv &&
             !channels[i].send)
             continue;
 
@@ -689,7 +689,7 @@ chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *time
     }
     maxfds = FD_SETSIZE;
 
-    nReady = select(maxfds, &(sockmask->rmask), &(sockmask->wmask), 
+    nReady = select(maxfds, &(sockmask->rmask), &(sockmask->wmask),
                       &(sockmask->emask), timeout);
     if (nReady <= 0) {
         return(nReady);
@@ -699,7 +699,7 @@ chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *time
     FD_ZERO(&(chanmask->wmask));
     FD_ZERO(&(chanmask->emask));
     for(i=0; i < chanIndex; i++) {
-        if (channels[i].handle == INVALID_HANDLE) 
+        if (channels[i].handle == INVALID_HANDLE)
             continue;
 
         if (FD_ISSET(channels[i].handle, &(sockmask->emask))) {
@@ -709,14 +709,14 @@ chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *time
         }
         if ((!channels[i].send || !channels[i].recv) &&
             (channels[i].state != CH_PRECONN) ) {
-            if (FD_ISSET(channels[i].handle, &(sockmask->rmask))) 
+            if (FD_ISSET(channels[i].handle, &(sockmask->rmask)))
                 FD_SET(i, &(chanmask->rmask));
             if (FD_ISSET(channels[i].handle, &(sockmask->wmask)))
                 FD_SET(i, &(chanmask->wmask));
             continue;
         }
-        
-        
+
+
         if (channels[i].state == CH_PRECONN) {
             if (FD_ISSET(channels[i].handle, &(sockmask->wmask))) {
                 channels[i].state = CH_CONN;
@@ -724,10 +724,10 @@ chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *time
                 channels[i].recv  = newBuf();
                 FD_SET(i, &(chanmask->wmask));
             }
-        } else { 
+        } else {
             if (FD_ISSET(channels[i].handle, &(sockmask->rmask))) {
                 doread(i, chanmask);
-                if (!FD_ISSET(i, &(chanmask->rmask)) && 
+                if (!FD_ISSET(i, &(chanmask->rmask)) &&
                     !FD_ISSET(i, &(chanmask->emask)) )
                     nReady--;
             }
@@ -742,12 +742,12 @@ chanSelect_(struct Masks *sockmask, struct Masks *chanmask, struct timeval *time
         FD_CLR(channels[i].handle, &(sockmask->emask));
     }
     return(nReady);
-} 
+}
 
 int
 chanEnqueue_(int chfd, struct Buffer *msg)
 {
-    long maxfds; 
+    long maxfds;
 
     maxfds = sysconf(_SC_OPEN_MAX);
     maxfds = sysconf(_SC_OPEN_MAX);
@@ -757,20 +757,20 @@ chanEnqueue_(int chfd, struct Buffer *msg)
         return(-1);
     }
 
-    if (channels[chfd].handle == INVALID_HANDLE || 
+    if (channels[chfd].handle == INVALID_HANDLE ||
         channels[chfd].state == CH_PRECONN) {
         cherrno = CHANE_NOTCONN;
         return(-1);
     }
-    
-    enqueueTail_(msg, channels[chfd].send); 
-    return(0);
-} 
 
-int 
+    enqueueTail_(msg, channels[chfd].send);
+    return(0);
+}
+
+int
 chanDequeue_(int chfd, struct Buffer **buf)
 {
-    long maxfds; 
+    long maxfds;
 
     maxfds = sysconf(_SC_OPEN_MAX);
 
@@ -790,7 +790,7 @@ chanDequeue_(int chfd, struct Buffer **buf)
     *buf = channels[chfd].recv->forw;
     dequeue_(channels[chfd].recv->forw);
     return(0);
-} 
+}
 
 int
 chanReadNonBlock_(int chfd, char *buf, int len, int timeout)
@@ -804,14 +804,14 @@ chanReadNonBlock_(int chfd, char *buf, int len, int timeout)
     }
 
     return (nb_read_timeout(channels[chfd].handle, buf, len, timeout));
-}	
+}
 
 int
 chanRead_(int chfd, char *buf, int len)
 {
    return (b_read_fix(channels[chfd].handle, buf, len));
 
-} 
+}
 
 int
 chanWrite_(int chfd, char *buf, int len)
@@ -819,10 +819,10 @@ chanWrite_(int chfd, char *buf, int len)
 
     return (b_write_fix(channels[chfd].handle, buf, len));
 
-} 
+}
 
 int
-chanRpc_(int chfd, struct Buffer *in, struct Buffer *out, 
+chanRpc_(int chfd, struct Buffer *in, struct Buffer *out,
          struct LSFHeader *outhdr, int timeout)
 {
     static char fname[]="chanRpc_";
@@ -837,7 +837,7 @@ chanRpc_(int chfd, struct Buffer *in, struct Buffer *out,
     if (in) {
        if (logclass & LC_COMM)
           ls_syslog(LOG_DEBUG1,"%s: sending %d bytes", fname, in->len);
-       if (chanWrite_(chfd, in->data, in->len ) != in->len) 
+       if (chanWrite_(chfd, in->data, in->len ) != in->len)
            return(-1);
 
        if (in->forw != NULL) {
@@ -847,10 +847,10 @@ chanRpc_(int chfd, struct Buffer *in, struct Buffer *out,
           if (logclass & LC_COMM)
               ls_syslog(LOG_DEBUG1,"%s: sending %d extra bytes", fname, nlen);
           if (chanWrite_(chfd, NET_INTADDR_(&nlen), NET_INTSIZE_)
-                                 != NET_INTSIZE_) 
+                                 != NET_INTSIZE_)
               return (-1);
 
-          if (chanWrite_(chfd, buf->data, buf->len ) != buf->len) 
+          if (chanWrite_(chfd, buf->data, buf->len ) != buf->len)
               return(-1);
        }
     }
@@ -879,15 +879,15 @@ chanRpc_(int chfd, struct Buffer *in, struct Buffer *out,
     if (logclass & LC_COMM)
         ls_syslog(LOG_DEBUG2,"%s: reading reply header", fname);
     xdrmem_create(&xdrs, (char *)&hdrBuf, sizeof(struct LSFHeader), XDR_DECODE);
-    cc = readDecodeHdr_(chfd, (char *)&hdrBuf, chanRead_, 
-                       &xdrs, outhdr); 
+    cc = readDecodeHdr_(chfd, (char *)&hdrBuf, chanRead_,
+                       &xdrs, outhdr);
     if (cc < 0) {
         xdr_destroy(&xdrs);
         return(-1);
     }
     xdr_destroy(&xdrs);
 
-#define MAXMSGLEN     (1<<28) 
+#define MAXMSGLEN     (1<<28)
     if (outhdr->length > MAXMSGLEN) {
        lserrno = LSE_PROTOCOL;
        return(-1);
@@ -915,7 +915,7 @@ chanRpc_(int chfd, struct Buffer *in, struct Buffer *out,
     if (logclass & LC_COMM)
        ls_syslog(LOG_DEBUG1, "%s: Leaving...repy_size=%d", fname, out->len);
     return(0);
-} 
+}
 
 int
 chanSock_(int chfd)
@@ -926,9 +926,9 @@ chanSock_(int chfd)
     }
 
     return(channels[chfd].handle);
-} 
+}
 
-int   
+int
 chanSetMode_(int chfd, int mode)
 {
     if (chfd < 0 || chfd > chanAllocSize) {
@@ -941,7 +941,7 @@ chanSetMode_(int chfd, int mode)
        lserrno = LSE_BAD_CHAN;
        return(-1);
     }
-    
+
     if (mode == CHAN_MODE_NONBLOCK) {
         if(io_nonblock_(channels[chfd].handle) < 0) {
             lserrno = LSE_SOCK_SYS;
@@ -963,7 +963,7 @@ chanSetMode_(int chfd, int mode)
     }
     return(0);
 
-} 
+}
 
 static void
 doread(int chfd, struct Masks *chanmask)
@@ -971,7 +971,7 @@ doread(int chfd, struct Masks *chanmask)
     struct Buffer *rcvbuf;
     int cc;
 
-    if (channels[chfd].recv->forw == channels[chfd].recv) { 
+    if (channels[chfd].recv->forw == channels[chfd].recv) {
         rcvbuf = newBuf();
         if(!rcvbuf) {
             FD_SET(chfd, &(chanmask->emask));
@@ -982,7 +982,7 @@ doread(int chfd, struct Masks *chanmask)
     } else
         rcvbuf = channels[chfd].recv->forw;
 
-    if (!rcvbuf->len) {	
+    if (!rcvbuf->len) {
         rcvbuf->data =  malloc(HDR_LEN);
         if (!rcvbuf->data) {
             FD_SET(chfd, &(chanmask->emask));
@@ -1000,15 +1000,15 @@ doread(int chfd, struct Masks *chanmask)
 
     errno = 0;
 
-    cc = read(channels[chfd].handle, rcvbuf->data + rcvbuf->pos, 
+    cc = read(channels[chfd].handle, rcvbuf->data + rcvbuf->pos,
 	      rcvbuf->len - rcvbuf->pos);
 
     if (cc == 0 && errno == EINTR) {
-	
+
 	ls_syslog(LOG_ERR,I18N(5004,"\
 doread: Hmm... looks like read(2) has returned EOF when interrupted by a signal, please report"));/*catgets 5004 */
 
-	
+
 	return;
     }
 
@@ -1051,13 +1051,13 @@ doread: Hmm... looks like read(2) has returned EOF when interrupted by a signal,
         xdr_destroy(&xdrs);
     }
 
-    if (rcvbuf->pos == rcvbuf->len) { 
+    if (rcvbuf->pos == rcvbuf->len) {
         FD_SET(chfd, &(chanmask->rmask));
     }
 
     return;
 
-} 
+}
 
 static void
 dowrite(int chfd, struct Masks *chanmask)
@@ -1066,7 +1066,7 @@ dowrite(int chfd, struct Masks *chanmask)
     int cc;
 
     if (channels[chfd].send->forw == channels[chfd].send)
-        return; 
+        return;
     else
         sendbuf = channels[chfd].send->forw;
 
@@ -1082,9 +1082,9 @@ dowrite(int chfd, struct Masks *chanmask)
         dequeue_(sendbuf);
         free(sendbuf->data);
         free(sendbuf);
-    } 
+    }
     return;
-} 
+}
 
 static struct Buffer *
 newBuf(void)
@@ -1099,14 +1099,14 @@ newBuf(void)
     newbuf->data = NULL;
     newbuf->stashed = FALSE;
 
-    return(newbuf); 
-} 
+    return(newbuf);
+}
 
 int
 chanAllocBuf_(struct Buffer **buf, int size)
 {
     *buf = newBuf();
-    if (!*buf) 
+    if (!*buf)
         return (-1);
     (*buf)->data = malloc(size);
     if ((*buf)->data == NULL) {
@@ -1116,9 +1116,9 @@ chanAllocBuf_(struct Buffer **buf, int size)
 
     memset((*buf)->data, 0, size);
     return (0);
-} 
+}
 
-int 
+int
 chanFreeBuf_(struct Buffer *buf)
 {
     if (buf) {
@@ -1126,13 +1126,13 @@ chanFreeBuf_(struct Buffer *buf)
 
         if (buf->data)
             free(buf->data);
-	
+
         free(buf);
     }
     return(0);
-} 
+}
 
-int 
+int
 chanFreeStashedBuf_(struct Buffer *buf)
 {
     if (buf) {
@@ -1140,14 +1140,14 @@ chanFreeStashedBuf_(struct Buffer *buf)
 	return(chanFreeBuf_(buf));
     }
     return(-1);
-} 
+}
 
 static void
 dequeue_(struct Buffer *entry)
 {
    entry->back->forw = entry->forw;
    entry->forw->back = entry->back;
-} 
+}
 
 static void
 enqueueTail_(struct Buffer *entry, struct Buffer *pred)
@@ -1169,7 +1169,7 @@ findAFreeChannel()
 
     if (chanIndex != 0) {
         for(i=0; i < chanIndex; i++)
-            if(channels[i].handle == INVALID_HANDLE) 
+            if(channels[i].handle == INVALID_HANDLE)
                 break;
     }
 
@@ -1194,7 +1194,7 @@ static int
 growchanDataArray()
 {
     if (chanAllocSize == chanIndex) {
-        channels = (struct chanData *)realloc(channels,( sizeof(struct chanData) 
+        channels = (struct chanData *)realloc(channels,( sizeof(struct chanData)
                       * (chanGrowSize + chanAllocSize)));
         if (channels == NULL)
             return (-1);
