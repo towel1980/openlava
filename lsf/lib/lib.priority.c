@@ -18,7 +18,7 @@
  */
 #include <errno.h>
 #include <unistd.h>
-#include "../../openlavaconfig.h"
+
 
 #define SYSV_NICE_0              20
 #define MAX_PRIORITY             20

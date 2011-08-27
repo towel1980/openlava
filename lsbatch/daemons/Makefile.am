@@ -10,14 +10,14 @@ mbd.comm.c mbd.host.c mbd.jgrp.c mbd.main.c mbd.proxy.c mbd.resource.c \
 mbd.dep.c mbd.init.c mbd.job.c mbd.misc.c mbd.queue.c mbd.serv.c \
 mbd.grp.c mbd.jarray.c mbd.log.c mbd.policy.c mbd.requeue.c mbd.window.c \
 elock.c misc.c mail.c daemons.c daemons.xdr.c
-mbatchd_LDADD = $(top_srcdir)/lsbatch/lib/liblsbatch.a \
-                $(top_srcdir)/lsf/lib/liblsf.a \
-                $(top_srcdir)/lsf/intlib/liblsfint.a -lnsl -lm
+mbatchd_LDADD = ../lib/liblsbatch.a \
+                ../../lsf/lib/liblsf.a \
+                ../../lsf/intlib/liblsfint.a -lnsl -lm
 
 sbatchd_SOURCES = sbd.comm.c sbd.file.c sbd.job.c sbd.main.c \
                   sbd.misc.c sbd.policy.c sbd.serv.c sbd.sig.c sbd.xdr.c \
                   elock.c mail.c misc.c daemons.c daemons.xdr.c
-sbatchd_LDADD = $(top_srcdir)/lsbatch/lib/liblsbatch.a \
-                $(top_srcdir)/lsf/lib/liblsf.a \
-                $(top_srcdir)/lsf/intlib/liblsfint.a -lnsl -lm
+sbatchd_LDADD = ../lib/liblsbatch.a \
+                ../../lsf/lib/liblsf.a \
+                ../../lsf/intlib/liblsfint.a -lnsl -lm
 

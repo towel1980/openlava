@@ -18,7 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include "../../openlavaconfig.h"
+
 
 void
 millisleep_(int msec)

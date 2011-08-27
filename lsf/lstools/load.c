@@ -23,7 +23,7 @@
 #include <malloc.h>
 #include <ctype.h>
 #include "../lsf.h"
-#include "../../openlavaconfig.h"
+
 #include "../intlib/intlibout.h"
 #define MAXFIELDSIZE 20
 int num_loadindex;

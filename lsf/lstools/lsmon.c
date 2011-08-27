@@ -30,7 +30,7 @@
 #include <rpc/xdr.h>
 
 #include "../lsf.h"
-#include "../../openlavaconfig.h"
+
 #include "../lib/lsi18n.h"
 
 extern void (*Signal_ (int, void (*)(int)))(int);

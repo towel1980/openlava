@@ -18,7 +18,7 @@
 #include "lib.h"
 
 #include <signal.h>
-#include "../../openlavaconfig.h"
+
 
 static int errno_map[] = {    0,           
 				  EPERM,

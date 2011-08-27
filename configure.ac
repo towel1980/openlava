@@ -59,7 +59,8 @@ AC_CONFIG_FILES([
 	lsbatch/man1/Makefile    \
 	lsbatch/man5/Makefile    \
 	lsbatch/man8/Makefile    \
-	eauth/Makefile]
+	eauth/Makefile           \
+	scripts/Makefile]
 )
 
 AC_OUTPUT

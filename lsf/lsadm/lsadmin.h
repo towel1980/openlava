@@ -22,7 +22,7 @@
 #include <string.h>
 
 
-#include "../../openlavaconfig.h"
+
 #include "../lsf.h"
 #include "../lib/lproto.h"
 

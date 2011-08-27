@@ -1,3 +1,7 @@
+2011-08-27  David Bigagli  <david@openlava.net>
+
+	* openlavaconfig.h Removed it from the top directory and merge its content into lsf.h which is the openlava master header file. In this way the repository is more GNU like as well.
+
 2011-08-23  David Bigagli  <david@openlava.net>
 
 	* GNU build system. Switched openlava from home made makefiles to the GNU build system.

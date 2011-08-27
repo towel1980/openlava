@@ -5,3 +5,5 @@ aclocal
 autoconf
 autoheader
 automake --add-missing --copy
+set +x
+./configure $1

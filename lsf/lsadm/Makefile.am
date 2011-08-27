@@ -3,8 +3,9 @@
 #
 INCLUDES = -I$(top_srcdir)/lsf
 
-bin_PROGRAMS = lsadm
+bin_PROGRAMS = lsadmin
 
-lsadm_SOURCES = lsadmin.c startup.c cmd.limcontrol.c cmd.rescontrol.c
-lsadm_LDADD =  $(top_srcdir)/lsf/lib/liblsf.a \
-	$(top_srcdir)/lsf/intlib/liblsfint.a
+lsadmin_SOURCES = lsadmin.c startup.c cmd.limcontrol.c \
+                   cmd.rescontrol.c lsadmin.h
+lsadmin_LDADD =  ../lib/liblsf.a ../intlib/liblsfint.a
+

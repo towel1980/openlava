@@ -21,7 +21,6 @@
 #include "../lsf/lib/lib.h"
 #include "../lsf/intlib/intlibout.h"
 #include "../lsf/lsf.h"
-#include "../openlavaconfig.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
