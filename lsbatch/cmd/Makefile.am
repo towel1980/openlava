@@ -9,8 +9,9 @@ bpeek brun busers bhosts bmig bqueues bsub bjobs bmod \
 brequeue bswitch 
 
 badmin_SOURCES = badmin.c cmd.bqc.c cmd.hist.c \
-	cmd.bhc.c cmd.misc.c cmd.job.c cmd.prt.c
-badmin_LDADD = $(top_srcdir)/lsf/lsadm/startup.o \
+	cmd.bhc.c cmd.misc.c cmd.job.c cmd.prt.c \
+	badmin.h cmd.h
+badmin_LDADD = ../../lsf/lsadm/startup.o \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
@@ -21,46 +22,46 @@ bkill_LDADD = \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bparams_SOURCES = bparams.c
+bparams_SOURCES = bparams.c cmd.h
 bparams_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
 brestart_SOURCES = brestart.c cmd.sub.c cmd.jobid.c \
-	cmd.err.c
+	cmd.err.c cmd.h
 brestart_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
 btop_SOURCES = btop.c cmd.move.c cmd.jobid.c cmd.misc.c \
-	 cmd.prt.c cmd.err.c
+	 cmd.prt.c cmd.err.c cmd.h
 btop_LDADD =  \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
 bbot_SOURCES = bbot.c cmd.move.c cmd.jobid.c cmd.misc.c \
-	 cmd.prt.c cmd.err.c
+	 cmd.prt.c cmd.err.c cmd.h
 bbot_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bmgroup_SOURCES = bmgroup.c cmd.misc.c
+bmgroup_SOURCES = bmgroup.c cmd.misc.c cmd.h
 bmgroup_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bpeek_SOURCES = bpeek.c cmd.err.c cmd.jobid.c cmd.misc.c cmd.prt.c
+bpeek_SOURCES = bpeek.c cmd.err.c cmd.jobid.c cmd.misc.c cmd.prt.c cmd.h
 bpeek_LDADD =  \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-brun_SOURCES = brun.c cmd.jobid.c cmd.err.c
+brun_SOURCES = brun.c cmd.jobid.c cmd.err.c cmd.h
 brun_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
@@ -72,50 +73,50 @@ busers_LDADD =  \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bhosts_SOURCES = bhosts.c cmd.prt.c cmd.misc.c
+bhosts_SOURCES = bhosts.c cmd.prt.c cmd.misc.c cmd.h
 bhosts_LDADD =  \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bmig_SOURCES = bmig.c cmd.jobid.c cmd.err.c
+bmig_SOURCES = bmig.c cmd.jobid.c cmd.err.c cmd.h
 bmig_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bqueues_SOURCES = bqueues.c cmd.prt.c cmd.misc.c
+bqueues_SOURCES = bqueues.c cmd.prt.c cmd.misc.c cmd.h
 bqueues_LDADD = \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bsub_SOURCES = bsub.c cmd.sub.c cmd.jobid.c cmd.err.c
+bsub_SOURCES = bsub.c cmd.sub.c cmd.jobid.c cmd.err.c cmd.h
 bsub_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
 bjobs_SOURCES = bjobs.c cmd.prt.c cmd.err.c cmd.job.c \
-	cmd.jobid.c cmd.misc.c
+	cmd.jobid.c cmd.misc.c cmd.h
 bjobs_LDADD =  \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bmod_SOURCES = bmod.c cmd.sub.c cmd.jobid.c cmd.err.c
+bmod_SOURCES = bmod.c cmd.sub.c cmd.jobid.c cmd.err.c cmd.h
 bmod_LDADD =  \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-brequeue_SOURCES = brequeue.c cmd.jobid.c cmd.err.c
+brequeue_SOURCES = brequeue.c cmd.jobid.c cmd.err.c cmd.h
 brequeue_LDADD =   \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
-bswitch_SOURCES = bswitch.c cmd.jobid.c cmd.err.c
+bswitch_SOURCES = bswitch.c cmd.jobid.c cmd.err.c cmd.h
 bswitch_LDADD =  \
 	../lib/liblsbatch.a \
 	../../lsf/lib/liblsf.a \

@@ -17,3 +17,8 @@ etc_DATA = openlava openlava.sh openlava.csh
 # kept.
 install-data-local:
 	mkdir -p $(prefix)/work
+
+# Tell automake to install during distcheck the
+# configuration and etc files. 
+#
+EXTRA_DIST = $(conf_DATA) $(etc_DATA)
