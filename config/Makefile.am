@@ -4,6 +4,15 @@
 
 # Install configuration files for openlava base and batch 
 # in the conf directory.
+
+noinst_SCRIPTS = lsf.conf
+CLEANFILES = $(bin_SCRIPTS)
+
+do_subst = sed -e 's,[@]prefix[@],$(prefix),g'
+
+lsf.conf :
+	$(do_subst) < lsf.conf.template > lsf.conf
+
 confdir = $(prefix)/conf
 conf_DATA = lsf.conf lsf.cluster.openlava lsf.shared lsf.task \
             lsb.hosts lsb.params lsb.queues lsb.users 
