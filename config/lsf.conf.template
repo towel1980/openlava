@@ -5,13 +5,13 @@
 # This file is designed as Bourne Shell rc file 
 # and it is sourced by all openlava components.
 #
-LSF_SERVERDIR=@prefix@/etc
+LSF_ENVDIR=@prefix@/etc
+LSF_SERVERDIR=@prefix@/sbin
 LSB_SHAREDIR=@prefix@/work
-LSF_ENVDIR=@prefix@/conf
 
 # Configuration directories for base and batch
-LSF_CONFDIR=@prefix@/conf
-LSB_CONFDIR=@prefix@/conf
+LSF_CONFDIR=@prefix@/etc
+LSB_CONFDIR=@prefix@/etc
 
 # Daemon log messages
 LSF_LOGDIR=@prefix@/log

@@ -21,4 +21,6 @@ lib.channel.h lib.h lib.osal.h lib.pim.h  lib.rcp.h lib.rmi.h lib.table.h \
 lib.xdr.h lib.xdrres.h lsi18n.h lib.conf.h lib.hdr.h lib.osux.h lib.queue.h \
 lib.rf.h lib.so.h lib.words.h lib.xdrlim.h lproto.h  mls.h
 
-
+etags:
+	etags ../*.h *.[hc] ../intlib/*.[hc] ../lim/*.[hc] \
+	../res/*.[hc] ../lstools/*.[hc]

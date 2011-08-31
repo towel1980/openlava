@@ -3,7 +3,6 @@
 #
 INCLUDES = -I$(top_srcdir)/lsf -I$(top_srcdir)/lsf/lib \
            -I$(top_srcdir)/lsbatch -I./
-#AM_LDFLAGS = $(top_srcdir)/lsf/intlib/liblsfint.a
 
 lib_LIBRARIES = liblsbatch.a
 
@@ -15,3 +14,6 @@ lsb.mig.c lsb.msg.c lsb.queues.c lsb.rexecv.c \
 lsb.sub.c lsb.err.c lsb.init.c lsb.misc.c lsb.params.c lsb.reason.c \
 lsb.sig.c lsb.switch.c \
 lsb.conf.h  lsb.h  lsb.log.h  lsb.sig.h  lsb.spool.h  lsb.xdr.h
+
+etags :
+	etags *.[hc] ../*.h ../lib/*.[hc] ../../lsf/*.h ../../intlib/*.[hc]

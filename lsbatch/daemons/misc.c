@@ -284,6 +284,8 @@ safeSave(char *str)
 
 }
 
+/* my_malloc()
+ */
 void *
 my_malloc(int len, char *fileName)
 {
@@ -291,14 +293,24 @@ my_malloc(int len, char *fileName)
 
 }
 
+/* my_calloc()
+ */
 void *
-my_calloc(int nelem, int esize, char *fileName)
+my_calloc(int nelem, int esize, const char *caller)
 {
-    return(calloc(nelem, esize));
+    void   *p;
+
+    p = calloc(nelem, esize);
+    if (!p) {
+        ls_syslog(LOG_ERR, "\
+%s: failed %M %s", __FUNCTION__, (caller ? caller : "unknown"));
+    }
+
+    return p;
 }
 
 void
-daemon_doinit (void)
+daemon_doinit(void)
 {
 
     if (! daemonParams[LSB_CONFDIR].paramValue ||

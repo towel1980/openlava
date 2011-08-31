@@ -122,3 +122,7 @@ bswitch_LDADD =  \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
+etags :
+	etags *.[hc] ../*.h ../lib/*.[hc] ../../lsf/*.h ../../lib/*.[hc] \
+	../../intlib/*.[hc]
+
