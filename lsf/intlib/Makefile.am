@@ -4,7 +4,7 @@
 
 INCLUDES = -I../
 
-lib_LIBRARIES = liblsfint.a
+noinst_LIBRARIES = liblsfint.a
 
 liblsfint_a_SOURCES = admin.c cmdtime.c jidx.c lsftcl.c resreq.c timers.c wait.c \
            bitset.c conf.c list.c misc.c userok.c window.c \
