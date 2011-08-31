@@ -46,7 +46,7 @@ case "$opcode" in
         ;;
 
   'start')
-        LSF_CONF=$OPENLAVA_TOP/conf/lsf.conf
+        LSF_CONF=$OPENLAVA_TOP/etc/lsf.conf
 
         if [ -f $LSF_CONF ]
         then

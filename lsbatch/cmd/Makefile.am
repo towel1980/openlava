@@ -122,6 +122,12 @@ bswitch_LDADD =  \
 	../../lsf/lib/liblsf.a \
 	../../lsf/intlib/liblsfint.a -lnsl -lm
 
+install-data-local:
+	cd "$(DESTDIR)$(bindir)" && ln -sf bkill bstop
+	cd "$(DESTDIR)$(bindir)" && ln -sf bkill bresume
+	cd "$(DESTDIR)$(bindir)" && ln -sf bkill bchkpnt
+	cd "$(DESTDIR)$(bindir)" && ln -sf bmgroup bugroup
+
 etags :
 	etags *.[hc] ../*.h ../lib/*.[hc] ../../lsf/*.h ../../lib/*.[hc] \
 	../../intlib/*.[hc]

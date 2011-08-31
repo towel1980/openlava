@@ -17,6 +17,7 @@ AC_PROG_INSTALL
 AC_PROG_RANLIB
 AC_PROG_YACC
 AC_PROG_LEX
+AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
 # Force warnings on for gcc
@@ -60,7 +61,8 @@ AC_CONFIG_FILES([
 	lsbatch/man5/Makefile    \
 	lsbatch/man8/Makefile    \
 	eauth/Makefile           \
-	scripts/Makefile]
+	scripts/Makefile         \
+	chkpnt/Makefile]
 )
 
 AC_OUTPUT
