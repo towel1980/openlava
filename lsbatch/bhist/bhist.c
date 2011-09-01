@@ -1113,10 +1113,8 @@ logfile_check(struct bhistReq *Req)
     int lineNum = 0, pos = 0;
     LS_STAT_T statBuf;
     struct eventRec *log;
-
     static char *envdir;
     static char *clusterName;
-
     char ch, *sp;
     struct eventLogFile eLogFile;
     struct eventLogHandle eLogHandle;
@@ -1129,16 +1127,14 @@ logfile_check(struct bhistReq *Req)
         exit(-1);
     }
 
-
     if (!(Req->options & OPT_ELOGFILE)) {
         if ((clusterName = ls_getclustername()) == NULL ) {
             ls_perror("ls_getclustername()");
             exit(-1);
         }
 
-        sprintf(workDir, "%s/%s/logdir", bhistParams[LSB_SHAREDIR].paramValue,
-                clusterName);
-
+        sprintf(workDir, "\
+%s/logdir", bhistParams[LSB_SHAREDIR].paramValue);
 
         readFromHeadFlag = 1;
         readEventFromHead(workDir, Req);
@@ -1175,9 +1171,10 @@ logfile_check(struct bhistReq *Req)
 
         maxEventFile = 0;
         do {
-            sprintf(eventFileName, "%s/%s/logdir/lsb.events.%d",
+            sprintf(eventFileName, "\
+%s/logdir/lsb.events.%d",
                     bhistParams[LSB_SHAREDIR].paramValue,
-                    clusterName, ++maxEventFile);
+                    ++maxEventFile);
         } while (stat(eventFileName, &statBuf) == 0);
 
 	if (Req->numLogFile >= maxEventFile) {
