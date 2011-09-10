@@ -21,7 +21,7 @@
 #define SIGEMT SIGBUS
 #define SIGLOST SIGIO
 
-#include "../../config.h"
+
 
 #if !defined(SIGWINCH) && defined(SIGWINDOW)
 #    define SIGWINCH SIGWINDOW

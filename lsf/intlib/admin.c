@@ -26,7 +26,7 @@
 
 #include "intlib.h"
 #include "intlibout.h"
-#include "../../config.h"
+
 #include "../lib/lsi18n.h"
 #include "../lib/mls.h"
 #define BADCH   ":"

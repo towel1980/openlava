@@ -32,7 +32,7 @@
 #ifndef __XDR_HEADER__
 #include <rpc/xdr.h>
 #endif
-#include "../../config.h"
+
 
 #include <sys/ioctl.h>
 

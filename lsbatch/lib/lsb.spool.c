@@ -29,7 +29,6 @@
 
 #include "lsb.h"
 #include "lsb.spool.h"
-#include "../cmd/cmd.h"
 #include "../../lsf/lib/lproto.h"
 #include "../../lsf/lsf.h"
 #include "../../lsf/lib/lib.rcp.h"

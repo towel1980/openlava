@@ -635,8 +635,6 @@ main(int argc, char **argv)
                 case LIM_SERV_AVAIL:
                     servAvailReq(&xdrs, fromHost, &from, &reqHdr);
                     break;
-
-
                 case LIM_LOAD_UPD:
                     rcvLoad(&xdrs, &from, &reqHdr);
                     break;

@@ -31,7 +31,7 @@
 #include "../lsf.h"
 #include "../lib/lproto.h"
 #include "../intlib/intlibout.h"
-#include "../../config.h"
+
 
 #define NL_SETN         (28)
 

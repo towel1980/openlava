@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "../lsf.h"
-#include "../../config.h"
+
 #include "../lib/lproto.h"
 #define MAXLISTSIZE 256
 

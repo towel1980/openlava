@@ -29,7 +29,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include "../lsf.h"
-#include "../../config.h"
+
 #include "lsi18n.h"
 #include "mls.h"
 

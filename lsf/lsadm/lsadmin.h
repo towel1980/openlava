@@ -22,7 +22,7 @@
 #include <string.h>
 
 
-#include "../../config.h"
+
 #include "../lsf.h"
 #include "../lib/lproto.h"
 

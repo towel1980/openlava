@@ -1,3 +1,15 @@
+2011-09-09  David Bigagli  <david@openlava.net>
+
+	* openlava.spec Updated the spec file to reflect the changes in teh build system. The ownership of all files changed, no longer root, the entire installation tree is owned by the openlava user. The daemons to run in multi user mode must still be started at root which is guaranteed at boot by init.
+
+2011-08-27  David Bigagli  <david@openlava.net>
+
+	* openlavaconfig.h Removed it from the top directory and merge its content into lsf.h which is the openlava master header file. In this way the repository is more GNU like as well.
+
+2011-08-23  David Bigagli  <david@openlava.net>
+
+	* GNU build system. Switched openlava from home made makefiles to the GNU build system.
+
 2011-07-20  David Bigagli  <david@openlava.net>
 
 	* scripts/Makefile: added the installation

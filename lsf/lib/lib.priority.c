@@ -1,4 +1,5 @@
-/* $Id: lib.priority.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,14 +18,14 @@
  */
 #include <errno.h>
 #include <unistd.h>
-#include "../../config.h"
 
-#define SYSV_NICE_0	 	 20     
-#define MAX_PRIORITY	 	 20	
-#define MIN_PRIORITY		-20	
 
-#define LSF_TO_SYSV(x)		((x) + SYSV_NICE_0)
-#define SYSV_TO_LSF(x)		((x) - SYSV_NICE_0)
+#define SYSV_NICE_0              20
+#define MAX_PRIORITY             20
+#define MIN_PRIORITY            -20
+
+#define LSF_TO_SYSV(x)          ((x) + SYSV_NICE_0)
+#define SYSV_TO_LSF(x)          ((x) - SYSV_NICE_0)
 
 int
 ls_setpriority(int newPriority)
@@ -32,19 +33,19 @@ ls_setpriority(int newPriority)
     int increment;
 
     if ( newPriority > MAX_PRIORITY * 2) {
-	newPriority = MAX_PRIORITY * 2;
+        newPriority = MAX_PRIORITY * 2;
     } else if ( newPriority < MIN_PRIORITY * 2) {
-	newPriority = MIN_PRIORITY * 2;
+        newPriority = MIN_PRIORITY * 2;
     }
     increment = newPriority;
 
-    errno = 0;	
+    errno = 0;
 
 
     if (-1 == nice(increment) && (0 != errno)) {
-	return FALSE;
+        return 0;
     }
 
-    return TRUE;
-} 
+    return 1;
+}
 

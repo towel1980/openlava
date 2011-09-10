@@ -28,7 +28,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include "../lsf.h"
-#include "../../config.h"
+
 #include "../lib/lsi18n.h" 
 
 

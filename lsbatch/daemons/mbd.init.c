@@ -88,10 +88,10 @@ extern int rusageUpdateRate;
 extern int rusageUpdatePercent;
 
 extern void initTab (struct hTab *tabPtr);
-static void readParamConf (int);
-static int  readHostConf (int);
-static void readUserConf (int);
-static void readQueueConf (int);
+static void readParamConf(int);
+static int  readHostConf(int);
+static void readUserConf(int);
+static void readQueueConf(int);
 
 static int isHostAlias (char *grpName);
 static int searchAll (char *);
@@ -440,10 +440,9 @@ minit (int mbdInitFlags)
         }
 
         if (!lsb_CheckMode) {
-            TIMEIT(0,init_log(),"init_log()");
+            TIMEIT(0, init_log(), "init_log()");
         }
     }
-
 
     getMaxCpufactor();
 
@@ -453,27 +452,31 @@ minit (int mbdInitFlags)
 static int
 readHostConf (int mbdInitFlags)
 {
-    static char fname[] = "readHostConf";
-    static char fileName[MAXFILENAMELEN];
+    char file[PATH_MAX];
 
-    if (mbdInitFlags == FIRST_START || mbdInitFlags == RECONFIG_CONF)  {
-        sprintf(fileName, "%s/%s/configdir/lsb.hosts",
-                daemonParams[LSB_CONFDIR].paramValue, clusterName);
-        hostFileConf = getFileConf (fileName, PARAM_FILE);
+    if (mbdInitFlags == FIRST_START
+        || mbdInitFlags == RECONFIG_CONF)  {
+
+        sprintf(file, "%s/lsb.hosts", daemonParams[LSB_CONFDIR].paramValue);
+
+        hostFileConf = getFileConf(file, HOST_FILE);
         if (hostFileConf == NULL && lserrno == LSE_NO_FILE) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6122,
-                                             "%s: File <%s> can not be found, all hosts known by LSF will be used"), fname, fileName); /* catgets 6122 */
+            ls_syslog(LOG_ERR, "\
+%s: lsb.hosts not found %M, all hosts known by LSF will be used",
+                      __FUNCTION__);
             addDefaultHost();
             return(0);
         }
     } else {
         if (hostFileConf == NULL) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6122,
-                                             "%s: File <%s> can not be found, all hosts known by LSF will be used"), fname, fileName);
+            ls_syslog(LOG_ERR, "\
+%s: lsb.hosts not found, all hosts known by LSF will be used",
+                      __FUNCTION__);
             addDefaultHost();
             return(0);
         }
     }
+
     fillClusterConf(&clusterConf);
     /* Invoke the library lsb.conf.c to read the
      * the lsb.hosts file.
@@ -482,7 +485,7 @@ readHostConf (int mbdInitFlags)
                                  allLsInfo,
                                  CONF_CHECK,
                                  &clusterConf)) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "lsb_readhost");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, __FUNCTION__, "lsb_readhost");
         if (lsb_CheckMode) {
             lsb_CheckError = FATAL_ERR;
             return -1;
@@ -563,10 +566,10 @@ initHData(struct hData *hData)
     return hData;
 }
 
-static
-void initThresholds (float loadSched[], float loadStop[])
+static void
+initThresholds(float loadSched[], float loadStop[])
 {
-    int i;
+    int   i;
 
     for (i = 0; i < allLsInfo->numIndx; i++) {
         if (allLsInfo->resTable[i].orderType == INCR) {
@@ -580,53 +583,49 @@ void initThresholds (float loadSched[], float loadStop[])
 }
 
 static void
-readUserConf (int mbdInitFlags)
+readUserConf(int mbdInitFlags)
 {
-    static char fname[] = "readUserConf";
-    static char fileName[MAXFILENAMELEN];
+    char file[PATH_MAX];
     struct sharedConf sharedConf;
-    hEnt   *userEnt;
+    hEnt *ent;
 
-    memset((void *)&sharedConf, 0, sizeof(struct sharedConf));
+    memset(&sharedConf, 0, sizeof(struct sharedConf));
 
-    if (mbdInitFlags == FIRST_START ||
-        mbdInitFlags == RECONFIG_CONF) {
+    if (mbdInitFlags == FIRST_START
+        || mbdInitFlags == RECONFIG_CONF) {
 
-        sprintf(fileName, "%s/%s/configdir/lsb.users",
-                daemonParams[LSB_CONFDIR].paramValue,
-                clusterName);
-
-        userFileConf = getFileConf (fileName, USER_FILE);
+        sprintf(file, "%s/lsb.users", daemonParams[LSB_CONFDIR].paramValue);
+        userFileConf = getFileConf(file, USER_FILE);
         if (userFileConf == NULL && lserrno == LSE_NO_FILE) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6125,
-                                             "%s: File <%s> can not be found, default user will be used"), /* catgets 6125 */
-                      fname,
-                      fileName);
 
-            userConf = (struct userConf *)my_calloc(1, sizeof(struct userConf),
-                                                    fname);
+            ls_syslog(LOG_ERR, "\
+%s: lsb.users not found %M, default user will be used", __FUNCTION__);
+            userConf = my_calloc(1,
+                                 sizeof(struct userConf),
+                                 __FUNCTION__);
             goto defaultUser;
         }
-    } else if (userFileConf == NULL) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6125,
-                                         "%s: File <%s> can not be found, default user will be used"),
-                  fname,
-                  fileName);
 
-        userConf = (struct userConf *)my_calloc(1, sizeof(struct userConf),
-                                                fname);
+    } else if (userFileConf == NULL) {
+
+        ls_syslog(LOG_ERR, "\
+%s: lsb.users not found %M, default user will be used",
+                  __FUNCTION__);
+
+        userConf = my_calloc(1,
+                             sizeof(struct userConf),
+                             __FUNCTION__);
         goto defaultUser;
     }
 
-
     fillClusterConf (&clusterConf);
-
-
     fillSharedConf( &sharedConf);
 
-    if ((userConf = lsb_readuser_ex(userFileConf, CONF_CHECK,
-                                    &clusterConf, &sharedConf)) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "lsb_readuser_ex");
+    if ((userConf = lsb_readuser_ex(userFileConf,
+                                    CONF_CHECK,
+                                    &clusterConf,
+                                    &sharedConf)) == NULL) {
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __FUNCTION__, "lsb_readuser_ex");
         if (lsb_CheckMode) {
             lsb_CheckError = FATAL_ERR;
             FREEUP(sharedConf.clusterName);
@@ -649,9 +648,9 @@ readUserConf (int mbdInitFlags)
 
 defaultUser:
 
-    if (!defUser) {
-        userEnt = h_getEnt_(&uDataList, "default");
-        if (userEnt == NULL) {
+    if (! defUser) {
+        ent = h_getEnt_(&uDataList, "default");
+        if (ent == NULL) {
             addUserData ("default",
                          INFINIT_INT,
                          INFINIT_FLOAT,
@@ -663,41 +662,45 @@ defaultUser:
     }
 
     FREEUP(sharedConf.clusterName);
-    return;
-
 }
 
 static void
-readQueueConf (int mbdInitFlags)
+readQueueConf(int mbdInitFlags)
 {
-    static char fname[] = "readQueueConf";
-    static char fileName[MAXFILENAMELEN], *cp, *word;
-    struct qData *qp = NULL;
-    int numDefQue = 0, numQueues = 0;
+    char file[PATH_MAX];
+    char *cp;
+    char *word;
+    struct qData *qp;
+    int numDefQue;
+    int numQueues;
     struct sharedConf sharedConf;
 
-    if (mbdInitFlags == FIRST_START || mbdInitFlags == RECONFIG_CONF) {
-        sprintf(fileName, "%s/%s/configdir/lsb.queues",
-                daemonParams[LSB_CONFDIR].paramValue, clusterName);
-        queueFileConf = getFileConf (fileName, QUEUE_FILE);
+    if (mbdInitFlags == FIRST_START
+        || mbdInitFlags == RECONFIG_CONF) {
+
+        sprintf(file, "%s/lsb.queues", daemonParams[LSB_CONFDIR].paramValue);
+        queueFileConf = getFileConf(file, QUEUE_FILE);
         if (queueFileConf == NULL && lserrno == LSE_NO_FILE) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6128,
-                                             "%s: File <%s> can not be found, default queue will be used"), fname, fileName); /* catgets 6128 */
+            ls_syslog(LOG_ERR, "\
+%s: lsb.queues not found %M, using default queue",
+                      __FUNCTION__);
             createDefQueue ();
             return;
         }
     } else if (queueFileConf == NULL) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6128,
-                                         "%s: File <%s> can not be found, default queue will be used"), fname, fileName);
+        ls_syslog(LOG_ERR, "\
+%s: lsb.queues not be found, using default queue", __FUNCTION__);
         createDefQueue ();
         return;
     }
 
     fillSharedConf(&sharedConf);
-    if ((queueConf = lsb_readqueue (queueFileConf,
-                                    allLsInfo, CONF_CHECK| CONF_RETURN_HOSTSPEC, &sharedConf)) == NULL) {
+    if ((queueConf = lsb_readqueue(queueFileConf,
+                                   allLsInfo,
+                                   CONF_CHECK| CONF_RETURN_HOSTSPEC,
+                                   &sharedConf)) == NULL) {
         if (lsberrno == LSBE_CONF_FATAL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "lsb_readqueue");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __FUNCTION__, "lsb_readqueue");
             if (lsb_CheckMode) {
                 lsb_CheckError = FATAL_ERR;
                 return;
@@ -705,8 +708,8 @@ readQueueConf (int mbdInitFlags)
                 mbdDie(MASTER_FATAL);
         } else {
             lsb_CheckError = WARNING_ERR;
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6131,
-                                             "%s: lsb_readqueue() failded, default queue will be used"), fname); /* catgets 6131 */
+            ls_syslog(LOG_ERR, "\
+%s: lsb_readqueue() failed %M, using default queue", __FUNCTION__);
             createDefQueue ();
             return;
         }
@@ -715,28 +718,30 @@ readQueueConf (int mbdInitFlags)
     if (lsberrno == LSBE_CONF_WARNING)
         lsb_CheckError = WARNING_ERR;
 
+    addQData(queueConf, mbdInitFlags);
 
-    addQData (queueConf, mbdInitFlags);
-
-
+    numQueues = 0;
     for (qp = qDataList->forw; qp != qDataList; qp = qp->forw)
         if (qp->flags & QUEUE_UPDATE)
             numQueues++;
 
     if (!numQueues) {
-        ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 6132,
-                                             "%s: File %s/%s/configdir/lsb.queues: No valid queue defined"), fname, daemonParams[LSB_CONFDIR].paramValue, clusterName); /* catgets 6132 */
+        ls_syslog(LOG_WARNING, "\
+%s: No valid queue defined", __FUNCTION__);
         lsb_CheckError = WARNING_ERR;
     }
 
-
+    numDefQue = 0;
     if (numQueues && defaultQueues) {
+
         cp = defaultQueues;
+
         while ((word = getNextWord_(&cp))) {
-            if ((qp = getQueueData(word)) == NULL ||
-                !(qp->flags & QUEUE_UPDATE)) {
-                ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 6133,
-                                                     "%s: File %s/%s/configdir/lsb.params: Invalid queue name <%s> specified by parameter DEFAULT_QUEUE; ignoring <%s>"), fname, daemonParams[LSB_CONFDIR].paramValue, clusterName, word, word); /* catgets 6133 */
+            if ((qp = getQueueData(word)) == NULL
+                || !(qp->flags & QUEUE_UPDATE)) {
+                ls_syslog(LOG_WARNING, "\
+%s: Invalid queue name specified by parameter DEFAULT_QUEUE; ignoring <%s>",
+                          __FUNCTION__, word);
                 lsb_CheckError = WARNING_ERR;
             } else {
                 qp->qAttrib |= Q_ATTRIB_DEFAULT;
@@ -748,15 +753,16 @@ readQueueConf (int mbdInitFlags)
     if (numDefQue)
         return;
 
-    ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 6134,
-                                         "%s: File %s/%s/configdir/lsb.queues: No valid default queue defined"), fname, daemonParams[LSB_CONFDIR].paramValue, clusterName); /* catgets 6134 */
+    ls_syslog(LOG_WARNING, "\
+%s: lsb.queues: No valid default queue defined", __FUNCTION__);
+
     lsb_CheckError = WARNING_ERR;
 
-
-
     if ((qp = getQueueData("default")) != NULL) {
-        ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 6135,
-                                             "%s: Using the default queue <default> provided by lsb.queues configuration file"), fname);  /* catgets 6135 */
+        ls_syslog(LOG_WARNING, "\
+%s: Using the default queue <default> provided by lsb.queues ",
+                  __FUNCTION__);
+
         qp->qAttrib |= Q_ATTRIB_DEFAULT;
         FREEUP (defaultQueues);
         defaultQueues = safeSave ("default");
@@ -764,8 +770,7 @@ readQueueConf (int mbdInitFlags)
         return;
     }
 
-    createDefQueue ();
-    return;
+    createDefQueue();
 
 }
 static void
@@ -1447,50 +1452,53 @@ parseGroups (int groupType, struct gData **group, char *line, char *filename)
     return;
 }
 
-
+/* readParamConf()
+ */
 static void
-readParamConf (int mbdInitFlags)
+readParamConf(int mbdInitFlags)
 {
-    static char fileName[MAXFILENAMELEN];
-    static char fname[] = "readParamFile";
+    char file[PATH_MAX];
 
     setDefaultParams();
 
-    if (mbdInitFlags == FIRST_START || mbdInitFlags == RECONFIG_CONF) {
+    if (mbdInitFlags == FIRST_START
+        || mbdInitFlags == RECONFIG_CONF) {
 
-        sprintf(fileName, "%s/%s/configdir/lsb.params",
-                daemonParams[LSB_CONFDIR].paramValue, clusterName);
-        paramFileConf = getFileConf (fileName, PARAM_FILE);
-        if (paramFileConf == NULL && lserrno == LSE_NO_FILE) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6173,"\
-%s: File <%s> can not be found, default parameters will be used"),
-                      fname, fileName);  /* catgets 6173 */
+        sprintf(file, "%s/lsb.params", daemonParams[LSB_CONFDIR].paramValue);
+
+        paramFileConf = getFileConf(file, PARAM_FILE);
+        if (paramFileConf == NULL
+            && lserrno == LSE_NO_FILE) {
+            ls_syslog(LOG_ERR, "\
+%s: lsb.params can not be found %M, using default parameters",
+                      __FUNCTION__);
             return;
         }
     }
 
     if ((paramConf = lsb_readparam(paramFileConf)) == NULL) {
+
         if (lsberrno == LSBE_CONF_FATAL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "lsb_readparam");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __FUNCTION__, "lsb_readparam");
             if (lsb_CheckMode) {
                 lsb_CheckError = FATAL_ERR;
                 return;
-            } else
-                mbdDie(MASTER_FATAL);
-        } else {
-            if (lsberrno == LSBE_CONF_WARNING)
-                lsb_CheckError = WARNING_ERR;
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "lsb_readparam");
-            return;
+            }
+
+            mbdDie(MASTER_FATAL);
         }
+
+        if (lsberrno == LSBE_CONF_WARNING)
+            lsb_CheckError = WARNING_ERR;
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, __FUNCTION__, "lsb_readparam");
+
+        return;
     }
 
     if (lsberrno == LSBE_CONF_WARNING)
         lsb_CheckError = WARNING_ERR;
 
     setParams(paramConf);
-
-    return;
 }
 
 int

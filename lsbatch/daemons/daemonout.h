@@ -21,7 +21,7 @@
 
 #include "../../lsf/lsf.h"
 #include "../lsbatch.h"
-#include "../../config.h"
+
 #include "../../lsf/lib/lib.hdr.h"
 #include "../../lsf/lib/lproto.h"
 #include "../lib/lsb.sig.h"

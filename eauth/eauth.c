@@ -21,7 +21,6 @@
 #include "../lsf/lib/lib.h"
 #include "../lsf/intlib/intlibout.h"
 #include "../lsf/lsf.h"
-#include "../config.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

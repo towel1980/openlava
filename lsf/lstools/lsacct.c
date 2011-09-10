@@ -27,7 +27,7 @@
 #include <netdb.h>
 #include "../lsf.h"
 #include "../lib/lsi18n.h"
-#include "../../config.h"
+
 #include "../lib/lproto.h"
 
 struct interval {
