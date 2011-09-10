@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Copyright (C) 2011 openlava foundation 
+
 # Start and stop openlava daemons
 # Run by hand or install in /etc/init.d
 # and make a symbolic link from rc3.d to it.
