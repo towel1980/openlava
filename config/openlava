@@ -20,7 +20,7 @@
 
 # This is the root of openlava installation
 # change it if installed somewhere else.
-export OPENLAVA_TOP=/opt/openlava
+export OPENLAVA_TOP=__LAVATOP__
 
 # kill the old daemons first.
 #

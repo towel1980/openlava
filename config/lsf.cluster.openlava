@@ -12,8 +12,8 @@ Administrators = openlava
 End    ClusterAdmins 
 
 Begin	Host
-HOSTNAME  model          type  server  r1m  RESOURCES
-bokis      IntelI5      linux   1      3.5    (cs)
+HOSTNAME          model          type  server  r1m  RESOURCES
+__HOSTNAME__      IntelI5      linux   1      3.5    (cs)
 End     Host
 
 Begin ResourceMap
