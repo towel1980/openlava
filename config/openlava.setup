@@ -22,16 +22,16 @@ fi
 ##
 ## install the openlava startup file
 ##
-cp $LSF_SERVERDIR/lava /etc/init.d
+cp $LSF_ENVDIR/openlava /etc/init.d
 
 ##
 ##
 ##
-cp $LSF_SERVERDIR/lava.sh /etc/profile.d
-cp $LSF_SERVERDIR/lava.csh /etc/profile.d
+cp $LSF_ENVDIR/openlava.sh /etc/profile.d
+cp $LSF_ENVDIR/openlava.csh /etc/profile.d
 
 ##
 ## configure the lava service to start at boot
 ##
-/sbin/chkconfig --add lava
-/sbin/chkconfig lava on
+/sbin/chkconfig --add openlava
+/sbin/chkconfig openlava on

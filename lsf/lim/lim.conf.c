@@ -125,6 +125,15 @@ extern char *getExtResourcesVal(char *);
 #define VCL_VERSION     2
 
 
+/* getHostType()
+ */
+char *
+getHostType(void)
+{
+
+    return HOST_TYPE_STRING;
+}
+
 int
 readShared(void)
 {
@@ -4919,13 +4928,6 @@ stripIllegalChars(char *str)
     *p = '\0';
 
     return str;
-}
-
-const char*
-getHostType()
-{
-
-    return HOST_TYPE_STRING;
 }
 
 void

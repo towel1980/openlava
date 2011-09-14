@@ -26,9 +26,9 @@
 #include <rpc/xdr.h>
 #ifdef _XOPEN_SOURCE
 #include <time.h>
-#else 
+#else
 #include <sys/time.h>
-#endif 
+#endif
 #include <sys/signal.h>
 #include <sys/file.h>
 #include <stdlib.h>
@@ -52,48 +52,48 @@
 #include "../lib/lib.xdr.h"
 
 
-#define EXCHINTVL 	    15  
-#define SAMPLINTVL           5  
-                                
-                                
-                       
-#define HOSTINACTIVITYLIMIT   5 
-#define MASTERINACTIVITYLIMIT 2 
-#define RESINACTIVITYLIMIT    9 
-#define RETRYLIMIT            2   
+#define EXCHINTVL 	    15
+#define SAMPLINTVL           5
 
-#define INTERCLUSCACHEINTVL   60 
 
-#define SBD_ACTIVE_TIME 60*5 
 
-#define KEEPTIME   2             
+#define HOSTINACTIVITYLIMIT   5
+#define MASTERINACTIVITYLIMIT 2
+#define RESINACTIVITYLIMIT    9
+#define RETRYLIMIT            2
 
-#define MAXCANDHOSTS  10 
+#define INTERCLUSCACHEINTVL   60
+
+#define SBD_ACTIVE_TIME 60*5
+
+#define KEEPTIME   2
+
+#define MAXCANDHOSTS  10
 #define MAXCLIENTS   32
 
-#define WARNING_ERR   EXIT_WARNING_ERROR  
+#define WARNING_ERR   EXIT_WARNING_ERROR
 
 #define MIN_FLOAT16  2.328306E-10
 
 #ifndef MIN
 #define MIN(x,y)        ((x) < (y) ? (x) : (y))
-#endif 
+#endif
 
 #ifndef MAX
 #define MAX(x,y)        ((x) > (y) ? (x) : (y))
-#endif 
+#endif
 
 #define DEFAULT_AFTER_HOUR "19:00-7:00 5:19:00-1:7:00"
 
 struct timewindow {
-    char       *winName;     
-    windows_t  *week[8];     
-    time_t     wind_edge;    
+    char       *winName;
+    windows_t  *week[8];
+    time_t     wind_edge;
 };
 
-#define LIM_STARTUP    0   
-#define LIM_CHECK      1   
-#define LIM_RECONFIG   2   
+#define LIM_STARTUP    0
+#define LIM_CHECK      1
+#define LIM_RECONFIG   2
 
 struct statInfo {
     short    hostNo;
@@ -102,7 +102,7 @@ struct statInfo {
     int      maxSwap;
     int      maxTmp;
     int      nDisks;
-    u_short  portno;                     
+    u_short  portno;
     char     hostType[MAXLSFNAMELEN];
     char     hostArch[MAXLSFNAMELEN];
 };
@@ -113,33 +113,33 @@ struct statInfo {
 
 struct hostNode {
     char    *hostName;
-    short   hModelNo;            
-    short   hTypeNo;             
-    short   hostNo;              
-    u_short naddr;	         	
-    u_int   *addr;               
-    struct  statInfo statInfo;   
-    char    infoValid;           
-    unsigned char protoVersion;	
-    short   availHigh;           
-    short   availLow;            
-    short   use;                 
-    int     resClass;            
-    int     DResClass;           
-    u_short nRes;                
-    char    *windows;            
-    windows_t *week[8];          
-    time_t  wind_edge;           
-    time_t  lastJackTime;        
+    short   hModelNo;
+    short   hTypeNo;
+    short   hostNo;
+    u_short naddr;
+    u_int   *addr;
+    struct  statInfo statInfo;
+    char    infoValid;
+    unsigned char protoVersion;
+    short   availHigh;
+    short   availLow;
+    short   use;
+    int     resClass;
+    int     DResClass;
+    u_short nRes;
+    char    *windows;
+    windows_t *week[8];
+    time_t  wind_edge;
+    time_t  lastJackTime;
     short hostInactivityCount;
-    int     *status;		 
+    int     *status;
     float   *busyThreshold;
-    float   *loadIndex;          
-                                     
-    float   *uloadIndex;         
-    char    conStatus;           
+    float   *loadIndex;
+
+    float   *uloadIndex;
+    char    conStatus;
     u_int   lastSeqNo;
-    int     rexPriority;         
+    int     rexPriority;
     int     infoMask;
     int     loadMask;
     int     *resBitMaps;
@@ -148,9 +148,9 @@ struct hostNode {
     struct  resourceInstance **instances;
     int     callElim ;
     int     maxResIndex;
-    int     *resBitArray; 
+    int     *resBitArray;
     struct  hostNode *nextPtr;
-    time_t  expireTime;         
+    time_t  expireTime;
 };
 
 #define CLUST_ACTIVE		0x00010000
@@ -167,30 +167,30 @@ struct clusterNode {
     char *clName;
     int  status;
 
-    
+
     u_int   candAddrList[MAXCANDHOSTS];
     int     currentAddr;
     char   *masterName;
     u_int   masterAddr;
     u_short masterPort;
     int     resClass;
-    int     typeClass;		      
-    int     modelClass;		      
+    int     typeClass;
+    int     modelClass;
 
     char  masterKnown;
     int   masterInactivityCount;
     struct hostNode *masterPtr;
-    struct hostNode *prevMasterPtr;    
-    u_short  checkSum;                 
-    int  numHosts;                     
-    int  numClients;                   
+    struct hostNode *prevMasterPtr;
+    u_short  checkSum;
+    int  numHosts;
+    int  numClients;
     int  managerId;
-    char *managerName;                 
+    char *managerName;
     struct hostNode  *hostList;
     struct hostNode  *clientList;
     struct clusterNode *nextPtr;
-    char  *eLimArgs;                   
-    char  **eLimArgv;                  
+    char  *eLimArgs;
+    char  **eLimArgv;
     int   chanfd;
     int   numIndx;
     int   numUsrIndx;
@@ -201,8 +201,8 @@ struct clusterNode {
     char **admins;
     int  nRes;
     int  *resBitMaps;
-    int  *hostTypeBitMaps;  		
-    int  *hostModelBitMaps;             
+    int  *hostTypeBitMaps;
+    int  *hostModelBitMaps;
     int numSharedRes;
     char **sharedResource;
     struct shortLsInfo *shortInfo;
@@ -219,25 +219,25 @@ struct clientNode {
 };
 
 struct liStruct {
-    char  *name;       
-    char  increasing;  
-    float delta[2];      
-    float extraload[2]; 
-    float valuesent;    
+    char  *name;
+    char  increasing;
+    float delta[2];
+    float extraload[2];
+    float valuesent;
     float exchthreshold;
     float sigdiff;
-    float satvalue;     
-    float value;        
+    float satvalue;
+    float value;
 };
 
-#define  SEND_NO_INFO       0x00 		
-#define  SEND_CONF_INFO     0x01	 
-#define  SEND_LOAD_INFO     0x02	
-#define  SEND_MASTER_ANN    0x04	
-#define  SEND_ELIM_REQ      0x08	
-#define  SEND_MASTER_QUERY  0x10	
-#define  SLIM_XDR_DATA      0x20        
-#define  SEND_LIM_LOCKEDM   0x100	
+#define  SEND_NO_INFO       0x00
+#define  SEND_CONF_INFO     0x01
+#define  SEND_LOAD_INFO     0x02
+#define  SEND_MASTER_ANN    0x04
+#define  SEND_ELIM_REQ      0x08
+#define  SEND_MASTER_QUERY  0x10
+#define  SLIM_XDR_DATA      0x20
+#define  SEND_LIM_LOCKEDM   0x100
 
 struct loadVectorStruct {
     int     hostNo;
@@ -262,18 +262,18 @@ struct masterReg {
     int    flags;
     u_int  seqNo;
     int    checkSum;
-    u_short portno;  
-    int    licFlag;  
+    u_short portno;
+    int    licFlag;
     int    maxResIndex;
-    int    *resBitArray; 
+    int    *resBitArray;
 };
 
 
-#define  ANN_SLIMCONF_ALL_MIN   (0x01)	
-#define  ANN_SLIMCONF_TO_ALL    (0x02)	
+#define  ANN_SLIMCONF_ALL_MIN   (0x01)
+#define  ANN_SLIMCONF_TO_ALL    (0x02)
 struct masterAnnSLIMConf {
     int    flags;
-    short  hostNo;                        
+    short  hostNo;
 };
 
 
@@ -289,17 +289,17 @@ struct resourceInstance {
 
 
 typedef struct sharedResourceInstance{
-    char *resName ;  
+    char *resName ;
     int nHosts ;
-    struct hostNode **hosts; 
-    struct sharedResourceInstance *nextPtr ; 
+    struct hostNode **hosts;
+    struct sharedResourceInstance *nextPtr ;
 } sharedResourceInstance ;
 
 struct minSLimConfData {
     int     defaultRunElim;
     int     nClusAdmins;
-    int     *clusAdminIds;    
-    char    **clusAdminNames; 
+    int     *clusAdminIds;
+    char    **clusAdminNames;
     float   exchIntvl;
     float   sampleIntvl;
     short   hostInactivityLimit;
@@ -314,9 +314,9 @@ struct minSLimConfData {
     char    *myCluster_eLimArgs;
     char    *myHost_windows;
     int     numMyhost_weekpair[8];
-    windows_t *myHost_week[8]; 
+    windows_t *myHost_week[8];
     time_t  myHost_wind_edge;
-    float   *myHost_busyThreshold; 
+    float   *myHost_busyThreshold;
     int     myHost_rexPriority;
     int     myHost_numInstances;
     struct  resourceInstance **myHost_instances;
@@ -338,9 +338,9 @@ extern int getpagesize(void);
 #define LSF_LIM_PORT	    4
 #define LSF_RES_PORT	    5
 #define LSF_DEBUG_LIM       6
-#define LSF_TIME_LIM        7 
-#define LSF_LOG_MASK        8 
-#define LSF_CONF_RETRY_MAX  9 
+#define LSF_TIME_LIM        7
+#define LSF_LOG_MASK        8
+#define LSF_CONF_RETRY_MAX  9
 #define LSF_CONF_RETRY_INT  10
 #define LSF_LIM_RCVBUF      11
 #define LSF_CROSS_UNIX_NT   12
@@ -410,10 +410,10 @@ extern struct sharedResource **hostResources;
 
 extern u_short lsfSharedCkSum;
 
-extern int numMasterCandidates; 
-extern int isMasterCandidate;  
-extern int limConfReady; 
-extern int kernelPerm; 
+extern int numMasterCandidates;
+extern int isMasterCandidate;
+extern int limConfReady;
+extern int kernelPerm;
 
 
 
@@ -433,7 +433,7 @@ extern int validHostType(const char *);
 extern int validHostModel(const char *);
 extern char *stripIllegalChars(char *);
 extern int initTypeModel(struct hostNode *);
-extern const char* getHostType();
+extern char *getHostType(void);
 extern struct hostNode *addFloatClientHost(struct hostent *);
 extern int removeFloatClientHost(struct hostNode *);
 extern void slaveOnlyInit(int checkMode, int *kernelPerm);
@@ -520,7 +520,7 @@ extern void xferLog(int, char *);
 extern void placeReq(XDR *, struct sockaddr_in *, struct LSFHeader *, int);
 extern void loadadjReq(XDR *, struct sockaddr_in *, struct LSFHeader *, int);
 extern void updExtraLoad(struct hostNode **, char *, int);
-extern void loadReq(XDR *, struct sockaddr_in *, struct LSFHeader *, 
+extern void loadReq(XDR *, struct sockaddr_in *, struct LSFHeader *,
                     int);
 extern int getEligibleSites(register struct resVal*, struct decisionReq *,
                             char, char *);
@@ -543,10 +543,10 @@ extern bool_t xdr_masterAnnSLIMConf(XDR *xdrs,
                                     struct masterAnnSLIMConf *masterAnnSLIMConfPtr,
                                     struct LSFHeader *hdr);
 extern int xdr_statInfo(XDR *xdrs, struct statInfo *sip, struct LSFHeader *);
-extern bool_t xdr_minSLimConfData(XDR *xdrs, 
-				  struct minSLimConfData *sLimConfDatap, 
+extern bool_t xdr_minSLimConfData(XDR *xdrs,
+				  struct minSLimConfData *sLimConfDatap,
 				  struct LSFHeader *hdr);
 
 extern void clientIO(struct Masks *);
 
-#endif 
+#endif

@@ -1,4 +1,6 @@
-/* $Id: lsid.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
+ * $Id: lsid.c 397 2007-11-26 19:04:00Z mblack $
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,18 +25,18 @@
 #include "../lib/lib.table.h"
 #include "../lib/lproto.h"
 
-#define NL_SETN  27   
+#define NL_SETN  27
 
 
 static void usage(char *);
-extern int errLineNum_;  
+extern int errLineNum_;
 
 static void
 usage(char *cmd)
 {
     fprintf (stderr, "%s: %s [-h] [-V]\n", I18N_Usage, cmd);
     exit(-1);
-} 
+}
 
 int
 main(int argc, char **argv)
@@ -44,7 +46,7 @@ main(int argc, char **argv)
     int achar;
     int rc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
     if (ls_initdebug(argv[0]) < 0) {
         ls_perror("ls_initdebug");
@@ -74,7 +76,7 @@ main(int argc, char **argv)
             char lno[20];
             sprintf (lno, _i18n_msg_get(ls_catd,NL_SETN,1701, "Line %d"), errLineNum_); /* catgets 1701 */
             ls_perror(lno);
-        } else 
+        } else
 	{
 	    char buf[150];
 	    sprintf( buf,I18N_FUNC_FAIL_NO_PERIOD,"lsid", "ls_getclustername");
@@ -93,7 +95,7 @@ main(int argc, char **argv)
     }
     printf(_i18n_msg_get(ls_catd,NL_SETN,1703, "My master name is %s\n"), Name); /* catgets  1703 */
 
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
 
     exit(0);
 }

@@ -19,8 +19,10 @@
 
 #ifndef _LSF_H_
 #define _LSF_H_
-#include <stdio.h>
 
+
+#include <config.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <sys/param.h>
@@ -35,18 +37,10 @@ typedef unsigned long long LS_UNS_LONG_INT;
 
 #include <sys/wait.h>
 
-#if defined(__STDC__)
 #ifdef REL_DATE
-#define _LS_VERSION_ ("Platform Lava 1.0, " REL_DATE "\nCopyright 2007 Platform Computing Corporation\n")
+#define _LS_VERSION_ ("openlava 1.0, " REL_DATE " \nCopyright (C) 2011 openlava foundation \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #else
-#define _LS_VERSION_ ("Platform Lava 1.0, " __DATE__ "\nCopyright 2007 Platform Computing Corporation\n")
-#endif
-#else
-#if defined(__DATE__)
-#define _LS_VERSION_ ("Platform Lava 1.0, " __DATE__ "\nCopyright 2007 Platform Computing Corporation\n")
-#else
-#define _LS_VERSION_ ("Platform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
-#endif
+#define _LS_VERSION_ ("openlava 1.0, "__DATE__" \nCopyright (C) 2011 openlava foundation \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #endif
 
 #define LAVA_VERSION   1

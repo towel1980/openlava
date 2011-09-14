@@ -1,3 +1,7 @@
+2011-09-14  David Bigagli  <david@openlava.net>
+
+	* lsf.h Added the openlava foundation copyright.
+
 2011-09-09  David Bigagli  <david@openlava.net>
 
 	* openlava.spec Updated the spec file to reflect the changes in teh build system. The ownership of all files changed, no longer root, the entire installation tree is owned by the openlava user. The daemons to run in multi user mode must still be started at root which is guaranteed at boot by init.
