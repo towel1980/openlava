@@ -487,8 +487,8 @@ rm -f ${_symlink}
 %config(noreplace) %{_openlavatop}/etc/lsf.conf
 %config(noreplace) %{_openlavatop}/etc/lsf.cluster.%{_clustername}
 %config(noreplace) %{_openlavatop}/etc/lsf.task
-%config(noreplace) %{_openlavatop}/etc/README
-%config(noreplace) %{_openlavatop}/etc/COPYING
+%config(noreplace) %{_openlavatop}/README
+%config(noreplace) %{_openlavatop}/COPYING
 %attr(0755,openlava,openlava) %{_openlavatop}/bin
 %attr(0755,openlava,openlava) %{_openlavatop}/etc
 %attr(0755,openlava,openlava) %{_openlavatop}/include
