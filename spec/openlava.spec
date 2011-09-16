@@ -95,6 +95,10 @@ install -d $RPM_BUILD_ROOT%{_openlavatop}/share/man/man5
 install -d $RPM_BUILD_ROOT%{_openlavatop}/share/man/man8
 install -d $RPM_BUILD_ROOT%{_openlavatop}/work/logdir
 
+# in openlava root
+install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/COPYING  $RPM_BUILD_ROOT%{_openlavatop}
+install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/README  $RPM_BUILD_ROOT%{_openlavatop}
+
 # bin
 install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/cmd/badmin  $RPM_BUILD_ROOT%{_openlavatop}/bin
 install -m 755 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/cmd/bbot    $RPM_BUILD_ROOT%{_openlavatop}/bin
@@ -483,8 +487,8 @@ rm -f ${_symlink}
 %config(noreplace) %{_openlavatop}/etc/lsf.conf
 %config(noreplace) %{_openlavatop}/etc/lsf.cluster.%{_clustername}
 %config(noreplace) %{_openlavatop}/etc/lsf.task
-#%config(noreplace) %{_openlavatop}/etc/README
-#%config(noreplace) %{_openlavatop}/etc/COPYING
+%config(noreplace) %{_openlavatop}/etc/README
+%config(noreplace) %{_openlavatop}/etc/COPYING
 %attr(0755,openlava,openlava) %{_openlavatop}/bin
 %attr(0755,openlava,openlava) %{_openlavatop}/etc
 %attr(0755,openlava,openlava) %{_openlavatop}/include
