@@ -22,7 +22,7 @@
 #include "../lib/lsb.h"
 #include <netdb.h>
 #include <errno.h>
-#define NL_SETN 8	 
+#define NL_SETN 8
 
 
 #define ALL_PROJ_STR "all"
@@ -30,14 +30,14 @@
 extern int sig_decode(int);
 extern char * get_status(struct jobInfoEnt *job);
 
-static void do_options (int, char **, int *, char **, char **, 
+static void do_options (int, char **, int *, char **, char **,
 			char **, char **, float *, int *, char **);
 static int  skip_job(struct jobInfoEnt *);
-static void displayJobs (struct jobInfoEnt *, struct jobInfoHead *, 
+static void displayJobs (struct jobInfoEnt *, struct jobInfoHead *,
                          int, int);
 
-static LS_LONG_INT *usrJids; 
-static int *numJobs; 
+static LS_LONG_INT *usrJids;
+static int *numJobs;
 
 static int numJids = 0;
 static int foundJids = 0;
@@ -56,22 +56,22 @@ static struct config_param securebjobsParams[] =
     {NULL,NULL}
 };
 
-void 
+void
 usage (char *cmd)
 {
     fprintf(stderr, I18N_Usage);
-    fprintf(stderr, 
+    fprintf(stderr,
 	(": %s [-h] [-V] [-w |-l] [-a] [-d] [-p] [-s] [-r]"),
 	    cmd);
 
     if (lsbMode_ == LSB_MODE_BATCH)
 	fprintf(stderr, " [-A]\n");
-    
+
     fprintf(stderr, "%s\n",
 	"             [-m host_name] [-q queue_name] [-u user_name | -u all]");
 
     if (lsbMode_ & LSB_MODE_BATCH)
-	fprintf(stderr, 
+	fprintf(stderr,
 	    "             [-P project_name] [-N host_spec]\n");
 
     fprintf(stderr, "             [-J name_spec]");
@@ -80,11 +80,11 @@ usage (char *cmd)
 	fprintf(stderr, " [jobId | \"jobId[idxList]\" ...]\n");
     else
 	fprintf(stderr, " [jobId ...]\n");
-    
+
     exit(-1);
 }
 
-int 
+int
 main (int argc, char **argv)
 {
     char *jobName = NULL;
@@ -94,7 +94,7 @@ main (int argc, char **argv)
     char *host = NULL;
     char *realUser = NULL;
     char *projectName = NULL;
-    int  format = 0;       
+    int  format = 0;
     struct jobInfoHead *jInfoH;
     struct jobInfoEnt *job;
     int  i;
@@ -106,35 +106,35 @@ main (int argc, char **argv)
     static char lsfUserName[MAXLINELEN];
     int rc,cc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
     if (lsb_init(argv[0]) < 0) {
 	lsb_perror("lsb_init");
 	exit(-1);
     }
-    
-    
+
+
     TIMEIT(0, do_options(argc, argv, &options, &user, &queue, &host, &jobName, &cpuFactor, &format, &projectName), "do_options");
-						
+
     if ((format == LONG_FORMAT) && (options & PEND_JOB))
         options |= HOST_NAME;
 
-    
+
     if ((options & JGRP_ARRAY_INFO) && numJids <= 0 ) {
         if (jobName == NULL)
             jobName = defaultJobName;
     }
 
-    
+
     if (numJids > 0) {
         numJobs = (int *) calloc(numJids, sizeof(int));
         memset(numJobs, 0, numJids * sizeof(int));
-    }   
+    }
 
     if (numJids == 1)
       jobId = usrJids[0];
     else
-      jobId = 0;                 
+      jobId = 0;
 
     if (format != LONG_FORMAT && !(options & (HOST_NAME | PEND_JOB)))
         options |= NO_PEND_REASONS;
@@ -148,34 +148,54 @@ main (int argc, char **argv)
         exit(-1);
     }
 
-    TIMEIT(0, (jInfoH = lsb_openjobinfo_a (jobId, jobName, user, queue, 
-                                   host, options)), "lsb_openjobinfo_a");
+    TIMEIT(0, (jInfoH = lsb_openjobinfo_a(jobId,
+                                          jobName,
+                                          user,
+                                          queue,
+                                          host,
+                                          options)), "lsb_openjobinfo_a");
     if (jInfoH == NULL) {
-        if (numJids >= 1) 
-            for (i = 0; i < numJids; i++) 
+
+        if (numJids >= 1) {
+            for (i = 0; i < numJids; i++)
                 jobInfoErr (usrJids[i], jobName, user, queue, host, options);
-        else
-            jobInfoErr (LSB_ARRAY_JOBID(jobId), jobName, user, queue, host, options);
+        } else {
+            /* openlava. bjobs without a parameter returns an error
+             * if there are no jobs in the system, it does not allow
+             * the set of jobs specified on the command line to be an
+             * empty set. We change it here by still returning an
+             * error but with a different numerical value. We hope
+             * to minimize problems with backward compatibility.
+             */
+            jobInfoErr(LSB_ARRAY_JOBID(jobId),
+                       jobName,
+                       user,
+                       queue,
+                       host,
+                       options);
+            exit(-2);
+        }
+
 	exit(-1);
     }
     options &= ~NO_PEND_REASONS;
     jobDisplayed = 0;
     for (i = 0; i < jInfoH->numJobs; i++) {
-	TIMEIT(0, (job = lsb_readjobinfo(NULL)), "lsb_readjobinfo"); 
+	TIMEIT(0, (job = lsb_readjobinfo(NULL)), "lsb_readjobinfo");
 	if (job == NULL) {
 	    lsb_perror("lsb_readjobinfo");
 	    exit(-1);
 	}
 
-        
-        if (numJids == 0 && projectName)  
-            if (strcmp(job->submit.projectName, projectName) != 0) 
-                continue; 
 
-	
-	if (numJids > 0)           
-            if (skip_job(job))     
-		continue;           
+        if (numJids == 0 && projectName)
+            if (strcmp(job->submit.projectName, projectName) != 0)
+                continue;
+
+
+	if (numJids > 0)
+            if (skip_job(job))
+		continue;
             if ((securebjobsParams[LSB_SECURE_JOBINFO_USERS].paramValue) &&
                (securebjobsParams[LSB_SECURE_JOBINFO_USERS].paramValue != NULL) &&
                 (strstr(securebjobsParams[LSB_SECURE_JOBINFO_USERS].paramValue,
@@ -201,28 +221,28 @@ main (int argc, char **argv)
 	    displayJobs(job, jInfoH, options, format);
 
 	jobDisplayed ++;
-    } 
+    }
 
     if (format == LONG_FORMAT) {
 	sprintf(prline, "\n");
 	prtLine(prline);
     }
 
-    TIMEIT(0, lsb_closejobinfo(), "lsb_closejobinfo"); 
+    TIMEIT(0, lsb_closejobinfo(), "lsb_closejobinfo");
 
     if (numJids > 1 ) {
         int errCount = FALSE;
         lsberrno = LSBE_NO_JOB;
         for (i = 0; i < numJids; i++) {
             if (numJobs[i] <= 0) {
-                errCount = TRUE; 
+                errCount = TRUE;
                 jobInfoErr(usrJids[i], jobName, realUser, queue, host, options);
             }
         }
         if (errCount == TRUE)
             exit(-1);
     } else {
-        
+
         if (jobDisplayed == 0) {
 	   if (projectName) {
               fprintf (stderr, "No job found in project %s\n", projectName);
@@ -236,20 +256,20 @@ main (int argc, char **argv)
     if (!jobDisplayed) {
 	exit(-1);
     }
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
     return(0);
-    
-} 
+
+}
 
 static void
-do_options (int argc, char **argv, int *options, char **user, char **queue, 
+do_options (int argc, char **argv, int *options, char **user, char **queue,
 	    char **host, char **jobName, float *cpuFactor, int *format, char **projectName)
 {
     extern char *optarg;
     int cc, Nflag = 0;
     char *norOp = NULL;
 
-    
+
     *options = 0;
     *user = NULL;
     *queue = NULL;
@@ -260,8 +280,8 @@ do_options (int argc, char **argv, int *options, char **user, char **queue,
     while ((cc = getopt(argc, argv, "VladpsrwWgRAhJ:q:u:m:N:P:S")) != EOF) {
         switch (cc) {
         case 'w':
-            if (*format == LONG_FORMAT) 
-                usage(argv[0]);   
+            if (*format == LONG_FORMAT)
+                usage(argv[0]);
             *format = WIDE_FORMAT;
             break;
         case 'l':
@@ -270,7 +290,7 @@ do_options (int argc, char **argv, int *options, char **user, char **queue,
             *format = LONG_FORMAT;
             break;
         case 'a':
-            *options |= ALL_JOB;       
+            *options |= ALL_JOB;
             break;
         case 'd':
             *options |= DONE_JOB;
@@ -332,7 +352,7 @@ do_options (int argc, char **argv, int *options, char **user, char **queue,
 
     TIMEIT(1, (numJids = getSpecJobIds (argc, argv, &usrJids, NULL)), "getSpecJobIds");
 
-    if (numJids > 0) {     
+    if (numJids > 0) {
 	*user = "all";
         *options |= ALL_JOB;
     }
@@ -344,7 +364,7 @@ do_options (int argc, char **argv, int *options, char **user, char **queue,
         }
     }
 
-    if ((*options  
+    if ((*options
         & (~JGRP_ARRAY_INFO)) == 0) {
 	*options |= CUR_JOB;
     }
@@ -352,12 +372,12 @@ do_options (int argc, char **argv, int *options, char **user, char **queue,
     if (Nflag) {
 	float *tempPtr;
 
-	*options |= DONE_JOB;       
+	*options |= DONE_JOB;
         *format = LONG_FORMAT;
 	TIMEIT(0, (tempPtr = getCpuFactor (norOp, FALSE)), "getCpuFactor");
 	if (tempPtr == NULL)
 	    if ((tempPtr = getCpuFactor (norOp, TRUE)) == NULL)
-		if (!isanumber_(norOp) 
+		if (!isanumber_(norOp)
 			 || (*cpuFactor = atof(norOp)) <= 0) {
 		    fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,1458, "<%s> is neither a host model, nor a host name, nor a CPU factor\n")), norOp); /* catgets  1458  */
 		    exit(-1);
@@ -366,7 +386,7 @@ do_options (int argc, char **argv, int *options, char **user, char **queue,
 	    *cpuFactor = *tempPtr;
     }
 
-} 
+}
 
 
 static void
@@ -386,10 +406,10 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
     char tmpBuf[MAXLINELEN];
     char osUserName[MAXLINELEN];
 
-    
+
     int                 i = 0;
 
-    
+
     if (getOSUserName_(job->user, osUserName, MAXLINELEN) != 0) {
         strncpy(osUserName, job->user, MAXLINELEN);
         osUserName[MAXLINELEN - 1] = '\0';
@@ -399,11 +419,11 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
         && strcmp(lsbParams[LSB_SHORT_HOSTLIST].paramValue, "1") == 0 ) {
         hostList = lsb_compressStrList(job->exHosts, job->numExHosts);
         if (!hostList) {
-            
+
             exit(99);
-        }   
-    }   
-    
+        }
+    }
+
 
     if (loadIndex == NULL)
 	loadIndex = initLoadIndex();
@@ -423,19 +443,19 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
 	exec_host = "   -   ";
     else
     {
-        
-        if (lsbParams[LSB_SHORT_HOSTLIST].paramValue && job->numExHosts > 1 
+
+        if (lsbParams[LSB_SHORT_HOSTLIST].paramValue && job->numExHosts > 1
              && strcmp(lsbParams[LSB_SHORT_HOSTLIST].paramValue, "1") == 0 ) {
             sprintf(tmpBuf, "%d*%s", hostList->counter[0], hostList->names[0]);
             exec_host = tmpBuf;
         }
-        else 
+        else
             exec_host = job->exHosts[0];
-    }   
-    
-    if (first) {       
+    }
+
+    if (first) {
 	first = FALSE;
-        if (job->jType == JGRP_NODE_ARRAY) 
+        if (job->jType == JGRP_NODE_ARRAY)
            printf((_i18n_msg_get(ls_catd,NL_SETN,1459, "JOBID    ARRAY_SPEC  OWNER   NJOBS PEND DONE  RUN EXIT SSUSP USUSP PSUSP\n"))); /* catgets  1459  */
         else if (options == PEND_JOB) {
 	    printf((_i18n_msg_get(ls_catd,NL_SETN,1460, "JOBID   USER    STAT  QUEUE       FROM_HOST      JOB_NAME           SUBMIT_TIME\n"))); /* catgets  1460  */
@@ -448,7 +468,7 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
             }
 
             printf("\n");
-			
+
 	    	exechostfmt = "%45s%-s\n";
         }
     }
@@ -472,15 +492,15 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
             job->counter[JGRP_COUNT_NUSUSP],
             job->counter[JGRP_COUNT_NPSUSP]);
         goto cleanup;
-    } 
+    }
 
     jobName = submitInfo->jobName;
     if (LSB_ARRAY_IDX(job->jobId) && (pos = strchr(jobName, '['))) {
         *pos = '\0';
         sprintf(jobName, "%s[%d]", jobName, LSB_ARRAY_IDX(job->jobId));
     }
-    if (options == PEND_JOB) {   
-        
+    if (options == PEND_JOB) {
+
 	TRUNC_STR(jobName, 20);
 	printf("%-7d %-7.7s %-5.5s %-11.11s %-14.14s %-18.18s %s\n",
 	     LSB_ARRAY_JOBID(job->jobId), osUserName, status,
@@ -493,17 +513,17 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
 	    submitInfo->queue, job->fromHost,
 	    exec_host,
 	    jobName, subtime);
-    } else { 
+    } else {
 	if (IS_PEND(job->status)) {
 	    exec_host = "   -    ";
 	} else {
 
-            
+
             static char *execHostList=NULL;
             static int execHostListSize=0;
             int execHostListUsed;
- 
-            
+
+
             if (execHostList == NULL) {
                 if ((execHostList = (char *) calloc(1, MAXLINELEN)) == NULL) {
                     fprintf(stderr,I18N_FUNC_FAIL, fName, "malloc");
@@ -511,12 +531,12 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
                 }
                 execHostListSize = MAXLINELEN;
             }
- 
-            
+
+
             strcpy(execHostList, exec_host);
             execHostListUsed =strlen(exec_host);
- 
-            if (lsbParams[LSB_SHORT_HOSTLIST].paramValue && job->numExHosts > 1 
+
+            if (lsbParams[LSB_SHORT_HOSTLIST].paramValue && job->numExHosts > 1
                  && strcmp(lsbParams[LSB_SHORT_HOSTLIST].paramValue, "1") == 0 ) {
                 for (i = 1; i < hostList->listSize; i++) {
                     execHostListUsed+=(strlen(job->exHosts[i])+1);
@@ -532,7 +552,7 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
                     sprintf(tmpBuf, "%d*%s", hostList->counter[i],
                                              hostList->names[i]);
                     strcat(execHostList, tmpBuf);
-                }   
+                }
             } else {
                 for (i = 1; i < job->numExHosts; i++) {
                     execHostListUsed+=(strlen(job->exHosts[i])+1);
@@ -546,15 +566,15 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
                     }
                     strcat(execHostList,":");
                     strcat(execHostList, job->exHosts[i]);
-                }   
-            }   
- 
+                }
+            }
+
             if (execHostList[0] == '\0')
                 exec_host = "   -   ";
             else
                 exec_host = execHostList;
-            
-	}   
+
+	}
 
         if (Wflag == TRUE) {
 	    printf("%-7d %-7s %-5.5s %-10s %-11s %-11s %-10s %-14.14s",
@@ -575,19 +595,19 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
 		   job->fromHost,
 		   exec_host,
 		   jobName,
-		   
+
 		   subtime);
         }
 
         if (Wflag == TRUE) {
             int		i;
 	    float cpuTime;
-	    
+
 	    if (job->cpuTime > 0) {
-		cpuTime = job->cpuTime;	
+		cpuTime = job->cpuTime;
 	    }
 	    else {
-		cpuTime = job->runRusage.utime + job->runRusage.stime;	
+		cpuTime = job->runRusage.utime + job->runRusage.stime;
 	    }
             printf(" %-10s %-10s %-6d %-6d ",
                    job->submit.projectName,
@@ -606,7 +626,7 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
                 printf(" - ");
             }
 
-	    
+
 	    if (job->startTime == 0)
 		printf(" - ");
             else
@@ -622,33 +642,33 @@ displayJobs (struct jobInfoEnt *job, struct jobInfoHead *jInfoH,
         printf("\n");
     }
 
-    
-    if (lsbParams[LSB_SHORT_HOSTLIST].paramValue && job->numExHosts > 1 
+
+    if (lsbParams[LSB_SHORT_HOSTLIST].paramValue && job->numExHosts > 1
          && strcmp(lsbParams[LSB_SHORT_HOSTLIST].paramValue, "1") == 0 ) {
         if (!IS_PEND(job->status) && format != WIDE_FORMAT) {
             for (i = 1 ; i < hostList->listSize; i++) {
                 sprintf(tmpBuf, "%d*%s", hostList->counter[i],
                                          hostList->names[i]);
                 printf(exechostfmt, "", tmpBuf);
-            }   
-        }   
-    } 
+            }
+        }
+    }
    else {
         if (!IS_PEND(job->status) && format != WIDE_FORMAT) {
             for (i = 1; i < job->numExHosts; i++) {
                 printf(exechostfmt, "", job->exHosts[i]);
-            }   
-        }   
-    }   
-    
+            }
+        }
+    }
 
-    
+
+
     if ((options & PEND_JOB) &&  IS_PEND(job->status)) {
 	printf(lsb_pendreason(job->numReasons, job->reasonTb, NULL,
                               loadIndex));
     }
 
-    
+
     if ((options & SUSP_JOB) &&  IS_SUSP(job->status)) {
         if (job->status & JOB_STAT_PSUSP && !(options & PEND_JOB))
 	    printf(lsb_pendreason(job->numReasons, job->reasonTb, NULL,
@@ -661,18 +681,18 @@ cleanup:
 
     return;
 
-} 
+}
 
 static int
 skip_job(struct jobInfoEnt *job)
 {
     int i;
 
-    
+
     for (i=0; i < numJids; i++) {
 	if (job->jobId == usrJids[i] ||
             LSB_ARRAY_JOBID(job->jobId) == usrJids[i]) {
-            numJobs[i]++; 
+            numJobs[i]++;
 	    foundJids++;
 	    return FALSE;
         }
@@ -681,7 +701,7 @@ skip_job(struct jobInfoEnt *job)
 
     return TRUE;
 
-} 
+}
 
 static int
 isLSFAdmin()
@@ -694,7 +714,7 @@ isLSFAdmin()
 
     if ((mycluster = ls_getclustername()) == NULL) {
 	if (logclass & (LC_TRACE))
-	    ls_syslog(LOG_ERR, 
+	    ls_syslog(LOG_ERR,
 		"%s: ls_getclustername(): %M", fname);
 	return (FALSE);
     }
@@ -702,16 +722,16 @@ isLSFAdmin()
     num = 0;
     if ((clusterInfo = ls_clusterinfo(NULL, &num, NULL, 0, 0)) == NULL) {
 	if (logclass & (LC_TRACE))
-	    ls_syslog(LOG_ERR, 
+	    ls_syslog(LOG_ERR,
 		"%s: ls_clusterinfo(): %M", fname);
 	return (FALSE);
     }
 
-    
+
     if (getLSFUser_(lsfUserName, MAXLINELEN) != 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "getLSFUser_");
 	return (FALSE);
-    } 
+    }
 
     for (i = 0; i < num; i++) {
 	if (!strcmp(mycluster, clusterInfo[i].clusterName)) {
@@ -725,7 +745,7 @@ isLSFAdmin()
 
     return(FALSE);
 
-} 
+}
 
 static char *
 Timer2String(float timer)
@@ -745,7 +765,7 @@ Timer2String(float timer)
             Second,
             Point);
     return(TimerStr);
-} 
+}
 
 static char *
 Time2String(int timer)
@@ -765,4 +785,4 @@ Time2String(int timer)
             Time->tm_sec);
 
     return(TimeStr);
-} 
+}
