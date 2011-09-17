@@ -19,18 +19,18 @@
 #include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "cmd.h" 
+#include "cmd.h"
 
-#define NL_SETN 8 	
+#define NL_SETN 8
 
-static int eventMatched = FALSE;          
+static int eventMatched = FALSE;
 
 void displayEvent(struct eventRec *, struct histReq *);
 static int isRequested(char *, char **);
 extern char *myGetOpt (int nargc, char **, char *);
 
 
-int  
+int
 sysHist(int argc, char **argv, int opCode)
 {
     extern int optind;
@@ -41,7 +41,7 @@ sysHist(int argc, char **argv, int opCode)
     int numNames = 0;
     char *optName;
 
-    
+
     req.opCode = opCode;
     req.names = NULL;
     req.eventFileName = NULL;
@@ -67,11 +67,11 @@ sysHist(int argc, char **argv, int opCode)
 	    return(-2);
 	}
     }
-    
+
     switch (opCode) {
     case QUEUE_HIST:
     case HOST_HIST:
-	if (argc > optind) {              
+	if (argc > optind) {
 	    numNames = getNames(argc, argv, optind, &nameList, &all, "queueC");
 	    if (!all && numNames != 0) {
 	        nameList[numNames] = NULL;
@@ -93,13 +93,12 @@ sysHist(int argc, char **argv, int opCode)
 
     return (searchEventFile(&req, &eventFound));
 
-} 
+}
 
 int
 searchEventFile(struct histReq *req, int *eventFound)
-{  
+{
     char eventFileName[MAXFILENAMELEN];
-    char *clusterName;
     int lineNum = 0;
     struct stat statBuf;
     struct eventRec *log;
@@ -107,44 +106,36 @@ searchEventFile(struct histReq *req, int *eventFound)
     char *envdir;
 
     struct config_param histParams[] = {
-#   define LSB_SHAREDIR 0
+#define LSB_SHAREDIR 0
         {"LSB_SHAREDIR", NULL},
         {NULL, NULL}
     };
 
     if ((envdir = getenv("LSF_ENVDIR")) == NULL)
 	envdir = "/etc";
-	
+
     if (ls_readconfenv(histParams, envdir) < 0) {
 	ls_perror("ls_readconfenv");
 	return(-1);
     }
 
-    if (!req->eventFileName) { 
-        if ( (clusterName = ls_getclustername()) == NULL ) {
-	    ls_perror("ls_getclustername()");
-            return(-1);
-        }
-	memset(eventFileName,0,sizeof(eventFileName));
-	ls_strcat(eventFileName,sizeof(eventFileName),histParams[LSB_SHAREDIR].paramValue);
-	ls_strcat(eventFileName,sizeof(eventFileName),"/");
-	ls_strcat(eventFileName,sizeof(eventFileName),clusterName);
-	ls_strcat(eventFileName,sizeof(eventFileName),"/logdir/lsb.events");
+    if (!req->eventFileName) {
+	memset(eventFileName, 0, sizeof(eventFileName));
+	ls_strcat(eventFileName, sizeof(eventFileName),
+                  histParams[LSB_SHAREDIR].paramValue);
+	ls_strcat(eventFileName, sizeof(eventFileName),"/logdir/lsb.events");
     } else {
-	memset(eventFileName,0,sizeof(eventFileName));
-	ls_strcat(eventFileName,sizeof(eventFileName),req->eventFileName);
+	memset(eventFileName,0, sizeof(eventFileName));
+	ls_strcat(eventFileName, sizeof(eventFileName),req->eventFileName);
     }
 
     FREEUP (histParams[LSB_SHAREDIR].paramValue);
-    
+
     if (stat(eventFileName, &statBuf) < 0) {
         perror(eventFileName);
         return (-1);
-    } else if ((statBuf.st_mode & S_IFREG) != S_IFREG ) {
-        fprintf(stderr, "%s: Not a regular file\n", eventFileName);
-        return(-1);
     }
-  
+
     if ((log_fp = fopen(eventFileName, "r")) == NULL) {
 	perror(eventFileName);
 	return(-1);
@@ -152,22 +143,27 @@ searchEventFile(struct histReq *req, int *eventFound)
 
     eventMatched = FALSE;
     while (TRUE) {
-	if ((log = lsb_geteventrec(log_fp, &lineNum)) != NULL) {
-	    displayEvent(log, req);  
+
+	log = lsb_geteventrec(log_fp, &lineNum);
+        if (log) {
+	    displayEvent(log, req);
 	    continue;
         }
+
         if (lsberrno == LSBE_EOF)
 	    break;
-	fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,1053, "File %s at line %d: %s\n")), eventFileName, lineNum, /* catgets  1053  */
-		                 lsb_sysmsg());
+	fprintf(stderr, "\
+File %s at line %d: %s\n", eventFileName, lineNum, lsb_sysmsg());
     }
-    if (!eventMatched)
-        fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,1054, "No matching event found\n"))); /* catgets  1054  */
-    *eventFound = eventMatched;
-    fclose(log_fp);
-    return 0;
 
-} 
+    if (!eventMatched)
+        fprintf(stderr, "No matching event found\n");
+    *eventFound = eventMatched;
+
+    fclose(log_fp);
+
+    return 0;
+}
 
 void
 displayEvent(struct eventRec *log, struct histReq *req)
@@ -178,15 +174,15 @@ displayEvent(struct eventRec *log, struct histReq *req)
 
     fName = putstr_ ("displayEvent");
 
-    if (req->eventTime[1] != 0 
+    if (req->eventTime[1] != 0
 	&& req->eventTime[0] < req->eventTime[1]) {
 	if (log->eventTime < req->eventTime[0]
 	    || log->eventTime > req->eventTime[1])
-            return;                   
+            return;
     }
 
     switch (log->type) {
-    case EVENT_LOG_SWITCH: 
+    case EVENT_LOG_SWITCH:
          if (req->opCode == MBD_HIST || req->opCode == SYS_HIST) {
             eventMatched = TRUE;
 	    strcpy ( localTimeStr, _i18n_ctime(ls_catd,CTIME_FORMAT_a_b_d_T, &log->eventTime ));
@@ -201,9 +197,9 @@ displayEvent(struct eventRec *log, struct histReq *req)
             eventMatched = TRUE;
 	    sprintf(prline, (_i18n_msg_get(ls_catd,NL_SETN,1056, "%s: mbatchd started on host <%s>; cluster name <%s>, %d server hosts, %d queues.\n")),   /* catgets  1056  */
 		    localTimeStr,
-		    log->eventLog.mbdStartLog.master, 
-		    log->eventLog.mbdStartLog.cluster, 
-		    log->eventLog.mbdStartLog.numHosts, 
+		    log->eventLog.mbdStartLog.master,
+		    log->eventLog.mbdStartLog.cluster,
+		    log->eventLog.mbdStartLog.numHosts,
 		    log->eventLog.mbdStartLog.numQueues);
 	    prtLine(prline);
 	}
@@ -235,21 +231,21 @@ displayEvent(struct eventRec *log, struct histReq *req)
             default:
                 sprintf(prline, (_i18n_msg_get(ls_catd,NL_SETN,1063, "killed by signal <%d>.\n")),  /* catgets  1063  */
                         log->eventLog.mbdDieLog.exitCode);
-                break; 
-	    }		
+                break;
+	    }
             prtLine(prline);
 	}
         break;
     case EVENT_QUEUE_CTRL:
 	if ((req->opCode == SYS_HIST)
-	    || (req->opCode == QUEUE_HIST 
+	    || (req->opCode == QUEUE_HIST
 		&& isRequested(log->eventLog.queueCtrlLog.queue,
 			       req->names))) {
 	    strcpy ( localTimeStr, _i18n_ctime(ls_catd,CTIME_FORMAT_a_b_d_T, &log->eventTime ));
             eventMatched = TRUE;
-	    sprintf(prline, "%s: %s <%s> ", 
+	    sprintf(prline, "%s: %s <%s> ",
 		    localTimeStr,
-		    I18N_Queue, 
+		    I18N_Queue,
 	            log->eventLog.queueCtrlLog.queue);
             prtLine(prline);
 	    switch (log->eventLog.queueCtrlLog.opCode) {
@@ -266,7 +262,7 @@ displayEvent(struct eventRec *log, struct histReq *req)
 		sprintf(prline, I18N_inactivated);
 		break;
             default:
-                sprintf(prline, "%s <%d>", 
+                sprintf(prline, "%s <%d>",
 			I18N(1069, "unknown operation code"),/* catgets  1069  */
                         log->eventLog.queueCtrlLog.opCode);
                 break;
@@ -283,7 +279,7 @@ displayEvent(struct eventRec *log, struct histReq *req)
 	break;
     case EVENT_HOST_CTRL:
 	if ((req->opCode == SYS_HIST)
-	     || (req->opCode == HOST_HIST 
+	     || (req->opCode == HOST_HIST
 		 && isRequested(log->eventLog.hostCtrlLog.host, req->names))) {
             eventMatched = TRUE;
 	    strcpy ( localTimeStr, _i18n_ctime(ls_catd,CTIME_FORMAT_a_b_d_T, &log->eventTime ));
@@ -306,7 +302,7 @@ displayEvent(struct eventRec *log, struct histReq *req)
 		sprintf(prline, (_i18n_msg_get(ls_catd,NL_SETN,1075, "shutdown"))); /* catgets  1075  */
 		break;
             default:
-                sprintf(prline, "%s <%d>", 
+                sprintf(prline, "%s <%d>",
 		        I18N(1069, "unknown operation code"),/* catgets 1069  */
                         log->eventLog.hostCtrlLog.opCode);
                 break;
@@ -324,14 +320,14 @@ displayEvent(struct eventRec *log, struct histReq *req)
     default:
 	break;
     }
-} 
+}
 
-static int 
+static int
 isRequested(char *name, char **nameList)
 {
     int  i = 0;
 
-    if (!nameList)      
+    if (!nameList)
 	return(TRUE);
 
     while (nameList[i]) {
@@ -340,4 +336,4 @@ isRequested(char *name, char **nameList)
     }
 
     return(FALSE);
-} 
+}
