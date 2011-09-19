@@ -45,8 +45,8 @@ Buildroot: %{_tmppath}/%{name}-%{version}-buildroot
 BuildRequires: gcc, tcl-devel, ncurses-devel
 Requires: ncurses, tcl
 Requires(pre): /usr/sbin/useradd
-Requires(post): chkconfig
-Requires(preun): chkconfig
+Requires(post): /sbin/chkconfig
+Requires(preun): /sbin/chkconfig
 Prefix: /opt
 
 %description
@@ -239,7 +239,8 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BU
 ##
 ## Add "openlava" user
 ##
-/usr/sbin/useradd -c "openlava Administrator" -m -d /home/openlava openlava 2> /dev/null || :
+/usr/sbin/groupadd openlava
+/usr/sbin/useradd -c "openlava Administrator" -g openlava -m -d /home/openlava openlava 2> /dev/null || :
 
 ##
 ## POST
@@ -270,10 +271,10 @@ ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bstop
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bresume
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bchkpnt
 ln -sf ${_openlavatop}/bin/bmgroup  ${_openlavatop}/bin/bugroup
-chown -h openlava.openlava ${_openlavatop}/bin/bstop
-chown -h openlava.openlava ${_openlavatop}/bin/bresume 
-chown -h openlava.openlava ${_openlavatop}/bin/bchkpnt 
-chown -h openlava.openlava ${_openlavatop}/bin/bugroup
+chown -h openlava:openlava ${_openlavatop}/bin/bstop
+chown -h openlava:openlava ${_openlavatop}/bin/bresume 
+chown -h openlava:openlava ${_openlavatop}/bin/bchkpnt 
+chown -h openlava:openlava ${_openlavatop}/bin/bugroup
 ##
 ## customize the openlava.sh file
 ##
