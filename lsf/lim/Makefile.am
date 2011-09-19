@@ -2,7 +2,7 @@
 # Copyright (C) openlava foundation
 #
 INCLUDES = -I$(top_srcdir)/lsf
-AM_CPPFLAGS = -DNO_SIGALARM -D$(HOSTTYPE) -DHOST_TYPE_STRING=\"$(HOSTTYPE)\"
+AM_CPPFLAGS = -D$(HOSTTYPE) -DHOST_TYPE_STRING=\"$(HOSTTYPE)\"
 
 HOSTTYPE=LINUX64
 

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Copyright (C) openlava foundation 2011
+#
+rsync -e ssh -vaz bobrock:/opt/openlava/etc /opt/openlava

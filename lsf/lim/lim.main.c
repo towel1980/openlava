@@ -1,4 +1,7 @@
-/* $Id: lim.main.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
+ *
+ * $Id: lim.main.c 397 2007-11-26 19:04:00Z mblack $
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,28 +19,10 @@
  *
  */
 
-
-
-#include <sys/ioctl.h>
-
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
-
-#include <pwd.h>
-
 #include "lim.h"
 #include "../lib/mls.h"
 
-
-
-#define VCL_VERSION     2
-
-#define NL_SETN 24
-
 #define _PATH_NULL      "/dev/null"
-
-#define SLIMCONF_WAIT_TIME      (1500)
 
 extern char *argvmsg_(int argc, char **argv);
 
@@ -56,9 +41,6 @@ int   *clusAdminIds = NULL;
 int   *clusAdminGids = NULL;
 char  **clusAdminNames = NULL;
 
-int numMasterCandidates = -1;
-int isMasterCandidate;
-int limConfReady = FALSE;
 int    kernelPerm;
 
 struct limLock limLock;
@@ -78,11 +60,9 @@ u_short lsfSharedCkSum = 0;
 
 pid_t pimPid = -1;
 static void startPIM(int, char **);
-#if defined(NO_SIGALARM)
 static struct timeval periodicTimer;
 static void timeToPeriodic(struct timeval *);
 static int  timeForPeriodic(void);
-#endif
 
 struct config_param limParams[] =
 {
@@ -97,7 +77,6 @@ struct config_param limParams[] =
     {"LSF_LOG_MASK",NULL},
     {"LSF_CONF_RETRY_MAX", NULL},
     {"LSF_CONF_RETRY_INT", NULL},
-    {"LSF_LIM_RCVBUF", NULL},
     {"LSF_CROSS_UNIX_NT", NULL},
     {"LSF_LIM_IGNORE_CHECKSUM", NULL},
     {"LSF_MASTER_LIST", NULL},
@@ -105,11 +84,6 @@ struct config_param limParams[] =
     {"LSF_LIM_JACKUP_BUSY", NULL},
     {NULL, NULL},
 };
-
-#ifdef MEAS
-char limtraceON = FALSE;
-#endif
-
 
 extern int chanIndex;
 
@@ -130,20 +104,21 @@ extern struct extResInfo *getExtResourcesDef(char *);
 extern char *getExtResourcesLoc(char *);
 extern char *getExtResourcesVal(char *);
 
+/* UDP message buffer.
+ */
+static char   reqBuf[MSGSIZE];
 
 static void
 usage(const char *cmd)
 {
-    fprintf(stderr, I18N_Usage);
-    fprintf(stderr, ": %s [-C] [-V] [-h] [-t] [-debug_level] [-d env_dir]\n",cmd);
-    exit(-1);
+    fprintf(stderr, "\
+%s: [-C] [-V] [-h] [-t] [-debug_level] [-d env_dir]\n", cmd);
 }
 
 
 int
 main(int argc, char **argv)
 {
-    static char fname[] = "main";
     fd_set allMask;
     struct Masks sockmask, chanmask;
     enum   limReqCode limReqCode;
@@ -151,48 +126,34 @@ main(int argc, char **argv)
     int    fromSize;
     XDR    xdrs;
     int    msgSize;
-#ifdef FLEX_RCVBUF
-    char   *reqBuf2;
-#endif
-    char   reqBuf[MSGSIZE];
     int    maxfd;
     char   *sp;
     int    i;
     struct LSFHeader reqHdr;
     int    to_background = 1;
-    char   *lic_file = NULL;
     int    showTypeModel = FALSE;
-    static int eagainErrors = 0;
-
-
-
+    int   cc;
 
     kernelPerm = 0;
     saveDaemonDir_(argv[0]);
 
+    while ((cc = getopt(argc, argv, "12dC:")) != EOF) {
 
-    _i18n_init(I18N_CAT_LIM);
+        switch (cc) {
+            case 'd':
+                env_dir = optarg;
+                break;
+            case '1':
+                lim_debug = 1;
+                break;
+            case '2':
+                lim_debug = 2;
+                break;
+            case 'C':
 
+    }
 
-    for (i=1; i<argc; i++) {
-        if (strcmp(argv[i], "-d") == 0 && argv[i+1] != NULL) {
-            env_dir = argv[i+1];
-            i++;
-            continue;
-        }
-        if (strcmp(argv[i], "-c") == 0 && argv[i+1] != NULL) {
-            lic_file = argv[i+1];
-            i++;
-            continue;
-        }
-        if (strcmp(argv[i], "-1") == 0) {
-            lim_debug = 1;
-            continue;
-        }
-        if (strcmp(argv[i], "-2") == 0) {
-            lim_debug = 2;
-            continue;
-        }
+    for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-3") == 0) {
             lim_debug = 3;
             continue;
@@ -226,8 +187,8 @@ main(int argc, char **argv)
             continue;
         }
         usage(argv[0]);
+        return -1;
     }
-
 
     if (env_dir == NULL) {
         if ((env_dir = getenv("LSF_ENVDIR")) == NULL) {
@@ -238,7 +199,6 @@ main(int argc, char **argv)
     if (lim_debug > 1)
         fprintf(stderr, "Reading configuration from %s/lsf.conf\n", env_dir);
 
-
     if (initenv_(limParams, env_dir) < 0) {
 
         sp = getenv("LSF_LOGDIR");
@@ -246,7 +206,7 @@ main(int argc, char **argv)
             limParams[LSF_LOGDIR].paramValue = sp;
         ls_openlog("lim", limParams[LSF_LOGDIR].paramValue, (lim_debug == 2),
                    limParams[LSF_LOG_MASK].paramValue);
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "initenv_", env_dir);
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, __FUNCTION__, "initenv_", env_dir);
         lim_Exit("main");
     }
 
@@ -256,34 +216,16 @@ main(int argc, char **argv)
             lim_debug = 1;
     }
 
-
-    msgSize = MSGSIZE;
-#ifdef FLEX_RCVBUF
-    if (limParams[LSF_LIM_RCVBUF].paramValue){
-        int tmpSize;
-        tmpSize = atoi(limParams[LSF_LIM_RCVBUF].paramValue);
-        if (tmpSize > MSGSIZE)
-            msgSize = tmpSize;
-    }
-    reqBuf2 = (char *)malloc(msgSize*sizeof(char));
-    if (! reqBuf2){
-        fprintf(stderr, I18N_FUNC_D_FAIL_M,
-                fname, "malloc", msgSize*sizeof(char));
-        exit(1);
-    }
-#endif
-
     if (lim_debug == 0) {
-        if(getuid() != 0) {
-            fprintf(stderr, _i18n_msg_get(ls_catd, NL_SETN, 4,
-                                          "%s: Real uid is %d, not root\n"), /* catgets 4 */
-                    argv[0], (int)getuid());
-            exit(1);
+        if (getuid() != 0) {
+            fprintf(stderr, "\
+%s: Real uid is %d, not root\n", __FUNCTION__, (int)getuid());
+            return -1;
         }
-        if(geteuid() != 0) {
-            fprintf(stderr, _i18n_msg_get(ls_catd, NL_SETN, 5,
-                                          "%s: Effective uid is %d, not root\n"), /* catgets 5 */
-                    argv[0], (int)geteuid());
+
+        if (geteuid() != 0) {
+            fprintf(stderr, "\
+%s: Effective uid is %d, not root\n", __FUNCTION__, (int)geteuid());
             exit(1);
         }
     }
@@ -300,10 +242,8 @@ main(int argc, char **argv)
     if (lim_debug < 2)
         chdir("/tmp");
 
-
     getLogClass_(limParams[LSF_DEBUG_LIM].paramValue,
                  limParams[LSF_TIME_LIM].paramValue);
-
 
     if (lim_debug > 1) {
         ls_openlog("lim", limParams[LSF_LOGDIR].paramValue, TRUE, "LOG_DEBUG");
@@ -314,245 +254,155 @@ main(int argc, char **argv)
     }
 
 
-
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: logclass=%x", fname, logclass);
+        ls_syslog(LOG_DEBUG, "%s: logclass=%x", __FUNCTION__, logclass);
 
     ls_syslog(LOG_NOTICE, argvmsg_(argc, argv));
 
 
-    if (initMasterList_() < 0) {
-        if (lserrno == LSE_NO_HOST) {
-            ls_syslog(LOG_ERR, I18N(5090,"There is no valid host in LSF_MASTER_LIST")); /* catgets 5090 */
-        }
-        if (lserrno == LSE_MALLOC) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        }
-        lim_Exit("initMasterList");
-    }
-    if (lserrno == LSE_LIM_IGNORE) {
-        ls_syslog(LOG_WARNING, I18N(5091, "Invalid or duplicated hostname in LSF_MASTER_LIST. Ignoring host")); /* catgets 5091 */
-    }
-    isMasterCandidate = getIsMasterCandidate_();
-    numMasterCandidates = getNumMasterCandidates_();
-
-    if (isMasterCandidate == TRUE) {
-        initAndConfig(lim_CheckMode, &kernelPerm);
-    } else {
-
-        if (lim_CheckMode) {
-
-            if (showTypeModel) {
-
-                printTypeModel();
-                exit(0);
-            }
-
-            printf(_i18n_msg_get(ls_catd, NL_SETN, 5022, "Current host is a slave-only LIM host\n") /* catgets 5022 */);
-            exit(EXIT_RUN_ERROR);
-        }
-
-        slaveOnlyInit(lim_CheckMode, &kernelPerm);
-    }
-
+    initAndConfig(lim_CheckMode, &kernelPerm);
 
     if (showTypeModel) {
         printTypeModel();
-        exit(0);
+        return 0;
     }
-
 
     masterMe = (myHostPtr->hostNo == 0);
 
     maxfd = sysconf(_SC_OPEN_MAX);
     myHostPtr->hostInactivityCount = 0;
 
-    if (lim_CheckMode && isMasterCandidate) {
-
+    if (lim_CheckMode) {
 
         if (lim_CheckError == EXIT_WARNING_ERROR) {
-            ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5001,
-                                                 "Checking Done. Warning(s)/error(s) found.")); /* catgets 5001 */
+            ls_syslog(LOG_WARNING, "\
+%s: Checking Done. Warning(s)/error(s) found.", __FUNCTION__);
             exit(EXIT_WARNING_ERROR);
-        } else {
-            ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5033, "Checking Done.")));   /* catgets 5033 */
-            exit(0);
-        }
-    }
-
-    if (isMasterCandidate) {
-
-
-        if (masterMe) {
-            millisleep_(6000);
-            initNewMaster();
         }
 
-        initMiscLiStruct();
-
+        ls_syslog(LOG_INFO, "%s: Checking Done.", __FUNCTION__);
+        return 0;
     }
 
+    if (masterMe) {
+        millisleep_(6000);
+        initNewMaster();
+    }
 
     initSignals();
-
-#if !defined(NO_SIGALARM)
-    Signal_(SIGALRM, (SIGFUNCTYPE) alrm_handler);
-#endif
-
     updtimer();
 
 
     FD_ZERO(&allMask);
-    ls_syslog(LOG_DEBUG, "%s: Daemon running (%d,%d,%d)",
-              fname, myClusterPtr->checkSum,
+    ls_syslog(LOG_DEBUG, "\
+%s: Daemon running (%d,%d,%d)", __FUNCTION__, myClusterPtr->checkSum,
               ntohs(myHostPtr->statInfo.portno), LSF_VERSION);
+
     if (logclass & LC_COMM)
-        ls_syslog(LOG_DEBUG,"%s: sampleIntvl=%f exchIntvl=%f hostInactivityLimit=%d masterInactivityLimit=%d retryLimit=%d",fname,sampleIntvl, exchIntvl, hostInactivityLimit, masterInactivityLimit, retryLimit);
+        ls_syslog(LOG_DEBUG,"%s: sampleIntvl=%f exchIntvl=%f hostInactivityLimit=%d masterInactivityLimit=%d retryLimit=%d",__FUNCTION__,sampleIntvl, exchIntvl, hostInactivityLimit, masterInactivityLimit, retryLimit);
 
     if (lim_debug < 2)
         chdir("/tmp");
-
-
-
-
 
     for (;;) {
         int nfiles;
         sigset_t oldMask, newMask;
         struct timeval *timep;
-#if defined (NO_SIGALARM)
-        struct timeval timeout;
-#endif
+
         sockmask.rmask = allMask;
 
-        if (pimPid == -1 && limConfReady) {
+        if (pimPid == -1) {
             startPIM(argc, argv);
         }
 
-#if defined(NO_SIGALARM)
         timeToPeriodic(&timeout);
         timep = &timeout;
-        if (lim_debug > 2)
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5002,
-                                             "%s: Before select: timeout.tv_sec=%d timeout.tv_usec=%d"),
-                      fname, timeout.tv_sec, timeout.tv_usec);
-#else
-        timep = NULL;
-#endif
-        if ((nfiles = chanSelect_(&sockmask, &chanmask, timep))  < 0)  {
 
-            if (errno != EINTR) {
-                ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanSelect_");
-            }
+        if (lim_debug > 2)
+            ls_syslog(LOG_ERR, "\
+%s: Before select: timeout.tv_sec=%d timeout.tv_usec=%d",
+                      __FUNCTION__, timeout.tv_sec, timeout.tv_usec);
+
+        if ((nfiles = chanSelect_(&sockmask, &chanmask, timep))  < 0)  {
+            if (errno != EINTR)
+                ls_syslog(LOG_ERR, "%s: chanSelect() failed %m", __FUNCTION__);
         }
 
-
         if (lim_debug > 2)
-            ls_syslog(LOG_ERR,I18N(5024, "%s: Afterselect: nfiles=%d"), fname, nfiles);/*catgets 5024 */
-
+            ls_syslog(LOG_ERR,"\
+%s: After select: nfiles %d", __FUNCTION__, nfiles);
 
         blockSigs_(0, &newMask, &oldMask);
 
-#if !defined(NO_SIGALARM)
         if (alarmed) {
             periodic(kernelPerm);
             sigprocmask(SIG_SETMASK, &oldMask, NULL);
             continue;
         }
-#else
-        if (lim_debug > 2)
-            ls_syslog(LOG_ERR,
-                      I18N(5025,"main: periodicTimer.tv_sec=%d periodicTimer.tv_usec=%d "),/*catgets 5025*/
-                      periodicTimer.tv_sec, periodicTimer.tv_usec);
-        if (timeForPeriodic()) {
-            if (lim_debug > 2)
-                ls_syslog(LOG_ERR, I18N(5026,"main: Invoking periodic()"));/* catgets 5026 */
-            periodic(kernelPerm);
-        }
-#endif
-
 
         if (nfiles <= 0) {
             sigprocmask(SIG_SETMASK, &oldMask, NULL);
             continue;
         }
 
-
         if (FD_ISSET(limSock, &chanmask.rmask)) {
-            struct hostNode *fromHost = NULL;
+            struct hostNode *fromHost;
             char deny = FALSE;
             int cc;
 
-
             fromSize = sizeof(from);
-            memset((char*)&from, 0, sizeof(from));
+            memset(&from, 0, sizeof(from));
 
-#ifdef FLEX_RCVBUF
-            if ((cc = chanRcvDgram_(limSock, reqBuf2, msgSize, &from, -1)) < 0)
-#else
-                if ((cc = chanRcvDgram_(limSock, reqBuf, msgSize, &from, -1)) < 0)
-#endif
-                {
+            cc = chanRcvDgram_(limSock, reqBuf, msgSize, &from, -1);
+            if (cc < 0) {
 
-                    if ( cc < 0 && errno == EAGAIN ) {
-                        ls_syslog(LOG_DEBUG,
-                                  "%s: EAGAIN limSock<%d> count<%d> : %M",
-                                  fname, limSock, eagainErrors);
-
-                        sigprocmask(SIG_SETMASK, &oldMask, NULL);
-                        eagainErrors++;
-
-                        if (eagainErrors > 500) {
-                            ls_syslog(LOG_ERR,
-                                      "%s: There have been 500+ EAGAIN errors",
-                                      fname);
-                            eagainErrors = 0;
-                        }
-                        continue;
-                    }
-
-                    if (cc == -1 && errno == ECONNREFUSED)
-                    {
-
-
-                        sigprocmask(SIG_SETMASK, &oldMask, NULL);
-                        continue;
-                    }
-                    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5002,
-                                                     "%s: Error receiving data on limSock %d, cc=%d: %M"), fname, limSock, cc); /* catgets 5002 */
-                    reconfig();
+                if (errno == EAGAIN ) {
+                    ls_syslog(LOG_ERR, "\
+%s: interrupted chanRcvDgram() limSock %d %M",
+                              __FUNCTION__, limSock, eagainErrors);
+                    sigprocmask(SIG_SETMASK, &oldMask, NULL);
+                    continue;
                 }
 
-#ifdef FLEX_RCVBUF
-            xdrmem_create(&xdrs, reqBuf2, msgSize, XDR_DECODE);
-#else
+                if (cc == -1 && errno == ECONNREFUSED) {
+
+                    sigprocmask(SIG_SETMASK, &oldMask, NULL);
+                    continue;
+                }
+
+                ls_syslog(LOG_ERR, "\
+%s: Error receiving data on limSock %d, cc=%d: %M reconfiguring...",
+                          __FUNCTION__, limSock, cc);
+                reconfig();
+            }
+
             xdrmem_create(&xdrs, reqBuf, msgSize, XDR_DECODE);
-#endif
             initLSFHeader_(&reqHdr);
             if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
-                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_LSFHeader");
+                ls_syslog(LOG_ERR, "\
+%s: failed to decode xdr_LSFHeader %M", __FUNCTION__);
                 xdr_destroy(&xdrs);
                 sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 continue;
             }
 
             limReqCode = reqHdr.opCode;
-
-
             limReqCode &= 0xFFFF;
 
-            if ((fromHost=findHostbyAddr(&from, "main")) == NULL) {
+            fromHost = findHostbyAddr(&from, "main");
+            if (fromHost == NULL) {
+
                 deny = TRUE;
-                ls_syslog(LOG_WARNING, I18N(5003, "\
-%s: Received request <%d> from non-LSF host %s"),
-                          fname, limReqCode, sockAdd2Str_(&from)); /* catgets 5003 */
+                ls_syslog(LOG_WARNING,"\
+%s: Received request <%d> from non-LSF host %s",
+                          __FUNCTION__, limReqCode, sockAdd2Str_(&from));
             }
 
             if (logclass & (LC_TRACE | LC_COMM))
-                ls_syslog(LOG_DEBUG,
-                          "%s: Received request <%d> from host <%s> %s",
-                          fname, limReqCode,
-                          ((fromHost != NULL) ? fromHost->hostName : "unknown"),
+                ls_syslog(LOG_DEBUG, "\
+%s: Received request <%d> from host <%s> %s",
+                          __FUNCTION__, limReqCode,
+                          (fromHost ? fromHost->hostName : "unknown"),
                           sockAdd2Str_(&from));
 
             if (deny) {
@@ -566,7 +416,7 @@ main(int argc, char **argv)
                 continue;
             }
 
-            if (!limConfReady && limReqCode != LIM_MASTER_ANN
+            if (limReqCode != LIM_MASTER_ANN
                 && limReqCode != LIM_REBOOT
                 && limReqCode != LIM_SHUTDOWN
                 && limReqCode != LIM_DEBUGREQ
@@ -582,11 +432,7 @@ main(int argc, char **argv)
             switch (limReqCode) {
 
                 case LIM_PLACEMENT:
-#ifdef VENDOR
-                    errorBack(&from, &reqHdr, LIME_BAD_REQ_CODE, -1);
-#else
                     placeReq(&xdrs, &from, &reqHdr, -1);
-#endif
                     break;
                 case LIM_LOAD_REQ:
                     loadReq(&xdrs, &from, &reqHdr, -1);
@@ -618,8 +464,6 @@ main(int argc, char **argv)
                 case LIM_GET_RESOUINFO:
                     resourceInfoReq(&xdrs, &from, &reqHdr, -1);
                     break;
-
-
                 case LIM_REBOOT:
                     reconfigReq(&xdrs, &from, &reqHdr);
                     break;
@@ -648,13 +492,14 @@ main(int argc, char **argv)
                     rcvConfInfo(&xdrs, &from, &reqHdr);
                     break;
                 default:
-
                     if (reqHdr.version <= LSF_VERSION ) {
                         static int lastcode;
                         errorBack(&from, &reqHdr, LIME_BAD_REQ_CODE, -1);
                         if (limReqCode != lastcode)
-                            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd, NL_SETN, 5005,
-                                                             "%s: Unknown request code %d vers %d from %s"), fname, limReqCode, reqHdr.version, sockAdd2Str_(&from)); /* catgets 5005 */
+                            ls_syslog(LOG_ERR, "\
+%s: Unknown request code %d vers %d from %s", __FUNCTION__,
+                                      limReqCode, reqHdr.version,
+                                      sockAdd2Str_(&from));
                         lastcode = limReqCode;
                         break;
                     }
@@ -672,92 +517,53 @@ main(int argc, char **argv)
         sigprocmask(SIG_SETMASK, &oldMask, NULL);
     }
 
-
 }
 
 static void
 doAcceptConn(void)
 {
-    static char fname[] = "doAcceptConn";
     int  ch;
     struct sockaddr_in from;
     struct hostNode *fromHost;
     struct clientNode *client;
-    int deny = FALSE;
 
     if (logclass & (LC_TRACE | LC_COMM))
-        ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", fname);
-
+        ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", __FUNCTION__);
 
     ch = chanAccept_(limTcpSock, &from);
     if (ch < 0) {
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_MM, fname, "chanAccept_",
-                  limTcpSock);
+        ls_syslog(LOG_ERR, "\
+%s: failed accept() new connection socket %d: %M", __FUNCTION__, limTcpSock);
         return;
     }
 
-    if ((fromHost = findHostbyAddr(&from, fname)) == NULL) {
+    fromHost = findHostbyAddr(&from, __FUNCTION__);
+    if (fromHost == NULL) {
 
-        if (!lim_debug) {
-            if (ntohs(from.sin_port) >= IPPORT_RESERVED ||
-                ntohs(from.sin_port) <  IPPORT_RESERVED/2) {
-                deny = TRUE;
-            }
-        }
+        ls_syslog(LOG_WARNING,"\
+%s: Received request <%d> from non-LSF host %s",
+                          __FUNCTION__, limReqCode, sockAdd2Str_(&from));
+        return;
     }
 
-    if (deny == TRUE) {
-        ls_syslog(LOG_ERR, I18N(5006, "\
-%s: Intercluster request from host <%s> not using privileged port"), /* catgets 5006 */
-                  fname,sockAdd2Str_(&from));
+    client = calloc(1, sizeof(struct clientNode));
+    if (!client) {
+        ls_syslog(LOG_ERR, "\
+%s: calloc() failed: %M connection from %s dropped",
+                  __FUNCTION__,
+                  sockAdd2Str_(&from));
         chanClose_(ch);
         return;
     }
 
-    if (fromHost != NULL) {
+    client->chanfd = ch;
+    clientMap[client->chanfd] = client;
+    client->inprogress = FALSE;
+    client->fromHost   = fromHost;
+    client->from       = from;
+    client->clientMasks = 0;
+    client->reqbuf = NULL;
 
-
-        client = (struct clientNode *)malloc(sizeof(struct clientNode));
-        if (!client) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5007,
-                                             "%s: Connection from %s dropped"), /* catgets 5007 */
-                      fname,
-                      sockAdd2Str_(&from));
-            chanClose_(ch);
-            return;
-        }
-        client->chanfd = ch;
-        if (client->chanfd < 0) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_ENO_D, fname, "chanOpenSock",
-                      cherrno);
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5019,
-                                             "%s: Connection from %s dropped"), /* catgets 5019 */
-                      fname,
-                      sockAdd2Str_(&from));
-            chanClose_(ch);
-            free(client);
-            return;
-        } else if (client->chanfd >= 2*MAXCLIENTS) {
-
-            chanClose_(ch);
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5020,
-                                             "%s: Can't maintain this big clientMap[%d], Connection from %s dropped"), /* catgets 5020 */
-                      fname, client->chanfd,
-                      sockAdd2Str_(&from));
-            free(client);
-
-
-            return;
-        }
-
-        clientMap[client->chanfd] = client;
-        client->inprogress = FALSE;
-        client->fromHost   = fromHost;
-        client->from       = from;
-        client->clientMasks = 0;
-        client->reqbuf = NULL;
-    }
 }
 
 static void
@@ -797,12 +603,7 @@ initSignals(void)
     Signal_(SIGUSR2, (SIGFUNCTYPE) term_handler);
     Signal_(SIGCHLD, (SIGFUNCTYPE) child_handler);
     Signal_(SIGPIPE, SIG_IGN);
-
-#ifdef NO_SIGALARM
     Signal_(SIGALRM, SIG_IGN);
-#endif
-
-
 
     sigemptyset(&mask);
     sigprocmask(SIG_SETMASK, &mask, NULL);
@@ -812,18 +613,16 @@ initSignals(void)
 static void
 initAndConfig(int checkMode, int *kernelPerm)
 {
-    static char fname[] = "initAndConfig";
     int i;
     struct tclLsInfo *tclLsInfo;
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...; checkMode=%d",
-                  fname, checkMode);
+        ls_syslog(LOG_DEBUG, "\
+%s: Entering this routine...; checkMode=%d", __FUNCTION__, checkMode);
 
     initLiStruct();
-    if (readShared() < 0) {
+    if (readShared() < 0)
         lim_Exit("initAndConfig");
-    }
 
     reCheckRes();
 
@@ -854,13 +653,12 @@ initAndConfig(int checkMode, int *kernelPerm)
         satIndex();
         loadIndex();
     }
+
     if (chanInit_() < 0)
         lim_Exit("chanInit_");
 
-    for(i=0; i < 2*MAXCLIENTS; i++) {
+    for(i = 0; i < 2*MAXCLIENTS; i++)
         clientMap[i]=NULL;
-    }
-
 
     {
         char *lsfLimLock;
@@ -871,7 +669,7 @@ initAndConfig(int checkMode, int *kernelPerm)
             && ('\0' != lsfLimLock[0])) {
 
             if ( logclass & LC_TRACE) {
-                ls_syslog(LOG_DEBUG2, "%s: LSF_LIM_LOCK=<%s>", fname, lsfLimLock);
+                ls_syslog(LOG_DEBUG2, "%s: LSF_LIM_LOCK=<%s>", __FUNCTION__, lsfLimLock);
             }
             sscanf(lsfLimLock, "%d %ld", &flag, &lockTime);
             if ( flag > 0 ) {
@@ -893,20 +691,15 @@ initAndConfig(int checkMode, int *kernelPerm)
         }
     }
 
-
     getLastActiveTime();
 
-    limConfReady = TRUE;
-
-    return;
 }
-
 
 static void
 updtimer(void)
 {
-#if defined(NO_SIGALARM)
-    int usec, sec;
+    int usec;
+    int sec;
 
 
     gettimeofday(&periodicTimer, 0);
@@ -921,58 +714,24 @@ updtimer(void)
 
     periodicTimer.tv_usec += usec;
     periodicTimer.tv_sec += sec;
-#else
-    struct itimerval timer;
-
-    timer.it_value.tv_sec    = 5;
-    timer.it_value.tv_usec   = 0;
-
-    if (sampleIntvl >= 1.0) {
-        timer.it_interval.tv_sec  = sampleIntvl;
-        timer.it_interval.tv_usec = 0;
-    } else {
-        timer.it_interval.tv_sec  = 0;
-        timer.it_interval.tv_usec = sampleIntvl*1000000.0;
-    }
-
-    if (logclass & LC_COMM)
-        ls_syslog(LOG_DEBUG,"updtimer: tv_sec=%d tv_usec=%d",
-                  (int)timer.it_interval.tv_sec,  (int)timer.it_interval.tv_usec);
-
-    if (setitimer(ITIMER_REAL, &timer, (struct itimerval *)0) < 0) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "setitimer");
-    }
-#endif
 
 }
 
 static void
 periodic(int kernelPerm)
 {
-    static char fname[] = "periodic";
     static time_t ckWtime = 0;
-    static time_t askSLIMConfTime = 0;
-    static int masterCandidateNo = -1;
     time_t now = time(0);
-
-#if !defined(NO_SIGALARM)
     struct itimerval itime;
-#endif
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __FUNCTION__);
 
     if (limConfReady) {
         TIMEIT(0, readLoad(kernelPerm), "readLoad()");
     }
 
-#if defined(NO_SIGALARM)
     updtimer();
-#else
-    getitimer(ITIMER_REAL, &itime);
-    Signal_(SIGALRM, alrm_handler);
-    setitimer(ITIMER_REAL, &itime, NULL);
-#endif
 
     if (masterMe) {
         announceMaster(myClusterPtr, 1, FALSE);
@@ -983,33 +742,10 @@ periodic(int kernelPerm)
         askSLIMConfTime = now;
     }
 
-    if (limConfReady) {
-        if (now - ckWtime > 60) {
-            checkHostWd();
-            ckWtime = now;
-        }
-    } else {
-
-        if (now - askSLIMConfTime > SLIMCONF_WAIT_TIME) {
-            char* hname;
-            struct hostNode *hPtr;
-
-            if (++masterCandidateNo == numMasterCandidates) {
-
-                masterCandidateNo = 0;
-            }
-            if ((hname = getMasterCandidateNameByNo_(masterCandidateNo))
-                != NULL) {
-                if ((hPtr = findHostbyList(myClusterPtr->hostList, hname))
-                    != NULL) {
-
-                    announceMasterToHost(hPtr, SEND_MASTER_QUERY);
-                    askSLIMConfTime = now;
-                }
-            }
-        }
+    if (now - ckWtime > 60) {
+        checkHostWd();
+        ckWtime = now;
     }
-
 
     alarmed = FALSE;
 }
@@ -1061,17 +797,14 @@ timeForPeriodic(void)
 static void
 term_handler(int signum)
 {
-    static char fname[] = "term_handler()";
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __FUNCTION__);
 
     Signal_(signum, SIG_DFL);
 
-    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5008,
-                                     "%s: Received signal %d, exiting"), /* catgets 5008 */
-              fname,
-              signum);
+    ls_syslog(LOG_ERR, "\
+%s: Received signal %d, exiting", __FUNCTION__, signum);
     chanClose_(limSock);
     chanClose_(limTcpSock);
 
@@ -1082,9 +815,6 @@ term_handler(int signum)
 
     kill(getpid(), signum);
 
-    _i18n_end (ls_catd);
-
-
     exit(0);
 
 } /* term_handler() */
@@ -1094,18 +824,17 @@ term_handler(int signum)
 static void
 child_handler(int sig)
 {
-    static char   fname[] = "child_handler()";
     int           pid;
     LS_WAIT_T     status;
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", fname);
+        ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", __FUNCTION__);
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         if (pid == elim_pid) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5008,
                                              "%s: elim (pid=%d) died (exit_code=%d,exit_sig=%d)"), /* catgets 5008 */
-                      fname,
+                      __FUNCTION__,
                       (int)elim_pid,
                       WEXITSTATUS (status),
                       WIFSIGNALED (status) ? WTERMSIG (status) : 0);
@@ -1124,28 +853,27 @@ child_handler: pim (pid=%d) died", pid);
 int
 initSock(int checkMode)
 {
-    static char          fname[] = "initSock()";
     struct sockaddr_in   limTcpSockId;
     socklen_t            size;
 
     if (limParams[LSF_LIM_PORT].paramValue == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: fatal error LSF_LIM_PORT is not defined in lsf.conf", fname);
+%s: fatal error LSF_LIM_PORT is not defined in lsf.conf", __FUNCTION__);
         return -1;
     }
 
     if ((lim_port = atoi(limParams[LSF_LIM_PORT].paramValue)) <= 0) {
         ls_syslog(LOG_ERR, "\
 %s: LSF_LIM_PORT <%s> must be a positive number",
-            fname, limParams[LSF_LIM_PORT].paramValue);
-            return -1;
+                  __FUNCTION__, limParams[LSF_LIM_PORT].paramValue);
+        return -1;
     }
 
     limSock = chanServSocket_(SOCK_DGRAM, lim_port, -1,  0);
     if (limSock < 0) {
         ls_syslog(LOG_ERR, "\
 %s: unable to create datagram socket port %d; another LIM running?: %M ",
-                  fname, lim_port);
+                  __FUNCTION__, lim_port);
         return -1;
     }
 
@@ -1153,7 +881,7 @@ initSock(int checkMode)
 
     limTcpSock = chanServSocket_(SOCK_STREAM, 0, 10, 0);
     if (limTcpSock < 0) {
-        ls_syslog(LOG_ERR, "%s: chanServSocket_() failed %M", fname);
+        ls_syslog(LOG_ERR, "%s: chanServSocket_() failed %M", __FUNCTION__);
         return -1;
     }
 
@@ -1163,7 +891,7 @@ initSock(int checkMode)
                     &size) < 0) {
 
         ls_syslog(LOG_ERR, "\
-%s: getsockname(%d) failed %M", fname, limTcpSock);
+%s: getsockname(%d) failed %M", __FUNCTION__, limTcpSock);
         return -1;
     }
 
@@ -1176,7 +904,6 @@ void
 errorBack(struct sockaddr_in *from, struct LSFHeader *reqHdr,
           enum limReplyCode replyCode, int chan)
 {
-    static char fname[] = "errorBack()";
     char buf[MSGSIZE/4];
     struct LSFHeader replyHdr;
     XDR  xdrs2;
@@ -1188,7 +915,7 @@ errorBack(struct sockaddr_in *from, struct LSFHeader *reqHdr,
     replyHdr.length = 0;
     xdrmem_create(&xdrs2, buf, MSGSIZE/4, XDR_ENCODE);
     if (!xdr_LSFHeader(&xdrs2, &replyHdr)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_LSFHeader");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __FUNCTION__, "xdr_LSFHeader");
         xdr_destroy(&xdrs2);
         return;
     }
@@ -1199,7 +926,7 @@ errorBack(struct sockaddr_in *from, struct LSFHeader *reqHdr,
         cc = chanWrite_(chan, buf, XDR_GETPOS(&xdrs2));
 
     if (cc < 0)
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,
+        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, __FUNCTION__,
                   "chanSendDgram_/chanWrite_",
                   limSock);
 
@@ -1209,19 +936,18 @@ errorBack(struct sockaddr_in *from, struct LSFHeader *reqHdr,
 static struct tclLsInfo *
 getTclLsInfo(void)
 {
-    static char fname[] = "getTclLsInfo";
     static struct tclLsInfo *tclLsInfo;
     int i;
 
     if ((tclLsInfo = (struct tclLsInfo *) malloc (sizeof (struct tclLsInfo )))
         == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __FUNCTION__, "malloc");
         return NULL;
     }
 
     if ((tclLsInfo->indexNames = (char **)malloc (allInfo.numIndx *
                                                   sizeof (char *))) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __FUNCTION__, "malloc");
         return NULL;
     }
     for (i=0; i < allInfo.numIndx; i++) {
@@ -1241,7 +967,6 @@ getTclLsInfo(void)
 static void
 startPIM(int argc, char **argv)
 {
-    static char fname[] = "startPIM";
     char *pargv[16];
     int i;
     static time_t lastTime = 0;
@@ -1254,7 +979,7 @@ startPIM(int argc, char **argv)
 
     if ((pimPid = fork())) {
         if (pimPid < 0)
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "fork");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __FUNCTION__, "fork");
         return;
     }
 
@@ -1278,7 +1003,7 @@ startPIM(int argc, char **argv)
     pargv[i] = NULL;
     pargv[0] = getDaemonPath_("/pim", limParams[LSF_SERVERDIR].paramValue);
     lsfExecv(pargv[0], pargv);
-    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "execv", pargv[0]);
+    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __FUNCTION__, "execv", pargv[0]);
     exit(-1);
 }
 
@@ -1401,238 +1126,3 @@ printTypeModel(void)
                              "Current host is a slave-only LIM host\n") /* catgets 5021 */);
     }
 }
-
-
-
-int
-slaveOnlyPostConf(int checkMode, int *kernelPerm)
-{
-
-    static char fname[]="slaveOnlyPostConf";
-    struct sharedResourceInstance *tmp;
-    int oldstatus, i, bitPos, newMax;
-    struct tclLsInfo *tclLsInfo;
-    int numUsrIndx;
-
-    numUsrIndx = 0;
-
-    for (i = NBUILTINDEX; i < allInfo.nRes; i++) {
-
-
-        if ((allInfo.resTable[i].interval > 0) &&
-            (allInfo.resTable[i].valueType == LS_NUMERIC) &&
-            (!(allInfo.resTable[i].flags & RESF_SHARED))) {
-
-
-            if (numUsrIndx+NBUILTINDEX >=li_len-1) {
-                li_len *= 2;
-
-                if (!(li=(struct liStruct *)
-                      realloc(li, li_len*sizeof(struct liStruct)))) {
-                    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",
-                              li_len*sizeof(struct liStruct));
-                    return -1;
-                }
-
-            }
-
-            if ((li[NBUILTINDEX + numUsrIndx].name =
-                 putstr_(allInfo.resTable[i].name)) == NULL) {
-                ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc", sizeof(allInfo.resTable[i].name));
-                return -1;
-            }
-
-            li[NBUILTINDEX + numUsrIndx].increasing =
-                (allInfo.resTable[i].orderType == INCR)?1:0;
-            numUsrIndx++;
-        }
-    }
-
-    allInfo.nTypes = 0;
-    allInfo.nModels = 0;
-
-    shortInfo.nRes = 0;
-    shortInfo.resName = (char **) malloc (allInfo.nRes * sizeof(char*));
-    shortInfo.stringResBitMaps = (int *) malloc (GET_INTNUM(allInfo.nRes) *
-                                                 sizeof (int));
-    shortInfo.numericResBitMaps = (int *) malloc (GET_INTNUM(allInfo.nRes) *
-                                                  sizeof (int));
-    if (shortInfo.resName == NULL || shortInfo.stringResBitMaps == NULL
-        || shortInfo.numericResBitMaps == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return -1;
-    }
-
-    for (i = 0; i < GET_INTNUM(allInfo.nRes); i++) {
-        shortInfo.stringResBitMaps[i] = 0;
-        shortInfo.numericResBitMaps[i] = 0;
-    }
-
-    for (i = 0; i < allInfo.nRes; i++) {
-
-
-        if ((allInfo.resTable[i].flags & RESF_BUILTIN)
-            || (allInfo.resTable[i].flags & RESF_DYNAMIC
-                && allInfo.resTable[i].valueType == LS_NUMERIC) ||
-            (allInfo.resTable[i].valueType != LS_STRING
-             && allInfo.resTable[i].valueType != LS_BOOLEAN))
-            continue;
-        shortInfo.resName[shortInfo.nRes] = putstr_(allInfo.resTable[i].name);
-        if (shortInfo.resName[shortInfo.nRes] == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            return -1;
-        }
-        if (allInfo.resTable[i].valueType == LS_STRING)
-            SET_BIT (shortInfo.nRes,  shortInfo.stringResBitMaps);
-        shortInfo.nRes++;
-    }
-
-
-
-    shortInfo.nTypes = 0;
-    shortInfo.nModels = 0;
-
-    myClusterPtr->loadIndxNames = (char **)calloc(allInfo.numIndx, sizeof(char *));
-    if (myClusterPtr->loadIndxNames == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "calloc");
-        return -1;
-    }
-
-    for (i = 0; i < allInfo.numIndx; i++)
-        myClusterPtr->loadIndxNames[i] = putstr_(li[i].name);
-
-    for (i = 1; i < 8; i++)
-        if (myHostPtr->week[i] != NULL)
-            break;
-
-    if (i==8)   {
-        for (i = 1; i < 8; i++)
-            insertW(&(myHostPtr->week[i]), -1.0, 25.0);
-    }
-
-    myHostPtr->status[0] = 0;
-    checkHostWd();
-
-
-    myClusterPtr->status = CLUST_STAT_OK | CLUST_ACTIVE | CLUST_INFO_AVAIL;
-    myClusterPtr->managerName = clusAdminNames[0];
-    myClusterPtr->managerId = clusAdminIds[0];
-
-    myClusterPtr->nAdmins = nClusAdmins;
-    myClusterPtr->adminIds = clusAdminIds;
-    myClusterPtr->admins   = clusAdminNames;
-
-    myHostPtr->resBitMaps = (int *)realloc(myHostPtr->resBitMaps, GET_INTNUM(allInfo.nRes) * sizeof (int));
-    myHostPtr->DResBitMaps =(int *)realloc(myHostPtr->DResBitMaps,GET_INTNUM(allInfo.nRes) * sizeof (int));
-    if (myHostPtr->resBitMaps == NULL || myHostPtr->DResBitMaps == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "realloc");
-        return -1;
-    }
-
-
-    if ((tclLsInfo = getTclLsInfo()) == NULL) {
-        return -1;
-    }
-    if (initTcl(tclLsInfo) < 0)  {
-        return -1;
-    }
-
-    initParse(&allInfo);
-
-    oldstatus = myHostPtr->status[0];
-    free(myHostPtr->status);
-    myHostPtr->status = (int *)malloc((GET_INTNUM(allInfo.numIndx) + 1) *
-                                      sizeof(int));
-    memset(myHostPtr->status, 0, (GET_INTNUM(allInfo.numIndx) + 1) *
-           sizeof(int));
-    myHostPtr->status[0] = oldstatus;
-
-    myHostPtr->loadIndex = (float *)realloc(myHostPtr->loadIndex,
-                                            allInfo.numIndx * sizeof(float));
-    myHostPtr->uloadIndex = (float *)realloc(myHostPtr->uloadIndex,
-                                             allInfo.numIndx * sizeof(float));
-    if (myHostPtr->loadIndex == NULL || myHostPtr->uloadIndex == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "realloc");
-        return -1;
-    }
-
-    for (i = 0; i < allInfo.numIndx; i++) {
-        myHostPtr->loadIndex[i] = INFINIT_LOAD;
-        myHostPtr->uloadIndex[i] = INFINIT_LOAD;
-    }
-
-    if (checkMode) {
-        initReadLoad(LIM_CHECK, kernelPerm);
-    } else {
-        initReadLoad(LIM_STARTUP, kernelPerm);
-    }
-
-    myHostPtr->hModelNo = -1;
-    myHostPtr->hTypeNo = -1;
-    strcpy(myHostPtr->statInfo.hostType, getHostType());
-    strcpy(myHostPtr->statInfo.hostArch, getHostModel());
-
-    for (tmp = sharedResourceHead, bitPos=0; tmp; tmp = tmp->nextPtr, bitPos++);
-    newMax = GET_INTNUM(bitPos);
-    if (!(myHostPtr->resBitArray)) {
-        myHostPtr->resBitArray = (int *)malloc((newMax+1)*sizeof(int));
-        if (myHostPtr->resBitArray == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            return -1;
-        }
-
-        for (i = 0; i < newMax+1; i++) {
-            myHostPtr->resBitArray[i] = 0;
-        }
-    }
-
-    if (! checkMode) {
-        initConfInfo();
-        satIndex();
-        loadIndex();
-    }
-
-    for(i = 0; i < 2*MAXCLIENTS; i++) {
-        clientMap[i] = NULL;
-    }
-
-
-    {
-        char *lsfLimLock;
-        int     flag = -1;
-        time_t  lockTime =-1;
-
-        if ((NULL != (lsfLimLock=getenv("LSF_LIM_LOCK")))
-            && ('\0' != lsfLimLock[0])) {
-
-            if ( logclass & LC_TRACE) {
-                ls_syslog(LOG_DEBUG2, "%s: LSF_LIM_LOCK=<%s>", fname, lsfLimLock);
-            }
-            sscanf(lsfLimLock, "%d %ld", &flag, &lockTime);
-            if ( flag > 0) {
-                limLock.on = flag;
-                limLock.time = lockTime;
-                if ( LOCK_BY_USER(limLock.on)) {
-                    myHostPtr->status[0] |= LIM_LOCKEDU;
-                }
-                if ( LOCK_BY_MASTER(limLock.on)) {
-                    myHostPtr->status[0] |= LIM_LOCKEDM;
-                }
-            }
-        } else {
-            limLock.on = FALSE;
-            limLock.time = 0;
-
-            myHostPtr->status[0] &= ~LIM_LOCKEDU;
-        }
-    }
-
-    initMiscLiStruct();
-
-    readLoad(*kernelPerm);
-
-    limConfReady = TRUE;
-    return 0;
-
-}
-

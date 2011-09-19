@@ -239,7 +239,7 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BU
 ##
 ## Add "openlava" user
 ##
-/usr/sbin/useradd -c "openlava Administrator" -m -d /home/openlava openlava 2> /dev/null || :
+/usr/sbin/useradd -c "openlava Administrator" -m -d /home/openlava -u 789 openlava 2> /dev/null || :
 
 ##
 ## POST
