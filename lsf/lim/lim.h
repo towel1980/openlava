@@ -1,4 +1,7 @@
-/* $Id: lim.h 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
+ *
+ * $Id: lim.h 397 2007-11-26 19:04:00Z mblack $
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -268,15 +271,6 @@ struct masterReg {
     int    *resBitArray;
 };
 
-
-#define  ANN_SLIMCONF_ALL_MIN   (0x01)
-#define  ANN_SLIMCONF_TO_ALL    (0x02)
-struct masterAnnSLIMConf {
-    int    flags;
-    short  hostNo;
-};
-
-
 struct resourceInstance {
     char      *resName;
     int       nHosts;
@@ -466,15 +460,13 @@ extern void tellMasterWho(XDR *, struct sockaddr_in *, struct LSFHeader *);
 extern void whoIsMaster(struct clusterNode *);
 extern void announceMaster(struct clusterNode *, char, char);
 extern void wrongMaster(struct sockaddr_in *, char *, struct LSFHeader *, int);
-extern void sndConfInfo(struct sockaddr_in *, int);
 extern void checkHostWd(void);
 extern void announceMasterToHost(struct hostNode *, int);
-extern int  probeMasterTcp(struct clusterNode *clPtr);
+extern int  probeMasterTcp(struct clusterNode *);
 extern void initNewMaster(void);
 extern int  callMasterTcp(enum limReqCode, struct hostNode *, void *, bool_t(*)(), void *, bool_t(*)(), int, int, struct LSFHeader *);
 extern int validateHost(char *, int);
 extern int validateHostbyAddr(struct sockaddr_in *, int);
-extern int sendMinSLimConfTCP(XDR *, struct LSFHeader *, int);
 extern void checkAfterHourWindow();
 
 extern void sendLoad(void);
@@ -539,9 +531,6 @@ extern int xdr_loadvector(XDR *, struct loadVectorStruct *,
 extern int xdr_loadmatrix(XDR *, int, struct loadVectorStruct *,
                           struct LSFHeader *);
 extern int xdr_masterReg(XDR *, struct masterReg *, struct LSFHeader *);
-extern bool_t xdr_masterAnnSLIMConf(XDR *xdrs,
-                                    struct masterAnnSLIMConf *masterAnnSLIMConfPtr,
-                                    struct LSFHeader *hdr);
 extern int xdr_statInfo(XDR *xdrs, struct statInfo *sip, struct LSFHeader *);
 extern bool_t xdr_minSLimConfData(XDR *xdrs,
 				  struct minSLimConfData *sLimConfDatap,

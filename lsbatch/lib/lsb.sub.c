@@ -504,10 +504,10 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
         useracctmap=NULL;
     }
 
-    strcat(jf->data, "LSF_VERSION='");
-    sprintf (num, "%d", LSF_VERSION);
+    strcat(jf->data, "OPENLAVA_VERSION='");
+    sprintf (num, "%d", OPENLAVA_VERSION);
     strcat(jf->data, num);
-    strcat(jf->data, "'; export LSF_VERSION\n");
+    strcat(jf->data, "'; export OPENLAVA_VERSION\n");
     length += 13 + strlen(num) + 23;
 
     for (ep = environ; *ep; ep++) {
@@ -530,7 +530,7 @@ createJobInfoFile(struct submit *jobSubReq, struct lenData *jf)
 	    !strncmp(*ep, "LSB_ACCT_MAP=", 13) ||
 	    !strncmp(*ep, "LSB_JOB_STARTER=", 16) ||
 	    !strncmp(*ep, "LSB_EVENT_ATTRIB=", 17) ||
-	    !strncmp(*ep, "LSF_VERSION=", 12) ||
+	    !strncmp(*ep, "OPENLAVA_VERSION=", 12) ||
 	    !strncmp(*ep, "LSB_SUB_", 8) ||
 
 

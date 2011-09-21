@@ -27,11 +27,11 @@
 
 #include "../../lsf/lib/lib.channel.h"
 
-#define NL_SETN	10	
+#define NL_SETN	10
 
 #include <malloc.h>
 
-#define MBD_THREAD_MIN_STACKSIZE  512    
+#define MBD_THREAD_MIN_STACKSIZE  512
 #define POLL_INTERVAL MAX(msleeptime/10, 1)
 
 
@@ -42,88 +42,88 @@ int lsb_CheckMode = 0;
 int lsb_CheckError = 0;
 
 int batchSock;
- 
+
 #include <pthread.h>
 
-#define MAX_THRNUM     3000     
+#define MAX_THRNUM     3000
 
 time_t      lastForkTime;
-int         statusChanged = 0;   
+int         statusChanged = 0;
 
 int nextJobId = 1;
 char masterme = TRUE;
-ushort sbd_port;               
-ushort mbd_port;               
-int connTimeout;               
-int glMigToPendFlag = FALSE;   
+ushort sbd_port;
+ushort mbd_port;
+int connTimeout;
+int glMigToPendFlag = FALSE;
 
-int requeueToBottom = FALSE;   
-int arraySchedOrder = FALSE;   
+int requeueToBottom = FALSE;
+int arraySchedOrder = FALSE;
 
-uid_t    *managerIds  = NULL;               
+uid_t    *managerIds  = NULL;
 char   **lsbManagers = NULL;
 int    nManagers     = 0;
 
 char   *lsbManager  = NULL;
 char   *lsbSys      = "SYS";
-int    managerId    = 0;                  
-uid_t  batchId      = 0;                  
+int    managerId    = 0;
+uid_t  batchId      = 0;
 int    jobTerminateInterval = DEF_JTERMINATE_INTERVAL;
 int    msleeptime   = DEF_MSLEEPTIME;
-int    sbdSleepTime = DEF_SSLEEPTIME;     
+int    sbdSleepTime = DEF_SSLEEPTIME;
 int    preemPeriod  = DEF_PREEM_PERIOD;
 int    pgSuspIdleT  = DEF_PG_SUSP_IT;
-int    rusageUpdateRate = DEF_RUSAGE_UPDATE_RATE; 
+int    rusageUpdateRate = DEF_RUSAGE_UPDATE_RATE;
 int    rusageUpdatePercent = DEF_RUSAGE_UPDATE_PERCENT;
 int    clean_period = DEF_CLEAN_PERIOD;
-int    max_retry    = DEF_MAX_RETRY;   
+int    max_retry    = DEF_MAX_RETRY;
 int    retryIntvl   = DEF_RETRY_INTVL;
 int    max_sbdFail  = DEF_MAXSBD_FAIL;
-int    sendEvMail   = 0;                         
-int    maxJobId = DEF_MAX_JOBID;                 
+int    sendEvMail   = 0;
+int    maxJobId = DEF_MAX_JOBID;
 
 int    maxJobArraySize = DEF_JOB_ARRAY_SIZE;
 int    jobRunTimes = INFINIT_INT;
 int    jobDepLastSub = 0;
 int    maxjobnum    = DEF_MAX_JOB_NUM;
-int    accept_intvl = DEF_ACCEPT_INTVL;   
-int    preExecDelay = DEF_PRE_EXEC_DELAY;  
+int    accept_intvl = DEF_ACCEPT_INTVL;
+int    preExecDelay = DEF_PRE_EXEC_DELAY;
 int    slotResourceReserve = FALSE;
-int    maxAcctArchiveNum = -1;  
-int    acctArchiveInDays = -1;   
-int    acctArchiveInSize = -1; 
+int    maxAcctArchiveNum = -1;
+int    acctArchiveInDays = -1;
+int    acctArchiveInSize = -1;
 int    numofqueues  = 0;
 int    numofhosts   = 0;
 int    numofprocs   = 0;
 int    numofusers    = 0;
 int    numofugroups  = 0;
 int    numofhgroups  = 0;
-int    mSchedStage = 0;                 
-int    maxSchedStay = DEF_SCHED_STAY;   
-int    freshPeriod = DEF_FRESH_PERIOD;  
-int    qAttributes = 0;             
-int    **hReasonTb = NULL;          
-int    **cReasonTb = NULL;          
-time_t now;                         
+int    mSchedStage = 0;
+int    maxSchedStay = DEF_SCHED_STAY;
+int    freshPeriod = DEF_FRESH_PERIOD;
+int    qAttributes = 0;
+int    **hReasonTb = NULL;
+int    **cReasonTb = NULL;
+time_t now;
 long   schedSeqNo = 0;
-struct hData **hDataPtrTb = NULL;   
-UDATA_TABLE_T * uDataPtrTb;          
-struct hTab uDataList;		   
-struct hTab hostTab;		   
+struct hData **hDataPtrTb = NULL;
+UDATA_TABLE_T * uDataPtrTb;
+struct hTab uDataList;
+struct hTab hostTab;
 
 
-struct qData *qDataList = NULL;           
-struct jData *jDataList[ALLJLIST];   
-struct jData *chkJList;            
+struct qData *qDataList = NULL;
+struct jData *jDataList[ALLJLIST];
+struct jData *chkJList;
 
 struct hTab cpuFactors;
 struct gData *usergroups[MAX_GROUPS];
 struct gData *hostgroups[MAX_GROUPS];
 struct clientNode *clientList = NULL;
 
-struct lsInfo *allLsInfo;             
-struct hTab calDataList;	      
-struct hTab condDataList;             
+struct lsInfo *allLsInfo;
+struct hTab calDataList;
+struct hTab condDataList;
 
 char   *masterHost = NULL;
 char   *clusterName = NULL;
@@ -141,10 +141,10 @@ int    maxJobPerSession = INFINIT_INT;
 int    maxUserPriority = -1;
 int    jobPriorityValue = -1;
 int    jobPriorityTime = -1;
-static int jobPriorityUpdIntvl = -1; 
+static int jobPriorityUpdIntvl = -1;
 
 int nSbdConnections = 0;
-int maxSbdConnections = DEF_MAX_SBD_CONNS; 
+int maxSbdConnections = DEF_MAX_SBD_CONNS;
 int numResources = 0;
 struct hostInfo *lsfHostInfo = NULL;
 int    numLsfHosts = 0;
@@ -156,14 +156,14 @@ int sharedResourceUpdFactor = INFINIT_INT;
 
 long   schedSeqNo;
 
-int    schedule;       
-int    scheRawLoad;   
+int    schedule;
+int    scheRawLoad;
 
 int lsbModifyAllJobs = FALSE;
 
 static int schedule1;
 static struct jData *jobData = NULL;
-static time_t lastSchedTime = 0;   
+static time_t lastSchedTime = 0;
 static time_t nextSchedTime = 0;
 
 void setJobPriUpdIntvl(void);
@@ -204,18 +204,18 @@ main (int argc, char **argv)
     time_t lastPeriodicCheckTime = 0;
     time_t lastElockTouch;
 
-    
+
     int aopt;
     extern char *optarg;
     extern int opterr;
 
-    
+
     saveDaemonDir_(argv[0]);
 
-    
+
     _i18n_init(I18N_CAT_MBD);
 
-    
+
     opterr = 0;
     while ((aopt = getopt(argc, argv, "hVd:12C")) != EOF) {
 	 switch(aopt)
@@ -237,7 +237,7 @@ main (int argc, char **argv)
 		 exit(0);
 	       case 'h':
 	       default:
-		 fprintf(stderr,  
+		 fprintf(stderr,
 		     "%s: mbatchd [-h] [-V] [-C] [-d env_dir] [-1 |-2]\n",
 		     I18N_Usage);
 		 exit(1);
@@ -247,7 +247,7 @@ main (int argc, char **argv)
 
     if (initenv_(daemonParams, env_dir) < 0)
     {
-	 ls_openlog("mbatchd", daemonParams[LSF_LOGDIR].paramValue, 
+	 ls_openlog("mbatchd", daemonParams[LSF_LOGDIR].paramValue,
 	   (debug > 1 || lsb_CheckMode), daemonParams[LSF_LOG_MASK].paramValue);
 	 ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, "main", "initenv");
 	 if (!lsb_CheckMode)
@@ -256,20 +256,20 @@ main (int argc, char **argv)
 	     lsb_CheckError = FATAL_ERR;
     }
 
-    
+
     if (!debug && isint_(daemonParams[LSB_DEBUG].paramValue)) {
 	 debug = atoi(daemonParams[LSB_DEBUG].paramValue);
 	 if (debug <= 0 || debug > 2)
 	     debug = 1;
     }
 
-    
+
     if (debug < 2 && !lsb_CheckMode) {
 	 for (i = sysconf(_SC_OPEN_MAX) ; i >= 3 ; i--)
 	     close(i);
     }
 
-    
+
     getLogClass_(daemonParams[LSB_DEBUG_MBD].paramValue,
 		  daemonParams[LSB_TIME_MBD].paramValue);
 
@@ -286,13 +286,13 @@ main (int argc, char **argv)
     if (logclass)
 	 ls_syslog(LOG_DEBUG, "%s: logclass=%x", fname, logclass);
 
-    
+
     if (isint_(daemonParams[LSB_MBD_CONNTIMEOUT].paramValue))
 	 connTimeout = atoi(daemonParams[LSB_MBD_CONNTIMEOUT].paramValue);
     else
 	 connTimeout = 5;
 
-    
+
     glMigToPendFlag = FALSE;
 
     if (isint_(daemonParams[LSB_MBD_MIGTOPEND].paramValue))
@@ -315,10 +315,10 @@ main (int argc, char **argv)
             arraySchedOrder = TRUE;
     }
 
-    
+
     if (daemonParams[LSB_HJOB_PER_SESSION].paramValue != NULL) {
         if (atoi(daemonParams[LSB_HJOB_PER_SESSION].paramValue) > 0) {
-            maxJobPerSession = 
+            maxJobPerSession =
                  atoi(daemonParams[LSB_HJOB_PER_SESSION].paramValue);
         } else {
            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5001,
@@ -326,7 +326,7 @@ main (int argc, char **argv)
         }
     }
 
-    
+
     if ((daemonParams[LSB_MOD_ALL_JOBS].paramValue != NULL)
 	&& (strcasecmp(
 	    daemonParams[LSB_MOD_ALL_JOBS].paramValue, "y") == 0
@@ -340,14 +340,14 @@ main (int argc, char **argv)
     if (daemonParams[LSB_PTILE_PACK].paramValue != NULL
 	&& (strcasecmp(daemonParams[LSB_PTILE_PACK].paramValue, "y") == 0)) {
 
-	
+
 	setLsbPtilePack(TRUE);
     }
 
     if (logclass & (LC_TRACE | LC_HANG))
 	 ls_syslog(LOG_DEBUG, "%s: connTimeout=%d", fname, connTimeout);
 
-    
+
     daemon_doinit();
 
     if ((!debug) && (!lsb_CheckMode))  {
@@ -367,12 +367,12 @@ main (int argc, char **argv)
 
     now = time(0);
     if (lsb_CheckMode == TRUE)
-        
+
         TIMEIT(0, minit(FIRST_START),"minit");
 
-    masterHost = ls_getmastername();                   
+    masterHost = ls_getmastername();
     for (i=0; i<3 && !masterHost && lserrno == LSE_TIME_OUT; i++) {
-	 millisleep_ (6000);            
+	 millisleep_ (6000);
 	 masterHost = ls_getmastername();
     }
     if (masterHost == NULL) {
@@ -410,12 +410,12 @@ main (int argc, char **argv)
 		 lsb_CheckError = FATAL_ERR;
 	 }
     }
-    
-    
-    (void)umask(022);        
+
+
+    (void)umask(022);
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
-    
+
     if (lsb_CheckMode) {
 	ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5029, "Checking Done")));       /* catgets 5029 */
 	exit(lsb_CheckError);
@@ -425,15 +425,15 @@ main (int argc, char **argv)
 	ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5030, "%s: (re-)started")), "main");  /* catgets 5030 */
 	ls_syslog(LOG_DEBUG1, "main: maxSchedStay=%d freshPeriod=%d qAttributes=%x", maxSchedStay, freshPeriod, qAttributes);
     }
-    pollSbatchds(FIRST_START);   
+    pollSbatchds(FIRST_START);
     lastSchedTime  = 0;
     nextSchedTime  = time(0) + msleeptime;
     lastElockTouch = time(0) - msleeptime;
     schedulerInit();
     setJobPriUpdIntvl();
 
-    
-    
+
+
     for(;;) {
 	int      maxfd;
 
@@ -442,20 +442,20 @@ main (int argc, char **argv)
 	 maxfd = sysconf(_SC_OPEN_MAX);
 	 now = time(0);
 
-	if ( (now - lastSchedTime >= msleeptime) 
+	if ( (now - lastSchedTime >= msleeptime)
 	     || (now >= nextSchedTime) ) {
 	    schedule = TRUE;
 	}
 
 	if (schedule) {
-	    
-	     hsKeeping = TRUE;       
-	     timeout.tv_sec = 0;     
+
+	     hsKeeping = TRUE;
+	     timeout.tv_sec = 0;
 	}
 
 	shutdownSbdConnections();
-	
-		 
+
+
 	if ( (now - lastElockTouch) >= msleeptime) {
 	    touchElogLock();
 	    lastElockTouch = now;
@@ -463,58 +463,58 @@ main (int argc, char **argv)
 
 	if (now - lastPeriodicCheckTime > 5 * 60
 	    && lastPeriodicCheckTime != 0 ) {
-	    
+
 	    hsKeeping = FALSE;
-	    timeout.tv_sec = 0;     
+	    timeout.tv_sec = 0;
 	}
-	
+
 	sockmask.rmask = readmask;
-	
+
 	nready = chanSelect_(&sockmask, &chanmask, &timeout);
-	
+
 	if (nready < 0) {
 	    if (errno != EINTR)
 		ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, "main", "select");
 	    continue;
 	}
-	
-	
-	if (nready == 0  
-	    ||  ( (now - lastSchedTime) >= 2*msleeptime)) {  
-	    
+
+
+	if (nready == 0
+	    ||  ( (now - lastSchedTime) >= 2*msleeptime)) {
+
 	    if (hsKeeping) {
 		houseKeeping (&hsKeeping);
 	    } else {
 		periodicCheck ();
 		lastPeriodicCheckTime = now;
 	    }
-	    
-	    if (!hsKeeping) {       
-		timeout.tv_sec = POLL_INTERVAL;    
+
+	    if (!hsKeeping) {
+		timeout.tv_sec = POLL_INTERVAL;
 	    } else {
-		timeout.tv_sec = 0;   
-	    }                      
-	    
+		timeout.tv_sec = 0;
+	    }
+
 	    timeout.tv_usec = 0;
-	    
+
 	    if (nready == 0)
 		continue;
 	}
-	
-	timeout.tv_sec  = 0;  
+
+	timeout.tv_sec  = 0;
 	timeout.tv_usec = 0;
-	
-	
+
+
 	if (FD_ISSET(batchSock, &chanmask.rmask)) {
 	    acceptConnection(batchSock);
 	}
-	
+
 	clientIO(&chanmask);
-	
-    }  
-    
+
+    }
+
 }
-    
+
 static void
 acceptConnection(int socket)
 {
@@ -529,11 +529,11 @@ acceptConnection(int socket)
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, "main", "accept");
 	return;
     }
-    
-    
+
+
     hp = (struct hostent *)getHostEntryByAddr_(&from.sin_addr);
     if (hp == NULL) {
-	ls_syslog(LOG_WARNING, 
+	ls_syslog(LOG_WARNING,
 		  _i18n_msg_get(ls_catd , NL_SETN, 5010, "%s: Request from unknown host <%s>: %M"), /* catgets 5010 */
 		  fname,
 		  sockAdd2Str_(&from));
@@ -541,42 +541,42 @@ acceptConnection(int socket)
 	chanClose_(s);
 	return;
     }
-    
+
     if (logclass & (LC_COMM | LC_TRACE)) {
 	ls_syslog(LOG_DEBUG1, "\
-%s: Received request from host <%s/%s> on socket <%d>", 
-		  fname, hp->h_name, sockAdd2Str_(&from), 
+%s: Received request from host <%s/%s> on socket <%d>",
+		  fname, hp->h_name, sockAdd2Str_(&from),
 		  chanSock_(s));
     }
-    
-    
-    memcpy((char *) &from.sin_addr, 
+
+
+    memcpy((char *) &from.sin_addr,
 	   (char *) hp->h_addr,
 	   (int) hp->h_length);
-    
+
     if (logclass & (LC_COMM))
 	ls_syslog(LOG_DEBUG1, "%s: Official address is %s",
 		  fname, sockAdd2Str_(&from));
-    
-    
-    client = 
+
+
+    client =
 	(struct clientNode *)my_malloc(sizeof(struct clientNode),
 				       "main");
-    
-    
+
+
     client->chanfd = s;
     client->from =  from;
     client->fromHost = safeSave(hp->h_name);
     client->reqType = 0;
-    client->lastTime = 0; 
-    
-    inList((struct listEntry *)clientList, 
+    client->lastTime = 0;
+
+    inList((struct listEntry *)clientList,
 	   (struct listEntry *) client);
-    
+
     if (logclass & LC_COMM )
 	ls_syslog(LOG_DEBUG1, "%s: Accepted connection from host <%s> on channell <%d>", fname, client->fromHost, client->chanfd);
-    
-} 
+
+}
 
 static void
 clientIO(struct Masks *chanmask)
@@ -584,7 +584,7 @@ clientIO(struct Masks *chanmask)
     struct clientNode *cliPtr, *nextClient;
     struct sbdNode *sbdPtr, *nextSbdPtr;
     int exception;
-   
+
     if (logclass & LC_TRACE)
 	 ls_syslog(LOG_DEBUG1,"clientIO: Entering...");
 
@@ -601,7 +601,7 @@ clientIO(struct Masks *chanmask)
 	 }
     }
 
-    
+
     for (cliPtr=clientList->forw; cliPtr != clientList; cliPtr=nextClient) {
 	int needFree;
 	nextClient = cliPtr->forw;
@@ -611,11 +611,11 @@ clientIO(struct Masks *chanmask)
 	}
 	needFree = FALSE;
 	if (FD_ISSET(cliPtr->chanfd, &chanmask->rmask)) {
-	    
+
 	    int saveChfd;
 	    saveChfd = cliPtr->chanfd;
 	    if (processClient(cliPtr, &needFree) == 0) {
-	        
+
 		 FD_CLR(saveChfd, &chanmask->rmask);
                  if (needFree == TRUE) {
 	             offList((struct listEntry *)cliPtr);
@@ -626,9 +626,9 @@ clientIO(struct Masks *chanmask)
 	}
 
     }
-} 
+}
 
-static int 
+static int
 processClient(struct clientNode *client, int *needFree)
 {
     static char          fname[]="processClient()";
@@ -641,7 +641,7 @@ processClient(struct clientNode *client, int *needFree)
     unsigned int         len;
     struct sockaddr_in   from;
     struct sockaddr_in   laddr;
-    socklen_t            laddrLen; 
+    socklen_t            laddrLen;
     struct lsfAuth       auth;
     struct LSFHeader     reqHdr;
     XDR                  xdrs;
@@ -675,17 +675,17 @@ processClient(struct clientNode *client, int *needFree)
 
     if (logclass & (LC_COMM | LC_TRACE)) {
 	ls_syslog(LOG_DEBUG, "\
-%s: Received request <%d> from host <%s/%s> on channel <%d>", 
-		  fname, mbdReqtype, client->fromHost, 
+%s: Received request <%d> from host <%s/%s> on channel <%d>",
+		  fname, mbdReqtype, client->fromHost,
 		  sockAdd2Str_(&from), s);
     }
 
     if( hostIsLocal(client->fromHost) ) {
         hostOkFlag = hostOk(client->fromHost, LOCAL_ONLY);
-    } else { 
+    } else {
         hostOkFlag = hostOk(client->fromHost, 0);
     }
-    
+
     switch (hostOkFlag) {
 	   case -1:
 
@@ -696,7 +696,7 @@ processClient(struct clientNode *client, int *needFree)
 	     errorBack(s, LSBE_NOLSF_HOST, &from);
 	     goto endLoop;
 	   default:
-	     
+
 	     break;
 	 }
 
@@ -704,11 +704,11 @@ processClient(struct clientNode *client, int *needFree)
 	     if (io_block_(chanSock_(s)) < 0)
 		 ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "io_block_");
 
-	 if (getsockname(chanSock_(s), 
-                         (struct sockaddr *) &laddr, 
+	 if (getsockname(chanSock_(s),
+                         (struct sockaddr *) &laddr,
                           &laddrLen) == -1) {
 	     ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "getsockname");
-	     errorBack(s, LSBE_PROTOCOL, &from);   
+	     errorBack(s, LSBE_PROTOCOL, &from);
 	     goto endLoop;
 	 }
 
@@ -725,11 +725,11 @@ processClient(struct clientNode *client, int *needFree)
 		 ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "fork");
 		 errorBack(s, LSBE_NO_FORK, &from);
 	     }
-	     
+
 	     if (pid != 0) {
 		 goto endLoop;
 	     }
-	     
+
 	     if (debug < 2)
 		 closeExceptFD(chanSock_(s));
 	 }
@@ -780,22 +780,22 @@ processClient(struct clientNode *client, int *needFree)
 	     break;
 	 case BATCH_STATUS_MSG_ACK:
 	 case BATCH_STATUS_JOB:
-	 case BATCH_RUSAGE_JOB:	     
+	 case BATCH_RUSAGE_JOB:
 	     TIMEIT(0, (statusReqCC = do_statusReq(&xdrs, s, &from,
 						   &schedule1, &reqHdr)),
 		    "do_statusReq()");
-          
+
 	     if (mSchedStage == 0) {
 		 setNextSchedTimeWhenJobFinish();
 	     }
 	     if (client->lastTime == 0)
 		 nSbdConnections++;
 	     break;
-	 case BATCH_STATUS_CHUNK:	     
+	 case BATCH_STATUS_CHUNK:
 	     TIMEIT(0, (statusReqCC = do_chunkStatusReq(&xdrs, s, &from,
 						   &schedule1, &reqHdr)),
 		    "do_chunkStatusReq()");
-          
+
 	     if (mSchedStage == 0) {
 		 setNextSchedTimeWhenJobFinish();
 	     }
@@ -821,7 +821,7 @@ processClient(struct clientNode *client, int *needFree)
 	     TIMEIT(3, do_modifyReq(&xdrs, s, &from, client->fromHost, &reqHdr,
 						     &auth),"do_modifyReq()");
 	     break;
-	 
+
 	 case BATCH_JOB_PEEK:
 	     TIMEIT(0, do_jobPeekReq(&xdrs, s, &from, client->fromHost, &reqHdr, &auth),"do_jobPeekReq()");
 	     break;
@@ -848,19 +848,19 @@ processClient(struct clientNode *client, int *needFree)
 	     break;
 	 case BATCH_JOB_FORCE:
 	     TIMEIT(0,
-		    do_runJobReq(&xdrs, s, &from, &auth, &reqHdr), 
+		    do_runJobReq(&xdrs, s, &from, &auth, &reqHdr),
 		    "do_runJobReq()");
 	     break;
 	 default:
 	     errorBack(s, LSBE_PROTOCOL, &from);
-	     if (reqHdr.version <= LSF_VERSION)
-		 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5019,
-		    "%s: Unknown request type <%d> from host <%s>"), /* catgets 5019 */
-		    fname, mbdReqtype, sockAdd2Str_(&from));
+	     if (reqHdr.version <= OPENLAVA_VERSION)
+		 ls_syslog(LOG_ERR, "\
+%s: Unknown request type %d from host %s",
+                           fname, mbdReqtype, sockAdd2Str_(&from));
 	     break;
 	 }
 
-	 
+
 	 if (forkOnRequest(mbdReqtype)) {
 	     chanFreeBuf_(buf);
 	     exit(0);
@@ -872,18 +872,18 @@ processClient(struct clientNode *client, int *needFree)
 	 chanFreeBuf_(buf);
 	 if ((reqHdr.opCode != PREPARE_FOR_OP &&
 	      reqHdr.opCode != BATCH_STATUS_JOB &&
-	      reqHdr.opCode != BATCH_RUSAGE_JOB &&	     
+	      reqHdr.opCode != BATCH_RUSAGE_JOB &&
 	      reqHdr.opCode != BATCH_STATUS_MSG_ACK &&
               reqHdr.opCode != BATCH_STATUS_CHUNK) ||
 	     statusReqCC < 0) {
 	     shutDownClient(client);
 	     return(-1);
-	 } 
+	 }
 	 return(0);
 
-} 
+}
 
-void 
+void
 shutDownClient(struct clientNode *client)
 {
     if ((client->reqType == BATCH_STATUS_JOB ||
@@ -897,9 +897,9 @@ shutDownClient(struct clientNode *client)
     offList((struct listEntry *)client);
     if (client->fromHost)
 	 free(client->fromHost);
-    free(client);	
+    free(client);
 
-} 
+}
 
 static void
 houseKeeping (int *hsKeeping)
@@ -911,7 +911,7 @@ houseKeeping (int *hsKeeping)
 #define SCHED  1
 #define DISPT  2
 #define RESIG  3
-#define T15MIN (60*15)  
+#define T15MIN (60*15)
     static int myTurn = RESIG;
 
     if (logclass & (LC_TRACE | LC_SCHED)) {
@@ -928,45 +928,45 @@ houseKeeping (int *hsKeeping)
 	    checkAcctLog();
 	}
     }
-	    
-	
+
+
     if (myTurn == RESIG)
 	 myTurn = SCHED;
     if (schedule && myTurn == SCHED) {
 	if (eventPending) {
 	     resignal = TRUE;
 	}
-	 now = time(0);       
+	 now = time(0);
 	 if (schedule) {
 	     lastSchedTime = now;
-             nextSchedTime = now + msleeptime;  
-	     TIMEIT(0, schedule = scheduleAndDispatchJobs(), 
+             nextSchedTime = now + msleeptime;
+	     TIMEIT(0, schedule = scheduleAndDispatchJobs(),
                     "scheduleAndDispatchJobs");
 	     if (schedule == 0) {
-		 
+
 		 schedule = FALSE;
 	     } else {
 		 schedule = TRUE;
 	     }
-	     return;           
+	     return;
 	 }
     }
 
 
-    
+
     if (myTurn == SCHED)
 	 myTurn = RESIG;
     if (resignal && myTurn == RESIG) {
 	 RESET_CNT();
 	 TIMEIT(0, resigJobs (&resignal), "resigJobs()");
 	 DUMP_CNT();
-	 return;               
+	 return;
     }
 
-    *hsKeeping = FALSE;       
+    *hsKeeping = FALSE;
     return;
 
-} 
+}
 
 static void
 periodicCheck (void)
@@ -991,12 +991,12 @@ periodicCheck (void)
          first_hostInfoRefreshTime = now;
     }
 
-    switchELog();    
+    switchELog();
 
-    
-    if ( jobPriorityUpdIntvl > 0 ) { 
+
+    if ( jobPriorityUpdIntvl > 0 ) {
         if (now - last_jobPriUpdTime >= jobPriorityUpdIntvl * 60 ) {
-    	    
+
 	    TIMEIT(0, updateJobPriorityInPJL( ), "updateJobPriorityInPJL()");
 	    last_jobPriUpdTime = now;
         }
@@ -1007,7 +1007,7 @@ periodicCheck (void)
         lastPollTime = now;
     }
 
-    if (now - last_chk_time > msleeptime) { 
+    if (now - last_chk_time > msleeptime) {
 	 masterHost = ls_getmastername();
 	 if (masterHost == NULL) {
 	     ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5020,
@@ -1024,23 +1024,23 @@ periodicCheck (void)
 	     masterHost = myhostnm;
 	     mbdDie(MASTER_RESIGN);
 	 }
-	 
-	 clean(now);               
-	 checkQWindow();           
+
+	 clean(now);
+	 checkQWindow();
 	 checkHWindow();
-         
-         TIMEIT(0, checkJgrpDep(), "checkJgrpDep"); 
+
+         TIMEIT(0, checkJgrpDep(), "checkJgrpDep");
 
 	 now = time(0);
 	 last_chk_time = now;
     }
     if (now - last_tryControlJobs > sbdSleepTime) {
 	last_tryControlJobs = now;
-	
+
 	TIMEIT(0, tryResume(), "tryResume()");
     }
     if (now - last_checkConf > condCheckTime) {
-	 if (winConf == FALSE && updAllConfCond() == TRUE) 
+	 if (winConf == FALSE && updAllConfCond() == TRUE)
 	     winConf = TRUE;
 	 if (dispatch == FALSE && winConf == TRUE) {
 	     readNumber++;
@@ -1050,14 +1050,14 @@ periodicCheck (void)
 	 }
 	 last_checkConf = now;
     }
-    if (now - last_hostInfoRefreshTime > 10*60) { 
+    if (now - last_hostInfoRefreshTime > 10*60) {
 	getLsbHostInfo();
 	last_hostInfoRefreshTime = now;
     }
-} 
+}
 
 
-void 
+void
 terminate_handler (int sig)
 {
     sigset_t newmask, oldmask;
@@ -1069,7 +1069,7 @@ terminate_handler (int sig)
     sigprocmask(SIG_BLOCK, &newmask, &oldmask);
 
     exit(sig);
-} 
+}
 
 void
 child_handler (int sig)
@@ -1087,9 +1087,9 @@ child_handler (int sig)
     while ((pid = waitpid(-1, &status, WNOHANG)) >0) {
     }
     sigprocmask(SIG_SETMASK, &oldmask, NULL);
-} 
+}
 
- 
+
 static int
 authRequest(struct lsfAuth *auth, XDR *xdrs, struct LSFHeader *reqHdr,
 	     struct sockaddr_in *from, struct sockaddr_in *local,
@@ -1099,13 +1099,13 @@ authRequest(struct lsfAuth *auth, XDR *xdrs, struct LSFHeader *reqHdr,
     mbdReqType reqType = reqHdr->opCode;
     char buf[1024];
 
-    
+
     if (!(reqType == BATCH_JOB_SUB || reqType == BATCH_JOB_PEEK ||
 	   reqType == BATCH_JOB_SIG || reqType == BATCH_QUE_CTRL ||
 	   reqType == BATCH_RECONFIG || reqType == BATCH_JOB_MIG ||
 	   reqType == BATCH_HOST_CTRL || reqType == BATCH_JOB_SWITCH ||
 	   reqType == BATCH_JOB_MOVE || reqType == BATCH_JOB_MODIFY ||
-	   reqType == BATCH_DEBUG    || 
+	   reqType == BATCH_DEBUG    ||
            reqType == BATCH_JOB_FORCE || reqType == BATCH_SET_JOB_ATTR))
 	 return (LSBE_NO_ERROR);
 
@@ -1114,15 +1114,15 @@ authRequest(struct lsfAuth *auth, XDR *xdrs, struct LSFHeader *reqHdr,
 	 return (LSBE_XDR);
     }
 
-    
 
-    
+
+
     putEauthClientEnvVar("user");
     sprintf(buf, "mbatchd@%s", clusterName);
     putEauthServerEnvVar(buf);
 
 #ifdef INTER_DAEMON_AUTH
-    
+
     if (daemonParams[LSF_AUTH_DAEMONS].paramValue) {
 
 	putEauthAuxDataEnvVar(NULL);
@@ -1131,8 +1131,8 @@ authRequest(struct lsfAuth *auth, XDR *xdrs, struct LSFHeader *reqHdr,
             createEauthAuxDataEnvVar();
 	}
     }
-#endif 
-    
+#endif
+
     if (!userok(s, from, hostName, local, auth, debug))
 	 return (LSBE_PERMISSION);
 
@@ -1159,7 +1159,7 @@ authRequest(struct lsfAuth *auth, XDR *xdrs, struct LSFHeader *reqHdr,
 
     return (LSBE_NO_ERROR);
 
-} 
+}
 
 
 static int
@@ -1168,21 +1168,21 @@ forkOnRequest(mbdReqType req)
     if (req == BATCH_JOB_INFO || req == BATCH_QUE_INFO ||
 	 req == BATCH_HOST_INFO || req == BATCH_GRP_INFO ||
 	 req == BATCH_RESOURCE_INFO || req == BATCH_PARAM_INFO ||
-	 req == BATCH_USER_INFO  || req == BATCH_JOB_PEEK) 
+	 req == BATCH_USER_INFO  || req == BATCH_JOB_PEEK)
 	 return(TRUE);
     else
 	 return(FALSE);
 
-} 
+}
 
 static void
 shutdownSbdConnections(void)
 {
     static char fname[] = "shutdownSbdConnections";
     struct clientNode *cliPtr, *nextClient, *deleteCliPtr = NULL;
-    struct sbdNode *sbdPtr, *nextSbdPtr, *deleteSbdPtr = NULL;    
+    struct sbdNode *sbdPtr, *nextSbdPtr, *deleteSbdPtr = NULL;
     time_t oldest = now + 1;
-    
+
     if (nSbdConnections < maxSbdConnections)
 	return;
 
@@ -1190,7 +1190,7 @@ shutdownSbdConnections(void)
 	ls_syslog(LOG_DEBUG, "%s: nSbdConnections=%d maxSbdConnections=%d",
 		  fname, nSbdConnections, maxSbdConnections);
 
-    
+
     for(cliPtr=clientList->forw; cliPtr != clientList; cliPtr=nextClient) {
         nextClient = cliPtr->forw;
 	if (cliPtr->reqType == BATCH_STATUS_JOB ||
@@ -1213,11 +1213,11 @@ shutdownSbdConnections(void)
 	 sbdPtr = nextSbdPtr) {
 	nextSbdPtr = sbdPtr->forw;
 
-        
+
 	if (sbdPtr->lastTime < oldest) {
 	    if (deleteSbdPtr == NULL ||
 		sbdPtr->reqCode >= deleteSbdPtr->reqCode) {
-		
+
 		deleteSbdPtr = sbdPtr;
 		oldest = sbdPtr->lastTime;
 	    }
@@ -1229,8 +1229,8 @@ shutdownSbdConnections(void)
     if (deleteSbdPtr) {
 	processSbdNode(deleteSbdPtr, TRUE);
     }
-    
-} 
+
+}
 
 
 
@@ -1269,13 +1269,13 @@ processSbdNode(struct sbdNode *sbdPtr, int exception)
     FREEUP(sbdPtr);
     nSbdConnections--;
 
-} 
+}
 
 void
 setNextSchedTimeUponNewJob(struct jData *jPtr)
 {
     if (mSchedStage == 0 && jPtr) {
-	
+
 	time_t newTime = INFINIT_INT;
 	if (jPtr->qPtr->schedDelay != INFINIT_INT) {
 	    newTime = now + jPtr->qPtr->schedDelay;
@@ -1284,7 +1284,7 @@ setNextSchedTimeUponNewJob(struct jData *jPtr)
 	    nextSchedTime = newTime;
 	}
     }
-} 
+}
 
 
 static void
@@ -1296,23 +1296,23 @@ setNextSchedTimeWhenJobFinish()
      if (newTime < nextSchedTime) {
 	 nextSchedTime = newTime;
      }
-} 
+}
 
 
 
-void 
-setJobPriUpdIntvl(void) 
+void
+setJobPriUpdIntvl(void)
 {
-    const int MINIMAL = 5;   
+    const int MINIMAL = 5;
     int   value;
-   
+
     if ( jobPriorityValue < 0 || jobPriorityTime < 0 ) {
 	jobPriorityUpdIntvl = -1;
 	return;
     }
 
-    if ( jobPriorityTime <= MINIMAL ) { 
-        jobPriorityUpdIntvl = jobPriorityTime; 
+    if ( jobPriorityTime <= MINIMAL ) {
+        jobPriorityUpdIntvl = jobPriorityTime;
         return;
     }
 
@@ -1321,7 +1321,7 @@ setJobPriUpdIntvl(void)
 	    jobPriorityUpdIntvl = jobPriorityTime / value;
 	    break;
 	}
-        
+
     }
 
     if ( jobPriorityUpdIntvl < 0 ) {
@@ -1330,27 +1330,27 @@ setJobPriUpdIntvl(void)
 
     return;
 
-} 
+}
 
 
 void
 updateJobPriorityInPJL(void)
 {
-    static int count=0; 
-    int    term;        
-    int    priority;    
-    struct jData  *jp;  
+    static int count=0;
+    int    term;
+    int    priority;
+    struct jData  *jp;
 
     if ( jobPriorityTime != jobPriorityUpdIntvl ) {
-        
-        term     = jobPriorityTime / jobPriorityUpdIntvl; 
+
+        term     = jobPriorityTime / jobPriorityUpdIntvl;
         count    = (count+1) % term;
 	priority = count * jobPriorityValue / term;
-    } else { 
+    } else {
         priority = jobPriorityValue;
     }
 
-    
+
     for (jp = jDataList[PJL]->forw;
          jp != jDataList[PJL]; jp = jp->forw) {
         unsigned int newVal = jp->jobPriority + priority;
@@ -1359,16 +1359,16 @@ updateJobPriorityInPJL(void)
 
     return;
 
-} 
+}
 
 #if defined(INTER_DAEMON_AUTH)
-void 
+void
 createEauthAuxDataEnvVar()
 {
     putEauthAuxDataEnvVar(createTmpFileName(".axmd"));
-}   
+}
 
-char* 
+char*
 createTmpFileName(const char *prefix)
 {
     char *aux_file;
@@ -1383,7 +1383,7 @@ createTmpFileName(const char *prefix)
         sprintf(aux_file_buf, "/tmp/%s_%lu", prefix, time(0));
     }
     return aux_file_buf;
-}   
-#endif 
+}
+#endif
 
 

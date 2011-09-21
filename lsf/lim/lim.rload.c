@@ -397,9 +397,7 @@ readLoad(int kernelPerm)
     static  float   instant_ut;
     static  int     loginses;
 
-
     TIMEIT(0, getusr(), "getusr()");
-
 
     if (kernelPerm < 0)
         goto checkOverRide;
@@ -410,8 +408,7 @@ readLoad(int kernelPerm)
 
     readCount0 = 0;
 
-
-    if ( queueLengthEx(&avrun15, &avrun1m, &avrun15m) < 0) {
+    if (queueLengthEx(&avrun15, &avrun1m, &avrun15m) < 0) {
 
       ql = queueLength();
       smooth(&avrun15, ql, EXP3);
@@ -424,18 +421,12 @@ readLoad(int kernelPerm)
 
     readCount1 = 0;
 
-
-
     cpuTime(&itime, &etime);
-
 
     instant_ut = 1.0 - itime/etime;
     smooth(&cpu_usage, instant_ut, EXP4);
     etime /= k_hz;
     etime = etime/ncpus;
-
-
-
 
     TIMEIT(0, smpages = getpaging(etime), "getpaging");
     TIMEIT(0, smkbps = getIoRate(etime), "getIoRate");
@@ -443,7 +434,6 @@ readLoad(int kernelPerm)
     TIMEIT(0, swap = getswap(), "getswap");
     TIMEIT(0, myHostPtr->loadIndex[TMP] = tmpspace(), "tmpspace");
     TIMEIT(0, myHostPtr->loadIndex[MEM] = realMem(0.0), "realMem");
-
 
 checkOverRide:
     if (overRide[UT] < INFINIT_LOAD)
@@ -522,9 +512,7 @@ checkExchange:
     if (myHostPtr->loadIndex[MEM] < 0)
         myHostPtr->loadIndex[MEM] = 0;
 
-
-
-    for (i=0; i < allInfo.numIndx; i++) {
+    for (i = 0; i < allInfo.numIndx; i++) {
 	if (i == R15S || i == R1M || i == R15M) {
 
 	    li[i].value = normalizeRq(myHostPtr->loadIndex[i], 1, ncpus) - 1;
@@ -535,7 +523,7 @@ checkExchange:
 
     for (i = 0; i < allInfo.numIndx; i++) {
 
-	if (   (li[i].increasing && fabs(li[i].value - INFINIT_LOAD) < 1.0)
+	if ((li[i].increasing && fabs(li[i].value - INFINIT_LOAD) < 1.0)
 	    || (! li[i].increasing && fabs(li[i].value + INFINIT_LOAD) < 1.0))
         {
 	    continue;
@@ -566,12 +554,10 @@ checkExchange:
 
     myHostPtr->loadMask = 0;
 
-
     TIMEIT(0, sendLoad(), "sendLoad()");
 
+    for(i = 0; i < allInfo.numIndx; i++) {
 
-
-    for(i=0; i < allInfo.numIndx; i++) {
         if (myHostPtr->loadIndex[i] < MIN_FLOAT16 &&
 	    i < NBUILTINDEX){
             myHostPtr->loadIndex[i] = 0.0;
@@ -587,7 +573,6 @@ checkExchange:
                            ncpus);
             myHostPtr->uloadIndex[i] = rawql;
         } else {
-
             myHostPtr->uloadIndex[i] = myHostPtr->loadIndex[i];
         }
     }
@@ -620,9 +605,9 @@ lim_popen(char **argv, char *mode)
 
         alarm(0);
 
-        for(i=2; i < sysconf(_SC_OPEN_MAX); i++)
+        for(i = 2; i < sysconf(_SC_OPEN_MAX); i++)
              close(i);
-        for (i=1; i < NSIG; i++)
+        for (i = 1; i < NSIG; i++)
             Signal_(i, SIG_DFL);
 
         lsfExecvp(argv[0], argv);
@@ -632,12 +617,13 @@ lim_popen(char **argv, char *mode)
     if (pid == -1) {
         close(p[0]);
         close(p[1]);
-        return(NULL);
+        return NULL;
     }
 
      elim_pid = pid;
      close(p[1]);
-     return(fdopen(p[0], mode));
+
+     return fdopen(p[0], mode);
 }
 
 static int

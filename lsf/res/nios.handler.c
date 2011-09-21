@@ -842,7 +842,7 @@ ls_niowrite(char *buf, int len)
         memcpy(writeBuf.buf + LSF_HEADER_LEN, buf, cc);
         bp = writeBuf.buf;
         reqHdr.opCode = NIOS2RES_STDIN;
-        reqHdr.version = LSF_VERSION;
+        reqHdr.version = OPENLAVA_VERSION;
         reqHdr.length = cc;
 
 
@@ -989,7 +989,7 @@ deliver_eof()
     sigprocmask(SIG_BLOCK, &newMask, &oldMask);
 
     reqHdr.opCode = NIOS2RES_EOF;
-    reqHdr.version = LSF_VERSION;
+    reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
     reqHdr.reserved0.High = 0;
     reqHdr.reserved0.Low = 0;
@@ -2427,7 +2427,7 @@ notify_task(int tid, int opCode)
     sigprocmask(SIG_BLOCK, &newMask, &oldMask);
 
     reqHdr.opCode = opCode;
-    reqHdr.version = LSF_VERSION;
+    reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
     reqHdr.reserved0.High = (tid >> 16) & 0xFF;
     reqHdr.reserved0.Low = tid & 0xFFFF;
@@ -2619,7 +2619,7 @@ sendHeartbeat(void)
 
 
     reqHdr.opCode = NIOS2RES_HEARTBEAT;
-    reqHdr.version = LSF_VERSION;
+    reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
     reqHdr.reserved0.High = 0;
     reqHdr.reserved0.Low = 0;

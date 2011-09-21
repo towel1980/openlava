@@ -20,7 +20,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#define NL_SETN 24      
+#define NL_SETN 24
 
 #ifdef MEAS
 #include "../lib/lib.table.h"
@@ -37,7 +37,7 @@ lim_Exit(const char *fname)
 	"%s: Above fatal error(s) found."), fname); /* catgets 5700 */
     exit (EXIT_FATAL_ERROR);
 }
-    
+
 int
 equivHostAddr(struct hostNode *hPtr, u_int from)
 {
@@ -47,7 +47,7 @@ equivHostAddr(struct hostNode *hPtr, u_int from)
             return TRUE;
     }
     return FALSE;
-} 
+}
 
 #ifdef MEAS
 void
@@ -64,7 +64,7 @@ timingLog(char action)
 
     if (action == 0) {
        gettimeofday(&timeofday, (struct timezone *)0);
-       asciiTime = _i18n_ctime(ls_catd, 
+       asciiTime = _i18n_ctime(ls_catd,
 	    CTIME_FORMAT_DEFAULT, &timeofday.tv_sec);
        fprintf(timfp, "%s", asciiTime);
        fprintf(timfp,_i18n_msg_get(ls_catd, NL_SETN, 700,
@@ -79,7 +79,7 @@ timingLog(char action)
     tstat_count++;
     if(tstat_count < tlogcnt) return;
     gettimeofday(&timeofday, (struct timezone *)0);
-       asciiTime = _i18n_ctime(ls_catd, 
+       asciiTime = _i18n_ctime(ls_catd,
 	    CTIME_FORMAT_DEFAULT, &timeofday.tv_sec);
     fprintf(timfp, "%s", asciiTime);
     fprintf(timfp, _i18n_msg_get(ls_catd, NL_SETN, 701,
@@ -96,7 +96,7 @@ timingLog(char action)
     getrusage(RUSAGE_SELF, &beg_time);
     return;
 
-} 
+}
 
 static void
 tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
@@ -149,7 +149,7 @@ loadLog(char action)
    fprintf(loadfp,"RealRQL  Pg/s    SMkb/s    Logins   CPU_usage\n");
    fprintf(loadfp,"%-5.2f    %-6.2f   %-5.0f    %d       %-5.1f %%\n"
           ,realcla, smpages, smkbps, loginses, cpu_usage*100);
-   fprintf(loadfp, _i18n_msg_get(ls_catd, NL_SETN, 704, 
+   fprintf(loadfp, _i18n_msg_get(ls_catd, NL_SETN, 704,
        "ld_send count: %d  ld_recv count %d  "), /* catgets 704 */
        sd_cnt, rcv_cnt);
    if(masterMe) {
@@ -182,12 +182,12 @@ xferLog(char action, char *host)
     hEnt *hashEntryPtr;
     sTab hashSearchPtr;
     int xfercnt;
-    if (action == 0) {      
+    if (action == 0) {
 	h_initTab(&xferVector, NUMSLOTS * RESETFACTOR);
 	xlogcnt = xferLogIntvl/exchIntvl;
 	xstat_count = 0;
         gettimeofday(&timeofday, (struct timezone *)0);
-        asciiTime = _i18n_ctime(ls_catd, 
+        asciiTime = _i18n_ctime(ls_catd,
 	    CTIME_FORMAT_DEFAULT, &timeofday.tv_sec);
 	fprintf(xferfp, "%s", asciiTime);
 	fprintf(xferfp, _i18n_msg_get(ls_catd, NL_SETN, 707,
@@ -195,8 +195,8 @@ xferLog(char action, char *host)
 	fflush(xferfp);
 	return;
     }
-    
-    if(action == 1) { 
+
+    if(action == 1) {
 	hashEntryPtr = h_addEnt(&xferVector, host, &new);
 	if(new) {
 	    hashEntryPtr->hData = (int *) 1;
@@ -207,13 +207,13 @@ xferLog(char action, char *host)
 	}
     }
 
-    if(action == 2) {  
+    if(action == 2) {
 	xstat_count++;
 	if(xstat_count < xlogcnt) return;
-	
+
 	hashEntryPtr = h_firstEnt(&xferVector, &hashSearchPtr);
         gettimeofday(&timeofday, (struct timezone *)0);
-        asciiTime = _i18n_ctime(ls_catd, 
+        asciiTime = _i18n_ctime(ls_catd,
 	    CTIME_FORMAT_DEFAULT, &timeofday.tv_sec);
 	fprintf(xferfp, "%s", asciiTime);
 	if(!hashEntryPtr) {
@@ -239,10 +239,10 @@ xferLog(char action, char *host)
         xstat_count = 0;
         return;
     }
-    
-    if(action == 3) {  
+
+    if(action == 3) {
         xstat_count = xlogcnt;
-        xferLog(2, NULL);   
+        xferLog(2, NULL);
         h_delTab(&xferVector);
         fclose(xferfp);
         return;
@@ -264,7 +264,7 @@ findHost(char *hostName)
 
     return(NULL);
 
-} 
+}
 
 struct hostNode *
 findHostbyList(struct hostNode *hList, char *hostName)
@@ -276,7 +276,7 @@ findHostbyList(struct hostNode *hList, char *hostName)
             return(hPtr);
 
     return((struct hostNode *)NULL);
-} 
+}
 
 struct hostNode *
 findHostbyNo(struct hostNode *hList, int hostNo)
@@ -287,7 +287,7 @@ findHostbyNo(struct hostNode *hList, int hostNo)
         if (hPtr->hostNo == hostNo)
             return(hPtr);
     return(NULL);
-} 
+}
 
 struct hostNode *
 findHostbyAddr(struct sockaddr_in *from, char *fname)
@@ -298,37 +298,39 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
 
     if (from->sin_addr.s_addr == ntohl(LOOP_ADDR))
         return (myHostPtr);
-    if ((hPtr = findHNbyAddr(*((u_int *) &from->sin_addr))))
+    hPtr = findHNbyAddr(*((u_int *) &from->sin_addr));
+    if (hPtr)
         return (hPtr);
 
-    
-    if ((hp = (struct hostent *)getHostEntryByAddr_(&from->sin_addr)) == NULL) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5701,
-	    "%s: Host %s is unknown by %s"), /* catgets 5701 */
-	    fname, sockAdd2Str_(from), myHostPtr->hostName);
-        return (NULL);
-    }
-    if ((hPtr = findHNbyAddr(*((u_int *) hp->h_addr))) == NULL) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5702,
-	    "%s: Host %s (hp=%s/%s) is unknown by configuration; all hosts used by LSF must have unique official names"), /* catgets 5702 */
-	    fname, sockAdd2Str_(from), hp->h_name,
-	    inet_ntoa(*((struct in_addr *) hp->h_addr)));
+    hp = (struct hostent *)getHostEntryByAddr_(&from->sin_addr);
+    if (hp == NULL) {
+	ls_syslog(LOG_ERR, "\
+%s: Host %s is unknown by %s", fname, sockAdd2Str_(from),
+                  myHostPtr->hostName);
         return (NULL);
     }
 
-    if ((tPtr = (u_int *) realloc((char *) hPtr->addr,
-                (hPtr->naddr + 1) * sizeof(u_int))) == NULL) {
-        return (hPtr);
+    hPtr = findHNbyAddr(*((u_int *) hp->h_addr));
+    if (hPtr) {
+	ls_syslog(LOG_ERR, "\
+%s: Host %s (hp=%s/%s) is unknown by configuration; all hosts used by LSF must have unique official names", fname, sockAdd2Str_(from),
+                  hp->h_name,
+                  inet_ntoa(*((struct in_addr *) hp->h_addr)));
+        return NULL;
     }
+
+    tPtr = realloc((char *) hPtr->addr,
+                   (hPtr->naddr + 1) * sizeof(u_int));
+    if (tPtr == NULL)
+        return hPtr;
 
     hPtr->addr = tPtr;
     hPtr->addr[hPtr->naddr] = (u_int) from->sin_addr.s_addr;
     hPtr->naddr++;
-	      
 
-    return (hPtr);
+    return hPtr;
 
-} 
+}
 
 
 static struct hostNode *
@@ -336,9 +338,9 @@ findHNbyAddr(u_int from)
 {
     struct clusterNode *clPtr;
     struct hostNode *hPtr;
-	      
-    
-    
+
+
+
     clPtr = myClusterPtr;
     for (hPtr = clPtr->hostList; hPtr; hPtr = hPtr->nextPtr) {
         if (equivHostAddr(hPtr, from))
@@ -350,19 +352,19 @@ findHNbyAddr(u_int from)
     }
 
     return (NULL);
-} 
+}
 
 bool_t
 findHostInCluster(char *hostname)
 {
-       
+
     if (strcmp(myClusterPtr->clName, hostname) == 0)
         return(TRUE);
     if (findHostbyList(myClusterPtr->hostList, hostname) != NULL ||
         findHostbyList(myClusterPtr->clientList, hostname) !=NULL)
         return(TRUE);
     return(FALSE);
-} 
+}
 
 
 int
@@ -380,7 +382,7 @@ definedSharedResource(struct hostNode *host, struct lsInfo *allInfo)
         }
     }
     return FALSE;
-} 
+}
 
 struct shortLsInfo *
 shortLsInfoDup(struct shortLsInfo *src)
@@ -401,10 +403,10 @@ shortLsInfoDup(struct shortLsInfo *src)
     shortLInfo->nTypes = src->nTypes;
     shortLInfo->nModels = src->nModels;
 
-    
+
     memp = malloc((src->nRes + src->nTypes + src->nModels) * MAXLSFNAMELEN +
 		   src->nRes * sizeof (char *));
-    
+
     if (!memp) {
 	FREEUP(shortLInfo);
 	return(NULL);
@@ -436,21 +438,21 @@ shortLsInfoDup(struct shortLsInfo *src)
 	shortLInfo->cpuFactors[i] = src->cpuFactors[i];
 
     return (shortLInfo);
-    
-} 
+
+}
 
 
 void
 shortLsInfoDestroy(struct shortLsInfo *shortLInfo)
 {
     char *allocBase;
-    
+
     allocBase = (char *)shortLInfo->resName;
 
     FREEUP(allocBase);
     FREEUP(shortLInfo);
 
-} 
+}
 
 int
 getHostNodeIPAddr(const struct hostNode* hPtr,struct sockaddr_in* toAddr)

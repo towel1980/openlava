@@ -4150,7 +4150,7 @@ eof_to_nios(struct child *chld)
     }
 
     reqHdr.opCode = RES2NIOS_EOF;
-    reqHdr.version = LSF_VERSION;
+    reqHdr.version = OPENLAVA_VERSION;
     setHdrReserved(&reqHdr, chld->rpid);
 
     rc = writeEncodeHdr_(conn2NIOS.sock.fd, &reqHdr, NB_SOCK_WRITE_FIX);
@@ -5715,7 +5715,7 @@ donios_sock(struct child **children, int op)
 
                 initLSFHeader_(&reqHdr);
                 reqHdr.opCode = conn2NIOS.sock.opCode;
-                reqHdr.version = LSF_VERSION;
+                reqHdr.version = OPENLAVA_VERSION;
                 reqHdr.length = conn2NIOS.sock.wbuf->bcount;
                 setHdrReserved(&reqHdr, conn2NIOS.wtag);
 
@@ -5895,7 +5895,7 @@ notify_nios(int retsock, int rpid, int opCode)
     initLSFHeader_(&reqHdr);
 
     reqHdr.opCode = opCode;
-    reqHdr.version = LSF_VERSION;
+    reqHdr.version = OPENLAVA_VERSION;
     setHdrReserved(&reqHdr, rpid);
     reqHdr.length = 0;
 

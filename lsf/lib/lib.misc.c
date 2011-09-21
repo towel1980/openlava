@@ -28,12 +28,12 @@
 #include <math.h>
 
 #define BADCH   ":"
-#define NL_SETN   23   
+#define NL_SETN   23
 
 extern int optind;
 extern char *optarg;
-extern int  opterr;          
-extern int  optopt;             
+extern int  opterr;
+extern int  optopt;
 
 #define PRINT_ERRMSG(errMsg, fmt, msg1, msg2)\
     {\
@@ -64,12 +64,12 @@ isanumber_(char *word)
 
     eptr = &word;
     number = strtod (word, eptr);
-    if (**eptr == '\0' &&  errno != ERANGE) 
+    if (**eptr == '\0' &&  errno != ERANGE)
         if (number <= MAXFLOAT && number > -MAXFLOAT)
             return (TRUE);
     return (FALSE);
 
-} 
+}
 
 char
 islongint_(char *word)
@@ -78,9 +78,9 @@ islongint_(char *word)
 
     if (!word || *word == '\0')
         return FALSE;
-        
+
     if(!isdigitstr_(word)) return FALSE;
-    
+
     if (errno == ERANGE)
         errno = 0;
 
@@ -91,7 +91,7 @@ islongint_(char *word)
     }
     return (FALSE);
 
-} 
+}
 
 int
 isdigitstr_(char *string)
@@ -104,7 +104,7 @@ isdigitstr_(char *string)
 	}
     }
     return TRUE;
-}  
+}
 
 LS_LONG_INT
 atoi64_(char *word)
@@ -123,7 +123,7 @@ atoi64_(char *word)
             return (number);
     }
     return (0);
-} 
+}
 
 char
 isint_(char *word)
@@ -145,13 +145,13 @@ isint_(char *word)
     }
     return (FALSE);
 
-} 
+}
 
 char *
 putstr_(const char *s)
 {
     register char *p;
-     
+
     if (s == (char *)NULL) {
         s = "";
     }
@@ -164,7 +164,7 @@ putstr_(const char *s)
 
     return (p);
 
-} 
+}
 
 short
 getRefNum_(void)
@@ -175,7 +175,7 @@ getRefNum_(void)
     if (reqRefNum >= MAX_REF_NUM)
 	reqRefNum = MIN_REF_NUM;
     return(reqRefNum);
-} 
+}
 
 char *
 chDisplay_(char *disp)
@@ -183,7 +183,7 @@ chDisplay_(char *disp)
     char *sp, *hostName;
     static char dspbuf[MAXHOSTNAMELEN+10];
 
-    sp = disp +8;     
+    sp = disp +8;
     if (strncmp("unix:", sp, 5) == 0)
         sp += 4;
     else if (strncmp("localhost:", sp, 10) == 0)
@@ -198,7 +198,7 @@ chDisplay_(char *disp)
 
     return(disp);
 
-} 
+}
 
 void
 strToLower_(char *name)
@@ -208,49 +208,49 @@ strToLower_(char *name)
         name++;
     }
 
-} 
+}
 
 char *
 getNextToken(char **sp)
 {
     static char word[MAXLINELEN];
     char *cp;
-    
+
     if (!*sp)
         return NULL;
-    
+
     cp = *sp;
-    if (cp[0] == '\0') 
+    if (cp[0] == '\0')
         return NULL;
-    
-    if (cp[0] == ':' || cp[0] == '=' || cp[0] == ' ')  
+
+    if (cp[0] == ':' || cp[0] == '=' || cp[0] == ' ')
         *sp += 1;
     cp = *sp;
     if (cp[0] == '\0')
         return NULL;
-    
+
     strcpy(word, cp);
     if ((cp = strchr(word, ':')) != NULL)
         *cp = '\0';
     if ((cp = strchr(word, '=')) != NULL)
         *cp = '\0';
-    
+
     *sp += strlen(word);
     return word;
-    
-} 
+
+}
 
 
-int 
+int
 getValPair(char **resReq, int *val1, int *val2)
 {
     char *token, *cp, *wd1 = NULL, *wd2 = NULL;
     int len;
-    
-    *val1 = INFINIT_INT;      
+
+    *val1 = INFINIT_INT;
     *val2 = INFINIT_INT;
 
-    token = getNextToken (resReq);    
+    token = getNextToken (resReq);
     if (!token)
         return 0;
     len = strlen (token);
@@ -260,14 +260,14 @@ getValPair(char **resReq, int *val1, int *val2)
     while (*cp != '\0' && *cp != ',' && *cp != '/')
         cp++;
     if (*cp != '\0') {
-        *cp = '\0';                  
+        *cp = '\0';
         if (cp - token > 0)
-            wd1 = token;            
+            wd1 = token;
         if (cp - token < len - 1)
-            wd2 = ++cp;            
+            wd2 = ++cp;
     } else
         wd1 = token;
-    if (wd1 && !isint_(wd1)) 
+    if (wd1 && !isint_(wd1))
         return -1;
     if (wd2 && !isint_(wd2))
         return -1;
@@ -279,7 +279,7 @@ getValPair(char **resReq, int *val1, int *val2)
         *val2 = atoi(wd2);
 
     return 0;
-} 
+}
 
 
 char *
@@ -294,7 +294,7 @@ my_getopt (int nargc, char **nargv, char *ostr, char **errMsg)
     if ((optName = nargv[optind]) == NULL)
         return (NULL);
     if (optind >= nargc || *optName != '-')
-    return (NULL);      
+    return (NULL);
     if (optName[1] && *++optName == '-') {
         ++optind;
         return(NULL);
@@ -309,32 +309,32 @@ my_getopt (int nargc, char **nargv, char *ostr, char **errMsg)
         int cp2len = strlen(cp2);
         for (i=0; i<cp2len; i++) {
             if (cp2[i] == '|') {
-                num_arg = 0;             
-                cp2[i] = '\0';          
+                num_arg = 0;
+                cp2[i] = '\0';
                 break;
             }
             else if (cp2[i] == ':') {
-                num_arg = 1;           
-                cp2[i] = '\0';        
+                num_arg = 1;
+                cp2[i] = '\0';
                 break;
             }
         }
         if (i >= cp2len)
-            return (BADCH);          
+            return (BADCH);
 
         if (!strcmp (optName, cp1)) {
             if (num_arg) {
                 if (nargc <= optind + 1) {
-                    PRINT_ERRMSG (errMsg, (_i18n_msg_get(ls_catd,NL_SETN,650, "%s: option requires an argument -- %s\n")), nargv[0], optName);  /* catgets 650 */ 
+                    PRINT_ERRMSG (errMsg, (_i18n_msg_get(ls_catd,NL_SETN,650, "%s: option requires an argument -- %s\n")), nargv[0], optName);  /* catgets 650 */
                     return (BADCH);
                 }
                 optarg = nargv[++optind];
             }
-            ++optind;                   
-            return (optName);          
+            ++optind;
+            return (optName);
         } else if (!strncmp(optName, cp1, strlen(cp1))) {
 	    if (num_arg == 0) {
-		PRINT_ERRMSG (errMsg, (_i18n_msg_get(ls_catd,NL_SETN,651, "%s: option cannot have an argument -- %s\n")),  /* catgets 651 */ 
+		PRINT_ERRMSG (errMsg, (_i18n_msg_get(ls_catd,NL_SETN,651, "%s: option cannot have an argument -- %s\n")),  /* catgets 651 */
 			 nargv[0], cp1);
 		return (BADCH);
 	    }
@@ -343,19 +343,19 @@ my_getopt (int nargc, char **nargv, char *ostr, char **errMsg)
             ++optind;
             return (cp1);
 	}
-	
+
         cp1 = &cp2[i];
         cp2 = ++cp1;
     }
-    PRINT_ERRMSG (errMsg, (_i18n_msg_get(ls_catd,NL_SETN,652, "%s: illegal option -- %s\n")), nargv[0], optName); /* catgets 652 */ 
+    PRINT_ERRMSG (errMsg, (_i18n_msg_get(ls_catd,NL_SETN,652, "%s: illegal option -- %s\n")), nargv[0], optName); /* catgets 652 */
     return (BADCH);
 
-} 
+}
 
 
 int putEnv(char *env, char *val)
 {
-    
+
     char *buf;
 
     buf = malloc(strlen(env) + strlen(val) + 4);
@@ -363,18 +363,18 @@ int putEnv(char *env, char *val)
         return (-1);
     sprintf(buf, "%s=%s", env, val);
     return(putenv(buf));
-} 
+}
 
 void
 initLSFHeader_ (struct LSFHeader *hdr)
 {
     hdr->refCode = 0;
-    hdr->version = LSF_VERSION;
+    hdr->version = OPENLAVA_VERSION;
     hdr->reserved0.High = 0;
     hdr->reserved0.Low = 0;
     hdr->length    = 0;
 
-} 
+}
 
 void *
 myrealloc(void *ptr, size_t size)
@@ -384,7 +384,7 @@ myrealloc(void *ptr, size_t size)
     } else {
 	return realloc(ptr, size);
     }
-} 
+}
 
 int
 Bind_(int sockfd, struct sockaddr *myaddr, int addrlen)
@@ -394,7 +394,7 @@ Bind_(int sockfd, struct sockaddr *myaddr, int addrlen)
     int i;
 
     cliaddr = (struct sockaddr_in *)myaddr;
-    if (cliaddr->sin_port != 0) 
+    if (cliaddr->sin_port != 0)
 	return(bind(sockfd, myaddr, addrlen));
     else {
 	for (i = 1 ; i <= BIND_RETRY_TIMES; i++) {
@@ -406,22 +406,22 @@ Bind_(int sockfd, struct sockaddr *myaddr, int addrlen)
 		        port = (ushort) (time(0) | getpid());
 		        port = ((port < 1024) ? (port + 1024) : port);
 		    }
-                    else { 
+                    else {
 		        port++;
 		        port = ((port < 1024) ? (port + 1024) : port);
 		    }
-		    ls_syslog(LOG_ERR,(_i18n_msg_get(ls_catd,NL_SETN,5650, 
+		    ls_syslog(LOG_ERR,(_i18n_msg_get(ls_catd,NL_SETN,5650,
 			 "%s: retry <%d> times, port <%d> will be bound" /* catgets 5650 */)),
-			  "Bind_", i, port);  
+			  "Bind_", i, port);
 		    cliaddr->sin_port = htons(port);
                 }
-                else 
+                else
 		    return (-1);
             }
-        }   
-	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, "Bind_", "bind", BIND_RETRY_TIMES); 
+        }
+	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, "Bind_", "bind", BIND_RETRY_TIMES);
 	return (-1);
-    }   
+    }
 }
 int
 isMasterCrossPlatform(void)
@@ -434,39 +434,39 @@ isMasterCrossPlatform(void)
 
     if (crossPlatform >= 0)
         return (crossPlatform);
-    
+
     if ((sp = ls_getmastername()) == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_getmastername");
             return FALSE;
     }
     strcpy(masterName, sp);
-    
+
     if ((sp = ls_gethosttype(masterName)) == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_gethosttype");
 	return FALSE;
     }
     strcpy(masterType, sp);
-    
+
     if ((sp = ls_gethosttype(NULL)) == NULL ) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_gethosttype");
 	return FALSE;
     }
     strcpy(localType, sp);
 
-    if ((!strncasecmp(masterType, "NT", 2) && strncasecmp(localType, "NT", 2)) 
+    if ((!strncasecmp(masterType, "NT", 2) && strncasecmp(localType, "NT", 2))
            ||
 	(!strncasecmp(localType, "NT", 2) && strncasecmp(masterType, "NT", 2)))
         crossPlatform = TRUE;
-    else 
+    else
         crossPlatform = FALSE;
-    
+
     return (crossPlatform);
 }
 int
 isAllowCross(char *paramValue)
 {
     int cross = TRUE;
-    
+
     if (paramValue != NULL &&
 	!strcasecmp(paramValue, "NO"))
         cross = FALSE;
@@ -510,19 +510,19 @@ getCmdPathName_(const char *cmdStr, int* cmdLen)
         *cmdLen = strlen(sp1);
     }
     return sp1;
-} 
+}
 
 int
 replace1stCmd_(const char* oldCmdArgs, const char* newCmdArgs,
                  char* outCmdArgs, int outLen)
 {
-    const char *sp1;   
-    const char *sp2;  
-    int len2;        
+    const char *sp1;
+    const char *sp2;
+    int len2;
     const char *sp3;
-    char *curSp;    
-    const char* newSp; 
-    int newLen;       
+    char *curSp;
+    const char* newSp;
+    int newLen;
     int len;
 
     newSp = getCmdPathName_(newCmdArgs, &newLen);
@@ -568,7 +568,7 @@ getLowestDir_(const char* filePath)
     return dirName;
 }
 
-void 
+void
 getLSFAdmins_(void)
 {
     struct clusterInfo    *clusterInfo;
@@ -584,7 +584,7 @@ getLSFAdmins_(void)
     }
 
     LSFAdmins.numAdmins = clusterInfo->nAdmins;
-    
+
     LSFAdmins.names = calloc(LSFAdmins.numAdmins, sizeof(char *));
     if (LSFAdmins.names == NULL) {
         LSFAdmins.numAdmins = 0;
@@ -603,11 +603,11 @@ getLSFAdmins_(void)
             LSFAdmins.numAdmins = 0;
 
             return;
-        }        
+        }
     }
-} 
+}
 
-bool_t    
+bool_t
 isLSFAdmin_(const char *name)
 {
     int    i;
@@ -620,7 +620,7 @@ isLSFAdmin_(const char *name)
 
     return(FALSE);
 
-} 
+}
 
 int
 ls_strcat(char *trustedBuffer, int bufferLength, char *strToAdd)
@@ -637,11 +637,11 @@ ls_strcat(char *trustedBuffer, int bufferLength, char *strToAdd)
         trustedBuffer[start+i] = strToAdd[i];
         if (strToAdd[i] == '\0' ) {
             break;
-        } 
+        }
     }
     if (i == remainder) {
         trustedBuffer[bufferLength-1] = '\0';
         return (-1);
     }
     return(0);
-} 
+}

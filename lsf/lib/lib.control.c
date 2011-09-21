@@ -1,4 +1,7 @@
-/* $Id: lib.control.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
+ *
+ * $Id: lib.control.c 397 2007-11-26 19:04:00Z mblack $
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,16 +41,24 @@ ls_limcontrol(char *hname, int opCode)
             break;
         default:
             lserrno = LSE_BAD_OPCODE;
-            return (-1);
+            return -1;
     }
 
     putEauthClientEnvVar("user");
     putEauthServerEnvVar("lim");
     getAuth_(&auth, hname);
-    if (callLim_(limReqCode, &auth, xdr_lsfAuth, NULL, NULL, hname, 0, NULL) < 0)
-        return(-1);
 
-    return (0);
+    if (callLim_(limReqCode,
+                 &auth,
+                 xdr_lsfAuth,
+                 NULL,
+                 NULL,
+                 hname,
+                 0,
+                 NULL) < 0)
+        return -1;
+
+    return 0;
 
 }
 
@@ -86,7 +97,7 @@ setLockOnOff_(int on, time_t duration, char *hname)
     char *host = hname;
 
     if (initenv_(NULL, NULL) <0)
-        return (-1);
+        return -1;
 
     lockReq.on = on;
 
@@ -103,11 +114,18 @@ setLockOnOff_(int on, time_t duration, char *hname)
 
     if (host == NULL)
         host = ls_getmyhostname();
-    if (callLim_(LIM_LOCK_HOST, &lockReq, xdr_limLock, NULL, NULL,
-                 host, 0, NULL) < 0)
-        return(-1);
 
-    return (0);
+    if (callLim_(LIM_LOCK_HOST,
+                 &lockReq,
+                 xdr_limLock,
+                 NULL,
+                 NULL,
+                 host,
+                 0,
+                 NULL) < 0)
+        return -1;
+
+    return 0;
 
 }
 
@@ -135,6 +153,9 @@ oneLimDebug(struct debugReq *pdebug, char *hostname)
 
 }
 
+/* ls_servavail()
+ * Send alive heartbeat from res to lim.
+ */
 int
 ls_servavail(int servId, int nonblock)
 {
@@ -146,15 +167,14 @@ ls_servavail(int servId, int nonblock)
     if (initenv_(NULL, NULL) < 0)
         return -1;
 
-    if (genParams_[LSF_LIM_DEBUG].paramValue == NULL) {
-        if (getuid() != 0) {
-            lserrno = LSE_LIM_DENIED;
-            return -1;
-        }
-    }
-
-    if (callLim_(LIM_SERV_AVAIL, &servId, xdr_int, NULL, NULL,
-                 ls_getmyhostname(), options, NULL) < 0)
+    if (callLim_(LIM_SERV_AVAIL,
+                 &servId,
+                 xdr_int,
+                 NULL,
+                 NULL,
+                 ls_getmyhostname(),
+                 options,
+                 NULL) < 0)
         return -1;
 
     return 0;

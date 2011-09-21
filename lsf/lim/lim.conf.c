@@ -105,7 +105,6 @@ static char * validLocationHost (char *);
 static char ** getValidHosts (char *, int *, struct sharedResource *);
 static void adjIndx (void);
 static int doubleResTable (char *, int);
-static int adjHostListOrder();
 static int saveHostIPAddr(struct hostNode *, struct hostent *);
 
 extern int  convertNegNotation_(char**, struct HostsArray*);
@@ -1967,12 +1966,6 @@ readCluster2(struct clusterNode *clPtr)
         } else if (strcasecmp(word, "host") == 0) {
             if (dohosts(clfp, clPtr, fileName, &LineNum) < 0)
                 Error = TRUE;
-
-
-            if (adjHostListOrder() < 0 ) {
-                return -1;
-            }
-
             continue;
         } else if (strcasecmp(word, "resourceMap") == 0) {
             if (doresourcemap(clfp, fileName, &LineNum) < 0)
@@ -4874,10 +4867,10 @@ initTypeModel(struct hostNode *me)
                       fname, getHostType());
             me->hTypeNo = 1;
         }
-        if (isMasterCandidate) {
-            myClusterPtr->typeClass |= ( 1 << me->hTypeNo);
-            SET_BIT(me->hTypeNo, myClusterPtr->hostTypeBitMaps);
-        }
+
+        myClusterPtr->typeClass |= ( 1 << me->hTypeNo);
+        SET_BIT(me->hTypeNo, myClusterPtr->hostTypeBitMaps);
+
     }
 
     strcpy(me->statInfo.hostType, allInfo.hostTypes[me->hTypeNo]);
@@ -4901,10 +4894,10 @@ initTypeModel(struct hostNode *me)
             }
 
         }
-        if (isMasterCandidate) {
-            myClusterPtr->modelClass |= ( 1 << me->hModelNo);
-            SET_BIT(me->hModelNo, myClusterPtr->hostModelBitMaps);
-        }
+
+        myClusterPtr->modelClass |= ( 1 << me->hModelNo);
+        SET_BIT(me->hModelNo, myClusterPtr->hostModelBitMaps);
+
     }
     strcpy(me->statInfo.hostArch, allInfo.hostArchs[me->hModelNo]);
 
@@ -4930,178 +4923,6 @@ stripIllegalChars(char *str)
     return str;
 }
 
-void
-slaveOnlyInit(int checkMode, int *kernelPerm)
-{
-
-    initLiStruct();
-    initResTable();
-
-    if (getenv("RECONFIG_CHECK") == NULL) {
-        if (initSock(lim_CheckMode) < 0) {
-            lim_Exit("initSock");
-        }
-    }
-
-    if (chanInit_() < 0) {
-        lim_Exit("chanInit_");
-    }
-
-    if (slaveOnlyPreConf() < 0) {
-        lim_Exit("slaveOnlyPreConf");
-    }
-
-
-    getLastActiveTime();
-
-    limConfReady = FALSE;
-
-    return;
-}
-
-
-int
-slaveOnlyPreConf(void)
-{
-    static char fname[] = "slaveOnlyPreConf";
-    struct hostent *hp;
-    struct hostNode *hPtr;
-    char * hname;
-    int  mindex;
-    char rootName[MAXLSFNAMELEN];
-
-    myClusterPtr = (struct clusterNode *)malloc(sizeof(struct clusterNode));
-    if (myClusterPtr == (struct clusterNode *)NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return -1;
-    }
-
-    memset((char *) myClusterPtr, 0, sizeof(struct clusterNode));
-    myClusterPtr->clusterNo = -1;
-    myClusterPtr->clName = NULL;
-
-    myClusterPtr->status = CLUST_ACTIVE | CLUST_STAT_UNAVAIL;
-    myClusterPtr->masterKnown = FALSE;
-    myClusterPtr->masterInactivityCount = 0;
-    myClusterPtr->masterPtr = (struct hostNode *)NULL;
-    myClusterPtr->prevMasterPtr = (struct hostNode *)NULL;
-    myClusterPtr->hostList = (struct hostNode *)NULL;
-    myClusterPtr->clientList = (struct hostNode *)NULL;
-    myClusterPtr->eLimArgs   = (char *)NULL;
-    myClusterPtr->eLimArgv   = (char **)NULL;
-    myClusterPtr->currentAddr = 0;
-    myClusterPtr->masterName = (char *)NULL;
-    myClusterPtr->managerName = (char *)NULL;
-    myClusterPtr->resClass = 0;
-    myClusterPtr->typeClass = 0;
-    myClusterPtr->modelClass = 0;
-    myClusterPtr->chanfd = -1;
-    myClusterPtr->numIndx = 0;
-    myClusterPtr->numUsrIndx = 0;
-    myClusterPtr->usrIndxClass = 0;
-    myClusterPtr->nRes = 0;
-    myClusterPtr->resBitMaps = NULL;
-    myClusterPtr->hostTypeBitMaps = NULL;
-    myClusterPtr->hostModelBitMaps = NULL;
-
-
-    nClusAdmins = 0;
-    clusAdminIds = NULL;
-    clusAdminNames = NULL;
-    clusAdminIds = (int *) malloc (sizeof (int));
-    if (clusAdminIds == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return -1;
-    }
-    clusAdminIds[0] = 0;
-    nClusAdmins = 1;
-    clusAdminNames = (char **) malloc (sizeof (char *));
-    if (clusAdminNames == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return -1;
-    }
-    if (getLSFUserByUid_(0, rootName, sizeof(rootName)) < 0) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "getLSFUserByUid_");
-        return -1;
-    }
-    clusAdminNames[0] = putstr_(rootName);
-    if (clusAdminNames[0] == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "putstr_");
-        return -1;
-    }
-
-    myClusterPtr->nAdmins = nClusAdmins;
-    myClusterPtr->adminIds = clusAdminIds;
-    myClusterPtr->admins   = clusAdminNames;
-    myClusterPtr->managerId   = 0;
-    if (clusAdminNames) {
-        myClusterPtr->managerName = clusAdminNames[0];
-    }
-
-    for (mindex = 0; mindex < numMasterCandidates; mindex++) {
-
-        if ((hPtr = initHostNode()) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            return -1;
-        }
-
-        hPtr->hostNo = mindex;
-
-        if ((hname = getMasterCandidateNameByNo_(mindex)) == NULL) {
-            ls_syslog(LOG_ERR, I18N(5467, "the name of master candidate <%d> is NULL"), mindex); /* catgets 5467 */
-            continue;
-        }
-
-        if ((hp = (struct hostent *)getHostEntryByName_(hname)) == NULL) {
-            ls_syslog(LOG_ERR, I18N(5468, "Can not get host entry for host %s"), hname); /* catgets 5468 */
-            continue;
-        }
-
-        hPtr->hostName = putstr_(hp->h_name);
-
-        if (saveHostIPAddr(hPtr, hp) < 0 ) {
-            ls_syslog(LOG_ERR, I18N(5469, "Can not save internet address of host %s"), hp->h_name); /* catgets 5469 */
-            freeHostNodes (hPtr, FALSE);
-            continue;
-        }
-
-        hPtr->nextPtr = myClusterPtr->hostList;
-        myClusterPtr->hostList = hPtr;
-
-    }
-
-    if ((myHostPtr = initHostNode()) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return -1;
-    }
-
-
-    myHostPtr->hostNo = INFINIT_SHORT;
-    if ((hname = ls_getmyhostname()) == NULL) {
-        ls_syslog(LOG_ERR, I18N(5470, "Can not get my host name")); /* catgets 5470 */
-        return -1;
-    }
-    if ((hp = (struct hostent *)getHostEntryByName_(hname)) == NULL) {
-        ls_syslog(LOG_ERR, I18N(5471, "Can not get host entry for host %s"), hname); /* catgets 5471 */
-        return -1;
-    }
-
-    myHostPtr->hostName = putstr_(hp->h_name);
-    myHostPtr->nextPtr = myClusterPtr->hostList;
-    myClusterPtr->hostList = myHostPtr;
-
-    myHostPtr->statInfo.nDisks = 0;
-    myHostPtr->statInfo.portno = 0;
-
-    if (saveHostIPAddr(myHostPtr, hp) < 0) {
-        ls_syslog(LOG_ERR, I18N(5472, "Can not save internet address of host %s"), hp->h_name); /* catgets 5472 */
-        freeHostNodes (myHostPtr, FALSE);
-        return -1;
-    }
-
-    return 0;
-}
-
 static int saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
 {
     static char fname[] = "saveHostIPAddr";
@@ -5125,109 +4946,4 @@ static int saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
         memcpy((char *)&hPtr->addr[i], hp->h_addr_list[i], hp->h_length);
 
     return 0;
-
 }
-
-static int
-adjHostListOrder(void)
-{
-    short slaveHostNo;
-    int i;
-    int found;
-    int realNumMasterCandidates;
-    char *hname;
-    struct hostNode *hPtr, *preHPtr, *firstHPtr;
-
-    if (numMasterCandidates > 0) {
-
-        firstHPtr = myClusterPtr->hostList;
-        myClusterPtr->hostList = NULL;
-        realNumMasterCandidates = numMasterCandidates;
-
-
-        for (i = 0; i < numMasterCandidates; i++) {
-
-            if ((hname = getMasterCandidateNameByNo_(i)) == NULL) {
-
-                ls_syslog(LOG_WARNING,I18N(5465, "the master candidate No <%d> isn't a valid host. Ignoring master candidate"), i); /* catgets 5465 */
-                realNumMasterCandidates--;
-
-            } else {
-                hPtr = firstHPtr;
-                preHPtr = firstHPtr;
-                found = FALSE;
-
-
-                while (hPtr != NULL) {
-                    if (strcmp(hname, hPtr->hostName) == 0) {
-                        found = TRUE;
-                        break;
-                    }
-                    preHPtr = hPtr;
-                    hPtr = preHPtr->nextPtr;
-                }
-
-                if (found) {
-
-
-                    if (hPtr == firstHPtr) {
-                        firstHPtr = hPtr->nextPtr;
-                    } else {
-                        preHPtr->nextPtr = hPtr->nextPtr;
-                    }
-
-
-                    hPtr->nextPtr = myClusterPtr->hostList;
-                    myClusterPtr->hostList = hPtr;
-                    hPtr->hostNo = i;
-
-                } else {
-
-                    ls_syslog(LOG_WARNING, I18N(5464, "the master candidate <%s> isn't in hostList. Ignoring master candidate"), hname); /* catgets 5464 */
-
-                    freeupMasterCandidate_(i);
-                    realNumMasterCandidates--;
-                    if (realNumMasterCandidates == 0) {
-                        ls_syslog(LOG_ERR, I18N(5466,"There is no valid host in LSF_MASTER_LIST")); /* catgets 5466 */
-                        return -1;
-                    }
-                }
-
-            }
-        }
-
-        slaveHostNo = numMasterCandidates;
-        while ( firstHPtr != NULL ) {
-
-
-            hPtr = firstHPtr;
-            firstHPtr = hPtr->nextPtr;
-
-
-            hPtr->nextPtr = myClusterPtr->hostList;
-            myClusterPtr->hostList = hPtr;
-            hPtr->hostNo = slaveHostNo;
-            slaveHostNo++;
-        }
-
-
-        for (hPtr = myClusterPtr->hostList, myClusterPtr->hostList = NULL;
-             hPtr; hPtr = preHPtr) {
-
-            preHPtr = hPtr->nextPtr;
-            hPtr->nextPtr = myClusterPtr->hostList;
-            myClusterPtr->hostList = hPtr;
-        }
-
-    } else {
-
-        numMasterCandidates = 0;
-        for (hPtr = myClusterPtr->hostList; hPtr; hPtr=hPtr->nextPtr) {
-            numMasterCandidates++;
-        }
-
-    }
-
-    return 0;
-}
-

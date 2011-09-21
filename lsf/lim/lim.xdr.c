@@ -1,4 +1,7 @@
-/* $Id: lim.xdr.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 openlava foundation
+ *
+ * $Id: lim.xdr.c 397 2007-11-26 19:04:00Z mblack $
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +21,9 @@
 #include "lim.h"
 #include <math.h>
 
-#define NL_SETN 24      
+#define NL_SETN 24
 
-#define MAX_FLOAT16 4.227858E+09      
+#define MAX_FLOAT16 4.227858E+09
 
 static u_short encfloat16_(float );
 static float   decfloat16_(u_short);
@@ -44,15 +47,15 @@ xdr_loadvector(XDR *xdrs, struct loadVectorStruct *lvp, struct LSFHeader *hdr)
 	  xdr_int(xdrs, &lvp->numIndx) &&
 	  xdr_int(xdrs, &lvp->numUsrIndx)) )
     {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, 
-	    "xdr_int/xdr_u_int"); 
+	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname,
+	    "xdr_int/xdr_u_int");
 	return(FALSE);
     }
 
-    if ( (xdrs->x_op == XDR_DECODE) 
+    if ( (xdrs->x_op == XDR_DECODE)
 	 &&
 	 (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) ) {
-	
+
 	if (myClusterPtr->checkSum != lvp->checkSum) {
 	    if (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) {
 	        ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 6001,
@@ -63,39 +66,39 @@ xdr_loadvector(XDR *xdrs, struct loadVectorStruct *lvp, struct LSFHeader *hdr)
 
         if (allInfo.numIndx != lvp->numIndx
 		|| allInfo.numUsrIndx != lvp->numUsrIndx) {
-	    
+
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6002,
 	        "%s: Sender has a different number of load index vectors. It will be rejected from the cluster by the master host."), fname); /* catgets 6002 */
 	    return FALSE;
 	}
     }
-    
+
     for (i = 0; i < 1+GET_INTNUM(lvp->numIndx); i++) {
 	if (!xdr_int(xdrs, (int *) &lvp->status[i])) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_int");  
+	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_int");
 	    return (FALSE);
 	}
     }
     if (!xdr_lvector(xdrs, lvp->li, lvp->numIndx)) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_lvector"); 
+	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_lvector");
         return(FALSE);
     }
-   
+
     if (xdrs->x_op == XDR_DECODE) {
 	freeResPairs (resPairs, numResPairs);
 	resPairs = NULL;
 	numResPairs = 0;
 	if (lvp->numResPairs > 0) {
-	    resPairs = (struct resPair *) 
+	    resPairs = (struct resPair *)
 		 malloc (lvp->numResPairs * sizeof (struct resPair));
             if (resPairs == NULL) {
 		lvp->numResPairs = 0;
-	        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",   
+	        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",
 	                  lvp->numResPairs * sizeof (struct resPair));
 	        return (FALSE);
             }
 	    lvp->resPairs = resPairs;
-        } else 
+        } else
 	    lvp->resPairs = NULL;
     }
     for (i = 0; i < lvp->numResPairs; i++) {
@@ -109,14 +112,14 @@ xdr_loadvector(XDR *xdrs, struct loadVectorStruct *lvp, struct LSFHeader *hdr)
 	    return (FALSE);
         }
     }
-    if (xdrs->x_op == XDR_DECODE) 
+    if (xdrs->x_op == XDR_DECODE)
 	numResPairs = lvp->numResPairs;
     return(TRUE);
 
-} 
+}
 
 
-static void 
+static void
 freeResPairs (struct resPair *resPairs, int num)
 {
     int i;
@@ -126,7 +129,7 @@ freeResPairs (struct resPair *resPairs, int num)
 	 FREEUP (resPairs[i].value);
     }
     FREEUP (resPairs);
-} 
+}
 
 
 static bool_t
@@ -137,15 +140,15 @@ xdr_resPair (XDR *xdrs, struct resPair *resPair, struct LSFHeader *hdr)
         return FALSE;
     return TRUE;
 
-} 
-    
+}
+
 
 bool_t
 xdr_loadmatrix(XDR *xdrs, int len, struct loadVectorStruct *lmp,
 		 struct LSFHeader *hdr)
 {
     return(TRUE);
-}  
+}
 
 
 bool_t
@@ -153,7 +156,7 @@ xdr_masterReg(XDR *xdrs, struct masterReg *masterRegPtr, struct LSFHeader *hdr)
 {
     char *sp1, *sp2;
     int i, size;
-    
+
     sp1 = masterRegPtr->clName;
     sp2 = masterRegPtr->hostName;
 
@@ -170,12 +173,12 @@ xdr_masterReg(XDR *xdrs, struct masterReg *masterRegPtr, struct LSFHeader *hdr)
            xdr_portno(xdrs, &masterRegPtr->portno) &&
            xdr_int(xdrs, &masterRegPtr->licFlag) &&
            xdr_int(xdrs, &masterRegPtr->maxResIndex))) {
-        return FALSE; 
+        return FALSE;
     }
 
     if (xdrs->x_op == XDR_DECODE) {
         size = masterRegPtr->maxResIndex;
-        masterRegPtr->resBitArray = (int *)malloc(size*sizeof(int));    
+        masterRegPtr->resBitArray = (int *)malloc(size*sizeof(int));
     }
     for (i=0; i < masterRegPtr->maxResIndex; i++){
         if (!xdr_int(xdrs, &(masterRegPtr->resBitArray[i])))
@@ -184,23 +187,7 @@ xdr_masterReg(XDR *xdrs, struct masterReg *masterRegPtr, struct LSFHeader *hdr)
 
     return TRUE;
 
-} 
-
-
-bool_t
-xdr_masterAnnSLIMConf(XDR *xdrs,
-		     struct masterAnnSLIMConf *masterAnnSLIMConfPtr,
-		     struct LSFHeader *hdr)
-{
-    if (!(xdr_int(xdrs, &masterAnnSLIMConfPtr->flags) &&
-        xdr_short(xdrs, &(masterAnnSLIMConfPtr->hostNo)))) {
-        return FALSE; 
-    }
-          
-    return TRUE;
-
-} 
-
+}
 
 bool_t
 xdr_statInfo(XDR *xdrs, struct statInfo *sip, struct LSFHeader *hdr)
@@ -219,7 +206,7 @@ xdr_statInfo(XDR *xdrs, struct statInfo *sip, struct LSFHeader *hdr)
            xdr_int(xdrs, &(sip->maxTmp)) ))
        return(FALSE);
 
-    
+
     if (xdrs->x_op == XDR_DECODE) {
 	sp1[0]='\0';
 	sp2[0]='\0';
@@ -230,7 +217,7 @@ xdr_statInfo(XDR *xdrs, struct statInfo *sip, struct LSFHeader *hdr)
         return (FALSE);
     }
     return(TRUE);
-} 
+}
 
 #define MIN_FLOAT16  2.328306E-10
 static u_short
@@ -247,12 +234,12 @@ encfloat16_(float f)
         return((u_short)0x7fff);
 
     fmant = frexp(temp, &expo);
-    
+
     if (expo < 0)
         expo =  0x20 | (expo & 0x1F);
     else
-        expo = expo & 0x1F;                    
-    
+        expo = expo & 0x1F;
+
     fmant -= 0.5;
     fmant *= 2048;
     mant   = fmant;
@@ -260,7 +247,7 @@ encfloat16_(float f)
     result = expo << 10;
     result = result + mant;
     return (result);
-} 
+}
 
 static float
 decfloat16_(u_short sf)
@@ -269,22 +256,22 @@ decfloat16_(u_short sf)
     double fmant;
     float result;
 
-    if (sf == 0x7fff)	
+    if (sf == 0x7fff)
         return(INFINIT_LOAD);
 
     expo = (sf >> 10) & 0x0000003F;
     if (expo & 0x20)
         expo =  (expo & 0x1F) - 32;
     else
-        expo = expo & 0x1F;       
+        expo = expo & 0x1F;
     mant = sf & 0x000003FF;
     fmant = (double)mant / 2048;
     fmant += 0.5;
-    result = (float)ldexp(fmant, expo); 
+    result = (float)ldexp(fmant, expo);
     if (result <= MIN_FLOAT16)
        result=0.0;
     return(result);
-} 
+}
 
 bool_t
 xdr_lvector(XDR *xdrs, float *li, int nIndices)
@@ -337,7 +324,7 @@ xdr_lvector(XDR *xdrs, float *li, int nIndices)
     FREEUP (a);
     return(TRUE);
 
-} 
+}
 
 bool_t
 xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSFHeader *hdr)
@@ -349,10 +336,10 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
     struct resItem *resTablePtr;
     struct sharedResourceInstance *tmp, *prevPtr;
 
-    
+
     if (xdrs->x_op == XDR_FREE) {
 
-	
+
 	for (i = 0;i < sLimConfDatap->nClusAdmins; i++) {
 	    FREEUP(sLimConfDatap->clusAdminNames[i]);
 	}
@@ -387,7 +374,7 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
 	return TRUE;
     }
 
-    
+
     if (xdrs->x_op == XDR_DECODE) {
 
 	sLimConfDatap->nClusAdmins = 0;
@@ -428,21 +415,21 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
         }
     }
     for (i = 0;i < sLimConfDatap->nClusAdmins; i++) {
-        if (!xdr_int(xdrs, &sLimConfDatap->clusAdminIds[i]) || 
+        if (!xdr_int(xdrs, &sLimConfDatap->clusAdminIds[i]) ||
 	    !xdr_var_string(xdrs, &sLimConfDatap->clusAdminNames[i])) {
 	    return FALSE;
 	}
     }
-    if (!xdr_float(xdrs, &sLimConfDatap->exchIntvl) || 
-	!xdr_float(xdrs, &sLimConfDatap->sampleIntvl) || 
-        !xdr_short(xdrs, &sLimConfDatap->hostInactivityLimit) || 
+    if (!xdr_float(xdrs, &sLimConfDatap->exchIntvl) ||
+	!xdr_float(xdrs, &sLimConfDatap->sampleIntvl) ||
+        !xdr_short(xdrs, &sLimConfDatap->hostInactivityLimit) ||
         !xdr_short(xdrs, &sLimConfDatap->masterInactivityLimit) ||
-        !xdr_short(xdrs, &sLimConfDatap->retryLimit) || 
+        !xdr_short(xdrs, &sLimConfDatap->retryLimit) ||
 	!xdr_short(xdrs, &sLimConfDatap->keepTime) ) {
         return FALSE;
     }
 
-    if (!xdr_int(xdrs, &sLimConfDatap->allInfo_nRes) || 
+    if (!xdr_int(xdrs, &sLimConfDatap->allInfo_nRes) ||
 	!xdr_int(xdrs, &sLimConfDatap->allInfo_numIndx) ||
 	!xdr_int(xdrs, &sLimConfDatap->allInfo_numUsrIndx) ) {
 	return FALSE;
@@ -480,7 +467,7 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
     }
 
     if (!xdr_var_string(xdrs, &sLimConfDatap->myHost_windows) ||
-	!xdr_time_t(xdrs, &sLimConfDatap->myHost_wind_edge) || 
+	!xdr_time_t(xdrs, &sLimConfDatap->myHost_wind_edge) ||
 	!xdr_int(xdrs, &sLimConfDatap->myHost_rexPriority) ||
 	!xdr_int(xdrs, &sLimConfDatap->myHost_numInstances) ) {
 	return FALSE;
@@ -501,7 +488,7 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
 	    }
 
 	    for (j = 0; j < sLimConfDatap->numMyhost_weekpair[i] - 1; j++) {
-	        sLimConfDatap->myHost_week[i][j].nextwind = 
+	        sLimConfDatap->myHost_week[i][j].nextwind =
 		    &sLimConfDatap->myHost_week[i][j+1];
 	    }
 
@@ -514,17 +501,17 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
 		return FALSE;
 	    }
 
-	    if (!xdr_float(xdrs, &windowsPtr->opentime) || 
+	    if (!xdr_float(xdrs, &windowsPtr->opentime) ||
 		!xdr_float(xdrs, &windowsPtr->closetime)) {
 		return FALSE;
 	    }
 
 	    windowsPtr = windowsPtr->nextwind;
-	} 
-    } 
+	}
+    }
 
     if (xdrs->x_op == XDR_DECODE && sLimConfDatap->allInfo_numIndx) {
-        sLimConfDatap->myHost_busyThreshold = 
+        sLimConfDatap->myHost_busyThreshold =
 	    (float *)calloc(sLimConfDatap->allInfo_numIndx, sizeof(float));
         if (!sLimConfDatap->myHost_busyThreshold) {
 	    sLimConfDatap->allInfo_numIndx = 0;
@@ -558,26 +545,26 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
     }
 
     for (i = 0; i < sLimConfDatap->myHost_numInstances; i++) {
-        if (!xdr_var_string(xdrs, 
+        if (!xdr_var_string(xdrs,
 			    &sLimConfDatap->myHost_instances[i]->resName) ||
-            !xdr_var_string(xdrs, 
+            !xdr_var_string(xdrs,
 			    &sLimConfDatap->myHost_instances[i]->value)) {
 	    return FALSE;
 	}
     }
 
-    
+
     if (xdrs->x_op == XDR_ENCODE) {
         sharedResourceCnt = 0;
 	for (tmp = sLimConfDatap->sharedResHead; tmp; tmp=tmp->nextPtr) {
 	    sharedResourceCnt++;
 	}
 
-	
+
 	if (!xdr_int(xdrs, &sharedResourceCnt) ) {
 	    return FALSE;
         }
-	
+
 	for (tmp = sLimConfDatap->sharedResHead; tmp; tmp=tmp->nextPtr) {
 	    if (!xdr_var_string(xdrs, &tmp->resName)) {
 		return FALSE;
@@ -586,12 +573,12 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
     }
 
     if (xdrs->x_op == XDR_DECODE) {
-	
+
 	if (!xdr_int(xdrs, &sharedResourceCnt) ) {
 	    return FALSE;
 	}
 
-        
+
 	sLimConfDatap->sharedResHead = NULL;
 	for (i = 0; i < sharedResourceCnt; i++) {
 	    tmp = (struct sharedResourceInstance *)
@@ -617,4 +604,4 @@ xdr_minSLimConfData(XDR *xdrs, struct minSLimConfData *sLimConfDatap, struct LSF
 
 return TRUE;
 
-} 
+}

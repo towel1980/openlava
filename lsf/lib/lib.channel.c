@@ -388,11 +388,11 @@ chanRcvDgram_(int chfd,
     socklen_t   peersize;
 
     peersize = sizeof(struct sockaddr_in);
-    sock=channels[chfd].handle;
+    sock = channels[chfd].handle;
 
     if (channels[chfd].type != CH_TYPE_UDP) {
        lserrno = LSE_INTERNAL;
-       return(-1);
+       return -1;
     }
 
    if (logclass & (LC_COMM | LC_TRACE))
@@ -413,7 +413,7 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
            lserrno = LSE_MSG_SYS;
 	   return(-1);
         }
-        return(0);
+        return 0;
     }
 
     if (timeout > 0) {
@@ -427,11 +427,11 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
         nReady = rd_select_(sock, timep);
         if (nReady < 0) {
             lserrno = LSE_SELECT_SYS;
-            return(-1);
+            return -1;
         } else if (nReady == 0) {
 
             lserrno = LSE_TIME_OUT;
-            return(-1);
+            return -1;
         } else {
             if (channels[chfd].state == CH_CONN)
                 cc = recv(sock, buf, len, 0);
@@ -442,13 +442,13 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
                     lserrno = LSE_LIM_DOWN;
                 else
                     lserrno = LSE_MSG_SYS;
-                return(-1);
+                return -1;
             }
-	    return(0);
+	    return 0;
         }
     }
 
-    return(0);
+    return 0;
 
 } /* chanRcvDgram_() */
 
@@ -457,12 +457,15 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
 int
 chanOpen_(u_int iaddr, u_short port, int options)
 {
-    int i,cc, oldOpt, newOpt = 0;
+    int i;
+    int cc;
+    int oldOpt;
+    int newOpt;
     struct sockaddr_in addr;
 
     if ((i = findAFreeChannel()) < 0) {
         cherrno = CHANE_NOCHAN;
-        return(-1);
+        return -1;
     }
 
     channels[i].type = CH_TYPE_TCP;
@@ -472,21 +475,23 @@ chanOpen_(u_int iaddr, u_short port, int options)
     memcpy((char *) &addr.sin_addr, (char *) &iaddr, sizeof(u_int));
     addr.sin_port = port;
 
+    newOpt = 0;
     if (options & CHAN_OP_PPORT) {
         newOpt |= LS_CSO_PRIVILEGE_PORT;
     }
+
     oldOpt = setLSFChanSockOpt_(newOpt | LS_CSO_ASYNC_NT);
     channels[i].handle = CreateSock_(SOCK_STREAM);
     setLSFChanSockOpt_(oldOpt);
-    if ( channels[i].handle < 0) {
+    if (channels[i].handle < 0) {
         cherrno = CHANE_SYSCALL;
-        return(-1);
+        return -1;
     }
 
     if (io_nonblock_(channels[i].handle) < 0) {
         CLOSEIT(i);
         cherrno = CHANE_SYSCALL;
-        return(-1);
+        return -1;
     }
 
     cc = connect(channels[i].handle, (struct sockaddr *) &addr, sizeof(addr));

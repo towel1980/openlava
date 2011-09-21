@@ -177,13 +177,6 @@ processMsg(int chanfd)
         shutDownChan(chanfd);
         chanFreeBuf_(buf);
         break;
-    case LIM_SLIMCONF_REQ:
-        sendMinSLimConfTCP(&xdrs, &hdr, chanfd);
-        xdr_destroy(&xdrs);
-        shutDownChan(chanfd);
-        chanFreeBuf_(buf);
-        break;
-
     default:
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5106,
 	    "%s: Invalid opCode <%d>"),fname,hdr.opCode); /* catgets 5106 */

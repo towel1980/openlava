@@ -43,11 +43,10 @@ typedef unsigned long long LS_UNS_LONG_INT;
 #define _LS_VERSION_ ("openlava 1.0, "__DATE__" \nCopyright (C) 2011 openlava foundation \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #endif
 
-#define LAVA_VERSION   1
-#define LSF_VERSION LAVA_VERSION
-#define LAVA_XDR_VERSION1_0          1
+#define OPENLAVA_VERSION   1
+#define OPENLAVA_XDR_VERSION1_0          1
 
-#define LAVA_CURRENT_VERSION   "1.0"
+#define OPENLAVA_CURRENT_VERSION   "1.0"
 
 #if defined(__STDC__)
 #define P_(s) s

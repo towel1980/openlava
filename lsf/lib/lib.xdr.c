@@ -33,8 +33,8 @@ xdr_LSFHeader (XDR *xdrs, struct LSFHeader *header)
 {
     unsigned int word1, word2, word3;
 
-    if (xdrs->x_op == XDR_ENCODE) { 
-        header->version = LSF_VERSION;
+    if (xdrs->x_op == XDR_ENCODE) {
+        header->version = OPENLAVA_VERSION;
 	encodeHdr(&word1, &word2, &word3, header);
     }
 
@@ -53,14 +53,14 @@ xdr_LSFHeader (XDR *xdrs, struct LSFHeader *header)
     }
 
     return TRUE;
-} 
+}
 
 bool_t
 xdr_packLSFHeader (char *buf, struct LSFHeader *header)
 {
     XDR xdrs;
     char hdrBuf[LSF_HEADER_LEN];
-    
+
     xdrmem_create(&xdrs, hdrBuf, LSF_HEADER_LEN, XDR_ENCODE);
 
     if (!xdr_LSFHeader(&xdrs, header)) {
@@ -70,10 +70,10 @@ xdr_packLSFHeader (char *buf, struct LSFHeader *header)
     }
 
     memcpy(buf, hdrBuf, XDR_GETPOS(&xdrs));
-    xdr_destroy(&xdrs);    
+    xdr_destroy(&xdrs);
 
     return TRUE;
-} 
+}
 
 static
 void encodeHdr (unsigned int *word1,
@@ -91,7 +91,7 @@ void encodeHdr (unsigned int *word1,
     *word3 = *word3 << 16;
     *word3 = *word3 | (header->reserved0.Low & 0x0000FFFF);
 
-} 
+}
 
 bool_t
 xdr_encodeMsg (XDR *xdrs, char *data, struct LSFHeader *hdr,
@@ -101,14 +101,14 @@ xdr_encodeMsg (XDR *xdrs, char *data, struct LSFHeader *hdr,
 
     XDR_SETPOS(xdrs, LSF_HEADER_LEN);
 
-    
-    hdr->version = LSF_VERSION;
+
+    hdr->version = OPENLAVA_VERSION;
 
     if (auth) {
 	if (!xdr_lsfAuth(xdrs, auth, hdr))
 	    return (FALSE);
     }
-    
+
     if (data) {
         if (!(*xdr_func)(xdrs, data, hdr))
 	    return (FALSE);
@@ -122,7 +122,7 @@ xdr_encodeMsg (XDR *xdrs, char *data, struct LSFHeader *hdr,
 	return (FALSE);
     XDR_SETPOS(xdrs, len);
     return (TRUE);
-} 
+}
 
 bool_t
 xdr_arrayElement (XDR *xdrs, char *data, struct LSFHeader *hdr,
@@ -162,7 +162,7 @@ xdr_arrayElement (XDR *xdrs, char *data, struct LSFHeader *hdr,
 
     XDR_SETPOS(xdrs, pos + nextElementOffset);
     return (TRUE);
-} 
+}
 
 bool_t
 xdr_array_string(XDR *xdrs, char **astring, int maxlen, int arraysize)
@@ -188,7 +188,7 @@ xdr_array_string(XDR *xdrs, char **astring, int maxlen, int arraysize)
     }
     return (TRUE);
 
-} 
+}
 
 bool_t
 xdr_time_t (XDR *xdrs, time_t *t)
@@ -196,15 +196,15 @@ xdr_time_t (XDR *xdrs, time_t *t)
    return(xdr_u_long(xdrs, (unsigned long *) t));
 
 
-} 
+}
 
 int
 readDecodeHdr_ (int s, char *buf, int (*readFunc)(), XDR *xdrs,
 		struct LSFHeader *hdr)
-{ 
+{
     if ((*readFunc)(s, buf, LSF_HEADER_LEN) != LSF_HEADER_LEN) {
 	lserrno = LSE_MSG_SYS;
-	return (-2); 
+	return (-2);
     }
 
     if (!xdr_LSFHeader(xdrs, hdr)) {
@@ -213,7 +213,7 @@ readDecodeHdr_ (int s, char *buf, int (*readFunc)(), XDR *xdrs,
     }
 
     return (0);
-} 
+}
 
 int
 readDecodeMsg_ (int s, char *buf, struct LSFHeader *hdr, int (*readFunc)(),
@@ -231,14 +231,14 @@ readDecodeMsg_ (int s, char *buf, struct LSFHeader *hdr, int (*readFunc)(),
 	    return (-1);
 	}
     }
-	    
+
     if (!(*xdrFunc)(xdrs, data, hdr)) {
 	lserrno = LSE_BAD_XDR;
 	return (-1);
     }
 
     return (0);
-} 
+}
 
 
 int
@@ -246,24 +246,24 @@ writeEncodeMsg_ (int s, char *buf, int len, struct LSFHeader *hdr, char *data,
 		 int (*writeFunc)(), bool_t (*xdrFunc)(), int options)
 {
     XDR xdrs;
-    
+
     xdrmem_create(&xdrs, buf, len, XDR_ENCODE);
-    
+
     if (!xdr_encodeMsg(&xdrs, data, hdr, xdrFunc, options, NULL)) {
 	lserrno = LSE_BAD_XDR;
 	xdr_destroy(&xdrs);
 	return (-1);
     }
-    
+
     if ((*writeFunc)(s, buf, XDR_GETPOS(&xdrs)) != XDR_GETPOS(&xdrs)) {
 	lserrno = LSE_MSG_SYS;
 	xdr_destroy(&xdrs);
 	return (-2);
     }
-    
+
     xdr_destroy(&xdrs);
     return (0);
-} 
+}
 
 int
 writeEncodeHdr_ (int s, struct LSFHeader *hdr, int (*writeFunc)())
@@ -272,9 +272,9 @@ writeEncodeHdr_ (int s, struct LSFHeader *hdr, int (*writeFunc)())
     struct LSFHeader buf;
 
     initLSFHeader_(&buf);
-    hdr->length = 0; 
+    hdr->length = 0;
     xdrmem_create(&xdrs, (char *) &buf, LSF_HEADER_LEN, XDR_ENCODE);
-    
+
     if (!xdr_LSFHeader(&xdrs, hdr)) {
 	lserrno = LSE_BAD_XDR;
 	xdr_destroy(&xdrs);
@@ -282,14 +282,14 @@ writeEncodeHdr_ (int s, struct LSFHeader *hdr, int (*writeFunc)())
     }
 
     xdr_destroy(&xdrs);
-    
+
     if ((*writeFunc)(s, (char *) &buf, LSF_HEADER_LEN) != LSF_HEADER_LEN) {
 	lserrno = LSE_MSG_SYS;
 	return (-2);
     }
 
     return (0);
-} 
+}
 
 
 bool_t
@@ -302,7 +302,7 @@ xdr_stringLen(XDR *xdrs, struct stringLen *str, struct LSFHeader *Hdr)
       return FALSE;
 
    return TRUE;
-} 
+}
 
 bool_t
 xdr_lsfLimit (XDR *xdrs, struct lsfLimit *limits, struct LSFHeader *hdr)
@@ -322,12 +322,12 @@ xdr_portno (XDR *xdrs, u_short *portno)
     char *sp;
 
     if (xdrs->x_op == XDR_DECODE)
-	*portno = 0; 
+	*portno = 0;
 
     sp = (char *) portno;
-    
+
     return (xdr_bytes(xdrs, &sp, &len, len));
-} 
+}
 
 
 bool_t
@@ -336,12 +336,12 @@ xdr_address (XDR *xdrs, u_int *addr)
     u_int len = NET_INTSIZE_;
     char *sp;
     if (xdrs->x_op == XDR_DECODE)
-	*addr = 0; 
+	*addr = 0;
 
     sp = (char *) addr;
-    
+
     return (xdr_bytes(xdrs, &sp, &len, len));
-} 
+}
 
 
 
@@ -371,17 +371,17 @@ xdr_debugReq (XDR *xdrs, struct debugReq  *debugReq,
     else
         phostname = debugReq->hostName;
 
-    if (!(xdr_int (xdrs, &debugReq->opCode) 
+    if (!(xdr_int (xdrs, &debugReq->opCode)
 	  && xdr_int(xdrs, &debugReq->level)
-	  && xdr_int(xdrs, &debugReq->logClass) 
-	  && xdr_int(xdrs, &debugReq->options) 
-	  && xdr_string(xdrs, &phostname, MAXHOSTNAMELEN) 
+	  && xdr_int(xdrs, &debugReq->logClass)
+	  && xdr_int(xdrs, &debugReq->options)
+	  && xdr_string(xdrs, &phostname, MAXHOSTNAMELEN)
 	  && xdr_string(xdrs, &sp, MAXPATHLEN)))
        return FALSE;
 
     return TRUE;
 
-} 
+}
 
 void
 xdr_lsffree(bool_t (*xdr_func)(), char *objp, struct LSFHeader *hdr)
@@ -395,12 +395,12 @@ xdr_lsffree(bool_t (*xdr_func)(), char *objp, struct LSFHeader *hdr)
 
     xdr_destroy(&xdrs);
 
-} 
+}
 
 int
 getXdrStrlen(char *str)
 {
-    
+
     if (str == NULL)
         return (4);
     return((strlen(str)+7)/4*4);
@@ -423,4 +423,4 @@ void setHdrReserved(struct LSFHeader *hdr, unsigned int val)
      hdr->reserved0.High = (val >> 16) & 0x000000FF;
      hdr->reserved0.Low  = val & 0x0000FFFF;
 }
- 
+
