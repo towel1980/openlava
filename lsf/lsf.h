@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 openlava foundation
+ * Copyright (C) 2011 David Bigagli
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,9 +38,9 @@ typedef unsigned long long LS_UNS_LONG_INT;
 #include <sys/wait.h>
 
 #ifdef REL_DATE
-#define _LS_VERSION_ ("openlava 1.0, " REL_DATE " \nCopyright (C) 2011 openlava foundation \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
+#define _LS_VERSION_ ("openlava project 1.0, " REL_DATE "\nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #else
-#define _LS_VERSION_ ("openlava 1.0, "__DATE__" \nCopyright (C) 2011 openlava foundation \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
+#define _LS_VERSION_ ("openlava project 1.0, "__DATE__" \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #endif
 
 #define LAVA_VERSION   1

@@ -146,15 +146,14 @@ ls_servavail(int servId, int nonblock)
     if (initenv_(NULL, NULL) < 0)
         return -1;
 
-    if (genParams_[LSF_LIM_DEBUG].paramValue == NULL) {
-        if (getuid() != 0) {
-            lserrno = LSE_LIM_DENIED;
-            return -1;
-        }
-    }
-
-    if (callLim_(LIM_SERV_AVAIL, &servId, xdr_int, NULL, NULL,
-                 ls_getmyhostname(), options, NULL) < 0)
+    if (callLim_(LIM_SERV_AVAIL,
+                 &servId,
+                 xdr_int,
+                 NULL,
+                 NULL,
+                 ls_getmyhostname(),
+                 options,
+                 NULL) < 0)
         return -1;
 
     return 0;
