@@ -37,6 +37,8 @@ typedef unsigned long long LS_UNS_LONG_INT;
 
 #include <sys/wait.h>
 
+#define _OPENLAVA_PROJECT_ "openlava project 1.0, "__DATE__"\n"
+
 #ifdef REL_DATE
 #define _LS_VERSION_ ("openlava project 1.0, " REL_DATE "\nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #else
