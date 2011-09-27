@@ -4,7 +4,7 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
 # published by the Free Software Foundation.
-# 	
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,7 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 #
-# 
+#
 
 %define major 1
 %define minor 0
@@ -31,7 +31,7 @@
 %define _includedir %{_openlavatop}/include
 %define _etcdir %{_openlavatop}/etc
 
-Summary: openlava Distributed Batch Scheduler 
+Summary: openlava Distributed Batch Scheduler
 Name: openlava
 Version: 1.0
 Release: 1
@@ -45,8 +45,8 @@ Buildroot: %{_tmppath}/%{name}-%{version}-buildroot
 BuildRequires: gcc, tcl-devel, ncurses-devel
 Requires: ncurses, tcl
 Requires(pre): /usr/sbin/useradd
-Requires(post): chkconfig
-Requires(preun): chkconfig
+Requires(post): /sbin/chkconfig
+Requires(preun): /sbin/chkconfig
 Prefix: /opt
 
 %description
@@ -56,7 +56,7 @@ openlava Distributed Batch Scheduler
 ## PREP
 ##
 %prep
-rm -rf $RPM_BUILD_ROOT 
+rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 
 %setup -q -n %{name}-%{version}
@@ -84,7 +84,7 @@ make install INSTALL_PREFIX=$RPM_BUILD_ROOT
 
 # install directories and files
 install -d $RPM_BUILD_ROOT%{_openlavatop}/bin
-install -d $RPM_BUILD_ROOT%{_openlavatop}/etc 
+install -d $RPM_BUILD_ROOT%{_openlavatop}/etc
 install -d $RPM_BUILD_ROOT%{_openlavatop}/include
 install -d $RPM_BUILD_ROOT%{_openlavatop}/lib
 install -d $RPM_BUILD_ROOT%{_openlavatop}/log
@@ -239,8 +239,8 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BU
 ##
 ## Add "openlava" user
 ##
-/usr/sbin/useradd -c "openlava Administrator" -m -d /home/openlava -u 789 openlava 2> /dev/null || :
-
+/usr/sbin/groupadd openlava
+/usr/sbin/useradd -c "openlava Administrator" -g openlava -m -d /home/openlava openlava 2> /dev/null || :
 ##
 ## POST
 ##
@@ -261,7 +261,7 @@ else
 	_clustername=${OPENLAVA_CLUSTER_NAME}
 	mv ${_openlavatop}/etc/lsf.cluster.openlava ${_openlavatop}/etc/lsf.cluster.${_clustername}
 fi
- 
+
 ##
 ## create the symbolic links
 ##
@@ -270,10 +270,10 @@ ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bstop
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bresume
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bchkpnt
 ln -sf ${_openlavatop}/bin/bmgroup  ${_openlavatop}/bin/bugroup
-chown -h openlava.openlava ${_openlavatop}/bin/bstop
-chown -h openlava.openlava ${_openlavatop}/bin/bresume 
-chown -h openlava.openlava ${_openlavatop}/bin/bchkpnt 
-chown -h openlava.openlava ${_openlavatop}/bin/bugroup
+chown -h openlava:openlava ${_openlavatop}/bin/bstop
+chown -h openlava:openlava ${_openlavatop}/bin/bresume
+chown -h openlava:openlava ${_openlavatop}/bin/bchkpnt
+chown -h openlava:openlava ${_openlavatop}/bin/bugroup
 ##
 ## customize the openlava.sh file
 ##
@@ -347,11 +347,11 @@ rm -rf ${_savedir}
 mv -f ${_savedir}.tar.gz /tmp
 
 echo
-echo "Thank you for using openlava!" 
+echo "Thank you for using openlava!"
 echo "Your openlava configuration and log files have been saved to /tmp/${_savedir}.tar.gz"
 
 rm -rf ${_openlavatop}
-rm -f ${_symlink} 
+rm -f ${_symlink}
 
 ##
 ## FILES
@@ -500,12 +500,12 @@ rm -f ${_symlink}
 %attr(0755,openlava,openlava) %{_openlavatop}/work/logdir
 
 %changelog
-* Sun Sep 4 2011 David Bigagli restructured to follow the new directory layout after 
+* Sun Sep 4 2011 David Bigagli restructured to follow the new directory layout after
 the GNU autoconf project.
 * Thu Jul 14 2011 Robert Stober <robert@openlava.net> 1.0-1
 - Enhanced support for RPM uninstall. rpm -e openlava
 - will now stop the openlava daemons and then completely
-- remove openlava. 
+- remove openlava.
 - openlava configuration files and log files are saved to
 - /tmp/openlava.$$.tar.gz
 - Uninstallation supports shared and non-shared file system
@@ -520,11 +520,11 @@ the GNU autoconf project.
 - The RPM installer now uses the template files that are in the
 - scripts directory instead of the standard files that are installed
 - by make:
-- lsf.cluster.openlava  
-- lsf.conf  
-- lsf.shared  
-- openlava  
-- openlava.csh  
+- lsf.cluster.openlava
+- lsf.conf
+- lsf.shared
+- openlava
+- openlava.csh
 - openlava.sh
 * Thu Jun 16 2011 Robert Stober <robert@openlava.net> 1.0-1
 - Changed name of openlava startup script from "lava" to "openlava"
@@ -545,13 +545,13 @@ the GNU autoconf project.
 - Changed default cluster name to "openlava"
 - Added support for cstomizing the cluster name
 - For example, export OPENLAVA_CLUSTER_NAME="bokisius"
-- then rpm -ivh openlava-1.0-1.x86_64.rpm this will: 
+- then rpm -ivh openlava-1.0-1.x86_64.rpm this will:
 - 1. Set the cluster name in the lsf.shared file
-- 2. renames the "clustername" directories  
-- The LSF binaries are now statically linked instead of being 
+- 2. renames the "clustername" directories
+- The LSF binaries are now statically linked instead of being
 - dynamically linked.
 - Renamed /etc/init.d/lava.sh to /etc/init.d/lava
-- The openlava shell initialization files lava.sh and lava.csh 
+- The openlava shell initialization files lava.sh and lava.csh
 - are now installed in /etc/profile.d
 * Fri Apr 22 2011 Robert Stober <rmstober@gmail.com> 1.0-6.6
 - Changed to install in /opt/lava
