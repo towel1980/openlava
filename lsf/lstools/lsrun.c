@@ -29,8 +29,6 @@
 #include "../lsf.h"
 #include "../lib/lproto.h"
 
-extern char **environ;
-
 struct lsrunParams {
     char **hlist;
     char **cmd;
@@ -54,7 +52,7 @@ static char **gethostsbylist(int *);
 static char **gethostsbyresreq(int *);
 
 int
-main(int argc, char **argv)
+main(int argc, char **argv, char **environ)
 {
     int cc;
     int num;
@@ -74,7 +72,7 @@ main(int argc, char **argv)
         switch (cc) {
             char *err;
             case 'V':
-                fprintf(stderr, "%s", _OPENLAVA_PROJECT_);
+                fprintf(stderr, "%s\n", _OPENLAVA_PROJECT_);
                 return 0;
             case 'p':
                 P->parallel = 1;
@@ -120,6 +118,11 @@ lsrun: cannot resolve %s hostname", err);
         hlist = gethostsbylist(&num);
     else
         hlist = gethostsbyresreq(&num);
+
+    if (hlist == NULL) {
+        free(P);
+        return -1;
+    }
 
     /* initialize the remote execution
      * library
@@ -209,6 +212,12 @@ gethostsbylist(int *num)
         ++cc;
     free(p0);
     *num = cc;
+
+    if (cc == 0) {
+        fprintf(stderr, "\
+%s: Not enough host(s) currently eligible\n", __FUNCTION__);
+        return NULL;
+    }
 
     hlist = calloc(cc, sizeof(char *));
     cc = 0;
