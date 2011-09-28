@@ -280,7 +280,7 @@ contact:
 
 static int
 callLimUdp_(char *reqbuf, char *repbuf, int len, struct LSFHeader *reqHdr,
-                   char *host, int options)
+            char *host, int options)
 {
     struct hostent *hp;
     int retried = 0;
