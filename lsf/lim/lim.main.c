@@ -22,8 +22,6 @@
 #include "lim.h"
 #include "../lib/mls.h"
 
-#define _PATH_NULL      "/dev/null"
-
 extern char *argvmsg_(int argc, char **argv);
 
 int    limSock = -1;
@@ -79,20 +77,22 @@ struct config_param limParams[] =
     {"LSF_MASTER_LIST", NULL},
     {"LSF_REJECT_NONLSFHOST", NULL},
     {"LSF_LIM_JACKUP_BUSY", NULL},
+    {"OPENLAVA_NON_SHARED_FS", NULL},
     {NULL, NULL},
 };
 
 extern int chanIndex;
 
-static void initAndConfig(int, int *);
+static int initAndConfig(int, int *);
 static void term_handler(int);
 static void child_handler(int);
 static void doAcceptConn(void);
 static void initSignals(void);
 static void periodic(int);
-static struct tclLsInfo * getTclLsInfo(void);
+static struct tclLsInfo *getTclLsInfo(void);
 static void printTypeModel(void);
 static void initMiscLiStruct(void);
+static int getClusterConfig(void);
 extern struct extResInfo *getExtResourcesDef(char *);
 extern char *getExtResourcesLoc(char *);
 extern char *getExtResourcesVal(char *);
@@ -127,11 +127,12 @@ main(int argc, char **argv)
     char   *sp;
     int    i;
     struct LSFHeader reqHdr;
-    int    showTypeModel = FALSE;
+    int    showTypeModel;
     int    cc;
 
     kernelPerm = 0;
     saveDaemonDir_(argv[0]);
+    showTypeModel = 0;
 
     while ((cc = getopt(argc, argv, "12CVthd:")) != EOF) {
 
@@ -156,7 +157,7 @@ main(int argc, char **argv)
                 fputs(_LS_VERSION_, stderr);
                 return 0;
             case 't':
-                showTypeModel = TRUE;
+                showTypeModel = 1;
                 putEnv("RECONFIG_CHECK","YES");
                 lim_CheckMode = 1;
                 break;
@@ -200,12 +201,12 @@ Reading configuration from %s/lsf.conf\n", env_dir);
 
     if (getuid() != 0) {
         fprintf(stderr, "\
-%s: Real uid is %d, not root\n", __FUNCTION__, (int)getuid());
+%s: Real uid is %d, not root\n", __func__, (int)getuid());
     }
 
     if (geteuid() != 0) {
         fprintf(stderr, "\
-%s: Effective uid is %d, not root\n", __FUNCTION__, (int)geteuid());
+%s: Effective uid is %d, not root\n", __func__, (int)geteuid());
     }
 
     /* If started with -2 in debug mode
@@ -241,7 +242,12 @@ Reading configuration from %s/lsf.conf\n", env_dir);
 
     ls_syslog(LOG_NOTICE, argvmsg_(argc, argv));
 
-    initAndConfig(lim_CheckMode, &kernelPerm);
+    cc = initAndConfig(lim_CheckMode, &kernelPerm);
+    if (cc < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: failed to configure, exiting...", __func__);
+        return -1;
+    }
 
     if (showTypeModel) {
         printTypeModel();
@@ -255,11 +261,11 @@ Reading configuration from %s/lsf.conf\n", env_dir);
 
         if (lim_CheckError == EXIT_WARNING_ERROR) {
             ls_syslog(LOG_WARNING, "\
-%s: Checking Done. Warning(s)/error(s) found.", __FUNCTION__);
+%s: Checking Done. Warning(s)/error(s) found.", __func__);
             exit(EXIT_WARNING_ERROR);
         }
 
-        ls_syslog(LOG_INFO, "%s: Checking Done.", __FUNCTION__);
+        ls_syslog(LOG_INFO, "%s: Checking Done.", __func__);
         return 0;
     }
 
@@ -271,10 +277,10 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     initSignals();
 
     ls_syslog(LOG_INFO, "\
-%s: Daemon running (%d,%d,%d)", __FUNCTION__, myClusterPtr->checkSum,
+%s: Daemon running (%d,%d,%d)", __func__, myClusterPtr->checkSum,
               ntohs(myHostPtr->statInfo.portno), OPENLAVA_VERSION);
     ls_syslog(LOG_DEBUG, "\
-%s: sampleIntvl %f exchIntvl %f hostInactivityLimit %d masterInactivityLimit %d retryLimit %d", __FUNCTION__, sampleIntvl, exchIntvl,
+%s: sampleIntvl %f exchIntvl %f hostInactivityLimit %d masterInactivityLimit %d retryLimit %d", __func__, sampleIntvl, exchIntvl,
               hostInactivityLimit, masterInactivityLimit, retryLimit);
 
     if (lim_debug < 2)
@@ -299,13 +305,13 @@ Reading configuration from %s/lsf.conf\n", env_dir);
             startPIM(argc, argv);
 
         ls_syslog(LOG_DEBUG, "\
-%s: Before select: timer %dsec", __FUNCTION__, timer.tv_sec);
+%s: Before select: timer %dsec", __func__, timer.tv_sec);
 
         cc = chanSelect_(&sockmask, &chanmask, &timer);
         if (cc < 0) {
             if (errno != EINTR)
                 ls_syslog(LOG_ERR, "\
-%s: chanSelect() failed %M", __FUNCTION__);
+%s: chanSelect() failed %M", __func__);
             continue;
         }
 
@@ -332,7 +338,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
 
         ls_syslog(LOG_DEBUG,"\
 %s: After select: cc %d alarmed %d timer %dsec",
-                  __FUNCTION__, cc, alarmed, timer.tv_sec);
+                  __func__, cc, alarmed, timer.tv_sec);
 
         blockSigs_(0, &newMask, &oldMask);
 
@@ -359,14 +365,14 @@ Reading configuration from %s/lsf.conf\n", env_dir);
                 if (errno == EAGAIN ) {
                     ls_syslog(LOG_ERR, "\
 %s: interrupted chanRcvDgram() limSock %d %m",
-                              __FUNCTION__, limSock);
+                              __func__, limSock);
                     sigprocmask(SIG_SETMASK, &oldMask, NULL);
                     continue;
                 }
 
                 ls_syslog(LOG_ERR, "\
 %s: chanRcvDgram() failed limSock %d: %m",
-                          __FUNCTION__, limSock);
+                          __func__, limSock);
                 continue;
             }
 
@@ -374,7 +380,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
             initLSFHeader_(&reqHdr);
             if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
                 ls_syslog(LOG_ERR, "\
-%s: failed to decode xdr_LSFHeader %M", __FUNCTION__);
+%s: failed to decode xdr_LSFHeader %M", __func__);
                 xdr_destroy(&xdrs);
                 sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 continue;
@@ -390,7 +396,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
                  */
                 ls_syslog(LOG_WARNING,"\
 %s: Received request <%d> from non-LSF host %s",
-                          __FUNCTION__, limReqCode, sockAdd2Str_(&from));
+                          __func__, limReqCode, sockAdd2Str_(&from));
                 /* tell the remote that we don't know him.
                  */
                 errorBack(&from, &reqHdr, LIME_NAUTH_HOST, -1);
@@ -401,7 +407,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
 
             ls_syslog(LOG_DEBUG, "\
 %s: Received request %d from host %s %s",
-                      __FUNCTION__, limReqCode,
+                      __func__, limReqCode,
                       (fromHost ? fromHost->hostName : "unknown"),
                       sockAdd2Str_(&from));
 
@@ -474,7 +480,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
                         errorBack(&from, &reqHdr, LIME_BAD_REQ_CODE, -1);
                         if (limReqCode != lastcode)
                             ls_syslog(LOG_ERR, "\
-%s: Unknown request code %d vers %d from %s", __FUNCTION__,
+%s: Unknown request code %d vers %d from %s", __func__,
                                       limReqCode, reqHdr.version,
                                       sockAdd2Str_(&from));
                         lastcode = limReqCode;
@@ -507,12 +513,12 @@ doAcceptConn(void)
 
     if (logclass & (LC_TRACE | LC_COMM))
         ls_syslog(LOG_DEBUG, "\
-%s: Entering this routine...", __FUNCTION__);
+%s: Entering this routine...", __func__);
 
     ch = chanAccept_(limTcpSock, &from);
     if (ch < 0) {
         ls_syslog(LOG_ERR, "\
-%s: failed accept() new connection socket %d: %M", __FUNCTION__, limTcpSock);
+%s: failed accept() new connection socket %d: %M", __func__, limTcpSock);
         return;
     }
 
@@ -521,7 +527,7 @@ doAcceptConn(void)
 
         ls_syslog(LOG_WARNING,"\
 %s: Received request from non-LSF host %s",
-                          __FUNCTION__, sockAdd2Str_(&from));
+                          __func__, sockAdd2Str_(&from));
         return;
     }
 
@@ -529,7 +535,7 @@ doAcceptConn(void)
     if (!client) {
         ls_syslog(LOG_ERR, "\
 %s: calloc() failed: %M connection from %s dropped",
-                  __FUNCTION__,
+                  __func__,
                   sockAdd2Str_(&from));
         chanClose_(ch);
         return;
@@ -595,9 +601,21 @@ initAndConfig(int checkMode, int *kernelPerm)
     int i;
     struct tclLsInfo *tclLsInfo;
 
-    if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "\
-%s: Entering this routine...; checkMode=%d", __FUNCTION__, checkMode);
+    ls_syslog(LOG_DEBUG, "\
+%s: Entering this routine...; checkMode=%d", __func__, checkMode);
+
+    /* LIM is running in a non shared fiel system mode,
+     * contact the master and retrieve the shared file
+     * and the cluster file.
+     */
+    if (limParams[OPENLAVA_NON_SHARED_FS].val) {
+        cc = getClusterConfig();
+        if (cc < 0) {
+            ls_syslog(LOG_ERR, "\
+%s: failed getting cluster configuration files %M, exiting...", __func__);
+            return -1;
+        }
+    }
 
     initLiStruct();
     if (readShared() < 0)
@@ -648,7 +666,7 @@ initAndConfig(int checkMode, int *kernelPerm)
             && ('\0' != lsfLimLock[0])) {
 
             if ( logclass & LC_TRACE) {
-                ls_syslog(LOG_DEBUG2, "%s: LSF_LIM_LOCK=<%s>", __FUNCTION__, lsfLimLock);
+                ls_syslog(LOG_DEBUG2, "%s: LSF_LIM_LOCK=<%s>", __func__, lsfLimLock);
             }
             sscanf(lsfLimLock, "%d %ld", &flag, &lockTime);
             if ( flag > 0 ) {
@@ -681,7 +699,7 @@ periodic(int kernelPerm)
     time_t now = time(0);
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __FUNCTION__);
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     TIMEIT(0, readLoad(kernelPerm), "readLoad()");
 
@@ -707,12 +725,12 @@ term_handler(int signum)
 {
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __FUNCTION__);
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     Signal_(signum, SIG_DFL);
 
     ls_syslog(LOG_ERR, "\
-%s: Received signal %d, exiting", __FUNCTION__, signum);
+%s: Received signal %d, exiting", __func__, signum);
     chanClose_(limSock);
     chanClose_(limTcpSock);
 
@@ -736,13 +754,13 @@ child_handler(int sig)
     LS_WAIT_T     status;
 
     if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", __FUNCTION__);
+        ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", __func__);
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         if (pid == elim_pid) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5008,
                                              "%s: elim (pid=%d) died (exit_code=%d,exit_sig=%d)"), /* catgets 5008 */
-                      __FUNCTION__,
+                      __func__,
                       (int)elim_pid,
                       WEXITSTATUS (status),
                       WIFSIGNALED (status) ? WTERMSIG (status) : 0);
@@ -766,14 +784,14 @@ initSock(int checkMode)
 
     if (limParams[LSF_LIM_PORT].paramValue == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: fatal error LSF_LIM_PORT is not defined in lsf.conf", __FUNCTION__);
+%s: fatal error LSF_LIM_PORT is not defined in lsf.conf", __func__);
         return -1;
     }
 
     if ((lim_port = atoi(limParams[LSF_LIM_PORT].paramValue)) <= 0) {
         ls_syslog(LOG_ERR, "\
 %s: LSF_LIM_PORT <%s> must be a positive number",
-                  __FUNCTION__, limParams[LSF_LIM_PORT].paramValue);
+                  __func__, limParams[LSF_LIM_PORT].paramValue);
         return -1;
     }
 
@@ -781,7 +799,7 @@ initSock(int checkMode)
     if (limSock < 0) {
         ls_syslog(LOG_ERR, "\
 %s: unable to create datagram socket port %d; another LIM running?: %M ",
-                  __FUNCTION__, lim_port);
+                  __func__, lim_port);
         return -1;
     }
 
@@ -789,7 +807,7 @@ initSock(int checkMode)
 
     limTcpSock = chanServSocket_(SOCK_STREAM, 0, 10, 0);
     if (limTcpSock < 0) {
-        ls_syslog(LOG_ERR, "%s: chanServSocket_() failed %M", __FUNCTION__);
+        ls_syslog(LOG_ERR, "%s: chanServSocket_() failed %M", __func__);
         return -1;
     }
 
@@ -799,7 +817,7 @@ initSock(int checkMode)
                     &size) < 0) {
 
         ls_syslog(LOG_ERR, "\
-%s: getsockname(%d) failed %M", __FUNCTION__, limTcpSock);
+%s: getsockname(%d) failed %M", __func__, limTcpSock);
         return -1;
     }
 
@@ -824,7 +842,7 @@ errorBack(struct sockaddr_in *from,
     replyHdr.length = 0;
     xdrmem_create(&xdrs2, buf, MSGSIZE/4, XDR_ENCODE);
     if (!xdr_LSFHeader(&xdrs2, &replyHdr)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __FUNCTION__, "xdr_LSFHeader");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __func__, "xdr_LSFHeader");
         xdr_destroy(&xdrs2);
         return;
     }
@@ -835,7 +853,7 @@ errorBack(struct sockaddr_in *from,
         cc = chanWrite_(chan, buf, XDR_GETPOS(&xdrs2));
 
     if (cc < 0)
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, __FUNCTION__,
+        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, __func__,
                   "chanSendDgram_/chanWrite_",
                   limSock);
 
@@ -850,13 +868,13 @@ getTclLsInfo(void)
 
     if ((tclLsInfo = (struct tclLsInfo *) malloc (sizeof (struct tclLsInfo )))
         == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __FUNCTION__, "malloc");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __func__, "malloc");
         return NULL;
     }
 
     if ((tclLsInfo->indexNames = (char **)malloc (allInfo.numIndx *
                                                   sizeof (char *))) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __FUNCTION__, "malloc");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __func__, "malloc");
         return NULL;
     }
     for (i=0; i < allInfo.numIndx; i++) {
@@ -888,7 +906,7 @@ startPIM(int argc, char **argv)
 
     if ((pimPid = fork())) {
         if (pimPid < 0)
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __FUNCTION__, "fork");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __func__, "fork");
         return;
     }
 
@@ -912,7 +930,7 @@ startPIM(int argc, char **argv)
     pargv[i] = NULL;
     pargv[0] = getDaemonPath_("/pim", limParams[LSF_SERVERDIR].paramValue);
     lsfExecv(pargv[0], pargv);
-    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __FUNCTION__, "execv", pargv[0]);
+    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __func__, "execv", pargv[0]);
     exit(-1);
 }
 
@@ -1027,3 +1045,11 @@ initMiscLiStruct(void)
     }
 
 } /* initMiscLiStruct() */
+
+/* getClusterConfig()
+ */
+static int
+getClusterConfig(void)
+{
+    return 0;
+} /* getClusterConfig() */

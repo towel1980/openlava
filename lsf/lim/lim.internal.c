@@ -38,7 +38,7 @@ masterRegister(XDR *xdrs,
         return;
 
     if (!xdr_masterReg(xdrs, &masterReg, reqHdr)) {
-        ls_syslog(LOG_ERR, "%s: Failed in xdr_masterReg", __FUNCTION__);
+        ls_syslog(LOG_ERR, "%s: Failed in xdr_masterReg", __func__);
         return;
     }
 
@@ -50,7 +50,7 @@ masterRegister(XDR *xdrs,
 
             ls_syslog(LOG_WARNING, "\
 %s: Sender %s may have different config.",
-                      __FUNCTION__, masterReg.hostName);
+                      __func__, masterReg.hostName);
             checkSumMismatch++;
         }
 
@@ -62,7 +62,7 @@ masterRegister(XDR *xdrs,
             ls_syslog(LOG_ERR, "\
 %s: Got master announcement from unused host %s; \
 Run lim -C on this host to find more information",
-                      __FUNCTION__, masterReg.hostName);
+                      __func__, masterReg.hostName);
             return;
         }
 
@@ -82,7 +82,7 @@ Run lim -C on this host to find more information",
 
                 ls_syslog(LOG_WARNING, "\
 %s: master %s lastSeqNo=%d seqNo=%d. Packets dropped?",
-                          __FUNCTION__, hPtr->hostName,
+                          __func__, hPtr->hostName,
                           hPtr->lastSeqNo, masterReg.seqNo);
 
             hPtr->lastSeqNo = masterReg.seqNo;
@@ -94,7 +94,7 @@ Run lim -C on this host to find more information",
             if (masterReg.flags & SEND_LOAD_INFO) {
                 mustSendLoad = TRUE;
                 ls_syslog(LOG_DEBUG, "\
-%s: Master lim is probing me. Send my load in next interval", __FUNCTION__);
+%s: Master lim is probing me. Send my load in next interval", __func__);
             }
 
         } else {
@@ -105,7 +105,7 @@ Run lim -C on this host to find more information",
                 && myClusterPtr->masterInactivityCount <= hostInactivityLimit) {
                 ls_syslog(LOG_INFO, "\
 %s: Host %s is trying to take over from %s, not accepted",
-                          __FUNCTION__, masterReg.hostName,
+                          __func__, masterReg.hostName,
                           myClusterPtr->masterPtr->hostName);
                 announceMasterToHost(hPtr, SEND_NO_INFO);
                 return;
@@ -120,7 +120,7 @@ Run lim -C on this host to find more information",
                 myClusterPtr->masterPtr->statInfo.portno = masterReg.portno;
                 if (masterMe) {
                     ls_syslog(LOG_INFO, "\
-%s: Give in master to %s", __FUNCTION__, masterReg.hostName);
+%s: Give in master to %s", __func__, masterReg.hostName);
                 }
                 masterMe                  = 0;
                 myClusterPtr->masterKnown = 1;
@@ -133,7 +133,7 @@ Run lim -C on this host to find more information",
                 if (masterReg.flags & SEND_LOAD_INFO) {
                     mustSendLoad = 1;
                     ls_syslog(LOG_DEBUG, "\
-%s: Master lim is probing me. Send my load in next interval",__FUNCTION__);
+%s: Master lim is probing me. Send my load in next interval",__func__);
                 }
 
             } else {
@@ -143,11 +143,11 @@ Run lim -C on this host to find more information",
                     announceMasterToHost(hPtr, SEND_NO_INFO);
                     ls_syslog(LOG_INFO, "\
 %s: Host <%s> is trying to take over master LIM from %s, not accepted",
-                              __FUNCTION__, masterReg.hostName,
+                              __func__, masterReg.hostName,
                               myClusterPtr->masterPtr->hostName);
                 } else
                     ls_syslog(LOG_INFO, "\
-%s: Host <%s> is trying to take over master LIM, not accepted", __FUNCTION__,
+%s: Host <%s> is trying to take over master LIM, not accepted", __func__,
                               masterReg.hostName);
             }
         }
@@ -223,7 +223,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
     if (! (xdr_LSFHeader(&xdrs1, &reqHdr)
            && xdr_masterReg(&xdrs1, &masterReg, &reqHdr))) {
         ls_syslog(LOG_ERR, "\
-%s: Error in xdr_LSFHeader/xdr_masterReg", __FUNCTION__);
+%s: Error in xdr_LSFHeader/xdr_masterReg", __func__);
         xdr_destroy(&xdrs1);
         return;
     }
@@ -233,7 +233,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
     if (! (xdr_LSFHeader(&xdrs2, &reqHdr)
            && xdr_masterReg(&xdrs2, &masterReg, &reqHdr))) {
         ls_syslog(LOG_ERR, "\
-%s: Error in xdr_enum/xdr_masterReg", __FUNCTION__);
+%s: Error in xdr_enum/xdr_masterReg", __func__);
         xdr_destroy(&xdrs1);
         xdr_destroy(&xdrs2);
         return;
@@ -245,7 +245,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
     xdrmem_create(&xdrs4, buf4, MSGSIZE/4, XDR_ENCODE);
     if ( ! xdr_LSFHeader(&xdrs4, &reqHdr)) {
         ls_syslog(LOG_ERR, "\
-%s: failed in xdr_LSFHeader", __FUNCTION__);
+%s: failed in xdr_LSFHeader", __func__);
         xdr_destroy(&xdrs1);
         xdr_destroy(&xdrs2);
         xdr_destroy(&xdrs4);
@@ -254,7 +254,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
 
     if ( ! xdr_masterReg(&xdrs4, &tmasterReg, &reqHdr)) {
         ls_syslog(LOG_ERR,"\
-%s: failed in xdr_masterRegister", __FUNCTION__);
+%s: failed in xdr_masterRegister", __func__);
         xdr_destroy(&xdrs1);
         xdr_destroy(&xdrs2);
         xdr_destroy(&xdrs4);
@@ -266,14 +266,14 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
         memcpy(&toAddr.sin_addr, &clPtr->masterPtr->addr[0], sizeof(u_int));
         if (logclass & LC_COMM)
             ls_syslog(LOG_DEBUG, "\
-%s: Sending request to LIM on %s: %m", __FUNCTION__, sockAdd2Str_(&toAddr));
+%s: Sending request to LIM on %s: %m", __func__, sockAdd2Str_(&toAddr));
 
         if (chanSendDgram_(limSock,
                            buf1,
                            XDR_GETPOS(&xdrs1),
                            (struct sockaddr_in *)&toAddr) < 0)
             ls_syslog(LOG_ERR, "\
-%s: Failed to send request to LIM on %s: %m", __FUNCTION__,
+%s: Failed to send request to LIM on %s: %m", __func__,
                       sockAdd2Str_(&toAddr));
         xdr_destroy(&xdrs1);
         return;
@@ -312,7 +312,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
             if (logclass & LC_COMM)
                 ls_syslog(LOG_DEBUG, "\
 %s: send announce (normal) to %s %s, inactivityCount=%d",
-                          __FUNCTION__,
+                          __func__,
                           hPtr->hostName, sockAdd2Str_(&toAddr),
                           hPtr->hostInactivityCount);
 
@@ -321,7 +321,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
                 if (logclass & LC_COMM)
                     ls_syslog(LOG_DEBUG,"\
 %s: announcing SEND_ELIM_REQ to host %s %s",
-                              __FUNCTION__, hPtr->hostName,
+                              __func__, hPtr->hostName,
                               sockAdd2Str_(&toAddr));
 
                 if (chanSendDgram_(limSock,
@@ -329,7 +329,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
                                    XDR_GETPOS(&xdrs4),
                                    (struct sockaddr_in *)&toAddr) < 0) {
                     ls_syslog(LOG_ERR,"\
-%s: Failed to send request 1 to LIM on %s: %m", __FUNCTION__,
+%s: Failed to send request 1 to LIM on %s: %m", __func__,
                               hPtr->hostName);
                 }
 
@@ -349,7 +349,7 @@ announceMaster: Failed to send request 1 to LIM on %s: %m", hPtr->hostName);
             if (logclass & LC_COMM)
                 ls_syslog(LOG_DEBUG,"\
 %s: send announce (SEND_CONF) to %s %s %x, inactivityCount=%d",
-                          __FUNCTION__,
+                          __func__,
                           hPtr->hostName, sockAdd2Str_(&toAddr),
                           hPtr->addr[0],
                           hPtr->hostInactivityCount);
@@ -360,7 +360,7 @@ announceMaster: Failed to send request 1 to LIM on %s: %m", hPtr->hostName);
                                (struct sockaddr_in *)&toAddr) < 0)
                 ls_syslog(LOG_ERR, "\
 %s: Failed to send request 2 to LIM on %s: %m",
-                          __FUNCTION__, hPtr->hostName);
+                          __func__, hPtr->hostName);
         }
 
     }
@@ -388,7 +388,7 @@ jobxferReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
         myClusterPtr->masterInactivityCount = 0;
 
     if (!xdr_jobXfer(xdrs, &jobXfer, reqHdr)) {
-        ls_syslog(LOG_ERR, "%s: Error on xdr_jobXfer", __FUNCTION__);
+        ls_syslog(LOG_ERR, "%s: Error on xdr_jobXfer", __func__);
         return;
     }
 
@@ -398,7 +398,7 @@ jobxferReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
             updExtraLoad(&hPtr, jobXfer.resReq, 1);
         } else {
             ls_syslog(LOG_ERR, "\
-%s: %s not found in jobxferReq", __FUNCTION__,
+%s: %s not found in jobxferReq", __func__,
                       jobXfer.placeInfo[i].hostName);
         }
     }
@@ -443,14 +443,14 @@ wrongMaster(struct sockaddr_in *from,
                         0,
                         NULL)) {
         ls_syslog(LOG_ERR, "\
-%s: error on xdr_LSFHeader/xdr_masterInfo", __FUNCTION__);
+%s: error on xdr_LSFHeader/xdr_masterInfo", __func__);
         xdr_destroy(&xdrs);
         return;
     }
 
     if (logclass & LC_COMM)
         ls_syslog(LOG_DEBUG, "\
-%s: Sending s%d to %s", __FUNCTION__, s, sockAdd2Str_(from));
+%s: Sending s%d to %s", __func__, s, sockAdd2Str_(from));
 
     if (s < 0) {
         cc = chanSendDgram_(limSock,
@@ -463,7 +463,7 @@ wrongMaster(struct sockaddr_in *from,
 
     if (cc < 0) {
         ls_syslog(LOG_ERR, "\
-%s: Send to %s len %d failed: %m", __FUNCTION__,
+%s: Send to %s len %d failed: %m", __func__,
                   sockAdd2Str_(from), XDR_GETPOS(&xdrs));
         xdr_destroy(&xdrs);
         return;
@@ -503,7 +503,7 @@ initNewMaster(void)
     myClusterPtr->masterInactivityCount = 0;
     masterMe = 1;
 
-    ls_syslog(LOG_WARNING, "%s: I am the master now", __FUNCTION__);
+    ls_syslog(LOG_WARNING, "%s: I am the master now", __func__);
 
 }
 
@@ -536,7 +536,7 @@ rcvConfInfo(XDR *xdrs,
 
     if (findHostbyList(myClusterPtr->hostList, hPtr->hostName) == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: Got info from client-only host %s %s", __FUNCTION__,
+%s: Got info from client-only host %s %s", __func__,
              sockAdd2Str_(from), hPtr->hostName);
         return;
     }
@@ -546,7 +546,7 @@ rcvConfInfo(XDR *xdrs,
 
     if (sinfo.maxCpus <= 0 || sinfo.maxMem < 0) {
         ls_syslog(LOG_ERR, "\
-%s: Invalid info received: maxCpus %d, maxMem %d", __FUNCTION__,
+%s: Invalid info received: maxCpus %d, maxMem %d", __func__,
                   sinfo.maxCpus, sinfo.maxMem);
         return;
     }
@@ -565,7 +565,7 @@ rcvConfInfo(XDR *xdrs,
     if (lim_debug >= 2)
 	ls_syslog(LOG_DEBUG, "\
 %s: Host %s: maxCpus=%d maxMem=%d ndisks=%d",
-                  __FUNCTION__, hPtr->hostName,
+                  __func__, hPtr->hostName,
                   hPtr->statInfo.maxCpus, hPtr->statInfo.maxMem,
                   hPtr->statInfo.nDisks);
 
@@ -592,20 +592,20 @@ sndConfInfo(struct sockaddr_in *to)
     if (! xdr_LSFHeader(&xdrs, &reqHdr)
         || !xdr_statInfo(&xdrs, &myHostPtr->statInfo, &reqHdr)) {
         ls_syslog(LOG_ERR, "\
-%s: Error in  xdr_LSFHeader/xdr_statInfo", __FUNCTION__);
+%s: Error in  xdr_LSFHeader/xdr_statInfo", __func__);
         return;
     }
 
     if (logclass & LC_COMM)
         ls_syslog(LOG_DEBUG, "\
-%s: chanSendDgram_ info to %s", __FUNCTION__, sockAdd2Str_(to));
+%s: chanSendDgram_ info to %s", __func__, sockAdd2Str_(to));
 
     if (chanSendDgram_(limSock,
                        buf,
                        XDR_GETPOS(&xdrs),
                        (struct sockaddr_in *)to) < 0) {
         ls_syslog(LOG_ERR, "\
-%s: chanSendDgram_ info to %s failed: %m", __FUNCTION__, sockAdd2Str_(to));
+%s: chanSendDgram_ info to %s failed: %m", __func__, sockAdd2Str_(to));
         return;
     }
 
@@ -671,7 +671,7 @@ void announceMasterToHost(struct hostNode *hPtr, int infoType )
     if (! xdr_LSFHeader(&xdrs,  &reqHdr)
         || ! xdr_masterReg(&xdrs, &masterReg, &reqHdr)) {
         ls_syslog(LOG_ERR, "\
-%s: Error xdr_LSFHeader/xdr_masterReg", __FUNCTION__);
+%s: Error xdr_LSFHeader/xdr_masterReg", __func__);
         xdr_destroy(&xdrs);
         return;
     }
@@ -680,14 +680,14 @@ void announceMasterToHost(struct hostNode *hPtr, int infoType )
 
     if (logclass & LC_COMM)
         ls_syslog(LOG_DEBUG, "\
-%s: Sending request to LIM on %s", __FUNCTION__, sockAdd2Str_(&toAddr));
+%s: Sending request to LIM on %s", __func__, sockAdd2Str_(&toAddr));
 
     if (chanSendDgram_(limSock,
                        buf,
                        XDR_GETPOS(&xdrs),
                        (struct sockaddr_in *)&toAddr) < 0)
         ls_syslog(LOG_ERR, "\
-%s: Failed to send request to LIM on %s: %m", __FUNCTION__,
+%s: Failed to send request to LIM on %s: %m", __func__,
                   sockAdd2Str_(&toAddr));
 
     xdr_destroy(&xdrs);
@@ -702,13 +702,13 @@ probeMasterTcp(struct clusterNode *clPtr)
     int rc;
     struct LSFHeader reqHdr;
 
-    ls_syslog (LOG_DEBUG, "%s: enter.... ", __FUNCTION__);
+    ls_syslog (LOG_DEBUG, "%s: enter.... ", __func__);
 
     hPtr = clPtr->masterPtr;
     if (!hPtr)
         hPtr = clPtr->prevMasterPtr;
 
-    ls_syslog (LOG_ERR, "%s: Last master is  UNKNOWN", __FUNCTION__);
+    ls_syslog (LOG_ERR, "%s: Last master is  UNKNOWN", __func__);
 
     if (!hPtr)
         return -1;
@@ -718,7 +718,7 @@ probeMasterTcp(struct clusterNode *clPtr)
 
     ls_syslog(LOG_ERR, "\
 %s: Attempting to probe last known master %s port %d timeout is %d",
-              __FUNCTION__, hPtr->hostName,
+              __func__, hPtr->hostName,
               ntohs(hPtr->statInfo.portno),
               probeTimeout);
 
@@ -730,19 +730,19 @@ probeMasterTcp(struct clusterNode *clPtr)
     ch = chanClientSocket_(AF_INET, SOCK_STREAM, 0);
     if (ch < 0 ) {
         ls_syslog(LOG_ERR, "\
-%s: chanClientSocket_ failed: %M", __FUNCTION__);
+%s: chanClientSocket_ failed: %M", __func__);
         return -2;
     }
 
     rc = chanConnect_(ch, &mlim_addr, probeTimeout * 1000, 0);
     if (rc < 0) {
         ls_syslog(LOG_ERR, "\
-%s: chanConnect_ %s failed: %M", __FUNCTION__, sockAdd2Str_(&mlim_addr));
+%s: chanConnect_ %s failed: %M", __func__, sockAdd2Str_(&mlim_addr));
         return -1;
     }
 
     ls_syslog(LOG_ERR, "\
-%s: chanConnect_ %s ok ", __FUNCTION__, sockAdd2Str_(&mlim_addr));
+%s: chanConnect_ %s ok ", __func__, sockAdd2Str_(&mlim_addr));
 
     initLSFHeader_(&reqHdr);
     reqHdr.opCode = LIM_PING;

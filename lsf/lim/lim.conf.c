@@ -257,7 +257,7 @@ readShared(void)
 }
 
 static char
-doindex (FILE *fp, int *LineNum, char *lsfile)
+doindex(FILE *fp, int *LineNum, char *lsfile)
 {
     static char fname[] = "doindex()";
     char *linep;
@@ -332,7 +332,7 @@ doindex (FILE *fp, int *LineNum, char *lsfile)
 }
 
 static char
-setIndex (struct keymap *keyList, char *lsfile, int linenum)
+setIndex(struct keymap *keyList, char *lsfile, int linenum)
 {
     static char fname[] = "setIndex()";
     int resIdx, i;
@@ -429,9 +429,7 @@ setIndex (struct keymap *keyList, char *lsfile, int linenum)
 
     defaultRunElim = TRUE;
 
-
     return TRUE;
-
 }
 
 static char
@@ -493,7 +491,6 @@ doclist(FILE *fp, int *LineNum, char *lsfile)
             else
                 servers = NULL;
 
-
             if (!clusterAdded && !addCluster(keyList[0].val, servers)) {
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5226,
                                                  "%s: Ignoring cluster %s"), /* catgets 5226 */
@@ -533,7 +530,6 @@ dotypelist(FILE *fp, int *LineNum, char *lsfile)
     };
     char *linep;
 
-
     linep = getNextLineC_(fp, LineNum, TRUE);
     if (!linep) {
         ls_syslog(LOG_ERR, I18N_PREMATURE_EOF, fname, lsfile, *LineNum,
@@ -564,7 +560,6 @@ dotypelist(FILE *fp, int *LineNum, char *lsfile)
             doSkipSection(fp, LineNum, lsfile, "HostType");
             return FALSE;
         }
-
 
         while ((linep = getNextLineC_(fp, LineNum, TRUE)) != NULL) {
             if (isSectionEnd(linep, lsfile, LineNum, "HostType"))
@@ -608,8 +603,8 @@ dotypelist(FILE *fp, int *LineNum, char *lsfile)
 
     ls_syslog(LOG_ERR, I18N_PREMATURE_EOF, fname, lsfile, *LineNum,
               "HostType");
-    return FALSE;
 
+    return FALSE;
 }
 
 static char
@@ -629,7 +624,6 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
     };
     char *sp, *word;
 
-
     if (first) {
         int i;
         for(i = 0; i < MAXMODELS; ++i) {
@@ -640,7 +634,6 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
         h_initTab_(&hostModelTbl, 11);
         first = FALSE;
     }
-
 
     linep = getNextLineC_(fp, LineNum, TRUE);
     if (! linep) {
@@ -677,10 +670,8 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
             return FALSE;
         }
 
-
         while ((linep = getNextLineC_(fp, LineNum, TRUE)) != NULL) {
-            if (isSectionEnd(linep, lsfile, LineNum, "hostmodel"))
-            {
+            if (isSectionEnd(linep, lsfile, LineNum, "hostmodel")) {
                 return TRUE;
             }
             if (mapValues(keyList, linep) < 0) {
@@ -779,15 +770,12 @@ dohostmodel(FILE *fp, int *LineNum, char *lsfile)
     return FALSE;
 }
 
-
-
 static void
 initResTable(void)
 {
     static char fname[] = "initResTable()";
     struct resItem *resTable;
     int   i;
-
 
     if ((resTable = (struct resItem *)
          malloc(300 * sizeof(struct resItem))) == NULL) {
@@ -833,7 +821,6 @@ resNameDefined (char *name)
 static char
 doresources(FILE *fp, int *LineNum, char *lsfile)
 {
-
     static char fname[] = "doresources()";
     char *linep;
     struct keymap keyList[] = {
@@ -854,7 +841,6 @@ doresources(FILE *fp, int *LineNum, char *lsfile)
     int nres=0;
     int resIdx;
 
-
     linep = getNextLineC_(fp, LineNum, TRUE);
     if (! linep) {
         ls_syslog(LOG_ERR, I18N_PREMATURE_EOF,
@@ -873,8 +859,8 @@ doresources(FILE *fp, int *LineNum, char *lsfile)
             return FALSE;
         }
 
-
         while ((linep = getNextLineC_(fp, LineNum, TRUE)) != NULL) {
+
             if (isSectionEnd(linep, lsfile, LineNum, "resource")) {
                 return TRUE;
             }
@@ -896,7 +882,6 @@ doresources(FILE *fp, int *LineNum, char *lsfile)
             }
 
             if ((resIdx = resNameDefined(keyList[RKEY_RESOURCENAME].val)) >= 0){
-
                 if ((allInfo.resTable[resIdx].flags & RESF_BUILTIN)
                     && (allInfo.resTable[resIdx].flags & RESF_DYNAMIC)) {
 
@@ -958,8 +943,7 @@ doresources(FILE *fp, int *LineNum, char *lsfile)
                 int type;
 
 
-                if (strcmp(keyList[RKEY_TYPE].val, LSF_LIM_ERES_TYPE) == 0)
-                {
+                if (strcmp(keyList[RKEY_TYPE].val, LSF_LIM_ERES_TYPE) == 0) {
                     if (setExtResourcesDef(keyList[RKEY_RESOURCENAME].val) != 0)
                     {
                         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5256,

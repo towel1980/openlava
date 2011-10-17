@@ -89,7 +89,7 @@ satIndex(void)
     int   i;
 
     for (i = 0; i < allInfo.numIndx; i++)
-	li[i].satvalue = myHostPtr->busyThreshold[i];
+        li[i].satvalue = myHostPtr->busyThreshold[i];
 
 }
 
@@ -121,27 +121,27 @@ getutime(char *usert)
 
 
     if (strchr(usert, ':') != NULL)
-	return(MAXIDLETIME);
+        return(MAXIDLETIME);
 
     strcpy(buffer, "/dev/");
     strcat(buffer, usert);
 
     if (stat(buffer, &ttystatus) < 0) {
-	ls_syslog(LOG_DEBUG, "getutime: stat(%s) failed: %m", buffer);
-	return(MAXIDLETIME);
+        ls_syslog(LOG_DEBUG, "getutime: stat(%s) failed: %m", buffer);
+        return(MAXIDLETIME);
     }
     lastinputtime = ttystatus.st_atime;
 
     time(&t);
     if (t < lastinputtime)
-	return (time_t)0;
+        return (time_t)0;
     else
-	return (t - lastinputtime);
+        return (t - lastinputtime);
 }
 
 
 
-#define IDLE_INTVL	30
+#define IDLE_INTVL      30
 #define GUESS_NUM       30
 
 
@@ -158,9 +158,9 @@ putLastActiveTime ()
 
     sprintf(lsfLastActiveTime, "%ld", lastActiveTime);
     if (putEnv(ENV_LAST_ACTIVE_TIME, lsfLastActiveTime) != 0) {
-	ls_syslog(LOG_WARNING, I18N(5902,
-	    "putLastActiveTime: %s, failed."),  /* catgets 5902 */
-	    lsfLastActiveTime);
+        ls_syslog(LOG_WARNING, I18N(5902,
+            "putLastActiveTime: %s, failed."),  /* catgets 5902 */
+            lsfLastActiveTime);
     }
 }
 
@@ -208,8 +208,8 @@ idletime(int *logins)
     bool_t firstLoop;
 
     if ((thisHostname = ls_getmyhostname()) == NULL) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_getmyhostname");
-	thisHostname = "localhost";
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_getmyhostname");
+        thisHostname = "localhost";
     }
 
 
@@ -220,25 +220,25 @@ idletime(int *logins)
     }
 
     if (idcount >= (IDLE_INTVL / exchIntvl))
-	idcount = 0;
+        idcount = 0;
 
     idcount++;
     if (idcount != 1) {
         *logins = last_logins;
-	return (idleSeconds / 60.0);
+        return (idleSeconds / 60.0);
     }
 
     if ((ufd = open(UTMP_FILE,  O_RDONLY)) < 0) {
-	ls_syslog(LOG_WARNING, I18N_FUNC_S_FAIL_M, fname, "open", UTMP_FILE);
-	*logins = last_logins;
+        ls_syslog(LOG_WARNING, I18N_FUNC_S_FAIL_M, fname, "open", UTMP_FILE);
+        *logins = last_logins;
         return (MAXIDLETIME/60.0);
     }
 
     numusers = 0;
     users = (char **) calloc(listsize, sizeof(char *));
     if (users == NULL) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "calloc");
-	excused_ls = TRUE;
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "calloc");
+        excused_ls = TRUE;
     }
 
     firstLoop = TRUE;
@@ -248,65 +248,65 @@ idletime(int *logins)
         if (user.ut_name[0] == 0 || nonuser(user))
             continue;
         else {
-	    char * ut_name ;
+            char * ut_name ;
             if (!(ut_name = malloc((sizeof(user.ut_name)+1)*sizeof(char)))) {
                 ls_syslog(LOG_ERR,I18N_FUNC_FAIL_M,fname, "malloc");
-		lim_Exit(fname);
-	    }
-	    memset(ut_name, '\0',(sizeof(user.ut_name)+1));
+                lim_Exit(fname);
+            }
+            memset(ut_name, '\0',(sizeof(user.ut_name)+1));
             strncpy(ut_name, user.ut_name, sizeof(user.ut_name));
-	    ut_name[sizeof(user.ut_name)] = '\0';
+            ut_name[sizeof(user.ut_name)] = '\0';
 
             if (! excused_ls) {
-	        for (i=0; i<numusers; i++) {
-		    if (strcmp(ut_name, users[i]) == 0)
-		        break;
-	        }
-	        if (i >= numusers) {
+                for (i=0; i<numusers; i++) {
+                    if (strcmp(ut_name, users[i]) == 0)
+                        break;
+                }
+                if (i >= numusers) {
 
-		    users[numusers] = putstr_(ut_name);
-		    if (users[numusers] == NULL) {
-	                ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "putstr_", ut_name);
-		        excused_ls = TRUE;
-		        for (i=0; i<numusers; i++)
-			    FREEUP(users[i]);
-		        FREEUP(users);
-		    } else {
-		        numusers++;
-		        if (numusers >= listsize) {
+                    users[numusers] = putstr_(ut_name);
+                    if (users[numusers] == NULL) {
+                        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "putstr_", ut_name);
+                        excused_ls = TRUE;
+                        for (i=0; i<numusers; i++)
+                            FREEUP(users[i]);
+                        FREEUP(users);
+                    } else {
+                        numusers++;
+                        if (numusers >= listsize) {
 
-			    char **sp;
-			    listsize = 2 * listsize;
-			    sp = (char **) realloc(users, listsize*sizeof(char *));
-			    if (sp == NULL) {
-			        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "realloc");
-			        for (i=0; i<numusers; i++)
-				    FREEUP(users[i]);
-			        FREEUP(users);
-			        excused_ls = TRUE;
-			    } else {
-			        users = sp;
-			    }
-		        }
-		    }
-	        }
+                            char **sp;
+                            listsize = 2 * listsize;
+                            sp = (char **) realloc(users, listsize*sizeof(char *));
+                            if (sp == NULL) {
+                                ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "realloc");
+                                for (i=0; i<numusers; i++)
+                                    FREEUP(users[i]);
+                                FREEUP(users);
+                                excused_ls = TRUE;
+                            } else {
+                                users = sp;
+                            }
+                        }
+                    }
+                }
             }
 
 
-	    user.ut_line[sizeof(user.ut_line)] = '\0';
+            user.ut_line[sizeof(user.ut_line)] = '\0';
 
 
-	    if (idleSeconds > 0) {
+            if (idleSeconds > 0) {
 
                  itime = getutime(user.ut_line);
-	         if (firstLoop == TRUE) {
-	             idleSeconds = itime;
-	             firstLoop = FALSE;
+                 if (firstLoop == TRUE) {
+                     idleSeconds = itime;
+                     firstLoop = FALSE;
                  } else {
-	            if (itime < idleSeconds)
-		        idleSeconds = itime;
+                    if (itime < idleSeconds)
+                        idleSeconds = itime;
                  }
-	    }
+            }
             FREEUP(ut_name);
         }
     }
@@ -316,26 +316,26 @@ idletime(int *logins)
 
 
     if (idleSeconds > 0 && (itime = getXIdle()) < idleSeconds)
-	idleSeconds = itime;
+        idleSeconds = itime;
 
 
 
     if (excused_ls)
-	*logins = last_logins;
+        *logins = last_logins;
     else {
-	*logins = numusers;
-	last_logins = numusers;
-	for (i=0; i<numusers; i++)
-	    FREEUP(users[i]);
-	FREEUP(users);
+        *logins = numusers;
+        last_logins = numusers;
+        for (i=0; i<numusers; i++)
+            FREEUP(users[i]);
+        FREEUP(users);
     }
 
 
     time(&currentTime);
     if ((currentTime-idleSeconds) > lastActiveTime){
-	lastActiveTime=currentTime-idleSeconds;
+        lastActiveTime=currentTime-idleSeconds;
     }else{
-	idleSeconds=currentTime-lastActiveTime;
+        idleSeconds=currentTime-lastActiveTime;
     }
     return(idleSeconds / 60.0);
 }
@@ -346,35 +346,29 @@ getXIdle()
     static char fname[] = "getXIdle()";
     time_t lastTime = 0;
     time_t t;
-
-
     struct stat st;
 
     if (stat("/dev/kbd", &st) == 0) {
-	if (lastTime < st.st_atime)
-	    lastTime = st.st_atime;
+        if (lastTime < st.st_atime)
+            lastTime = st.st_atime;
     } else {
         if (errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "stat", "/dev/kbd");
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "stat", "/dev/kbd");
     }
 
     if (stat("/dev/mouse", &st) == 0) {
-	if (lastTime < st.st_atime)
-	    lastTime = st.st_atime;
+        if (lastTime < st.st_atime)
+            lastTime = st.st_atime;
     } else {
         if (errno != ENOENT)
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "stat", "/dev/mouse");
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "stat", "/dev/mouse");
     }
-
-
-
-
 
     time(&t);
     if (t < lastTime)
-	return (time_t)0;
+        return (time_t)0;
     else
-	return (t - lastTime);
+        return (t - lastTime);
 }
 
 void
@@ -513,31 +507,31 @@ checkExchange:
         myHostPtr->loadIndex[MEM] = 0;
 
     for (i = 0; i < allInfo.numIndx; i++) {
-	if (i == R15S || i == R1M || i == R15M) {
+        if (i == R15S || i == R1M || i == R15M) {
 
-	    li[i].value = normalizeRq(myHostPtr->loadIndex[i], 1, ncpus) - 1;
-	} else {
-	    li[i].value = myHostPtr->loadIndex[i];
-	}
+            li[i].value = normalizeRq(myHostPtr->loadIndex[i], 1, ncpus) - 1;
+        } else {
+            li[i].value = myHostPtr->loadIndex[i];
+        }
     }
 
     for (i = 0; i < allInfo.numIndx; i++) {
 
-	if ((li[i].increasing && fabs(li[i].value - INFINIT_LOAD) < 1.0)
-	    || (! li[i].increasing && fabs(li[i].value + INFINIT_LOAD) < 1.0))
+        if ((li[i].increasing && fabs(li[i].value - INFINIT_LOAD) < 1.0)
+            || (! li[i].increasing && fabs(li[i].value + INFINIT_LOAD) < 1.0))
         {
-	    continue;
-	}
+            continue;
+        }
 
         if (!THRLDOK(li[i].increasing, li[i].value, li[i].satvalue))  {
-	    SET_BIT (i + INTEGER_BITS, myHostPtr->status);
+            SET_BIT (i + INTEGER_BITS, myHostPtr->status);
             myHostPtr->status[0] |= LIM_BUSY;
         } else
-	    CLEAR_BIT(i + INTEGER_BITS, myHostPtr->status);
+            CLEAR_BIT(i + INTEGER_BITS, myHostPtr->status);
 
     }
     for (i = 0; i < GET_INTNUM (allInfo.numIndx); i++)
-	 busyBits += myHostPtr->status[i+1];
+         busyBits += myHostPtr->status[i+1];
     if (!busyBits)
         myHostPtr->status[0] &= ~LIM_BUSY;
 
@@ -546,7 +540,7 @@ checkExchange:
             limLock.on &= ~LIM_LOCK_STAT_USER;
             limLock.time = 0;
             mustSendLoad = TRUE;
-	    myHostPtr->status[0] = myHostPtr->status[0] & ~LIM_LOCKEDU;
+            myHostPtr->status[0] = myHostPtr->status[0] & ~LIM_LOCKEDU;
         } else {
             myHostPtr->status[0] = myHostPtr->status[0] | LIM_LOCKEDU;
         }
@@ -559,7 +553,7 @@ checkExchange:
     for(i = 0; i < allInfo.numIndx; i++) {
 
         if (myHostPtr->loadIndex[i] < MIN_FLOAT16 &&
-	    i < NBUILTINDEX){
+            i < NBUILTINDEX){
             myHostPtr->loadIndex[i] = 0.0;
         }
 
@@ -568,7 +562,7 @@ checkExchange:
 
             rawql=myHostPtr->loadIndex[i];
             myHostPtr->loadIndex[i]  = normalizeRq(rawql,
-			   (myHostPtr->hModelNo >= 0) ?
+                           (myHostPtr->hModelNo >= 0) ?
                            shortInfo.cpuFactors[myHostPtr->hModelNo] : 1.0,
                            ncpus);
             myHostPtr->uloadIndex[i] = rawql;
@@ -593,11 +587,11 @@ lim_popen(char **argv, char *mode)
         return(NULL);
 
     if ((pid = fork()) == 0) {
-	char  *resEnv;
-	resEnv = getElimRes();
+        char  *resEnv;
+        resEnv = getElimRes();
         if (resEnv != NULL) {
-	    if (logclass & LC_TRACE)
-	        ls_syslog (LOG_DEBUG, "lim_popen: LS_ELIM_RESOURCES <%s>", resEnv);
+            if (logclass & LC_TRACE)
+                ls_syslog (LOG_DEBUG, "lim_popen: LS_ELIM_RESOURCES <%s>", resEnv);
             putEnv ("LS_ELIM_RESOURCES", resEnv);
         }
         close(p[0]);
@@ -611,7 +605,7 @@ lim_popen(char **argv, char *mode)
             Signal_(i, SIG_DFL);
 
         lsfExecvp(argv[0], argv);
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "execvp", argv[0]);
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "execvp", argv[0]);
         exit(127);
     }
     if (pid == -1) {
@@ -664,8 +658,8 @@ saveIndx(char *name, float value)
 
    if (!names) {
        if (!(names = malloc((allInfo.numIndx+1)*sizeof(char *)))) {
-	   ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-	   lim_Exit(fname);
+           ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+           lim_Exit(fname);
        }
        memset (names,0, (allInfo.numIndx+1)*sizeof(char *));
    }
@@ -679,12 +673,12 @@ saveIndx(char *name, float value)
        }
 
 
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5920,
+        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5920,
                                          "%s: Unknown index name %s from ELIM"), /* catgets 5920 */
                   fname, name);
-	if (names[i]) {
-	    FREEUP(names[i]);
-	}
+        if (names[i]) {
+            FREEUP(names[i]);
+        }
         names[i] = putstr_(name);
         return 0;
    }
@@ -699,7 +693,7 @@ saveIndx(char *name, float value)
            names[indx] = allInfo.resTable[indx].name;
            ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5921,
                                                 "%s: ELIM over-riding value of index %s"), /* catgets 5921 */
-	    fname, name);
+            fname, name);
        }
        overRide[indx] = value;
    } else
@@ -825,7 +819,7 @@ getusr(void)
 
       if (ELIMrestarts < 0 || ELIMrestarts > 0) {
 
-	if (ELIMrestarts > 0) {
+        if (ELIMrestarts > 0) {
             ELIMrestarts--;
         }
 
@@ -834,7 +828,7 @@ getusr(void)
             char *path = malloc(strlen(limParams[LSF_SERVERDIR].paramValue) +
                                 strlen(ELIMNAME) + 8);
             if (!path) {
-	        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
+                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
                 setUnkwnValues();
                 return;
             }
@@ -851,64 +845,64 @@ getusr(void)
             myClusterPtr->eLimArgv = parseCommandArgs(
                                         path, myClusterPtr->eLimArgs);
             if (!myClusterPtr->eLimArgv) {
-	        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
+                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
                 setUnkwnValues();
                 return;
             }
         }
 
-	if (fp) {
-	    fclose(fp);
-	    fp = NULL;
-	}
+        if (fp) {
+            fclose(fp);
+            fp = NULL;
+        }
 
 
         lastStart = time(0);
 
         if (masterMe)
             putEnv("LSF_MASTER",masterResStr);
-	else
+        else
             putEnv("LSF_MASTER", "N");
 
         if (resStr != NULL) free(resStr);
 
-	hostNamePtr = ls_getmyhostname();
+        hostNamePtr = ls_getmyhostname();
 
 
         size = 0;
-	for (tmpSharedRes=sharedResourceHead;
-	     tmpSharedRes ;
-	     tmpSharedRes=tmpSharedRes->nextPtr ){
-	     size += strlen(tmpSharedRes->resName) + sizeof(char) ;
-	}
-	for (i=NBUILTINDEX; i < allInfo.nRes; i++) {
-	    if (allInfo.resTable[i].flags & RESF_EXTERNAL)
-	        continue;
-	    if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
-	         && !(allInfo.resTable[i].flags & RESF_BUILTIN)){
+        for (tmpSharedRes=sharedResourceHead;
+             tmpSharedRes ;
+             tmpSharedRes=tmpSharedRes->nextPtr ){
+             size += strlen(tmpSharedRes->resName) + sizeof(char) ;
+        }
+        for (i=NBUILTINDEX; i < allInfo.nRes; i++) {
+            if (allInfo.resTable[i].flags & RESF_EXTERNAL)
+                continue;
+            if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
+                 && !(allInfo.resTable[i].flags & RESF_BUILTIN)){
 
-	        size += strlen(allInfo.resTable[i].name) + sizeof(char);
-	    }
-	}
+                size += strlen(allInfo.resTable[i].name) + sizeof(char);
+            }
+        }
         resStr = (char *)malloc((size+1) * sizeof(char)) ;
         if (!resStr) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
             setUnkwnValues();
             return;
         }
         resStr[0] = '\0' ;
 
-	for (i=NBUILTINDEX; i < allInfo.nRes; i++) {
+        for (i=NBUILTINDEX; i < allInfo.nRes; i++) {
            if (allInfo.resTable[i].flags & RESF_EXTERNAL)
                continue;
            if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
                && !(allInfo.resTable[i].flags & RESF_BUILTIN)){
 
-	       if ((allInfo.resTable[i].flags & RESF_SHARED)
-		   && (!masterMe)
-		   && (isResourceSharedInAllHosts(allInfo.resTable[i].name))){
-		   continue;
-	       }
+               if ((allInfo.resTable[i].flags & RESF_SHARED)
+                   && (!masterMe)
+                   && (isResourceSharedInAllHosts(allInfo.resTable[i].name))){
+                   continue;
+               }
 
                if( (allInfo.resTable[i].flags & RESF_SHARED)
                    && (!isResourceSharedByHost(myHostPtr, allInfo.resTable[i].name)) )
@@ -925,7 +919,7 @@ getusr(void)
         putEnv ("LSF_RESOURCES",resStr);
 
         if ((fp = lim_popen(myClusterPtr->eLimArgv, "r")) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "lim_popen",
+            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "lim_popen",
                       myClusterPtr->eLimArgv[0]);
             setUnkwnValues();
 
@@ -956,7 +950,7 @@ getusr(void)
     timeout.tv_usec = 5;
 
     if ( (nfds = rd_select_(fileno(fp), &timeout)) < 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "rd_select_");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "rd_select_");
         lim_pclose(fp);
         fp = NULL;
 
@@ -967,8 +961,8 @@ getusr(void)
         int numIndx, cc;
         char name[MAXLSFNAMELEN], valueString[MAXEXTRESLEN];
         float value;
-	sigset_t  oldMask;
-	sigset_t  newMask;
+        sigset_t  oldMask;
+        sigset_t  newMask;
 
         static char *fromELIM = NULL;
         static int sizeOfFromELIM = MAXLINELEN;
@@ -995,12 +989,12 @@ getusr(void)
         *elimPos = '\0';
 
 
-	blockSigs_(0, &newMask, &oldMask);
+        blockSigs_(0, &newMask, &oldMask);
 
-	if (logclass & LC_TRACE) {
-	    ls_syslog(LOG_DEBUG,"\
+        if (logclass & LC_TRACE) {
+            ls_syslog(LOG_DEBUG,"\
 %s: Signal mask has been changed, all are signals blocked now", fname);
-	}
+        }
 
         if (ELIMblocktime >= 0) {
             io_nonblock_(fileno(fp));
@@ -1008,11 +1002,11 @@ getusr(void)
 
         cc = fscanf(fp,"%d",&numIndx);
         if ( cc != 1) {
-	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5924,
-	        "%s: Protocol error numIndx not read (cc=%d): %m"),fname,cc); /* catgets 5924 */
+            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5924,
+                "%s: Protocol error numIndx not read (cc=%d): %m"),fname,cc); /* catgets 5924 */
             lim_pclose(fp);
             fp = NULL;
-	    unblockSigs_(&oldMask);
+            unblockSigs_(&oldMask);
 
             return;
         }
@@ -1022,12 +1016,12 @@ getusr(void)
         elimPos += bw;
 
         if ( numIndx < 0) {
-	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5925,
-	        "%s: Protocol error numIndx=%d"),fname,numIndx); /* catgets 5925 */
+            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5925,
+                "%s: Protocol error numIndx=%d"),fname,numIndx); /* catgets 5925 */
             setUnkwnValues();
             lim_pclose(fp);
             fp = NULL;
-	    unblockSigs_(&oldMask);
+            unblockSigs_(&oldMask);
             return;
         }
 
@@ -1070,8 +1064,8 @@ getusr(void)
 
 
                     ls_syslog(LOG_ERR, I18N(5904,
-			"Received from ELIM: %s."), /* catgets 5904 */
-			fromELIM);
+                        "Received from ELIM: %s."), /* catgets 5904 */
+                        fromELIM);
 
                     setUnkwnValues();
                     lim_pclose(fp);
@@ -1135,7 +1129,7 @@ getusr(void)
             i--;
         }
 
-	unblockSigs_(&oldMask);
+        unblockSigs_(&oldMask);
 
 
 
@@ -1156,7 +1150,7 @@ unblockSigs_(sigset_t*  mask)
     sigprocmask(SIG_SETMASK, mask, NULL);
 
     if (logclass & LC_TRACE) {
-	ls_syslog(LOG_DEBUG,"\
+        ls_syslog(LOG_DEBUG,"\
 %s: The original signal mask has been restored", fname);
     }
 
@@ -1201,8 +1195,8 @@ saveSBValue (char *name, char *value)
 
     if (allInfo.resTable[indx].valueType == LS_NUMERIC){
         if (!isanumber_(value)){
-	    return -1;
-	}
+            return -1;
+        }
     }
 
     if (myHostPtr->numInstances <= 0)
@@ -1235,7 +1229,7 @@ saveSBValue (char *name, char *value)
         }
 
         if ((temp = (char *)malloc (strlen(value) + 1)) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             FREEUP (temp);
             return (0);
         }
@@ -1263,11 +1257,11 @@ initConfInfo(void)
     else
         myHostPtr->statInfo.maxCpus = numCpus();
     if (myHostPtr->statInfo.maxCpus <= 0) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5928,
-	    "%s: Invalid num of CPUs %d. Default to 1"), /* catgets 5928 */
-	    fname,
-	    myHostPtr->statInfo.maxCpus);
-	myHostPtr->statInfo.maxCpus = 1;
+        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5928,
+            "%s: Invalid num of CPUs %d. Default to 1"), /* catgets 5928 */
+            fname,
+            myHostPtr->statInfo.maxCpus);
+        myHostPtr->statInfo.maxCpus = 1;
     }
 
     ncpus = myHostPtr->statInfo.maxCpus;
@@ -1282,41 +1276,45 @@ static char *
 getElimRes (void)
 {
 
-    int i, numEnv = 0, resNo;
-    char *resNameString = NULL;
+    int i;
+    int numEnv;
+    int resNo;
+    char *resNameString;
 
-    if ((resNameString = (char *) malloc
-       ((allInfo.nRes) * MAXLSFNAMELEN)) == NULL) {
-        ls_syslog (LOG_ERR, I18N_FUNC_D_FAIL,"getElimRes","malloc",
-           allInfo.nRes * MAXLSFNAMELEN);
+    resNameString = malloc((allInfo.nRes) * MAXLSFNAMELEN);
+    if (resNameString == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: failed allocate %d bytes %m", __func__, allInfo.nRes * MAXLSFNAMELEN);
         lim_Exit("getElimRes");
     }
 
+    numEnv = 0;
     resNameString[0] = '\0';
-    for (i=0; i < allInfo.numIndx; i++) {
-	if (allInfo.resTable[i].flags & RESF_EXTERNAL)
-	    continue;
+    for (i = 0; i < allInfo.numIndx; i++) {
+        if (allInfo.resTable[i].flags & RESF_EXTERNAL)
+            continue;
         if (numEnv != 0)
             strcat (resNameString, " ");
-        strcat (resNameString, allInfo.resTable[i].name);
+        strcat(resNameString, allInfo.resTable[i].name);
         numEnv++;
     }
-    for (i=0; i < myHostPtr->numInstances; i++) {
+
+    for (i = 0; i < myHostPtr->numInstances; i++) {
         resNo = resNameDefined (myHostPtr->instances[i]->resName);
-	if (allInfo.resTable[resNo].flags & RESF_EXTERNAL)
-	    continue;
+        if (allInfo.resTable[resNo].flags & RESF_EXTERNAL)
+            continue;
         if (allInfo.resTable[resNo].interval > 0) {
            if (numEnv != 0)
-               strcat (resNameString, " ");
+               strcat(resNameString, " ");
             strcat (resNameString, myHostPtr->instances[i]->resName);
             numEnv++;
         }
     }
-    if (numEnv == 0)
-        return (NULL);
-    else
-        return (resNameString);
 
+    if (numEnv == 0)
+        return NULL;
+
+    resNameString;
 }
 
 static int
@@ -1366,8 +1364,8 @@ callElim(void)
 
 
     if (defaultRunElim) {
-	runit = TRUE;
-	return TRUE;
+        runit = TRUE;
+        return TRUE;
     }
 
     if (myHostPtr->callElim) {
@@ -1388,12 +1386,12 @@ startElim(void)
     int i;
 
     if (!notFirst){
-        for (i=0; i < allInfo.nRes; i++) {
-	    if (allInfo.resTable[i].flags & RESF_EXTERNAL)
-	        continue;
-	    if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
+        for (i = 0; i < allInfo.nRes; i++) {
+            if (allInfo.resTable[i].flags & RESF_EXTERNAL)
+                continue;
+            if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
                 && !(allInfo.resTable[i].flags & RESF_BUILTIN)){
-	        startElim = TRUE;
+                startElim = TRUE;
                 break;
             }
         }
@@ -1408,7 +1406,7 @@ static void
 termElim(void)
 {
     if (elim_pid == -1)
-	return;
+        return;
 
     kill(elim_pid, SIGTERM);
     elim_pid = -1;
@@ -1425,11 +1423,11 @@ isResourceSharedInAllHosts(char *resName)
          tmpSharedRes=tmpSharedRes->nextPtr ){
 
          if (strcmp(tmpSharedRes->resName, resName)) {
-	     continue;
-	 }
-	 if (tmpSharedRes->nHosts == myClusterPtr->numHosts) {
-	     return(1);
-	 }
+             continue;
+         }
+         if (tmpSharedRes->nHosts == myClusterPtr->numHosts) {
+             return(1);
+         }
     }
 
     return(0);
