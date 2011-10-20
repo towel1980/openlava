@@ -154,8 +154,8 @@ xdr_loadmatrix(XDR *xdrs, int len, struct loadVectorStruct *lmp,
 bool_t
 xdr_masterReg(XDR *xdrs, struct masterReg *masterRegPtr, struct LSFHeader *hdr)
 {
-    char *sp1, *sp2;
-    int i, size;
+    char *sp1;
+    char *sp2;
 
     sp1 = masterRegPtr->clName;
     sp2 = masterRegPtr->hostName;
@@ -165,24 +165,13 @@ xdr_masterReg(XDR *xdrs, struct masterReg *masterRegPtr, struct LSFHeader *hdr)
 	sp2[0] = '\0';
     }
 
-    if ( !(xdr_string(xdrs, &sp1, MAXLSFNAMELEN) &&
-           xdr_string(xdrs, &sp2, MAXHOSTNAMELEN) &&
-           xdr_int(xdrs,&masterRegPtr->flags) &&
-           xdr_u_int(xdrs,&masterRegPtr->seqNo) &&
-           xdr_int(xdrs,&masterRegPtr->checkSum) &&
-           xdr_portno(xdrs, &masterRegPtr->portno) &&
-           xdr_int(xdrs, &masterRegPtr->licFlag) &&
-           xdr_int(xdrs, &masterRegPtr->maxResIndex))) {
+    if (! xdr_string(xdrs, &sp1, MAXLSFNAMELEN)
+        || !xdr_string(xdrs, &sp2, MAXHOSTNAMELEN)
+        || !xdr_int(xdrs,&masterRegPtr->flags)
+        || !xdr_u_int(xdrs,&masterRegPtr->seqNo)
+        || !xdr_int(xdrs,&masterRegPtr->checkSum)
+        || !xdr_portno(xdrs, &masterRegPtr->portno)) {
         return FALSE;
-    }
-
-    if (xdrs->x_op == XDR_DECODE) {
-        size = masterRegPtr->maxResIndex;
-        masterRegPtr->resBitArray = (int *)malloc(size*sizeof(int));
-    }
-    for (i=0; i < masterRegPtr->maxResIndex; i++){
-        if (!xdr_int(xdrs, &(masterRegPtr->resBitArray[i])))
-            return FALSE;
     }
 
     return TRUE;

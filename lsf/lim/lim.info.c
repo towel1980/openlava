@@ -303,14 +303,12 @@ masterInfoReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
     }
 
     xdr_destroy(&xdrs2);
-    return;
-
 }
 
 
 void
 hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
-	struct LSFHeader *reqHdr, int s)
+            struct LSFHeader *reqHdr, int s)
 {
     static char fname[]="hostInfoReq";
     char *buf;

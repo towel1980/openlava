@@ -1136,30 +1136,6 @@ chkUIdxAndSetDfltRunElim(void)
     }
 }
 
-static void
-setupHostNodeResBitArrays(void)
-{
-    struct sharedResourceInstance *tmp;
-    int i, j, bitPos, newMax;
-    struct hostNode *hostPtr;
-
-    for (tmp=sharedResourceHead, bitPos=0; tmp; tmp=tmp->nextPtr, bitPos++);
-
-    newMax = GET_INTNUM(bitPos);
-
-    for ( tmp=sharedResourceHead; tmp; tmp=tmp->nextPtr ){
-        for ( i=0; i < tmp->nHosts; i++ ){
-            hostPtr = tmp->hosts[i];
-            if (!(hostPtr->resBitArray)){
-                hostPtr->resBitArray = (int *)malloc((newMax+1)*sizeof(int));
-                for (j=0; j < newMax+1; j++)
-                    hostPtr->resBitArray[j] = 0;
-            }
-        }
-    }
-
-}
-
 static int
 doresourcemap(FILE *fp, char *lsfile, int *LineNum)
 {
@@ -1778,18 +1754,11 @@ readCluster(int checkMode)
     if (readCluster2(myClusterPtr) < 0)
         lim_Exit("readCluster");
 
-
-    myClusterPtr->loadIndxNames = (char **)calloc(allInfo.numIndx,
-                                                  sizeof(char *));
-    if (myClusterPtr->loadIndxNames == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "calloc");
-        lim_Exit("calloc");
-    }
+    myClusterPtr->loadIndxNames = calloc(allInfo.numIndx,
+                                         sizeof(char *));
 
     for (i = 0; i < allInfo.numIndx; i++)
         myClusterPtr->loadIndxNames[i] = putstr_(li[i].name);
-
-    setupHostNodeResBitArrays();
 
     if ((hname = ls_getmyhostname()) == NULL)
         lim_Exit("readCluster/ls_getmyhostname");
@@ -1813,12 +1782,12 @@ readCluster(int checkMode)
         }
     }
 
-    for (i=1; i<8; i++)
+    for (i = 1; i < 8; i++)
         if (myHostPtr->week[i] != NULL)
             break;
 
-    if (i==8)   {
-        for (i=1;i<8;i++)
+    if (i == 8)   {
+        for (i = 1; i < 8;i++)
             insertW(&(myHostPtr->week[i]), -1.0, 25.0);
     }
 
@@ -1832,15 +1801,13 @@ readCluster(int checkMode)
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5396,
                                          "%s: No LSF managers are specified in file lsf.cluster.%s, default cluster manager is root."), fname, myClusterName);  /* catgets 5396 */
 
-        clusAdminIds = (int *) malloc (sizeof (int));
+        clusAdminIds = malloc(sizeof (int));
         clusAdminIds[0] = 0;
         nClusAdmins = 1;
-        clusAdminNames = (char **) malloc (sizeof (char *));
+        clusAdminNames = malloc(sizeof (char *));
         getLSFUserByUid_(0, rootName, sizeof(rootName));
         clusAdminNames[0] = putstr_(rootName);
     }
-
-
 
     myClusterPtr->status = CLUST_STAT_OK | CLUST_ACTIVE | CLUST_INFO_AVAIL;
     myClusterPtr->managerName = clusAdminNames[0];
@@ -1850,7 +1817,7 @@ readCluster(int checkMode)
     myClusterPtr->adminIds = clusAdminIds;
     myClusterPtr->admins   = clusAdminNames;
 
-    return(0);
+    return 0;
 
 }
 
@@ -2011,8 +1978,6 @@ adjIndx (void)
         shortInfo.nRes++;
 
         if (tmpTable.flags & RESF_DYNAMIC) {
-
-
 
             for (k = NBUILTINDEX; k < allInfo.numIndx; k++) {
                 if (strcasecmp(li[k].name, tmpTable.name) != 0)
@@ -3308,56 +3273,23 @@ removeFloatClientHost(struct hostNode *hPtr)
 struct hostNode *
 initHostNode (void)
 {
-    static char fname[] = "initHostNode()";
     struct hostNode *hPtr;
     int i;
 
-    if ((hPtr = (struct hostNode *) malloc(sizeof(struct hostNode))) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return (NULL);
-    }
-    hPtr->resBitMaps = NULL;
-    hPtr->DResBitMaps = NULL;
-    hPtr->status = NULL;
-
-    if ((hPtr->resBitMaps = (int *)
-         malloc(GET_INTNUM(allInfo.nRes) * sizeof (int))) == NULL
-        || (hPtr->DResBitMaps = (int *)
-            malloc(GET_INTNUM(allInfo.nRes) * sizeof (int))) == NULL
-        || (hPtr->status = (int *)
-            malloc((1+GET_INTNUM(allInfo.numIndx)) * sizeof (int))) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        FREEUP (hPtr->resBitMaps);
-        FREEUP (hPtr->DResBitMaps);
-        FREEUP (hPtr->status);
-        FREEUP (hPtr);
-        return(NULL);
-    }
-    for (i =0; i< GET_INTNUM(allInfo.nRes); i++) {
-        hPtr->resBitMaps[i] = 0;
-        hPtr->DResBitMaps[i] = 0;
-    }
-    hPtr->loadIndex = NULL;
-    hPtr->uloadIndex = NULL;
-    hPtr->busyThreshold = NULL;
-
-    if ((hPtr->loadIndex = (float *) malloc (allInfo.numIndx * sizeof (float))) == NULL
-        || (hPtr->uloadIndex = (float *)
-            malloc (allInfo.numIndx * sizeof (float))) == NULL
-        || (hPtr->busyThreshold = (float *)
-            malloc (allInfo.numIndx * sizeof (float))) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        FREEUP (hPtr->resBitMaps);
-        FREEUP (hPtr->DResBitMaps);
-        FREEUP (hPtr->status);
-        FREEUP (hPtr->loadIndex);
-        FREEUP (hPtr->uloadIndex);
-        FREEUP (hPtr->busyThreshold);
-        FREEUP (hPtr);
-        return(NULL);
+    hPtr = calloc(1, sizeof(struct hostNode));
+    if (hPtr == NULL) {
+        ls_syslog(LOG_ERR, "%s: malloc failed %m", __func__);
+        return NULL;
     }
 
-    for (i =0; i < allInfo.numIndx; i++) {
+    hPtr->resBitMaps = calloc(GET_INTNUM(allInfo.nRes), sizeof (int));
+    hPtr->DResBitMaps = calloc(GET_INTNUM(allInfo.nRes), sizeof (int));
+    hPtr->status = calloc((1 + GET_INTNUM(allInfo.numIndx)), sizeof (int));
+    hPtr->loadIndex = calloc(allInfo.numIndx, sizeof (float));
+    hPtr->uloadIndex =  calloc(allInfo.numIndx, sizeof (float));
+    hPtr->busyThreshold =  calloc(allInfo.numIndx, sizeof (float));
+
+    for (i = 0; i < allInfo.numIndx; i++) {
         hPtr->loadIndex[i]  = INFINIT_LOAD;
         hPtr->uloadIndex[i] = INFINIT_LOAD;
     }
@@ -3366,55 +3298,11 @@ initHostNode (void)
         hPtr->busyThreshold[i] = (allInfo.resTable[i].orderType == INCR) ?
             INFINIT_LOAD : -INFINIT_LOAD;
 
-    hPtr->hostName = NULL;
-    hPtr->hModelNo = 0;
-    hPtr->hTypeNo = 0;
-    hPtr->hostNo = 0;
-    hPtr->naddr = 0;
-    hPtr->addr = NULL;
-    hPtr->infoValid = FALSE;
-    hPtr->protoVersion = 0;
-    hPtr->availHigh = 0;
-    hPtr->availLow = 0;
     hPtr->use = -1;
-    hPtr->resClass = 0;
-    hPtr->DResClass = 0;
-    hPtr-> nRes = 0;
-    hPtr->windows = NULL;
-
-
-    hPtr->statInfo.maxMem = 0;
-    hPtr->statInfo.maxSwap = 0;
-    hPtr->statInfo.maxTmp = 0;
-
-    for (i = 0; i < 8; i++)
-        hPtr->week[i] = NULL;
-
-    hPtr->wind_edge = 0;
-    hPtr->lastJackTime= (time_t) 0;
-    hPtr->hostInactivityCount = 0;
-
-    for (i = 0; i < 1+GET_INTNUM(allInfo.numIndx); i++)
-        hPtr->status[i] = 0;
+    hPtr->expireTime = -1;
     hPtr->status[0] = LIM_UNAVAIL;
 
-    hPtr-> conStatus = 0;
-    hPtr->lastSeqNo = 0;
-    hPtr->rexPriority = 0;
-    hPtr->infoMask = 0;
-    hPtr->loadMask = 0;
-    hPtr->numInstances = 0;
-    hPtr->instances = NULL;
-
-    hPtr->callElim = FALSE ;
-    hPtr->maxResIndex = 0;
-    hPtr->resBitArray = NULL;
-
-    hPtr->nextPtr = NULL;
-    hPtr->expireTime = -1;
-
-    return (hPtr);
-
+    return hPtr;
 }
 
 void

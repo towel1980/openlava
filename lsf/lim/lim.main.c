@@ -55,7 +55,6 @@ int  numHostResources;
 struct sharedResource **hostResources = NULL;
 u_short lsfSharedCkSum = 0;
 
-
 pid_t pimPid = -1;
 static void startPIM(int, char **);
 
@@ -64,6 +63,7 @@ struct config_param limParams[] =
     {"LSF_CONFDIR", NULL},
     {"LSF_LIM_DEBUG", NULL},
     {"LSF_SERVERDIR", NULL},
+    {"LSF_BINDIR", NULL},
     {"LSF_LOGDIR", NULL},
     {"LSF_LIM_PORT", NULL},
     {"LSF_RES_PORT", NULL},
@@ -77,7 +77,7 @@ struct config_param limParams[] =
     {"LSF_MASTER_LIST", NULL},
     {"LSF_REJECT_NONLSFHOST", NULL},
     {"LSF_LIM_JACKUP_BUSY", NULL},
-    {"OPENLAVA_NON_SHARED_FS", NULL},
+    {"OPENLAVA_NONSHARED_FS", NULL},
     {NULL, NULL},
 };
 
@@ -595,10 +595,11 @@ initSignals(void)
 
 }
 
-static void
+static int
 initAndConfig(int checkMode, int *kernelPerm)
 {
     int i;
+    int cc;
     struct tclLsInfo *tclLsInfo;
 
     ls_syslog(LOG_DEBUG, "\
@@ -608,7 +609,7 @@ initAndConfig(int checkMode, int *kernelPerm)
      * contact the master and retrieve the shared file
      * and the cluster file.
      */
-    if (limParams[OPENLAVA_NON_SHARED_FS].val) {
+    if (limParams[OPENLAVA_NONSHARED_FS].paramValue) {
         cc = getClusterConfig();
         if (cc < 0) {
             ls_syslog(LOG_ERR, "\
@@ -655,28 +656,29 @@ initAndConfig(int checkMode, int *kernelPerm)
         lim_Exit("chanInit_");
 
     for(i = 0; i < 2*MAXCLIENTS; i++)
-        clientMap[i]=NULL;
+        clientMap[i] = NULL;
 
     {
         char *lsfLimLock;
         int     flag = -1;
         time_t  lockTime =-1;
 
-        if ((NULL != (lsfLimLock=getenv("LSF_LIM_LOCK")))
-            && ('\0' != lsfLimLock[0])) {
+        if ((lsfLimLock = getenv("LSF_LIM_LOCK")) != NULL
+            && lsfLimLock[0] != 0) {
 
-            if ( logclass & LC_TRACE) {
-                ls_syslog(LOG_DEBUG2, "%s: LSF_LIM_LOCK=<%s>", __func__, lsfLimLock);
+            if (logclass & LC_TRACE) {
+                ls_syslog(LOG_DEBUG2, "\
+%s: LSF_LIM_LOCK %s", __func__, lsfLimLock);
             }
             sscanf(lsfLimLock, "%d %ld", &flag, &lockTime);
-            if ( flag > 0 ) {
+            if (flag > 0) {
 
                 limLock.on = flag;
                 limLock.time = lockTime;
-                if ( LOCK_BY_USER(limLock.on)) {
+                if (LOCK_BY_USER(limLock.on)) {
                     myHostPtr->status[0] |= LIM_LOCKEDU;
                 }
-                if ( LOCK_BY_MASTER(limLock.on)) {
+                if (LOCK_BY_MASTER(limLock.on)) {
                     myHostPtr->status[0] |= LIM_LOCKEDM;
                 }
             }
@@ -690,6 +692,7 @@ initAndConfig(int checkMode, int *kernelPerm)
 
     getLastActiveTime();
 
+    return 0;
 }
 
 static void
@@ -898,7 +901,6 @@ startPIM(int argc, char **argv)
     int i;
     static time_t lastTime = 0;
 
-
     if (time(NULL) - lastTime < 60*2)
         return;
 
@@ -914,32 +916,28 @@ startPIM(int argc, char **argv)
 
     if (lim_debug > 1) {
 
-        for(i=3; i < sysconf(_SC_OPEN_MAX); i++)
+        for(i = 3; i < sysconf(_SC_OPEN_MAX); i++)
             close(i);
+
     } else {
-        for(i=0; i < sysconf(_SC_OPEN_MAX); i++)
+        for(i = 0; i < sysconf(_SC_OPEN_MAX); i++)
             close(i);
     }
 
-    for (i=1; i < NSIG; i++)
+    for (i = 1; i < NSIG; i++)
         Signal_(i, SIG_DFL);
 
 
     for (i = 1; i < argc; i++)
         pargv[i] = argv[i];
+
     pargv[i] = NULL;
     pargv[0] = getDaemonPath_("/pim", limParams[LSF_SERVERDIR].paramValue);
     lsfExecv(pargv[0], pargv);
+
     ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __func__, "execv", pargv[0]);
+
     exit(-1);
-}
-
-
-int
-load_objects(void)
-{
-
-    return(0);
 }
 
 void
@@ -1051,5 +1049,46 @@ initMiscLiStruct(void)
 static int
 getClusterConfig(void)
 {
+    static char buf[PATH_MAX];
+    struct stat stat2;
+    int cc;
+    FILE *fp;
+
+    if (! limParams[OPENLAVA_NONSHARED_FS].paramValue)
+        return 0;
+
+    ls_syslog(LOG_DEBUG, "\
+%s: openlava non shared fs configured", __func__);
+
+    sprintf(buf, "%s/esync", limParams[LSF_BINDIR].paramValue);
+
+    cc = stat(buf, &stat2);
+    if (cc != 0) {
+        /* If site does not have their esync let's
+         * build our own?
+         */
+        ls_syslog(LOG_ERR, "\
+%s: stat(%s) failed %m", __func__, buf);
+        return -1;
+    }
+
+    fp = popen(buf, "r");
+    if (fp == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: popen(%s) failed %m", __func__, buf);
+    }
+
+    memset(buf, 0, sizeof(buf));
+    while (fgets(buf, sizeof(buf) - 1, fp)) {
+        buf[strlen(buf) - 1] = 0;
+        ls_syslog(LOG_INFO, "%s: %s", __func__, buf);
+    }
+
+    pclose(fp);
+
+    ls_syslog(LOG_INFO, "\
+%s: configuration files sync done", __func__);
+
     return 0;
+
 } /* getClusterConfig() */

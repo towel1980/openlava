@@ -725,7 +725,7 @@ getSharedResBitPos(char *resName)
 static void
 getExtResourcesLoad(void)
 {
-    int i, isSet, bitPos;
+    int i, bitPos;
     char *resName, *resValue;
     float fValue;
 
@@ -736,9 +736,6 @@ getExtResourcesLoad(void)
 
             if (!defaultRunElim){
                 if ((bitPos=getSharedResBitPos(resName)) == -1)
-                    continue;
-                TEST_BIT(bitPos,myHostPtr->resBitArray,isSet)
-                if (!isSet)
                     continue;
             }
             if ((resValue=getExtResourcesVal(resName)) == NULL)
@@ -792,7 +789,6 @@ getusr(void)
     int size;
     struct sharedResourceInstance *tmpSharedRes;
     char * hostNamePtr;
-
     struct timeval t, expire;
     struct timeval time0 = {0,0};
     int bw, scc;
@@ -806,13 +802,11 @@ getusr(void)
         return;
     }
 
-
     getExtResourcesLoad();
 
     if (!startElim()) {
         return;
     }
-
 
     if ((elim_pid < 0) && (time(0) - lastStart > 90)) {
 
@@ -915,7 +909,7 @@ getusr(void)
                    sprintf(resStr,"%s %s", resStr, allInfo.resTable[i].name);
                }
            }
-       }
+        }
         putEnv ("LSF_RESOURCES",resStr);
 
         if ((fp = lim_popen(myClusterPtr->eLimArgv, "r")) == NULL) {
@@ -943,8 +937,6 @@ getusr(void)
 
         return;
     }
-
-
 
     timeout.tv_sec  = 0;
     timeout.tv_usec = 5;
@@ -1314,7 +1306,7 @@ getElimRes (void)
     if (numEnv == 0)
         return NULL;
 
-    resNameString;
+    return resNameString;
 }
 
 static int

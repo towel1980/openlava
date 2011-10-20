@@ -325,23 +325,29 @@ extern struct sharedResourceInstance *sharedResourceHead ;
 
 extern int getpagesize(void);
 
-#define LSF_CONFDIR         0
-#define LSF_LIM_DEBUG       1
-#define LSF_SERVERDIR       2
-#define LSF_LOGDIR          3
-#define LSF_LIM_PORT	    4
-#define LSF_RES_PORT	    5
-#define LSF_DEBUG_LIM       6
-#define LSF_TIME_LIM        7
-#define LSF_LOG_MASK        8
-#define LSF_CONF_RETRY_MAX  9
-#define LSF_CONF_RETRY_INT  10
-#define LSF_LIM_RCVBUF      11
-#define LSF_CROSS_UNIX_NT   12
-#define LSF_LIM_IGNORE_CHECKSUM 13
-#define LSF_MASTER_LIST 14
-#define LSF_REJECT_NONLSFHOST 15
-#define LSF_LIM_JACKUP_BUSY 16
+/* These are the entries in the limParams[]
+ * LIM configuration array.
+ */
+typedef enum {
+    LSF_CONFDIR,
+    LSF_LIM_DEBUG,
+    LSF_SERVERDIR,
+    LSF_BINDIR,
+    LSF_LOGDIR,
+    LSF_LIM_PORT,
+    LSF_RES_PORT,
+    LSF_DEBUG_LIM,
+    LSF_TIME_LIM,
+    LSF_LOG_MASK,
+    LSF_CONF_RETRY_MAX,
+    LSF_CONF_RETRY_INT,
+    LSF_CROSS_UNIX_NT,
+    LSF_LIM_IGNORE_CHECKSUM,
+    LSF_MASTER_LIST,
+    LSF_REJECT_NONLSFHOST,
+    LSF_LIM_JACKUP_BUSY,
+    OPENLAVA_NONSHARED_FS
+} limParams_t;
 
 #define LOOP_ADDR       0x7F000001
 
