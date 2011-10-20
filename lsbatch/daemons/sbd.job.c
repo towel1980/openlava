@@ -4064,7 +4064,7 @@ runQPost (struct jobCard *jp)
 static int
 chPrePostUser(struct jobCard *jp)
 {
-    if (initgroups(userName, gid) < 0) {
+    if (initgroups(jp->execUsername, jp->execGid) < 0) {
         ls_syslog(LOG_ERR, "\
 %s: initgroups() failed for user %s uid %d gid %d %m", __func__,
                   jp->execUsername, jp->jobSpecs.execUid,
@@ -4078,7 +4078,7 @@ chPrePostUser(struct jobCard *jp)
                   jp->execGid);
     }
 
-    if (lsfSetUid(uid) < 0) {
+    if (lsfSetUid(jp->jobSpecs.execUid) < 0) {
         ls_syslog(LOG_ERR, "\
 %s: lsfSetUid() failed for user %s uid %d gid %d %m", __func__,
                   jp->execUsername, jp->jobSpecs.execUid,

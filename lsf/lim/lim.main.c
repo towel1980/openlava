@@ -77,7 +77,7 @@ struct config_param limParams[] =
     {"LSF_MASTER_LIST", NULL},
     {"LSF_REJECT_NONLSFHOST", NULL},
     {"LSF_LIM_JACKUP_BUSY", NULL},
-    {"OPENLAVA_NONSHARED_FS", NULL},
+    {"OPENLAVA_RSYNC_CONFIG", NULL},
     {NULL, NULL},
 };
 
@@ -609,7 +609,7 @@ initAndConfig(int checkMode, int *kernelPerm)
      * contact the master and retrieve the shared file
      * and the cluster file.
      */
-    if (limParams[OPENLAVA_NONSHARED_FS].paramValue) {
+    if (limParams[OPENLAVA_RSYNC_CONFIG].paramValue) {
         cc = getClusterConfig();
         if (cc < 0) {
             ls_syslog(LOG_ERR, "\
@@ -1054,7 +1054,7 @@ getClusterConfig(void)
     int cc;
     FILE *fp;
 
-    if (! limParams[OPENLAVA_NONSHARED_FS].paramValue)
+    if (! limParams[OPENLAVA_RSYNC_CONFIG].paramValue)
         return 0;
 
     ls_syslog(LOG_DEBUG, "\
