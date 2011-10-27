@@ -27,8 +27,7 @@
 #include "daemons.h"
 
 #include "../../lsf/lib/lsi18n.h"
-#define NL_SETN		10	
-                                
+#define NL_SETN		10
 
 struct config_param daemonParams[] = {
     {"LSB_DEBUG", NULL},
@@ -62,14 +61,14 @@ struct config_param daemonParams[] = {
     {"LSF_GETPWNAM_RETRY", NULL},
     {"LSB_MEMLIMIT_ENFORCE", NULL},
     {"LSB_BSUBI_OLD", NULL},
-    {"LSB_STOP_IGNORE_IT", NULL},    
+    {"LSB_STOP_IGNORE_IT", NULL},
     {"LSB_HJOB_PER_SESSION", NULL},
     {"LSF_AUTH_DAEMONS", NULL},
     {"LSB_REQUEUE_HOLD", NULL},
     {"LSB_SMTP_SERVER", NULL},
     {"LSB_MAILSERVER", NULL},
     {"LSB_MAILSIZE_LIMIT", NULL},
-    {"LSB_REQUEUE_TO_BOTTOM", NULL}, 
+    {"LSB_REQUEUE_TO_BOTTOM", NULL},
     {"LSB_ARRAY_SCHED_ORDER", NULL},
     {"LSF_LIBDIR", NULL},
     {"LSB_QPOST_EXEC_ENFORCE", NULL},
@@ -80,11 +79,12 @@ struct config_param daemonParams[] = {
     {"LSF_MLS_LOG", NULL},
     {"LSB_JOB_MEMLIMIT", NULL},
     {"LSB_MOD_ALL_JOBS", NULL},
-    {"LSB_SET_TMPDIR", NULL}, 
+    {"LSB_SET_TMPDIR", NULL},
     {"LSB_PTILE_PACK", NULL},
     {"LSB_SBD_FINISH_SLEEP", NULL},
-    {"LSB_VIRTUAL_SLOT",NULL},
-    {"LSB_STDOUT_DIRECT",NULL},
+    {"LSB_VIRTUAL_SLOT", NULL},
+    {"LSB_STDOUT_DIRECT", NULL},
+    {"LSB_DONT_FORK", NULL},
     {NULL, NULL}
 };
 
@@ -92,7 +92,7 @@ struct config_param daemonParams[] = {
 extern int removeSpoolFile(const char*,const char*);
 extern char* getSpoolHostBySpoolFile(const char *);
 
-int 
+int
 init_ServSock (u_short port)
 {
     int ch;
@@ -105,13 +105,13 @@ init_ServSock (u_short port)
 
     return ch;
 }
-        
+
 int
 rcvJobFile(int chfd, struct lenData *jf)
 {
     static char fname[]="rcvJobFile";
     int cc;
-    
+
     jf->data = NULL;
     jf->len = 0;
 
@@ -131,7 +131,7 @@ rcvJobFile(int chfd, struct lenData *jf)
     }
 
     return (0);
-} 
+}
 
 int
 do_readyOp (XDR *xdrs, int chanfd, struct sockaddr_in *from,
@@ -169,7 +169,7 @@ do_readyOp (XDR *xdrs, int chanfd, struct sockaddr_in *from,
 
     xdr_destroy(&xdrs2);
     return(0);
-} 
+}
 
 
 void childRemoveSpoolFile(const char* spoolFile, int options,
@@ -189,21 +189,21 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
 
     if ( ( fromHost =  (char *) getSpoolHostBySpoolFile(spoolFile)) != NULL) {
         strcpy( hostName, fromHost );
-    } else {	
+    } else {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 8000,
 	    "Unable to get spool host from the string \'%s\'") /* catgets 8000 */
             , (spoolFile ? spoolFile : "NULL"));
         goto Done;
     }
-    
+
     if ( pwUser == NULL ) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 8001,
 	    "%s: Parameter const struct passwd * pwUser is NULL!") /* catgets 8001 */
             ,fname);
        goto Done;
     }
-    
-    
+
+
     sp = getLowestDir_(spoolFile);
     if (sp) {
         strcpy(dirName, sp);
@@ -211,16 +211,16 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
         strcpy(dirName, spoolFile);
     }
 
-    sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3000, 
+    sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3000,
             "%s: Unable to remove spool file:\n,\'%s\'\n on host %s\n") /* catgets 3000 */
             ,fname, dirName ,fromHost );
 
     if ( ! (options &  FORK_REMOVE_SPOOL_FILE) ) {
-        
+
         if ( (options &  CALL_RES_IF_NEEDED) ) {
             if (ls_initrex(1, 0) < 0) {
                 status = -1;
-                sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3001, 
+                sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3001,
                   "%s: %s failed when trying to delete %s from %s\n") /* catgets 3001 */
                   ,fname, apiName, dirName, fromHost );
                 goto Error;
@@ -238,10 +238,10 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
         }
         goto Done;
     }
-    
+
     switch(pid = fork()) {
         case 0:
-            
+
             if (debug < 2) {
                  closeExceptFD(-1);
             }
@@ -249,13 +249,13 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
             if ( (options &  CALL_RES_IF_NEEDED) ) {
                 if (ls_initrex(1, 0) < 0) {
                     status = -1;
-                    sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3001, 
+                    sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3001,
                       "%s: %s failed when trying to delete %s from %s\n") /* catgets 3001 */
                       ,fname, apiName, dirName, fromHost );
                     goto Error;
                 }
             }
-            
+
             chuser( pwUser->pw_uid );
             status = 0;
             if ( removeSpoolFile( hostName, dirName ) == 0 ) {
@@ -267,33 +267,33 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
             break;
 
         case -1:
-            
+
             if (logclass & (LC_FILE)) {
                 ls_syslog(LOG_ERR,I18N_FUNC_FAIL_M,fname,"fork" );
             }
             status = -1;
-            sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3002, 
+            sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3002,
               "%s: Unable to fork to remove spool file:\n,\'%s\'\n on host %s\n") /* catgets 3002 */
               ,fname, dirName ,fromHost );
 
             goto Error;
 
         default:
-            
+
             status = 0;
-            goto Done; 
-    } 
+            goto Done;
+    }
 
 Error:
 
     if ( status == -1 )
     {
-        
 
-        lsb_merr(errMsg); 
+
+        lsb_merr(errMsg);
     }
 Done:
 
     return;
-} 
+}
 

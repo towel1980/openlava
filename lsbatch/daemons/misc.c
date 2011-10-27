@@ -303,7 +303,7 @@ my_calloc(int nelem, int esize, const char *caller)
     p = calloc(nelem, esize);
     if (!p) {
         ls_syslog(LOG_ERR, "\
-%s: failed %M %s", __FUNCTION__, (caller ? caller : "unknown"));
+%s: failed %m %s", __func__, (caller ? caller : "unknown"));
     }
 
     return p;

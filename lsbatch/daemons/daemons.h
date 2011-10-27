@@ -150,7 +150,6 @@
 #define LSF_GETPWNAM_RETRY  28
 #define LSB_MEMLIMIT_ENFORCE 29
 #define LSB_BSUBI_OLD 30
-
 #define LSB_STOP_IGNORE_IT 31
 #define LSB_HJOB_PER_SESSION 32
 #define LSF_AUTH_DAEMONS 33
@@ -167,18 +166,15 @@
 #define LSB_UTMP               43
 #define LSB_JOB_CPULIMIT       44
 #define LSB_RENICE_NEVER_AT_RESTART 45
-
-
 #define LSF_MLS_LOG 	       46
 #define LSB_JOB_MEMLIMIT       47
 #define LSB_MOD_ALL_JOBS       48
-
 #define LSB_SET_TMPDIR         49
-#define LSB_PTILE_PACK          50
-#define LSB_SBD_FINISH_SLEEP    51
+#define LSB_PTILE_PACK         50
+#define LSB_SBD_FINISH_SLEEP   51
 #define LSB_VIRTUAL_SLOT       52
-#define LSB_STDOUT_DIRECT        53
-
+#define LSB_STDOUT_DIRECT      53
+#define LSB_DONT_FORK          54
 #define NOT_LOG  INFINIT_INT
 
 #define JOB_SAVE_OUTPUT   0x10000000

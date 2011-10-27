@@ -22,7 +22,7 @@
 #include <malloc.h>
 
 #include "../../lsf/lib/lsi18n.h"
-#define NL_SETN		10	
+#define NL_SETN		10
 
 static void addSharedResource (struct lsSharedResourceInfo *);
 static void addInstances (struct lsSharedResourceInfo *, struct sharedResource *);
@@ -41,12 +41,12 @@ static struct qPRValues * findQPRValues(int, struct hData *, struct qData *);
 static struct qPRValues * addQPRValues(int, struct hData *, struct qData *);
 static float roundFloatValue (float);
 
-static float 
-checkOrTakeAvailableByPreemptPRHQValue(int index, float value, 
+static float
+checkOrTakeAvailableByPreemptPRHQValue(int index, float value,
     struct hData *hPtr, struct qData *qPtr, int update);
 
 
-void 
+void
 getLsbResourceInfo (void)
 {
     static char fname[] = "getLsbresourceInfo";
@@ -56,24 +56,21 @@ getLsbResourceInfo (void)
     if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG3, "%s: Entering ..." , fname);
 
+    if ((resourceInfo = ls_sharedresourceinfo (NULL, &numRes, NULL, 0))
+        == NULL) {
 
-    
-
-    if ((resourceInfo = ls_sharedresourceinfo (NULL, &numRes, NULL, 0)) 
-								 == NULL) {
-        
-        return;                        
+        return;
     }
-    if (numResources > 0) 
+    if (numResources > 0)
         freeSharedResource();
-    initHostInstances (numRes); 
-    for (i = 0; i < numRes; i++) 
-        addSharedResource(&resourceInfo[i]); 
+    initHostInstances (numRes);
+    for (i = 0; i < numRes; i++)
+        addSharedResource(&resourceInfo[i]);
 
-}     
+}
 
 
-static void 
+static void
 addSharedResource (struct lsSharedResourceInfo *lsResourceInfo)
 {
     static char fname[] = "addSharedResource";
@@ -86,32 +83,32 @@ addSharedResource (struct lsSharedResourceInfo *lsResourceInfo)
         if (logclass & LC_TRACE)
             ls_syslog (LOG_DEBUG3, "%s: More than one resource <%s> is found in lsResourceInfo got from lim; ignoring later", fname, lsResourceInfo->resourceName);
         return;
-    }  
-    resource = (struct sharedResource *) 
-               my_malloc(sizeof (struct sharedResource), fname); 
+    }
+    resource = (struct sharedResource *)
+               my_malloc(sizeof (struct sharedResource), fname);
     resource->numInstances = 0;
     resource->instances = NULL;
     resource->resourceName = safeSave (lsResourceInfo->resourceName);
     addInstances (lsResourceInfo, resource);
 
     if (numResources == 0)
-        temp = (struct sharedResource **) 
-                     my_malloc (sizeof (struct sharedResource *), fname); 
+        temp = (struct sharedResource **)
+            my_malloc (sizeof (struct sharedResource *), fname);
     else
-        temp = (struct sharedResource **) realloc (sharedResources, 
-                     (numResources + 1) *sizeof (struct sharedResource *)); 
+        temp = (struct sharedResource **) realloc (sharedResources,
+                                                   (numResources + 1) *sizeof (struct sharedResource *));
     if (temp == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "realloc");
         mbdDie(MASTER_MEM);
-    } 
+    }
     sharedResources = (struct sharedResource **) temp;
     sharedResources[numResources] = resource;
     numResources++;
 
-} 
+}
 
-static void 
-addInstances (struct lsSharedResourceInfo *lsResourceInfo, 
+static void
+addInstances (struct lsSharedResourceInfo *lsResourceInfo,
                                          struct sharedResource *resource)
 {
     static char fname[] = "addInstances";
@@ -122,24 +119,24 @@ addInstances (struct lsSharedResourceInfo *lsResourceInfo,
     if (lsResourceInfo->nInstances <= 0)
         return;
 
-    resource->instances = (struct resourceInstance **) my_malloc 
-            (lsResourceInfo->nInstances * sizeof (struct resourceInstance *), fname); 
+    resource->instances = (struct resourceInstance **) my_malloc
+            (lsResourceInfo->nInstances * sizeof (struct resourceInstance *), fname);
     for (i = 0; i < lsResourceInfo->nInstances; i++) {
-        instance = (struct resourceInstance *)my_malloc 
+        instance = (struct resourceInstance *)my_malloc
                      (sizeof (struct resourceInstance), fname);
         instance->nHosts = 0;
 	instance->lsfValue = NULL;
 	instance->value = NULL;
         instance->resName = resource->resourceName;
 	if (lsResourceInfo->instances[i].nHosts > 0) {
-            instance->hosts = (struct hData **) my_malloc 
+            instance->hosts = (struct hData **) my_malloc
               (lsResourceInfo->instances[i].nHosts * sizeof (struct hData *), fname);
         } else
             instance->hosts = NULL;
-        
+
         numHosts = 0;
         for (j = 0; j < lsResourceInfo->instances[i].nHosts; j++) {
-            if ((hPtr = getHostData 
+            if ((hPtr = getHostData
                       (lsResourceInfo->instances[i].hostList[j])) == NULL) {
                 if (logclass & LC_TRACE)
                     ls_syslog (LOG_DEBUG3, "%s: Host <%s> is not used by the batch system;ignoring", fname, lsResourceInfo->instances[i].hostList[j]);
@@ -148,10 +145,10 @@ addInstances (struct lsSharedResourceInfo *lsResourceInfo,
 
             if ((hPtr->hStatus & HOST_STAT_REMOTE) ||
 			   !strcmp (hPtr->host, LOST_AND_FOUND)) {
-                
-                continue; 
+
+                continue;
             }
-	    
+
             hPtr->instances[hPtr->numInstances] = instance;
 	    hPtr->numInstances++;
             instance->hosts[numHosts] = hPtr;
@@ -161,14 +158,14 @@ addInstances (struct lsSharedResourceInfo *lsResourceInfo,
 	instance->lsfValue = safeSave(lsResourceInfo->instances[i].value);
 	instance->value = safeSave (lsResourceInfo->instances[i].value);
 
-	
+
         resource->instances[numInsatnces++] = instance;
     }
     resource->numInstances = numInsatnces;
 
-} 
-    
-void 
+}
+
+void
 freeSharedResource (void)
 {
     int i, j;
@@ -190,14 +187,14 @@ freeSharedResource (void)
     FREEUP (sharedResources);
     numResources = 0;
 
-    freeHostInstances(); 
+    freeHostInstances();
 
-} 
+}
 
-static void 
+static void
 freeHostInstances (void)
 {
-    sTab hashSearchPtr;   
+    sTab hashSearchPtr;
     hEnt *hashEntryPtr;
     struct hData *hData;
 
@@ -207,20 +204,20 @@ freeHostInstances (void)
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 
         if (!strcmp (hData->host, LOST_AND_FOUND))
-            continue; 
-        if (hData->hStatus & HOST_STAT_REMOTE) 
+            continue;
+        if (hData->hStatus & HOST_STAT_REMOTE)
             continue;
 
         FREEUP (hData->instances);
         hData->numInstances = 0;
     }
 
-}  
+}
 
-static void 
+static void
 initHostInstances (int num)
 {
-    sTab hashSearchPtr;   
+    sTab hashSearchPtr;
     hEnt *hashEntryPtr;
     struct hData *hData;
 
@@ -230,18 +227,18 @@ initHostInstances (int num)
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 
         if (!strcmp (hData->host, LOST_AND_FOUND))
-            continue; 
-        if (hData->hStatus & HOST_STAT_REMOTE) 
+            continue;
+        if (hData->hStatus & HOST_STAT_REMOTE)
             continue;
 
-        hData->instances = (struct resourceInstance **) my_malloc 
+        hData->instances = (struct resourceInstance **) my_malloc
 	      (num * sizeof (struct resourceInstance *), "initHostInstances");
         hData->numInstances = 0;
     }
 
-}  
+}
 
-struct sharedResource * 
+struct sharedResource *
 getResource (char *resourceName)
 {
     int i;
@@ -254,10 +251,10 @@ getResource (char *resourceName)
     }
     return NULL;
 
-} 
+}
 
-int 
-checkResources (struct resourceInfoReq *resourceInfoReq, 
+int
+checkResources (struct resourceInfoReq *resourceInfoReq,
                 struct lsbShareResourceInfoReply *reply)
 {
     static char fname[] = "checkResources";
@@ -266,7 +263,7 @@ checkResources (struct resourceInfoReq *resourceInfoReq,
     const char *officialName;
     char officialNameBuf[MAXHOSTNAMELEN];
 
-    if (resourceInfoReq->numResourceNames == 1 
+    if (resourceInfoReq->numResourceNames == 1
 	   && !strcmp (resourceInfoReq->resourceNames[0], "")) {
         allResources = TRUE;
     }
@@ -275,11 +272,11 @@ checkResources (struct resourceInfoReq *resourceInfoReq,
     if (numResources == 0)
         return LSBE_NO_RESOURCE;
 
-    if (resourceInfoReq->hostName == NULL 
+    if (resourceInfoReq->hostName == NULL
 	  || (resourceInfoReq->hostName && strcmp (resourceInfoReq->hostName, " ")== 0))
 	hPtr = NULL;
     else {
-	
+
         if ((officialName = getHostOfficialByName_(resourceInfoReq->hostName)) == NULL) {
             ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "getHostOfficialByName_",
 		resourceInfoReq->hostName);
@@ -292,30 +289,30 @@ checkResources (struct resourceInfoReq *resourceInfoReq,
 		fname, resourceInfoReq->hostName);
 	    return LSBE_BAD_HOST;
         }
-    } 
-    
+    }
+
     reply->numResources = 0;
-    reply->resources = (struct lsbSharedResourceInfo *) 
+    reply->resources = (struct lsbSharedResourceInfo *)
        my_malloc (numResources * sizeof (struct lsbSharedResourceInfo), fname);
-    
+
     for (i = 0; i < resourceInfoReq->numResourceNames; i++) {
-        found = FALSE; 
+        found = FALSE;
         for (j = 0; j < numResources; j++) {
             if (allResources == FALSE
-                 && (strcmp (resourceInfoReq->resourceNames[i], 
+                 && (strcmp (resourceInfoReq->resourceNames[i],
                             sharedResources[j]->resourceName)))
                 continue;
-            found = TRUE; 
-            if ((replyCode = copyResource (reply, sharedResources[j], 
+            found = TRUE;
+            if ((replyCode = copyResource (reply, sharedResources[j],
 		     (hPtr != NULL)?hPtr->host:NULL)) != LSBE_NO_ERROR) {
                 return replyCode;
             }
             reply->numResources++;
             if (allResources == FALSE)
-                break;                
+                break;
         }
         if (allResources == FALSE && found == FALSE) {
-            
+
 	    reply->badResource = i;
 	    reply->numResources = 0;
 	    FREEUP(reply->resources);
@@ -327,9 +324,9 @@ checkResources (struct resourceInfoReq *resourceInfoReq,
     }
     return LSBE_NO_ERROR;
 
-}  
-     
-static int 
+}
+
+static int
 copyResource (struct lsbShareResourceInfoReply *reply, struct sharedResource *resource, char *hostName)
 {
     static char fname[] = "copyResource";
@@ -340,13 +337,13 @@ copyResource (struct lsbShareResourceInfoReply *reply, struct sharedResource *re
     num = reply->numResources;
     reply->resources[num].resourceName = resource->resourceName;
 
-    
+
     reply->resources[num].instances = (struct lsbSharedResourceInstance *) my_malloc (resource->numInstances * sizeof (struct lsbSharedResourceInstance), fname);
     reply->resources[num].nInstances = 0;
     numInstances = 0;
-    
+
     for (i = 0; i < resource->numInstances; i++) {
-	if (hostName) { 
+	if (hostName) {
 	    for (j = 0; j < resource->instances[i]->nHosts; j++) {
 		if (strcmp (hostName, resource->instances[i]->hosts[j]->host))
 		    continue;
@@ -358,31 +355,31 @@ copyResource (struct lsbShareResourceInfoReply *reply, struct sharedResource *re
 	    continue;
 
         found = FALSE;
-        reply->resources[num].instances[numInstances].totalValue = 
+        reply->resources[num].instances[numInstances].totalValue =
                      safeSave (resource->instances[i]->value);
-        
-        if ((rsvValue = atoi(resource->instances[i]->value) 
-             - atoi(resource->instances[i]->lsfValue)) < 0) 
-            rsvValue = -rsvValue;  
+
+        if ((rsvValue = atoi(resource->instances[i]->value)
+             - atoi(resource->instances[i]->lsfValue)) < 0)
+            rsvValue = -rsvValue;
 
         sprintf (stringValue, "%-10.1f", rsvValue);
-        reply->resources[num].instances[numInstances].rsvValue = 
-                     safeSave (stringValue); 
-                      
-        reply->resources[num].instances[numInstances].hostList = 
+        reply->resources[num].instances[numInstances].rsvValue =
+                     safeSave (stringValue);
+
+        reply->resources[num].instances[numInstances].hostList =
           (char **) my_malloc (resource->instances[i]->nHosts * sizeof (char *),                               fname);
         for (j = 0; j < resource->instances[i]->nHosts; j++) {
             reply->resources[num].instances[numInstances].hostList[j] =
                        safeSave(resource->instances[i]->hosts[j]->host);
         }
         reply->resources[num].instances[numInstances].nHosts =
-                                resource->instances[i]->nHosts; 
-	numInstances++; 
+                                resource->instances[i]->nHosts;
+	numInstances++;
     }
     reply->resources[num].nInstances = numInstances;
     return LSBE_NO_ERROR;
 
-}  
+}
 
 float
 getHRValue(char *resName, struct hData *hPtr,
@@ -396,16 +393,16 @@ getHRValue(char *resName, struct hData *hPtr,
             continue;
         *instance = hPtr->instances[i];
         if (strcmp(hPtr->instances[i]->value, "-") == 0) {
-            return (INFINIT_LOAD); 
+            return (INFINIT_LOAD);
         }
         return (atof (hPtr->instances[i]->value));
     }
     ls_syslog(LOG_ERR, I18N(7704,"%s, instance name not found."), fname);/*catgets 7704 */
     return (-INFINIT_LOAD);
 
-} 
+}
 
-void 
+void
 resetSharedResource()
 {
     int         i;
@@ -414,15 +411,15 @@ resetSharedResource()
     for (i = 0; i < numResources; i++) {
 
 	for (j = 0; j < sharedResources[i]->numInstances; j++) {
-	    
+
 	    FREEUP(sharedResources[i]->instances[j]->value);
 
 	    sharedResources[i]->instances[j]->value =
-		safeSave(sharedResources[i]->instances[j]->lsfValue);       
+		safeSave(sharedResources[i]->instances[j]->lsfValue);
 	}
     }
 }
-void 
+void
 updSharedResourceByRUNJob(const struct jData* jp)
 {
     static char fname[] = "updSharedResourceByRUNJob";
@@ -431,7 +428,7 @@ updSharedResourceByRUNJob(const struct jData* jp)
     int                        resAssign = 0;
     float                      jackValue;
     float                      originalLoad;
-    float                      duration; 
+    float                      duration;
     float                      decay;
     struct resVal              *resValPtr;
     struct resourceInstance    *instance;
@@ -443,34 +440,34 @@ updSharedResourceByRUNJob(const struct jData* jp)
 %s: Updating shared resource by job=%s", fname, lsb_jobid2str(jp->jobId));
 
     if (rusgBitMaps == NULL) {
-        rusgBitMaps = (int *) my_malloc 
+        rusgBitMaps = (int *) my_malloc
 	    (GET_INTNUM(allLsInfo->nRes) * sizeof (int), fname);
     }
-	
+
     if (!jp->numHostPtr || jp->hPtr == NULL) {
 	return;
     }
 
-    if ((resValPtr = getReserveValues(jp->shared->resValPtr, 
+    if ((resValPtr = getReserveValues(jp->shared->resValPtr,
 				      jp->qPtr->resValPtr)) == NULL) {
         return;
     }
-    
+
     for (i = 0; i < GET_INTNUM(allLsInfo->nRes); i++) {
 	resAssign += resValPtr->rusgBitMaps[i];
 	rusgBitMaps[i] = 0;
     }
 
-    if (resAssign == 0)   
-        return;      
+    if (resAssign == 0)
+        return;
 
     duration = (float) resValPtr->duration;
     decay = resValPtr->decay;
-    if (resValPtr->duration != INFINIT_INT && (duration - jp->runTime <= 0)){ 
-        
+    if (resValPtr->duration != INFINIT_INT && (duration - jp->runTime <= 0)){
+
 	if ((duration - runTimeSinceResume(jp) <= 0)
 	    || !isReservePreemptResource(resValPtr)) {
-            return;   
+            return;
         }
         adjForPreemptableResource = TRUE;
     }
@@ -480,71 +477,71 @@ updSharedResourceByRUNJob(const struct jData* jp)
 	char  loadString[MAXLSFNAMELEN];
 
 	if (jp->hPtr[i]->hStatus & HOST_STAT_UNAVAIL)
-	    continue;   
+	    continue;
 
         for (ldx = 0; ldx < allLsInfo->nRes; ldx++) {
             float factor;
 	    int isSet;
 
-	    
-            if (ldx < allLsInfo->numIndx) 
+
+            if (ldx < allLsInfo->numIndx)
 		continue;
 
 	    if (NOT_NUMERIC(allLsInfo->resTable[ldx]))
 		continue;
 
             TEST_BIT(ldx, resValPtr->rusgBitMaps, isSet);
-	    if (isSet == 0)   
+	    if (isSet == 0)
 	        continue;
 
-	    
+
 	    if (adjForPreemptableResource && (!isItPreemptResourceIndex(ldx))) {
 		continue;
             }
 
-	    
+
 	    if (jp->jStatus & JOB_STAT_RUN) {
 
 		goto adjustLoadValue;
-	
-		
-	    } else if (IS_SUSP(jp->jStatus) 
-		       && 
+
+
+	    } else if (IS_SUSP(jp->jStatus)
+		       &&
 		       ! (allLsInfo->resTable[ldx].flags & RESF_RELEASE)) {
 
 		goto adjustLoadValue;
-		
-		
-	    } else if (IS_SUSP(jp->jStatus) 
-		       && 
+
+
+	    } else if (IS_SUSP(jp->jStatus)
+		       &&
 		       (jp->jStatus & JOB_STAT_RESERVE)) {
 
 		goto adjustLoadValue;
-		
+
 	    } else {
 
-		
+
 
 		continue;
 
 	    }
-		       
+
 adjustLoadValue:
-           
+
 	    jackValue = resValPtr->val[ldx];
 	    if (jackValue >= INFINIT_LOAD || jackValue <= -INFINIT_LOAD)
-		continue;     
+		continue;
 
-	    if ( (load = getHRValue(allLsInfo->resTable[ldx].name, 
-				    jp->hPtr[i], 
+	    if ( (load = getHRValue(allLsInfo->resTable[ldx].name,
+				    jp->hPtr[i],
 				    &instance) ) < 0.0) {
 		continue;
 	    } else {
-		
+
 		TEST_BIT (ldx, rusgBitMaps, isSet)
                     if (isSet == TRUE)
                         continue;
-	    } 
+	    }
 
 	    if (logclass & LC_SCHED)
 		ls_syslog(LOG_DEBUG,"\
@@ -558,12 +555,12 @@ adjustLoadValue:
 			  duration,
 			  decay);
 
-	    
+
             factor = 1.0;
 	    if (resValPtr->duration != INFINIT_INT) {
-	        if (resValPtr->decay != INFINIT_FLOAT) { 
+	        if (resValPtr->decay != INFINIT_FLOAT) {
                     float du;
-		    
+
 		    if ( isItPreemptResourceIndex(ldx) ) {
                         du = duration - runTimeSinceResume(jp);
                     } else {
@@ -579,7 +576,7 @@ adjustLoadValue:
 
 	    if (allLsInfo->resTable[ldx].orderType == DECR)
 	        jackValue = -jackValue;
-             
+
 	    originalLoad = atof (instance->value);
 	    load = originalLoad + jackValue;
 
@@ -607,9 +604,9 @@ adjustLoadValue:
 			  factor);
         }
     }
-} 
+}
 
-static void 
+static void
 initQPRValues(struct qPRValues *qPRValuesPtr, struct qData *qPtr)
 {
     qPRValuesPtr->qData                 = qPtr;
@@ -620,10 +617,10 @@ initQPRValues(struct qPRValues *qPRValuesPtr, struct qData *qPtr)
 
     return;
 
-} 
+}
 
 
-static void 
+static void
 freePreemptResourceInstance(struct preemptResourceInstance *pRIPtr)
 {
 
@@ -633,9 +630,9 @@ freePreemptResourceInstance(struct preemptResourceInstance *pRIPtr)
 
     return;
 
-} 
+}
 
-static void 
+static void
 freePreemptResource(struct preemptResource *pRPtr)
 {
     int i;
@@ -649,9 +646,9 @@ freePreemptResource(struct preemptResource *pRPtr)
 
     return;
 
-} 
+}
 
-void 
+void
 newPRMO(char *nameList)
 {
     static char fname[] = "newPRMO";
@@ -669,23 +666,23 @@ newPRMO(char *nameList)
 	return;
     }
 
-    
+
     if ((nameListPtr = lsb_parseLongStr(nameList)) == NULL) {
 	return;
     }
 
     nameList[0]='\0';
 
-    
+
     if (nameListPtr->listSize <= 0) {
 	return;
     }
-    pRMOPtr = (struct objPRMO *) my_malloc(sizeof (struct objPRMO), fname); 
+    pRMOPtr = (struct objPRMO *) my_malloc(sizeof (struct objPRMO), fname);
     pRMOPtr->numPreemptResources = 0;
-    pRMOPtr->pResources = (struct preemptResource *) 
-	my_malloc(nameListPtr->listSize * sizeof (struct preemptResource), fname); 
+    pRMOPtr->pResources = (struct preemptResource *)
+	my_malloc(nameListPtr->listSize * sizeof (struct preemptResource), fname);
 
-    
+
     for (i=0; i<nameListPtr->listSize; i++) {
 	if (nameListPtr->counter[i] > 1) {
             ls_syslog(LOG_WARNING, I18N(7707,
@@ -702,7 +699,7 @@ newPRMO(char *nameList)
 	    continue;
 	}
 
-	
+
         if (index < allLsInfo->numIndx) {
             if (allLsInfo->resTable[index].flags & RESF_BUILTIN) {
                 ls_syslog(LOG_ERR, I18N(7709,
@@ -717,7 +714,7 @@ newPRMO(char *nameList)
 	    continue;
 	}
 
-	
+
 	if (NOT_NUMERIC(allLsInfo->resTable[index])) {
             ls_syslog(LOG_ERR, I18N(7710,
     	        "Non-numeric resource (%s) can't be defined as a preemptable resource, ignored."),/* catgets 7710*/
@@ -726,7 +723,7 @@ newPRMO(char *nameList)
 	    continue;
 	}
 
-	
+
         if (!(allLsInfo->resTable[index].flags & RESF_RELEASE)) {
             ls_syslog(LOG_ERR, I18N(7711,
     	        "Non-releasable resource (%s) can't be defined as a preemptable resource, ignored."),/* catgets 7711*/
@@ -735,7 +732,7 @@ newPRMO(char *nameList)
 	    continue;
 	}
 
-	
+
 	if (allLsInfo->resTable[index].orderType != DECR) {
             ls_syslog(LOG_ERR, I18N(7712,
     	        "Increasing resource (%s) can't be defined as a preemptable resource, ignored."),/* catgets 7712*/
@@ -744,9 +741,9 @@ newPRMO(char *nameList)
 	    continue;
 	}
 
-	
+
 	if (addPreemptableResource(index) == 0) {
-	    
+
 	    if (addedNum > 0) {
 		strcat(nameList, " ");
 	    }
@@ -757,7 +754,7 @@ newPRMO(char *nameList)
 
     return;
 
-} 
+}
 
 void delPRMO()
 {
@@ -775,36 +772,36 @@ void delPRMO()
 
     return;
 
-} 
+}
 
 void mbdReconfPRMO()
 {
     struct jData *jp;
     int i;
 
-    
+
     delPRMO();
 
-    
+
     for (jp = jDataList[SJL]->forw; jp != jDataList[SJL]; jp = jp->forw) {
         jp->jFlags &= ~JFLAG_WILL_BE_PREEMPTED;
     }
 
-    
+
     for (i = SJL; i <= PJL; i++) {
         for (jp = jDataList[i]->back; jp != jDataList[i]; jp = jp->back) {
 	    if (JOB_PREEMPT_WAIT(jp)) {
-	        
+
 	        deallocReservePreemptResources(jp);
 	    }
 	}
     }
-} 
+}
 
 void resetPRMOValues(int valueSelectFlag)
 {
     int i, j, k;
-    
+
     if (pRMOPtr == NULL) {
         return;
     }
@@ -842,10 +839,10 @@ void resetPRMOValues(int valueSelectFlag)
 
     return;
 
-} 
+}
 
-float 
-getUsablePRHQValue(int index, struct hData *hPtr, struct qData *qPtr, 
+float
+getUsablePRHQValue(int index, struct hData *hPtr, struct qData *qPtr,
 struct resourceInstance **instance)
 {
     float currentValue;
@@ -854,7 +851,7 @@ struct resourceInstance **instance)
 
     currentValue = getHRValue(allLsInfo->resTable[index].name, hPtr, instance);
 
-    
+
     if (currentValue < 0.0 || currentValue == INFINIT_LOAD) {
 	return(currentValue);
     }
@@ -865,17 +862,17 @@ struct resourceInstance **instance)
 
     return(roundFloatValue(currentValue - reservedValue));
 
-} 
+}
 
-float 
-takeAvailableByPreemptPRHQValue(int index, float value, struct hData *hPtr, 
+float
+takeAvailableByPreemptPRHQValue(int index, float value, struct hData *hPtr,
 				struct qData *qPtr)
 {
     return checkOrTakeAvailableByPreemptPRHQValue(index, value, hPtr, qPtr, 1);
-} 
+}
 
-float 
-checkOrTakeAvailableByPreemptPRHQValue(int index, float value, 
+float
+checkOrTakeAvailableByPreemptPRHQValue(int index, float value,
     struct hData *hPtr, struct qData *qPtr, int update)
 {
     struct preemptResourceInstance *pRInstancePtr;
@@ -887,10 +884,10 @@ checkOrTakeAvailableByPreemptPRHQValue(int index, float value,
 
     return(remainValue);
 
-} 
+}
 
-void 
-addRunJobUsedPRHQValue(int index, float value, struct hData *hPtr, 
+void
+addRunJobUsedPRHQValue(int index, float value, struct hData *hPtr,
 struct qData *qPtr)
 {
     struct qPRValues *qPRVPtr;
@@ -902,9 +899,9 @@ struct qData *qPtr)
 
     return;
 
-} 
+}
 
-void 
+void
 removeRunJobUsedPRHQValue(int index, float value, struct hData *hPtr,
 struct qData *qPtr)
 {
@@ -919,10 +916,10 @@ struct qData *qPtr)
     }
 
     return;
-    
-} 
 
-void 
+}
+
+void
 addReservedByWaitPRHQValue(int index, float value, struct hData *hPtr,
 struct qData *qPtr)
 {
@@ -935,9 +932,9 @@ struct qData *qPtr)
 	roundFloatValue(qPRVPtr->reservedByPreemptWait+value);
 
     return;
-} 
+}
 
-void 
+void
 removeReservedByWaitPRHQValue(int index, float value, struct hData *hPtr,
 struct qData *qPtr)
 {
@@ -946,7 +943,7 @@ struct qData *qPtr)
     if ((qPRVPtr = findQPRValues(index, hPtr, qPtr)) == NULL) {
         return;
     }
-    qPRVPtr->reservedByPreemptWait = 
+    qPRVPtr->reservedByPreemptWait =
 	roundFloatValue(qPRVPtr->reservedByPreemptWait-value);
     if (qPRVPtr->reservedByPreemptWait < 0.1) {
 	qPRVPtr->reservedByPreemptWait = 0.0;
@@ -954,10 +951,10 @@ struct qData *qPtr)
 
     return;
 
-} 
+}
 
-float 
-getReservedByWaitPRHQValue(int index, struct hData *hPtr, 
+float
+getReservedByWaitPRHQValue(int index, struct hData *hPtr,
 struct qData *qPtr)
 {
     struct qPRValues *qPRVPtr;
@@ -967,9 +964,9 @@ struct qData *qPtr)
     }
     return(qPRVPtr->reservedByPreemptWait);
 
-} 
+}
 
-void 
+void
 addAvailableByPreemptPRHQValue(int index, float value, struct hData *hPtr,
 struct qData *qPtr)
 {
@@ -983,9 +980,9 @@ struct qData *qPtr)
 
     return;
 
-} 
+}
 
-void 
+void
 removeAvailableByPreemptPRHQValue(int index, float value, struct hData *hPtr,
 struct qData *qPtr)
 {
@@ -994,14 +991,14 @@ struct qData *qPtr)
     if ((qPRVPtr = addQPRValues(index, hPtr, qPtr)) == NULL) {
         return;
     }
-    qPRVPtr->availableByPreempt = 
+    qPRVPtr->availableByPreempt =
 	roundFloatValue(qPRVPtr->availableByPreempt-value);
 
     return;
-} 
+}
 
-float 
-getAvailableByPreemptPRHQValue(int index, struct hData *hPtr, 
+float
+getAvailableByPreemptPRHQValue(int index, struct hData *hPtr,
 struct qData *qPtr)
 {
     struct qPRValues *qPRVPtr;
@@ -1011,9 +1008,9 @@ struct qData *qPtr)
     }
     return(qPRVPtr->availableByPreempt);
 
-} 
+}
 
-int 
+int
 resName2resIndex(char *resName)
 {
     int i;
@@ -1026,36 +1023,36 @@ resName2resIndex(char *resName)
 
     return(-1);
 
-} 
+}
 
-int 
+int
 isItPreemptResourceName(char *resName)
 {
 
     return(isItPreemptResourceIndex(resName2resIndex(resName)));
 
-} 
+}
 
-int 
+int
 isItPreemptResourceIndex(int index)
 {
     int i;
-    
+
     if (pRMOPtr == NULL) {
         return(0);
     }
 
     for (i = 0; i < pRMOPtr->numPreemptResources; i++) {
 	if (pRMOPtr->pResources[i].index == index) {
-	    
+
 	    return(1);
 	}
     }
 
     return(0);
-} 
+}
 
-int 
+int
 isReservePreemptResource(struct  resVal *resValPtr)
 {
     int resn;
@@ -1074,7 +1071,7 @@ isReservePreemptResource(struct  resVal *resValPtr)
 
     return(0);
 
-} 
+}
 
 static int
 addPreemptableResource(int index)
@@ -1088,7 +1085,7 @@ addPreemptableResource(int index)
 	return -1;
     }
 
-    
+
     for (i=0; i<pRMOPtr->numPreemptResources; i++) {
         if (pRMOPtr->pResources[i].index == index) {
             ls_syslog(LOG_INFO, I18N(7707,
@@ -1099,9 +1096,9 @@ addPreemptableResource(int index)
 	}
     }
 
-    
+
     for (i=0; i<numResources; i++) {
-        if (!strcmp(sharedResources[i]->resourceName, 
+        if (!strcmp(sharedResources[i]->resourceName,
 	    allLsInfo->resTable[index].name)) {
 	    sharedIndex = i;
 	    break;
@@ -1119,15 +1116,15 @@ addPreemptableResource(int index)
 
     loc = pRMOPtr->numPreemptResources;
     pRMOPtr->pResources[loc].index = index;
-    pRMOPtr->pResources[loc].numInstances = 
+    pRMOPtr->pResources[loc].numInstances =
 	sharedResources[sharedIndex]->numInstances;
-    pRMOPtr->pResources[loc].pRInstance = 
+    pRMOPtr->pResources[loc].pRInstance =
 	(struct preemptResourceInstance *)
 	my_malloc ( sharedResources[sharedIndex]->numInstances *
 	    sizeof(struct preemptResourceInstance), fname);
 
     for (i=0; i<pRMOPtr->pResources[loc].numInstances; i++) {
-	pRMOPtr->pResources[loc].pRInstance[i].instancePtr = 
+	pRMOPtr->pResources[loc].pRInstance[i].instancePtr =
 	    sharedResources[sharedIndex]->instances[i];
 	pRMOPtr->pResources[loc].pRInstance[i].nQPRValues  = 0;
 	pRMOPtr->pResources[loc].pRInstance[i].qPRValues   = NULL;
@@ -1136,14 +1133,14 @@ addPreemptableResource(int index)
 
     return 0;
 
-} 
+}
 
-static struct preemptResourceInstance * 
+static struct preemptResourceInstance *
 findPRInstance(int index, struct hData *hPtr)
 {
     int i, j;
     struct preemptResource *pRPtr=NULL;
-    
+
     if (pRMOPtr == NULL || pRMOPtr->numPreemptResources <= 0) {
         return NULL;
     }
@@ -1170,14 +1167,14 @@ findPRInstance(int index, struct hData *hPtr)
 
     return(NULL);
 
-} 
+}
 
-static struct qPRValues * 
+static struct qPRValues *
 findQPRValues(int index, struct hData *hPtr, struct qData *qPtr)
 {
-    struct preemptResourceInstance *pRIPtr; 
+    struct preemptResourceInstance *pRIPtr;
     int i;
-    
+
     if ((pRIPtr = findPRInstance(index, hPtr)) == NULL) {
 	return(NULL);
     }
@@ -1192,21 +1189,21 @@ findQPRValues(int index, struct hData *hPtr, struct qData *qPtr)
     }
     return(NULL);
 
-} 
+}
 
-static struct qPRValues * 
+static struct qPRValues *
 addQPRValues(int index, struct hData *hPtr, struct qData *qPtr)
 {
     static char fname[] = "addQPRValues";
-    struct preemptResourceInstance *pRIPtr; 
+    struct preemptResourceInstance *pRIPtr;
     struct qPRValues *temp;
     int i, pos;
-    
+
     if ((pRIPtr = findPRInstance(index, hPtr)) == NULL) {
 	return(NULL);
     }
 
-    
+
     pos = pRIPtr->nQPRValues;
     for (i = 0; i < pRIPtr->nQPRValues; i++) {
 	if (pRIPtr->qPRValues[i].qData->priority > qPtr->priority) {
@@ -1218,21 +1215,21 @@ addQPRValues(int index, struct hData *hPtr, struct qData *qPtr)
 	}
     }
 
-    
+
     if (pRIPtr->nQPRValues == 0)
-        temp = (struct qPRValues *) 
-                     my_malloc (sizeof (struct qPRValues), fname); 
+        temp = (struct qPRValues *)
+                     my_malloc (sizeof (struct qPRValues), fname);
     else
-        temp = (struct qPRValues *) realloc (pRIPtr->qPRValues, 
-                     (pRIPtr->nQPRValues + 1) *sizeof (struct qPRValues)); 
+        temp = (struct qPRValues *) realloc (pRIPtr->qPRValues,
+                     (pRIPtr->nQPRValues + 1) *sizeof (struct qPRValues));
     if (temp == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "realloc");
         mbdDie(MASTER_MEM);
-    } 
+    }
     pRIPtr->qPRValues = (struct qPRValues *) temp;
     pRIPtr->nQPRValues++;
 
-    
+
     for (i=pRIPtr->nQPRValues-1; i > pos; i--) {
       pRIPtr->qPRValues[i] = pRIPtr->qPRValues[i-1];
     }
@@ -1240,7 +1237,7 @@ addQPRValues(int index, struct hData *hPtr, struct qData *qPtr)
 
     return(&(pRIPtr->qPRValues[pos]));
 
-} 
+}
 
 static float
 roundFloatValue (float old)
@@ -1251,13 +1248,13 @@ roundFloatValue (float old)
 
     return (atof (stringValue));
 
-} 
+}
 
 void printPRMOValues()
 {
     static char fname[] = "printPRMOValues";
     int i, j, k;
-    
+
     if (!(logclass & LC_SCHED)) {
 	return;
     }
@@ -1302,9 +1299,9 @@ void printPRMOValues()
 
     return;
 
-} 
+}
 
-int 
+int
 isHostsInSameInstance(int index, struct hData *hPtr1, struct hData *hPtr2)
 {
     int         i;
@@ -1315,14 +1312,14 @@ isHostsInSameInstance(int index, struct hData *hPtr1, struct hData *hPtr2)
     }
 
     for (i = 0; i < numResources; i++) {
-        if (strcmp(allLsInfo->resTable[index].name, 
+        if (strcmp(allLsInfo->resTable[index].name,
 	    sharedResources[i]->resourceName)) {
 	    continue;
 	}
 	for (j = 0; j < sharedResources[i]->numInstances; j++) {
 	    int found = 0;
 	    int k;
-	    
+
 	    for (k = 0; k < sharedResources[i]->instances[j]->nHosts; k++) {
 		if (sharedResources[i]->instances[j]->hosts[k] == hPtr1) {
 		    found++;
@@ -1341,4 +1338,4 @@ isHostsInSameInstance(int index, struct hData *hPtr1, struct hData *hPtr2)
 	return(FALSE);
     }
     return(FALSE);
-} 
+}

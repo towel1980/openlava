@@ -21,7 +21,7 @@
      x = NULL;\
 }
 
-#define    JGRP_VOID         -1 
+#define    JGRP_VOID         -1
 #include "../../lsf/intlib/jidx.h"
 
 typedef void (*FREE_JGARRAY_FUNC_T)(void *);
@@ -35,7 +35,7 @@ typedef void (*FREE_JGARRAY_FUNC_T)(void *);
     char    *userName;\
     int      fromPlatform;\
     void    (*freeJgArray)(void *);\
-    int      counts[NUM_JGRP_COUNTERS+1]; 
+    int      counts[NUM_JGRP_COUNTERS+1];
 
 struct jgArrayBase {
     JG_ARRAY_BASE
@@ -52,29 +52,29 @@ struct jgrpData {
 };
 
 
-#define JOB_DATA(node)   ((struct jData *)node->ndInfo) 
-#define JGRP_DATA(node)   ((struct jgrpData *)node->ndInfo) 
-#define ARRAY_DATA(node)   ((struct jarray *)node->ndInfo) 
+#define JOB_DATA(node)   ((struct jData *)node->ndInfo)
+#define JGRP_DATA(node)   ((struct jgrpData *)node->ndInfo)
+#define ARRAY_DATA(node)   ((struct jarray *)node->ndInfo)
 
 struct jgTreeNode {
     struct jgTreeNode *parent, *child, *left, *right;
-    int     nodeType;          
-    char    *name;             
-    void    *ndInfo;           
+    int     nodeType;
+    char    *name;
+    void    *ndInfo;
 };
 
 
 typedef enum treeEventType {
-    TREE_EVENT_ADD,   
-    TREE_EVENT_CLIP,  
-    TREE_EVENT_CTRL,  
+    TREE_EVENT_ADD,
+    TREE_EVENT_CLIP,
+    TREE_EVENT_CTRL,
     TREE_EVENT_NULL
 } TREE_EVENT_TYPE_T;
 
 
 struct treeObserver;
 typedef void (*TREE_EVENT_OP_T)(struct treeObserver *, void *,
-                                               TREE_EVENT_TYPE_T);
+                                TREE_EVENT_TYPE_T);
 struct treeObserver {
     struct treeObserver *           forw;
     struct treeObserver *           back;
@@ -92,7 +92,7 @@ extern char               treeFile[];
 
 struct nodeList {
     int 	isJData;
-    void        *info;  
+    void        *info;
 };
 
 extern struct jgTreeNode *groupRoot;
@@ -123,7 +123,7 @@ extern void               updJgrpCountByJStatus(struct jData *, int, int);
 extern void               putOntoTree(struct jData *, int jobType);
 extern void               printTreeStruct(char *);
 extern int 		  jgrpPermitOk(struct lsfAuth *, struct jgTreeNode *);
-extern int                selectJgrps (struct jobInfoReq *, 
+extern int                selectJgrps (struct jobInfoReq *,
                                        void **, int *);
 extern void               updJgrpCountByOp(struct jgTreeNode *, int);
 extern char              *myName(char * );

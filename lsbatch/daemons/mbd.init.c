@@ -2233,15 +2233,17 @@ setDefaultParams(void)
 }
 
 static void
-addQData (struct queueConf *queueConf, int mbdInitFlags )
+addQData(struct queueConf *queueConf, int mbdInitFlags )
 {
-    static char fname[]="addQData";
-    int i, badqueue, j;
-    struct qData  *qp, *oldQp;
+    int i;
+    int badqueue;
+    int j;
+    struct qData *qp;
+    struct qData *oldQp;
     struct queueInfoEnt *queue;
-    char *sp, *word;
+    char *sp;
+    char *word;
     int queueIndex = 0;
-
 
     for (qp = qDataList->forw; qp != qDataList; qp = qp->forw) {
         qp->flags &= ~QUEUE_UPDATE;
@@ -2249,18 +2251,16 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
 
     if (queueConf == NULL || queueConf->numQueues <= 0
         || queueConf->queues == NULL) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6194,
-                                         "%s: No valid queue in queueConf structure"), /* catgets 6194 */
-                  fname);
+        ls_syslog(LOG_ERR, "\
+%s: No valid queue in queueConf structure", __func__);
         lsb_CheckError = WARNING_ERR;
         return;
     }
 
-
     for (i = 0; i < queueConf->numQueues; i++) {
+
         queue = &(queueConf->queues[i]);
         qp = initQData();
-
 
         qp->queue = safeSave (queue->queue);
         if (queue->description)
@@ -2268,23 +2268,22 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
         else
             qp->description = safeSave("No description provided.");
 
-
         setValue(qp->priority, queue->priority);
 
-
-
-        if (queue->userList) {
-            parseGroups(USER_GRP, &qp->uGPtr, queue->userList, fname);
-        }
-
+        if (queue->userList)
+            parseGroups(USER_GRP,
+                        &qp->uGPtr,
+                        queue->userList,
+                        (char *)__func__);
 
         if (queue->hostList) {
-            if (strcmp(queue->hostList, "none") == 0) {
 
+            if (strcmp(queue->hostList, "none") == 0) {
                 qp->hostList = safeSave(queue->hostList);
+
             } else {
-                if (searchAll (queue->hostList) == FALSE) {
-                    if ( parseQHosts (qp, queue->hostList) != 0 ) {
+                if (searchAll(queue->hostList) == FALSE) {
+                    if (parseQHosts(qp, queue->hostList) != 0 ) {
                         qp->hostList = safeSave(queue->hostList);
                     }
                 }
@@ -2293,35 +2292,33 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
 
         badqueue = FALSE;
         if (qp->uGPtr)
-            if (qp->uGPtr->memberTab.numEnts == 0 &&
-                qp->uGPtr->numGroups == 0) {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6196,
-                                                 "%s: No valid value for key USERS in the queue <%s>; ignoring the queue"), /* catgets 6196 */
-                          fname, qp->queue);
+            if (qp->uGPtr->memberTab.numEnts == 0
+                && qp->uGPtr->numGroups == 0) {
+
+                ls_syslog(LOG_ERR, "\
+%s: No valid value for key USERS in the queue <%s>; ignoring the queue",
+                          __func__, qp->queue);
                 lsb_CheckError = WARNING_ERR;
                 badqueue = TRUE;
             }
-        if (   qp->hostList != NULL
-               && strcmp(qp->hostList, "none")
-               && qp->numAskedPtr <= 0
-               && qp->askedOthPrio <= 0)
-        {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6197,
-                                             "%s: No valid value for key HOSTS in the queue <%s>; ignoring the queue"), /* catgets 6197 */
-                      fname, qp->queue);
+        if (qp->hostList != NULL
+            && strcmp(qp->hostList, "none")
+            && qp->numAskedPtr <= 0
+            && qp->askedOthPrio <= 0) {
+            ls_syslog(LOG_ERR, "\
+%s: No valid value for key HOSTS in the queue <%s>; ignoring the queue",
+                      __func__, qp->queue);
             lsb_CheckError = WARNING_ERR;
             badqueue = TRUE;
         }
 
         if (badqueue) {
-            freeQData (qp, FALSE);
+            freeQData(qp, FALSE);
             continue;
         }
 
-
         ++queueIndex;
         qp->queueId = queueIndex;
-
 
         if ((oldQp = getQueueData(qp->queue)) == NULL) {
             inQueueList (qp);
@@ -2335,12 +2332,17 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
             FREEUP(qp->reasonTb);
             FREEUP (qp);
 
-            if ( mbdInitFlags == RECONFIG_CONF || mbdInitFlags == WINDOW_CONF ) {
-                int j;
+            if (mbdInitFlags == RECONFIG_CONF
+                || mbdInitFlags == WINDOW_CONF) {
+
                 FREEUP(oldQp->reasonTb[0]);
                 FREEUP(oldQp->reasonTb[1]);
-                oldQp->reasonTb[0] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
-                oldQp->reasonTb[1] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
+                oldQp->reasonTb[0] = my_calloc(numLsfHosts + 2,
+                                               sizeof(int),
+                                               __func__);
+                oldQp->reasonTb[1] = my_calloc(numLsfHosts + 2,
+                                               sizeof(int),
+                                               __func__);
 
                 for(j = 0; j < numLsfHosts+2; j++) {
                     oldQp->reasonTb[0][j] = 0;
@@ -2350,102 +2352,73 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
         }
     }
 
-
     for (i = 0; i < queueConf->numQueues; i++) {
+
         queue = &(queueConf->queues[i]);
         qp = getQueueData(queue->queue);
-
 
         if (queue->nice != INFINIT_SHORT)
             qp->nice = queue->nice;
 
-
         setValue(qp->uJobLimit, queue->userJobLimit);
-
-
         setValue(qp->pJobLimit, queue->procJobLimit);
-
-
         setValue(qp->maxJobs, queue->maxJobs);
-
-
         setValue(qp->hJobLimit, queue->hostJobLimit);
-
-
         setValue(qp->procLimit, queue->procLimit);
         setValue(qp->minProcLimit, queue->minProcLimit);
         setValue(qp->defProcLimit, queue->defProcLimit);
-
-
-
         qp->windEdge = 0 ;
 
-
-
         if (queue->windows != NULL) {
-            if (1){
 
-                qp->windows = safeSave(queue->windows);
-                *(qp->windows) = '\0';
-                sp = queue->windows;
-                while ((word = getNextWord_(&sp)) != NULL) {
-                    char *save;
-                    save = safeSave(word);
-                    if (addWindow(word, qp->weekR, qp->queue) < 0) {
-                        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6198,
-                                                         "%s: Bad time expression <%s>/<%s> for run windows of queue <%s>; ignored"), /* catgets 6198 */
-                                  fname, queue->windows, save, qp->queue);
+            qp->windows = safeSave(queue->windows);
+            *(qp->windows) = '\0';
+            sp = queue->windows;
+            while ((word = getNextWord_(&sp)) != NULL) {
+                char *save;
+                save = safeSave(word);
+                if (addWindow(word, qp->weekR, qp->queue) < 0) {
+                    ls_syslog(LOG_ERR, "\
+%s: Bad time expression %s/%s in queue window %s; ignored",
+                              __func__, queue->windows, save, qp->queue);
                         lsb_CheckError = WARNING_ERR;
-                        freeWeek (qp->weekR);
-                        free (save);
+                        freeWeek(qp->weekR);
+                        free(save);
                         continue;
-                    }
-                    qp->windEdge = now;
-                    if (*(qp->windows) != '\0')
-                        strcat (qp->windows, " ");
-                    strcat (qp->windows, save);
-                    free (save);
                 }
-
-                if (logclass & (LC_TRACE | LC_SCHED)) {
-                    int i, j;
-                    windows_t *wp;
-                    ls_syslog(LOG_DEBUG2, "%s: queue <%s> run window <%s>",
-                              fname, qp->queue, qp->windows);
-                    for (i = 0; i < 8; i++) {
-                        for (wp = qp->weekR[i], j = 0; wp != NULL;
-                             wp = wp->nextwind, j++) {
-                            ls_syslog(LOG_DEBUG2, "%s: queue <%s> weekR[%d] window #%d opentime <%f> closetime <%f>", fname, qp->queue, i, j, wp->opentime, wp->closetime);
-                        }
-                    }
-                }
+                qp->windEdge = now;
+                if (*(qp->windows) != '\0')
+                    strcat(qp->windows, " ");
+                strcat(qp->windows, save);
+                free(save);
             }
         }
-
 
         if (queue->windowsD) {
 
             qp->windowsD = safeSave(queue->windowsD);
             *(qp->windowsD) = '\0';
             sp = queue->windowsD;
+
             while ((word = getNextWord_(&sp)) != NULL) {
                 char *save;
                 save = safeSave(word);
                 if (addWindow(word, qp->week, qp->queue) <0) {
-                    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6200,
-                                                     "%s: Bad time expression <%s>/<%s> for dispatch windows of queue <%s>; ignored"), /* catgets 6200 */
-                              fname, queue->windowsD, save, qp->queue);
+                    ls_syslog(LOG_ERR, "\
+%s: Bad time expression %s/%s in queue dispatch windows %s; ignored",
+                              __func__, queue->windowsD,
+                              save, qp->queue);
                     lsb_CheckError = WARNING_ERR;
-                    freeWeek (qp->week);
-                    free (save);
+                    freeWeek(qp->week);
+                    free(save);
                     continue;
                 }
                 qp->windEdge = now;
                 if (*(qp->windowsD) != '\0')
-                    strcat (qp->windowsD, " ");
+                    strcat(qp->windowsD, " ");
 
-                strcat (qp->windowsD, save);
-                free (save);
+                strcat(qp->windowsD, save);
+                free(save);
             }
         }
 
@@ -2458,25 +2431,24 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
             qp->qStatus |= QUEUE_STAT_RUN;
         }
 
-
         if (queue->defaultHostSpec) {
             float *cpuFactor;
-            if ((cpuFactor =
-                 getModelFactor (queue->defaultHostSpec)) == NULL &&
-                (cpuFactor =
-                 getHostFactor (queue->defaultHostSpec)) == NULL) {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6201,
-                                                 "%s: Invalid value <%s> for %s in queue <%s>; ignored"), /* catgets 6201 */
-                          fname,
-                          queue->defaultHostSpec,
-                          "DEFAULT_HOST_SPEC",
-                          qp->queue);
+
+            cpuFactor = getModelFactor(queue->defaultHostSpec);
+            if (cpuFactor == NULL)
+                cpuFactor = getHostFactor (queue->defaultHostSpec);
+            if (cpuFactor == NULL) {
+                ls_syslog(LOG_ERR, "\
+%s: Invalid hostspec %s for %s in queue <%s>; ignored",
+                    __func__,
+                    queue->defaultHostSpec,
+                    "DEFAULT_HOST_SPEC",
+                    qp->queue);
                 lsb_CheckError = WARNING_ERR;
             }
             if (cpuFactor != NULL)
-                qp->defaultHostSpec = safeSave (queue->defaultHostSpec);
+                qp->defaultHostSpec = safeSave(queue->defaultHostSpec);
         }
-
 
         if (queue->hostSpec)
             qp->hostSpec = safeSave (queue->hostSpec);
@@ -2493,37 +2465,29 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
                 qp->defLimits[j] = queue->defLimits[j];
         }
 
-
         qp->qAttrib = (qp->qAttrib | queue->qAttrib);
-
 
         if (queue->mig != INFINIT_INT) {
             setValue(qp->mig, queue->mig);
             qp->mig *= 60;
         }
 
-
         if (queue->schedDelay != INFINIT_INT)
             qp->schedDelay = queue->schedDelay;
-
 
         if (queue->acceptIntvl != INFINIT_INT)
             qp->acceptIntvl = queue->acceptIntvl;
         else
             qp->acceptIntvl = accept_intvl;
 
-
         if (queue->admins)
             parseAUids (qp, queue->admins);
-
 
         if (queue->preCmd)
             qp->preCmd = safeSave (queue->preCmd);
 
-
         if (queue->postCmd)
             qp->postCmd = safeSave (queue->postCmd);
-
 
         if (queue->requeueEValues) {
             qp->requeueEValues = safeSave (queue->requeueEValues);
@@ -2535,14 +2499,15 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
 
         }
 
-
         if (queue->resReq) {
-            if ((qp->resValPtr =
-                 checkResReq (queue->resReq,
-                              USE_LOCAL | PARSE_XOR | CHK_TCL_SYNTAX)) == NULL)
-            {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6203,
-                                                 "%s: RES_REQ <%s> for the queue <%s> is invalid; ignoring"), fname, queue->resReq, qp->queue); /* catgets 6203 */
+            qp->resValPtr = checkResReq(queue->resReq,
+                                        USE_LOCAL
+                                        | PARSE_XOR
+                                        | CHK_TCL_SYNTAX);
+            if (qp->resValPtr == NULL) {
+                ls_syslog(LOG_ERR, "\
+%s: invalid RES_REQ %s in queues %s; ignoring",
+                          __func__, queue->resReq, qp->queue);
                 lsb_CheckError = WARNING_ERR;
             } else
                 qp->resReq = safeSave (queue->resReq);
@@ -2551,14 +2516,14 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
         if (queue->slotHoldTime != INFINIT_INT)
             qp->slotHoldTime = queue->slotHoldTime * msleeptime;
 
-
         if (queue->resumeCond) {
             struct resVal *resValPtr;
-            if ((resValPtr = checkResReq (queue->resumeCond,
-                                          USE_LOCAL | CHK_TCL_SYNTAX)) == NULL)
-            {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6204,
-                                                 "%s: RESUME_COND <%s> for the queue <%s> is invalid; ignoring"), fname, queue->resumeCond, qp->queue); /* catgets 6204 */
+            resValPtr = checkResReq(queue->resumeCond,
+                                     USE_LOCAL | CHK_TCL_SYNTAX);
+            if (resValPtr == NULL) {
+                ls_syslog(LOG_ERR, "\
+%s: invalid RESUME_COND %s in queue %s; ignoring",
+                          __func__, queue->resumeCond, qp->queue);
                 lsb_CheckError = WARNING_ERR;
             } else {
                 qp->resumeCondVal = resValPtr;
@@ -2566,15 +2531,14 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
             }
         }
 
-
         if (queue->stopCond) {
             struct resVal *resValPtr;
-            if ((resValPtr =
-                 checkResReq (queue->stopCond,
-                              USE_LOCAL | CHK_TCL_SYNTAX)) == NULL)
-            {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6205,
-                                                 "%s: STOP_COND <%s> for the queue <%s> is invalid; ignoring"), fname, queue->stopCond, qp->queue); /* catgets 6205 */
+            resValPtr = checkResReq(queue->stopCond,
+                                    USE_LOCAL | CHK_TCL_SYNTAX);
+            if (resValPtr == NULL) {
+                ls_syslog(LOG_ERR, "\
+%s: invalid STOP_COND %s in queue %s; ignoring",
+                          __func__, queue->stopCond, qp->queue);
                 lsb_CheckError = WARNING_ERR;
             } else {
                 lsbFreeResVal (&resValPtr);
@@ -2582,23 +2546,20 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
             }
         }
 
-
         if (queue->jobStarter)
-            qp->jobStarter = safeSave (queue->jobStarter);
-
+            qp->jobStarter = safeSave(queue->jobStarter);
 
         if (queue->suspendActCmd != NULL)
-            qp->suspendActCmd = safeSave (queue->suspendActCmd);
+            qp->suspendActCmd = safeSave(queue->suspendActCmd);
 
         if (queue->resumeActCmd != NULL)
-            qp->resumeActCmd = safeSave (queue->resumeActCmd);
+            qp->resumeActCmd = safeSave(queue->resumeActCmd);
 
         if (queue->terminateActCmd != NULL)
-            qp->terminateActCmd = safeSave (queue->terminateActCmd);
+            qp->terminateActCmd = safeSave(queue->terminateActCmd);
 
-        for (j=0; j<LSB_SIG_NUM; j++)
+        for (j = 0; j < LSB_SIG_NUM; j++)
             qp->sigMap[j] = queue->sigMap[j];
-
 
         initThresholds (qp->loadSched, qp->loadStop);
         for (j = 0; j < queue->nIdx; j++) {
@@ -2624,8 +2585,6 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
         if (qp->qAttrib & Q_ATTRIB_BACKFILL)
             qAttributes |= Q_ATTRIB_BACKFILL;
     }
-
-    return;
 }
 
 static void

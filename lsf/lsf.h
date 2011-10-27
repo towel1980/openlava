@@ -23,7 +23,10 @@
 
 #include <config.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
+#include <math.h>
+#include <assert.h>
 #include <syslog.h>
 #include <sys/param.h>
 #include <sys/time.h>
