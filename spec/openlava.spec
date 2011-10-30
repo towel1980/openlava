@@ -1,4 +1,5 @@
-# Copyright (C) 2011 openlava foundation
+#
+# Copyright (C) 2011 David Bigagli
 # Copyright (C) 2007 Platform Computing Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,7 +38,7 @@ Version: 1.0
 Release: 1
 License: GPLv2
 Group: Applications/Productivity
-Vendor: openlava foundation
+Vendor: openlava project
 ExclusiveArch: x86_64
 URL: http://www.openlava.net/
 Source: %{name}-%{version}.tar.gz
@@ -52,31 +53,31 @@ Prefix: /opt
 %description
 openlava Distributed Batch Scheduler
 
-##
-## PREP
-##
+#
+# PREP
+#
 %prep
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT
 
 %setup -q -n %{name}-%{version}
 
-##
-## BUILD
-##
+#
+# BUILD
+#
 %build
 ./bootstrap.sh
 make
 
-##
-## CLEAN
-##
+#
+# CLEAN
+#
 %clean
 /bin/rm -rf $RPM_BUILD_ROOT
 
-##
-## INSTALL
-##
+#
+# INSTALL
+#
 %install
 
 # Install binaries, daemons
@@ -229,42 +230,23 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsf/man/man8/pim.8  $RPM_BUILD_
 install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsf/man/man8/res.8  $RPM_BUILD_ROOT%{_openlavatop}/share/man/man8
 install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BUILD_ROOT%{_openlavatop}/share/man/man8
 
-# libraries
-
-##
-## PRE
-##
+#
+# PRE
+#
 %pre
 
-##
-## Add "openlava" user
-##
+#
+# Add "openlava" user
+#
 /usr/sbin/groupadd openlava
 /usr/sbin/useradd -c "openlava Administrator" -g openlava -m -d /home/openlava openlava 2> /dev/null || :
-##
-## POST
-##
+#
+# POST
+#
 %post
 
-##
-## set variables
-##
-#_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
-#_symlink=${RPM_INSTALL_PREFIX}/openlava
-
-##
-## set the clustername if the OPENLAVA_CLUSTER_NAME is set
-##
-if [ x"${OPENLAVA_CLUSTER_NAME}" = x ]; then
-	_clustername=%{_clustername}
-else
-	_clustername=${OPENLAVA_CLUSTER_NAME}
-	mv ${_openlavatop}/etc/lsf.cluster.openlava ${_openlavatop}/etc/lsf.cluster.${_clustername}
-fi
-
-##
-## create the symbolic links
-##
+# create the symbolic links
+#
 ln -sf ${_openlavatop} ${_symlink}
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bstop
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bresume
@@ -274,20 +256,10 @@ chown -h openlava:openlava ${_openlavatop}/bin/bstop
 chown -h openlava:openlava ${_openlavatop}/bin/bresume
 chown -h openlava:openlava ${_openlavatop}/bin/bchkpnt
 chown -h openlava:openlava ${_openlavatop}/bin/bugroup
-##
-## customize the openlava.sh file
-##
-#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.sh
-#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.csh
 
-##
-## customize the openlava startup file
-##
-#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava
-
-##
-## copy scripts into the relevant directories
-##
+#
+# copy scripts into the relevant directories
+#
 cp ${_symlink}/etc/openlava.sh %{_sysconfdir}/profile.d
 cp ${_symlink}/etc/openlava.csh %{_sysconfdir}/profile.d
 cp ${_symlink}/etc/openlava %{_sysconfdir}/init.d
@@ -296,66 +268,39 @@ cp ${_symlink}/etc/openlava %{_sysconfdir}/init.d
 /sbin/chkconfig --add openlava
 /sbin/chkconfig openlava on
 
-##
-## customize the lsf.cluster.clustername file
-##
+#
+# customize the lsf.cluster.clustername file
+#
 hostname=`hostname`
 sed -i -e "s/__HOSTNAME__/$hostname/" ${_symlink}/etc/lsf.cluster.${_clustername}
 
-##
-## customize the lsf.conf file
-##
-#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lsf.conf
-
-##
-## customize the lsf.shared file
-##
-#sed -i -e "s/__CLUSTERNAME__/${_clustername}/" ${_symlink}/etc/lsf.shared
-
-##
-## PREUN
-##
+# PREUN
+#
 %preun
 if [ $1 = 0 ]; then
-   /sbin/service openlava stop > /dev/null 2>&1
+/sbin/service openlava stop > /dev/null 2>&1
    /sbin/chkconfig openlava off
    /sbin/chkconfig --del openlava
 fi
 
-##
-## POSTUN
-##
-%postun
+#
+# POSTUN
+#
+postun
 
 # lets clean up everything else
 _openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
 _symlink=${RPM_INSTALL_PREFIX}/openlava
-_savedir=openlava.$$
-
-mkdir -p ${_savedir}
-mv -f ${_openlavatop}/log/* ${_savedir} >/dev/null 2>&1
-mv -f ${_openlavatop}/etc/* ${_savedir} >dev/null 2>&1
-mv -f ${_openlavatop}/work/logdir/lsb.acct ${_savedir} >/dev/null 2>&1
-mv -f ${_openlavatop}/work/logdir/lsb.events ${_savedir} >/dev/null 2>&1
 
 # remove the scripts
 rm -f /etc/init.d/openlava
 rm -f /etc/profile.d/openlava.*
-
-tar cvzf ${_savedir}.tar.gz ${_savedir} >/dev/null 2>&1
-rm -rf ${_savedir}
-mv -f ${_savedir}.tar.gz /tmp
-
-echo
-echo "Thank you for using openlava!"
-echo "Your openlava configuration and log files have been saved to /tmp/${_savedir}.tar.gz"
-
 rm -rf ${_openlavatop}
 rm -f ${_symlink}
 
-##
-## FILES
-##
+#
+# FILES
+#
 %files
 %defattr(-,openlava,openlava)
 %attr(0755,openlava,openlava) %{_openlavatop}/etc/openlava
@@ -500,6 +445,14 @@ rm -f ${_symlink}
 %attr(0755,openlava,openlava) %{_openlavatop}/work/logdir
 
 %changelog
+* Oct 30 2011 modified the spec file so that autoconf creates openlava
+  configuration files and use the outptu variables to make the necessary
+  subsititution in the them. Change the post install to just erase the package 
+  without saving anything. 
+  Removed the symbolic link as that is something sites have to do as they may 
+  want to run more versions together, also in now the lsf.conf has the version 
+  in the openlava fundamental variables clearly indicating which version is 
+  in use.
 * Sun Sep 4 2011 David Bigagli restructured to follow the new directory layout after
 the GNU autoconf project.
 * Thu Jul 14 2011 Robert Stober <robert@openlava.net> 1.0-1

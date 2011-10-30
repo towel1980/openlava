@@ -1,3 +1,16 @@
+2011-10-30  David Bigagli  <david@openlava.net>
+
+	* mbd.policy.c Developed a little round robin scheduler absed on the number of jobs a user has running.
+
+	* openlava.spec  modified the spec file so that autoconf creates
+	openlava configuration files and use the outptu variables to make
+	the necessary subsititution in the them. Change the post install
+	to just erase the package without saving anything.
+	Removed the symbolic link as that is something sites have to
+	do as they may want to run more versions together, also
+	in now the lsf.conf has the version in the openlava
+	fundamental variables clearly indicating which version is in use.
+
 2011-09-16  David Bigagli  <david@openlava.net>
 
 	* README removed obsolete information about the source code directory structure.
