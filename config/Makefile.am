@@ -5,14 +5,6 @@
 # Install configuration files for openlava base and batch 
 # in the conf directory.
 
-# noinst_SCRIPTS = lsf.conf
-# CLEANFILES = $(noinst_SCRIPTS)
-# 
-# do_subst = sed -e 's,[@]prefix[@],$(prefix),g'
-
-# lsf.conf :
-# 	$(do_subst) < lsf.conf.template > lsf.conf
-
 # Install the shell profile scrips and the system startup 
 # script in the etc directory.
 etcdir = $(prefix)/etc

@@ -1,5 +1,4 @@
 #
-# Copyright (C) 2011 David Bigagli
 # Copyright (C) 2007 Platform Computing Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -38,7 +37,7 @@ Version: 1.0
 Release: 1
 License: GPLv2
 Group: Applications/Productivity
-Vendor: openlava project
+Vendor: openlava foundation
 ExclusiveArch: x86_64
 URL: http://www.openlava.net/
 Source: %{name}-%{version}.tar.gz
@@ -244,10 +243,12 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BU
 # POST
 #
 %post
-_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
 
-# create the symbolic links
 #
+# set variables
+#
+_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
+# create the symbolic links
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bstop
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bresume
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bchkpnt
@@ -256,9 +257,6 @@ chown -h openlava:openlava ${_openlavatop}/bin/bstop
 chown -h openlava:openlava ${_openlavatop}/bin/bresume
 chown -h openlava:openlava ${_openlavatop}/bin/bchkpnt
 chown -h openlava:openlava ${_openlavatop}/bin/bugroup
-
-#
-# copy scripts into the relevant directories
 #
 cp ${_openlavatop}/etc/openlava.sh %{_sysconfdir}/profile.d
 cp ${_openlavatop}/etc/openlava.csh %{_sysconfdir}/profile.d
@@ -266,21 +264,19 @@ cp ${_openlavatop}/etc/openlava %{_sysconfdir}/init.d
 
 # Register lava daemons
 /sbin/chkconfig --add openlava
+/sbin/chkconfig openlava on
 
-# PREUN
-#
 %preun
 /sbin/service openlava stop > /dev/null 2>&1
 /sbin/chkconfig openlava off
 /sbin/chkconfig --del openlava
 
-#
-# POSTUN
-%postun
 
+%postun
+_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
 rm -f /etc/init.d/openlava
 rm -f /etc/profile.d/openlava.*
-rm -rf ${RPM_INSTALL_PREFIX}/openlava-1.0
+rm -rf ${_openlavatop}
 
 #
 # FILES
@@ -429,14 +425,14 @@ rm -rf ${RPM_INSTALL_PREFIX}/openlava-1.0
 %attr(0755,openlava,openlava) %{_openlavatop}/work/logdir
 
 %changelog
-* Sun Oct 30 2011 modified the spec file so that autoconf creates openlava
--  configuration files and use the outptu variables to make the necessary
--  subsititution in the them. Change the post install to just erase the package 
--  without saving anything. 
--  Removed the symbolic link as that is something sites have to do as they may 
--  want to run more versions together, also in now the lsf.conf has the version 
--  in the openlava fundamental variables clearly indicating which version is 
--  in use.
+* Sun Oct 30 2011 modified the spec file so that autoconf creates
+- openlava configuration files and use the outptu variables to make
+- the necessary subsititution in the them. Change the post install
+- to just erase the package without saving anything.
+- Removed the symbolic link as that is something sites have to
+- do as they may want to run more versions together, also
+- in now the lsf.conf has the version in the openlava
+- fundamental variables clearly indicating which version is in use.
 * Sun Sep 4 2011 David Bigagli restructured to follow the new directory layout after
 the GNU autoconf project.
 * Thu Jul 14 2011 Robert Stober <robert@openlava.net> 1.0-1
