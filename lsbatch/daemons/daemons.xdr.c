@@ -396,6 +396,13 @@ xdr_jobSpecs (XDR *xdrs, struct jobSpecs *jobSpecs, struct LSFHeader *hdr)
         return (FALSE);
     }
 
+    sp[0] = jobSpecs->prepostUsername;
+    if (!(xdr_string(xdrs, &sp[0], MAX_LSB_NAME_LEN))) {
+	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname,
+			"xdr_string", "prepostUsername");
+	return (FALSE);
+    }
+    
     return(TRUE);
 
 } 

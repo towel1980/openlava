@@ -2268,6 +2268,13 @@ packJobSpecs (struct jData *jDataPtr, struct jobSpecs *jobSpecs)
             strcpy (jobSpecs->postCmd, jDataPtr->queuePostCmd);
         }
     }
+    
+    if (!qp->prepostUsername) { 
+	strcpy (jobSpecs->prepostUsername, ""); 
+    }
+    else {
+	strcpy (jobSpecs->prepostUsername, qp->prepostUsername); 
+    }
 
     if ((jDataPtr->shared->jobBill.options & SUB_RESTART) && (jDataPtr->execCwd))
         strcpy (jobSpecs->execCwd, jDataPtr->execCwd);

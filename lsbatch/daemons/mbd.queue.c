@@ -356,6 +356,12 @@ checkQueues (struct infoReq*        queueInfoReqPtr,
             else
 		qRep->preCmd = safeSave(" ");
 
+	    if (qp->prepostUsername) {
+		qRep->prepostUsername = safeSave (qp->prepostUsername);
+	    } else {
+		qRep->prepostUsername = safeSave(" ");
+	    }
+
 	    qRep->chkpntPeriod = qp->chkpntPeriod;
 	    if ( qp->chkpntDir)
 		qRep->chkpntDir = safeSave(qp->chkpntDir);
@@ -708,6 +714,7 @@ freeQueueInfoReply (struct queueInfoReply *reply, char *freeAll)
 	FREEUP (reply->queues[i].admins);
 	FREEUP (reply->queues[i].preCmd);
 	FREEUP (reply->queues[i].postCmd);
+	FREEUP (reply->queues[i].prepostUsername);
 	FREEUP (reply->queues[i].requeueEValues);
 	FREEUP (reply->queues[i].resReq);
 	FREEUP (reply->queues[i].resumeCond);

@@ -751,6 +751,7 @@ struct queueInfoEnt {
     char   *admins;
     char   *preCmd;
     char   *postCmd;
+    char   *prepostUsername;
     char   *requeueEValues;
     int    hostJobLimit;
     char   *resReq;

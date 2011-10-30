@@ -3904,9 +3904,10 @@ runQPost (struct jobCard *jp)
 
     if (logclass & LC_TRACE) {
         chuser(batchId);
-        ls_syslog(LOG_DEBUG, "runQPost: queue's post-command <%s> pre-command <%s> execJobFlag <%x> for job <%s> status %x",
+        ls_syslog(LOG_DEBUG, "runQPost: queue's post-command <%s> pre-command <%s> prepostUsername <%s> execJobFlag <%x> for job <%s> status %x",
                   jp->jobSpecs.postCmd ? jp->jobSpecs.postCmd : "NULL",
                   jp->jobSpecs.preCmd ? jp->jobSpecs.preCmd : "NULL",
+                  jp->jobSpecs.prepostUsername ? jp->jobSpecs.prepostUsername : "NULL",
                   jp->execJobFlag, lsb_jobid2str(jp->jobSpecs.jobId),
                   jp->w_status);
         chuser(jp->jobSpecs.execUid);
@@ -4078,11 +4079,15 @@ chPrePostUser(struct jobCard *jp)
                   jp->execGid);
     }
 
-    if (lsfSetUid(jp->jobSpecs.execUid) < 0) {
+    uid_t prepostUid = -1; 
+    if (getOSUid_(jp->jobSpecs.prepostUsername, &prepostUid) < 0) {
+	prepostUid = jp->jobSpecs.execUid;
+    }
+
+    if (lsfSetUid(prepostUid) < 0) {
         ls_syslog(LOG_ERR, "\
-%s: lsfSetUid() failed for user %s uid %d gid %d %m", __func__,
-                  jp->execUsername, jp->jobSpecs.execUid,
-                  jp->execGid);
++%s: lsfSetUid() failed for uid %d gid %d %m", __func__,
+	    prepostUid, jp->execGid);
         return -1;
     }
 

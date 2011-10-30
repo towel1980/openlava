@@ -542,6 +542,8 @@ struct qData {
     int       nice;
     char      *preCmd;
     char      *postCmd;
+    char      *prepostUsername;
+
     struct requeueEStruct {
 	int type;
 #define RQE_NORMAL   0

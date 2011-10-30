@@ -861,6 +861,7 @@ xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply,
             FREEUP (qInfo[i].admins); 
             FREEUP (qInfo[i].preCmd);
 	    FREEUP (qInfo[i].postCmd);
+	    FREEUP (qInfo[i].prepostUsername);
 	    FREEUP (qInfo[i].requeueEValues);
 	    FREEUP (qInfo[i].resReq); 
 	    FREEUP (qInfo[i].resumeCond); 
@@ -980,6 +981,7 @@ xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo,
           xdr_var_string(xdrs, &qInfo->admins) &&
           xdr_var_string(xdrs, &qInfo->preCmd) &&
           xdr_var_string(xdrs, &qInfo->postCmd) &&
+          xdr_var_string(xdrs, &qInfo->prepostUsername) &&
 	  xdr_var_string(xdrs, &qInfo->requeueEValues) &&
           xdr_int(xdrs, &qInfo->hostJobLimit)))
         return (FALSE);

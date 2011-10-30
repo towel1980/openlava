@@ -3759,8 +3759,9 @@ do_Queues(struct lsConf *conf,
 #define QKEY_CHKPNT          info->numIndx+43
 #define QKEY_RERUNNABLE      info->numIndx+44
 #define QKEY_ENQUE_INTERACTIVE_AHEAD info->numIndx+45
-#define QKEY_ROUND_ROBIN_POLICY info->numIndx + 46
-#define KEYMAP_SIZE info->numIndx+48
+#define QKEY_ROUND_ROBIN_POLICY info->numIndx+46
+#define QKEY_PRE_POST_EXEC_USER info->numIndx+47
+#define KEYMAP_SIZE info->numIndx+49
 
     static char pname[] = "do_Queues";
     struct queueInfoEnt queue;
@@ -3805,6 +3806,7 @@ do_Queues(struct lsConf *conf,
     keylist[QKEY_ADMINISTRATORS].key="ADMINISTRATORS";
     keylist[QKEY_PRE_EXEC].key="PRE_EXEC";
     keylist[QKEY_POST_EXEC].key="POST_EXEC";
+    keylist[QKEY_PRE_POST_EXEC_USER].key="PRE_POST_EXEC_USER";
     keylist[QKEY_REQUEUE_EXIT_VALUES].key="REQUEUE_EXIT_VALUES";
     keylist[QKEY_HJOB_LIMIT].key="HJOB_LIMIT";
     keylist[QKEY_RES_REQ].key="RES_REQ";
@@ -4237,7 +4239,7 @@ do_Queues(struct lsConf *conf,
 
                 if (queue.chkpntDir == NULL) {
                     ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, pname, "malloc",
-                              strlen(keylist[QKEY_POST_EXEC].val)+1);
+                              strlen(keylist[QKEY_CHKPNT].val)+1);
                     lsberrno = LSBE_NO_MEM;
                     freekeyval (keylist);
                     freeQueueInfo ( &queue );
@@ -4423,6 +4425,27 @@ do_Queues(struct lsConf *conf,
             }
         }
 
+	if (keylist[QKEY_PRE_POST_EXEC_USER].val != NULL 
+	    && strcmp(keylist[QKEY_PRE_POST_EXEC_USER].val, "")) {
+	    if (strlen (keylist[QKEY_PRE_POST_EXEC_USER].val) >= MAXLINELEN) {
+		ls_syslog(LOG_ERR, I18N(5352,
+					"%s: User name %s in section Queue ending at line %d: PRE_POST_EXEC_USER of the queue <%s> is too long <%s>; ignoring"), 
+			pname, fname, *lineNum, queue.queue, keylist[QKEY_PRE_POST_EXEC_USER].val); /* catgets 5352 */
+		lsberrno = LSBE_CONF_WARNING;
+	    } else {
+		queue.prepostUsername = putstr_ (keylist[QKEY_PRE_POST_EXEC_USER].val);
+		if (queue.prepostUsername == NULL) {
+		    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, pname, 
+			      "malloc",
+			      strlen(keylist[QKEY_PRE_POST_EXEC_USER].val)+1);
+		    lsberrno = LSBE_NO_MEM;
+		    freekeyval (keylist);
+		    freeQueueInfo ( &queue );
+		    return (FALSE);
+		}
+	    }
+	}
+
         if (keylist[QKEY_POST_EXEC].val != NULL
             && strcmp(keylist[QKEY_POST_EXEC].val, "")) {
             if (strlen (keylist[QKEY_POST_EXEC].val) >= MAXLINELEN) {
@@ -4601,6 +4624,7 @@ initQueueInfo(struct queueInfoEnt *qp)
     qp->admins = NULL;
     qp->preCmd = NULL;
     qp->postCmd = NULL;
+    qp->prepostUsername = NULL;
     qp->requeueEValues = NULL;
     qp->resReq = NULL;
     qp->priority = INFINIT_INT;
@@ -4664,6 +4688,7 @@ freeQueueInfo(struct queueInfoEnt *qp)
     FREEUP( qp->admins );
     FREEUP( qp->preCmd );
     FREEUP( qp->postCmd );
+    FREEUP( qp->prepostUsername );
     FREEUP( qp->requeueEValues );
     FREEUP( qp->resReq );
     FREEUP(qp->jobStarter);
