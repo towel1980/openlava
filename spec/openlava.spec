@@ -249,8 +249,8 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BU
 ##
 ## set variables
 ##
-_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
-_symlink=${RPM_INSTALL_PREFIX}/openlava
+#_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
+#_symlink=${RPM_INSTALL_PREFIX}/openlava
 
 ##
 ## set the clustername if the OPENLAVA_CLUSTER_NAME is set
@@ -277,13 +277,13 @@ chown -h openlava:openlava ${_openlavatop}/bin/bugroup
 ##
 ## customize the openlava.sh file
 ##
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.sh
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.csh
+#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.sh
+#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava.csh
 
 ##
 ## customize the openlava startup file
 ##
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava
+#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/openlava
 
 ##
 ## copy scripts into the relevant directories
@@ -305,12 +305,12 @@ sed -i -e "s/__HOSTNAME__/$hostname/" ${_symlink}/etc/lsf.cluster.${_clustername
 ##
 ## customize the lsf.conf file
 ##
-sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lsf.conf
+#sed -i -e "s#__LAVATOP__#${_symlink}#" ${_symlink}/etc/lsf.conf
 
 ##
 ## customize the lsf.shared file
 ##
-sed -i -e "s/__CLUSTERNAME__/${_clustername}/" ${_symlink}/etc/lsf.shared
+#sed -i -e "s/__CLUSTERNAME__/${_clustername}/" ${_symlink}/etc/lsf.shared
 
 ##
 ## PREUN

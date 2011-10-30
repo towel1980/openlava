@@ -1,9 +1,18 @@
 #
+# openlava project
 #
+# Copyright (C) 2011 David Bigagli
 #
 AC_INIT(openlava, 1.0)
 AC_CONFIG_HEADERS(config.h)
 AC_PREFIX_DEFAULT([/opt/openlava-1.0])
+
+# Set some cluster configuration variables .
+AC_SUBST([openlavadmin], [openlava])
+AC_ARG_VAR([openlavaadmin], "")
+
+AC_SUBST([openlavacluster], [openlava])
+AC_ARG_VAR([openlavacluster], "")
 
 # Initialize the automake
 AM_INIT_AUTOMAKE
@@ -64,7 +73,19 @@ AC_CONFIG_FILES([
 	lsbatch/man8/Makefile    \
 	eauth/Makefile           \
 	scripts/Makefile         \
-	chkpnt/Makefile]
+	chkpnt/Makefile          \
+	config/lsf.conf          \
+	config/lsb.hosts         \
+	config/lsb.params        \
+	config/lsb.queues        \
+	config/lsb.users         \
+	config/lsf.cluster.openlava \
+	config/lsf.shared        \
+	config/lsf.task          \
+	config/openlava.csh      \
+	config/openlava          \
+	config/openlava.setup    \
+	config/openlava.sh]
 )
 
 AC_OUTPUT

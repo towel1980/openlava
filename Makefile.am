@@ -1,7 +1,7 @@
 #
-# Copyright (C) openlava foundation 
+# Copyright (C) David Bigagli
 #
-SUBDIRS = lsf config lsbatch lsf/res eauth scripts chkpnt
+SUBDIRS = lsf lsbatch lsf/res eauth scripts chkpnt config
 
 MISSING_FILES = aclocal.m4
 
