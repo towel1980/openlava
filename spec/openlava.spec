@@ -238,16 +238,16 @@ install -m 644 $RPM_BUILD_DIR/%{name}-%{version}/lsbatch/man8/sbatchd.8  $RPM_BU
 #
 # Add "openlava" user
 #
-/usr/sbin/groupadd openlava
+/usr/sbin/groupadd -f openlava
 /usr/sbin/useradd -c "openlava Administrator" -g openlava -m -d /home/openlava openlava 2> /dev/null || :
 #
 # POST
 #
 %post
+_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
 
 # create the symbolic links
 #
-ln -sf ${_openlavatop} ${_symlink}
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bstop
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bresume
 ln -sf ${_openlavatop}/bin/bkill  ${_openlavatop}/bin/bchkpnt
@@ -260,43 +260,27 @@ chown -h openlava:openlava ${_openlavatop}/bin/bugroup
 #
 # copy scripts into the relevant directories
 #
-cp ${_symlink}/etc/openlava.sh %{_sysconfdir}/profile.d
-cp ${_symlink}/etc/openlava.csh %{_sysconfdir}/profile.d
-cp ${_symlink}/etc/openlava %{_sysconfdir}/init.d
+cp ${_openlavatop}/etc/openlava.sh %{_sysconfdir}/profile.d
+cp ${_openlavatop}/etc/openlava.csh %{_sysconfdir}/profile.d
+cp ${_openlavatop}/etc/openlava %{_sysconfdir}/init.d
 
 # Register lava daemons
 /sbin/chkconfig --add openlava
-/sbin/chkconfig openlava on
-
-#
-# customize the lsf.cluster.clustername file
-#
-hostname=`hostname`
-sed -i -e "s/__HOSTNAME__/$hostname/" ${_symlink}/etc/lsf.cluster.${_clustername}
 
 # PREUN
 #
 %preun
-if [ $1 = 0 ]; then
 /sbin/service openlava stop > /dev/null 2>&1
-   /sbin/chkconfig openlava off
-   /sbin/chkconfig --del openlava
-fi
+/sbin/chkconfig openlava off
+/sbin/chkconfig --del openlava
 
 #
 # POSTUN
-#
-postun
+%postun
 
-# lets clean up everything else
-_openlavatop=${RPM_INSTALL_PREFIX}/openlava-1.0
-_symlink=${RPM_INSTALL_PREFIX}/openlava
-
-# remove the scripts
 rm -f /etc/init.d/openlava
 rm -f /etc/profile.d/openlava.*
-rm -rf ${_openlavatop}
-rm -f ${_symlink}
+rm -rf ${RPM_INSTALL_PREFIX}/openlava-1.0
 
 #
 # FILES
@@ -445,14 +429,14 @@ rm -f ${_symlink}
 %attr(0755,openlava,openlava) %{_openlavatop}/work/logdir
 
 %changelog
-* Oct 30 2011 modified the spec file so that autoconf creates openlava
-  configuration files and use the outptu variables to make the necessary
-  subsititution in the them. Change the post install to just erase the package 
-  without saving anything. 
-  Removed the symbolic link as that is something sites have to do as they may 
-  want to run more versions together, also in now the lsf.conf has the version 
-  in the openlava fundamental variables clearly indicating which version is 
-  in use.
+* Sun Oct 30 2011 modified the spec file so that autoconf creates openlava
+-  configuration files and use the outptu variables to make the necessary
+-  subsititution in the them. Change the post install to just erase the package 
+-  without saving anything. 
+-  Removed the symbolic link as that is something sites have to do as they may 
+-  want to run more versions together, also in now the lsf.conf has the version 
+-  in the openlava fundamental variables clearly indicating which version is 
+-  in use.
 * Sun Sep 4 2011 David Bigagli restructured to follow the new directory layout after
 the GNU autoconf project.
 * Thu Jul 14 2011 Robert Stober <robert@openlava.net> 1.0-1
