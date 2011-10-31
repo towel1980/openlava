@@ -3719,7 +3719,7 @@ runQPre (struct jobCard *jp, char ** variables)
     (void) Signal_(SIGCHLD, SIG_DFL);
 
     if ((pid = fork()) == 0) {
-
+        int i;
         sigset_t newmask;
         char *myargv[6];
         int maxfds = sysconf(_SC_OPEN_MAX);
@@ -4065,6 +4065,8 @@ runQPost (struct jobCard *jp)
 static int
 chPrePostUser(struct jobCard *jp)
 {
+    uid_t prepostUid;
+
     if (initgroups(jp->execUsername, jp->execGid) < 0) {
         ls_syslog(LOG_ERR, "\
 %s: initgroups() failed for user %s uid %d gid %d %m", __func__,
@@ -4079,15 +4081,14 @@ chPrePostUser(struct jobCard *jp)
                   jp->execGid);
     }
 
-    uid_t prepostUid = -1; 
     if (getOSUid_(jp->jobSpecs.prepostUsername, &prepostUid) < 0) {
-	prepostUid = jp->jobSpecs.execUid;
+        prepostUid = jp->jobSpecs.execUid;
     }
 
     if (lsfSetUid(prepostUid) < 0) {
         ls_syslog(LOG_ERR, "\
-+%s: lsfSetUid() failed for uid %d gid %d %m", __func__,
-	    prepostUid, jp->execGid);
+%s: lsfSetUid() failed for uid %d gid %d %m", __func__,
+                  prepostUid, jp->execGid);
         return -1;
     }
 

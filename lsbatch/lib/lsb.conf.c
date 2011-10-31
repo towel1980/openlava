@@ -3806,7 +3806,6 @@ do_Queues(struct lsConf *conf,
     keylist[QKEY_ADMINISTRATORS].key="ADMINISTRATORS";
     keylist[QKEY_PRE_EXEC].key="PRE_EXEC";
     keylist[QKEY_POST_EXEC].key="POST_EXEC";
-    keylist[QKEY_PRE_POST_EXEC_USER].key="PRE_POST_EXEC_USER";
     keylist[QKEY_REQUEUE_EXIT_VALUES].key="REQUEUE_EXIT_VALUES";
     keylist[QKEY_HJOB_LIMIT].key="HJOB_LIMIT";
     keylist[QKEY_RES_REQ].key="RES_REQ";
@@ -3827,6 +3826,7 @@ do_Queues(struct lsConf *conf,
     keylist[QKEY_RERUNNABLE].key = "RERUNNABLE";
     keylist[QKEY_ENQUE_INTERACTIVE_AHEAD].key = "ENQUE_INTERACTIVE_AHEAD";
     keylist[QKEY_ROUND_ROBIN_POLICY].key = "ROUND_ROBIN_POLICY";
+    keylist[QKEY_PRE_POST_EXEC_USER].key="PRE_POST_EXEC_USER";
     keylist[KEYMAP_SIZE - 1].key = NULL;
 
     initQueueInfo(&queue);
@@ -4425,17 +4425,17 @@ do_Queues(struct lsConf *conf,
             }
         }
 
-	if (keylist[QKEY_PRE_POST_EXEC_USER].val != NULL 
+	if (keylist[QKEY_PRE_POST_EXEC_USER].val != NULL
 	    && strcmp(keylist[QKEY_PRE_POST_EXEC_USER].val, "")) {
 	    if (strlen (keylist[QKEY_PRE_POST_EXEC_USER].val) >= MAXLINELEN) {
 		ls_syslog(LOG_ERR, I18N(5352,
-					"%s: User name %s in section Queue ending at line %d: PRE_POST_EXEC_USER of the queue <%s> is too long <%s>; ignoring"), 
+					"%s: User name %s in section Queue ending at line %d: PRE_POST_EXEC_USER of the queue <%s> is too long <%s>; ignoring"),
 			pname, fname, *lineNum, queue.queue, keylist[QKEY_PRE_POST_EXEC_USER].val); /* catgets 5352 */
 		lsberrno = LSBE_CONF_WARNING;
 	    } else {
 		queue.prepostUsername = putstr_ (keylist[QKEY_PRE_POST_EXEC_USER].val);
 		if (queue.prepostUsername == NULL) {
-		    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, pname, 
+		    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, pname,
 			      "malloc",
 			      strlen(keylist[QKEY_PRE_POST_EXEC_USER].val)+1);
 		    lsberrno = LSBE_NO_MEM;

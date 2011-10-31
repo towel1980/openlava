@@ -23,7 +23,7 @@
 #include "lib.h"
 #include "lib.so.h"
 
-#define NL_SETN 23 
+#define NL_SETN 23
 
 #define GET_LSF_USER         "getLSFUser_"
 #define GET_LSF_USER_BY_NAME "getLSFUserByName_"
@@ -37,23 +37,23 @@ static int defGetLSFUser(char *lsfUserName, unsigned int lsfUserNameSize);
 static int defGetLSFUserByName(const char *osUserName,
                                char *lsfUserName, unsigned int lsfUserNameSize);
 static int defGetLSFUserByUid(uid_t uid, char *lsfUserName, unsigned int lsfUserNameSize);
-static int defGetOSUserName(const char *lsfUserName, 
+static int defGetOSUserName(const char *lsfUserName,
                             char *osUserName, unsigned int osUserNameSize);
 static int defGetOSUid(const char *lsfUserName, uid_t *uid);
 
 typedef int (*GET_LSF_USER_FN_T)(char *lsfUserName, unsigned int lsfUserNameSize);
-typedef int (*GET_LSF_USER_BY_NAME_FN_T)(const char *osUserName, char *lsfUserName, 
+typedef int (*GET_LSF_USER_BY_NAME_FN_T)(const char *osUserName, char *lsfUserName,
 					 unsigned int lsfUserNameSize);
-typedef int (*GET_LSF_USER_BY_UID_FN_T)(uid_t uid, char *lsfUserName, 
+typedef int (*GET_LSF_USER_BY_UID_FN_T)(uid_t uid, char *lsfUserName,
 					unsigned int lsfUserNameSize);
 typedef int (*GET_OS_USER_NAME_FN_T)(const char *lsfUserName, char *osUserName,
 				     unsigned int osUserNameSize);
 typedef int (*GET_OS_UID_FN_T)(const char *lsfUserName, uid_t *uid);
 
 typedef struct {
-    bool_t initialized; 
-    bool_t initFailed;  
-    SO_HANDLE_T handle; 
+    bool_t initialized;
+    bool_t initFailed;
+    SO_HANDLE_T handle;
 
 
     GET_LSF_USER_FN_T getLSFUser_;
@@ -82,7 +82,7 @@ initIdLibDefaults(IDLIB_INFO_T *idLib)
     idLib->getLSFUserByUid_ = defGetLSFUserByUid;
     idLib->getOSUserName_ = defGetOSUserName;
     idLib->getOSUid_ = defGetOSUid;
-} 
+}
 
 static int
 initIdLib(IDLIB_INFO_T *idLib)
@@ -134,28 +134,28 @@ initIdLib(IDLIB_INFO_T *idLib)
                   fname, GET_LSF_USER, libPath);
         goto cleanup;
     }
-    idLib->getLSFUserByName_ = (GET_LSF_USER_BY_NAME_FN_T) 
+    idLib->getLSFUserByName_ = (GET_LSF_USER_BY_NAME_FN_T)
 	soSym_(idLib->handle, GET_LSF_USER_BY_NAME);
     if (idLib->getLSFUserByName_ == NULL) {
         ls_syslog(LOG_ERR, I18N(6351, "%s: Error loading symbol %s from library %s: %k"), /* catgets 6351 */
                   fname, GET_LSF_USER_BY_NAME, libPath);
         goto cleanup;
     }
-    idLib->getLSFUserByUid_ = (GET_LSF_USER_BY_UID_FN_T) 
+    idLib->getLSFUserByUid_ = (GET_LSF_USER_BY_UID_FN_T)
 	soSym_(idLib->handle, GET_LSF_USER_BY_UID);
     if (idLib->getLSFUserByUid_ == NULL) {
         ls_syslog(LOG_ERR, I18N(6351, "%s: Error loading symbol %s from library %s: %k"), /* catgets 6351 */
                   fname, GET_LSF_USER_BY_UID, libPath);
         goto cleanup;
     }
-    idLib->getOSUserName_ = (GET_OS_USER_NAME_FN_T) 
+    idLib->getOSUserName_ = (GET_OS_USER_NAME_FN_T)
 	soSym_(idLib->handle, GET_OS_USER_NAME);
     if (idLib->getOSUserName_ == NULL) {
         ls_syslog(LOG_ERR, I18N(6351, "%s: Error loading symbol %s from library %s: %k"), /* catgets 6351 */
                   fname, GET_OS_USER_NAME, libPath);
         goto cleanup;
     }
-    idLib->getOSUid_ = (GET_OS_UID_FN_T) 
+    idLib->getOSUid_ = (GET_OS_UID_FN_T)
 	soSym_(idLib->handle, GET_OS_UID);
     if (idLib->getOSUid_ == NULL) {
         ls_syslog(LOG_ERR, I18N(6351, "%s: Error loading symbol %s from library %s: %k"), /* catgets 6351 */
@@ -180,7 +180,7 @@ cleanup:
     }
 
     return retcode;
-} 
+}
 
 static bool_t
 checkInit(IDLIB_INFO_T *idLib)
@@ -193,7 +193,7 @@ checkInit(IDLIB_INFO_T *idLib)
         return FALSE;
     }
     return TRUE;
-} 
+}
 
 int
 getLSFUser_(char *lsfUserName, unsigned int lsfUserNameSize)
@@ -203,7 +203,7 @@ getLSFUser_(char *lsfUserName, unsigned int lsfUserNameSize)
     if (!checkInit(&idLib)) {
         return -1;
     }
-    
+
     rc = idLib.getLSFUser_(lsfUserName, lsfUserNameSize);
     if (rc != LSE_NO_ERR) {
         lserrno = rc;
@@ -211,7 +211,7 @@ getLSFUser_(char *lsfUserName, unsigned int lsfUserNameSize)
     } else {
         return 0;
     }
-} 
+}
 
 int
 getLSFUserByName_(const char *osUserName,
@@ -230,7 +230,7 @@ getLSFUserByName_(const char *osUserName,
     } else {
         return 0;
     }
-} 
+}
 
 int
 getLSFUserByUid_(uid_t uid, char *lsfUserName, unsigned int lsfUserNameSize)
@@ -248,7 +248,7 @@ getLSFUserByUid_(uid_t uid, char *lsfUserName, unsigned int lsfUserNameSize)
     } else {
         return 0;
     }
-} 
+}
 
 int
 getOSUserName_(const char *lsfUserName,
@@ -267,7 +267,7 @@ getOSUserName_(const char *lsfUserName,
     } else {
         return 0;
     }
-} 
+}
 
 
 int
@@ -283,10 +283,10 @@ getOSUid_(const char *lsfUserName, uid_t *uid)
     if (rc != LSE_NO_ERR) {
         lserrno = rc;
         return -1;
-    } else {
-        return 0;
     }
-} 
+
+    return 0;
+}
 
 struct passwd *
 getpwlsfuser_(const char *lsfUserName)
@@ -305,7 +305,7 @@ getpwlsfuser_(const char *lsfUserName)
     }
 
     return pw;
-} 
+}
 
 struct passwd *
 getpwdirlsfuser_(const char *lsfUserName)
@@ -324,7 +324,7 @@ getpwdirlsfuser_(const char *lsfUserName)
     }
 
     return pw;
-} 
+}
 
 static int
 defGetLSFUser(char *lsfUserName, unsigned int lsfUserNameSize)
@@ -341,9 +341,9 @@ defGetLSFUser(char *lsfUserName, unsigned int lsfUserNameSize)
         return LSE_BAD_ARGS;
     }
     strcpy(lsfUserName, pw->pw_name);
-    
+
     return LSE_NO_ERR;
-} 
+}
 
 static int
 defGetLSFUserByName(const char *osUserName, char *lsfUserName, unsigned int lsfUserNameSize)
@@ -354,9 +354,9 @@ defGetLSFUserByName(const char *osUserName, char *lsfUserName, unsigned int lsfU
         return LSE_BAD_ARGS;
     }
     strcpy(lsfUserName, osUserName);
-    
+
     return LSE_NO_ERR;
-} 
+}
 
 static int
 defGetLSFUserByUid(uid_t uid, char *lsfUserName, unsigned int lsfUserNameSize)
@@ -373,9 +373,9 @@ defGetLSFUserByUid(uid_t uid, char *lsfUserName, unsigned int lsfUserNameSize)
         return LSE_BAD_ARGS;
     }
     strcpy(lsfUserName, pw->pw_name);
-    
+
     return LSE_NO_ERR;
-} 
+}
 
 static int
 defGetOSUserName(const char *lsfUserName,
@@ -387,16 +387,14 @@ defGetOSUserName(const char *lsfUserName,
         return LSE_BAD_ARGS;
     }
     strcpy(osUserName, lsfUserName);
-    
+
     return LSE_NO_ERR;
-} 
+}
 
 static int
 defGetOSUid(const char *lsfUserName, uid_t *uid)
 {
     struct passwd *pw;
-
-    *uid = -1;
 
     if ((pw = getpwnam(lsfUserName)) == NULL) {
         return LSE_BADUSER;
@@ -405,5 +403,5 @@ defGetOSUid(const char *lsfUserName, uid_t *uid)
     *uid = pw->pw_uid;
 
     return LSE_NO_ERR;
-} 
+}
 

@@ -145,6 +145,18 @@
 # Jobs submitted to the queue with this option will be rerunnable.
 # The default value is 'n'. 
 
+# ROUND_ROBIN = Y | y
+# If defined the jobs in the queue are scheduled using a round robin
+# algorithm weighted on the number of users' jobs.
+#
+
+# PRE_POST_EXEC_USER = user
+# By default, both the pre- and post-execution commands are run as 
+# the job submission user. Use the PRE_POST_EXEC_USER parameter to 
+# specify a different user ID for queue-level pre- and post-execution 
+# commands.
+#
+
 Begin Queue
 QUEUE_NAME   = normal
 PRIORITY     = 30
@@ -174,21 +186,21 @@ DESCRIPTION  = For normal low priority jobs, running only if hosts are \
 lightly loaded.
 End Queue
 
-Begin Queue
-QUEUE_NAME    = owners
-PRIORITY      = 43
-NICE          = 10
+#Begin Queue
+#QUEUE_NAME    = owners
+#PRIORITY      = 43
+#NICE          = 10
 #QJOB_LIMIT    = 10
-UJOB_LIMIT    = 6
+#UJOB_LIMIT    = 6
 #PJOB_LIMIT    = 1
 #RUN_WINDOW
-r1m	      = 1.2/2.6
+#r1m	      = 1.2/2.6
 #r15m	      = 1.0/2.6
 #r15s	      = 1.0/2.6
-pg	      = 4/15
-io	      = 30/200
-swp	      = 4/1
-tmp	      = 1/0
+#pg	      = 4/15
+#io	      = 30/200
+#swp	      = 4/1
+#tmp	      = 1/0
 #CPULIMIT      = 24:0/apple	 # 24 hours of host apple
 #MEMLIMIT      = 5000            # jobs bigger than this (5M) will be niced
 #FILELIMIT     = 20000
@@ -202,15 +214,15 @@ tmp	      = 1/0
 #PRE_EXEC     = /usr/local/lsf/misc/testq_pre >> /tmp/pre.out
 #POST_EXEC    = /usr/local/lsf/misc/testq_post |grep -v "Hey"
 #REQUEUE_EXIT_VALUES = 55 34 78
-DESCRIPTION   = For owners of some machines. Only users listed in the HOSTS\
-section can submit jobs to this queue. 
-End Queue
+#DESCRIPTION   = For owners of some machines. Only users listed in the HOSTS\
+#section can submit jobs to this queue. 
+#End Queue
 
 
-Begin Queue
-QUEUE_NAME    = priority
-PRIORITY      = 43
-NICE          = 10
+#Begin Queue
+#QUEUE_NAME    = priority
+#PRIORITY      = 43
+#NICE          = 10
 #QJOB_LIMIT    = 10
 #UJOB_LIMIT    = 1
 #PJOB_LIMIT    = 1
@@ -228,24 +240,24 @@ NICE          = 10
 #PRE_EXEC     = /usr/local/lsf/misc/testq_pre >> /tmp/pre.out
 #POST_EXEC    = /usr/local/lsf/misc/testq_post |grep -v "Hey"
 #REQUEUE_EXIT_VALUES = 55 255 78
-DESCRIPTION   =  Jobs submitted for this queue are scheduled as urgent\
-jobs.
-End Queue
+#DESCRIPTION   =  Jobs submitted for this queue are scheduled as urgent\
+#jobs.
+#End Queue
 
 
-Begin Queue
-QUEUE_NAME    = short
-PRIORITY      = 35
-NICE          = 20
+#Begin Queue
+#QUEUE_NAME    = short
+#PRIORITY      = 35
+#NICE          = 20
 #UJOB_LIMIT    = 4
 #PJOB_LIMIT    = 2
 #RUN_WINDOW
 #r15s	       = 0.7/2.3
-r1m	       = 0.9/
+#r1m	       = 0.9/
 #r15m	       = 0.4/2.0
 #pg	       = 5/12
 #io	       = 140/400
-CPULIMIT      = 15             # 15 minutes of the fastest host in the cluster
+#CPULIMIT      = 15             # 15 minutes of the fastest host in the cluster
 #MEMLIMIT      = 5000           # jobs bigger than this (5M) will be niced
 #FILELIMIT     = 20000
 #DATALIMIT     = 20000          # jobs data segment limit
@@ -257,21 +269,21 @@ CPULIMIT      = 15             # 15 minutes of the fastest host in the cluster
 #ADMINISTRATORS
 #PRE_EXEC  
 #POST_EXEC 
-DESCRIPTION   = For short jobs that would not take much CPU time. \
-Scheduled with higher priority.
-End Queue
+#DESCRIPTION   = For short jobs that would not take much CPU time. \
+#Scheduled with higher priority.
+#End Queue
 
 
-Begin Queue
-QUEUE_NAME   = idle
-PRIORITY     = 20
-NICE         = 20
+#Begin Queue
+#QUEUE_NAME   = idle
+#PRIORITY     = 20
+#NICE         = 20
 #UJOB_LIMIT
 #RUN_WINDOW
-r15s	     = 0.3/1.5
-r1m	     = 0.3/1.5
-pg	     = 4.0/15
-it	     = 10/1
+#r15s	     = 0.3/1.5
+#r1m	     = 0.3/1.5
+#pg	     = 4.0/15
+#it	     = 10/1
 #CPULIMIT
 #MEMLIMIT     = 5000           # jobs bigger than this (5M) will be niced
 #FILELIMIT   = 20000
@@ -285,18 +297,18 @@ it	     = 10/1
 #PRE_EXEC  
 #POST_EXEC  
 #REQUEUE_EXIT_VALUES
-DESCRIPTION  = Running only if the machine is idle and very lightly loaded.
-End Queue
+#DESCRIPTION  = Running only if the machine is idle and very lightly loaded.
+#End Queue
 
 
-Begin Queue
-QUEUE_NAME   = chkpnt_rerun_queue
-PRIORITY     = 40
-NICE         = 10
-r1m	     = 0.8/2.5
-#STACKLIMIT   = 2048
-CHKPNT       = /tmp 10  # chkpnt period 10 minutes;
-RERUNNABLE   = YES
-DESCRIPTION  = Jobs submitted to this queue will be checkpointed\
-automatically and also rerunnable.
-End Queue
+#Begin Queue
+#QUEUE_NAME   = chkpnt_rerun_queue
+#PRIORITY     = 40
+#NICE         = 10
+#r1m	     = 0.8/2.5
+##STACKLIMIT   = 2048
+#CHKPNT       = /tmp 10  # chkpnt period 10 minutes;
+#RERUNNABLE   = YES
+#DESCRIPTION  = Jobs submitted to this queue will be checkpointed\
+#automatically and also rerunnable.
+#End Queue
