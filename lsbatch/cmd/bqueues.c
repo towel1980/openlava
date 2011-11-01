@@ -19,12 +19,12 @@
 #include "cmd.h"
 
 void load2Str();
-static void prtQueuesLong (int, struct queueInfoEnt *); 
-static void prtQueuesShort (int, struct queueInfoEnt *); 
+static void prtQueuesLong (int, struct queueInfoEnt *);
+static void prtQueuesShort (int, struct queueInfoEnt *);
 static char wflag = FALSE;
 extern int terminateWhen_(int *, char *);
 
-#define NL_SETN 8	 
+#define NL_SETN 8
 
 #define QUEUE_NAME_LENGTH    15
 #define QUEUE_PRIO_LENGTH    4
@@ -44,19 +44,19 @@ extern int terminateWhen_(int *, char *);
 
 static char fomt[200];
 
-void 
+void
 usage (char *cmd)
 {
     fprintf(stderr, I18N_Usage);
     fprintf(stderr, ": %s [-h] [-V] [-w | -l] [-m host_name | -m cluster_name]\n", cmd);
-    
+
     if (lsbMode_ & LSB_MODE_BATCH)
-	fprintf(stderr, " [-u user_name]");     
-    fprintf(stderr, " [queue_name ...]\n"); 
+	fprintf(stderr, " [-u user_name]");
+    fprintf(stderr, " [queue_name ...]\n");
     exit(-1);
 }
 
-int 
+int
 main (int argc, char **argv)
 {
     extern int optind;
@@ -71,7 +71,7 @@ main (int argc, char **argv)
 
     numQueues = 0;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
     if (lsb_init(argv[0]) < 0) {
 	lsb_perror("lsb_init");
@@ -91,14 +91,14 @@ main (int argc, char **argv)
                 usage(argv[0]);
             break;
         case 'm':
-            if (host != NULL || *optarg == '\0')   
+            if (host != NULL || *optarg == '\0')
                 usage(argv[0]);
-            host = optarg; 
+            host = optarg;
             break;
         case 'u':
-            if (user != NULL || *optarg == '\0')   
+            if (user != NULL || *optarg == '\0')
                 usage(argv[0]);
-            user = optarg; 
+            user = optarg;
             break;
 	case 'V':
 	    fputs(_LS_VERSION_, stderr);
@@ -115,15 +115,15 @@ main (int argc, char **argv)
     else
         queues = NULL;
 
-    TIMEIT(0, (queueInfo = lsb_queueinfo(queues, 
-					 &numQueues, 
-					 host, 
-					 user, 
+    TIMEIT(0, (queueInfo = lsb_queueinfo(queues,
+					 &numQueues,
+					 host,
+					 user,
 					 0)), "lsb_queueinfo");
 
-    if (!queueInfo) { 
+    if (!queueInfo) {
         if (lsberrno == LSBE_BAD_QUEUE && queues)
-	    lsb_perror(queues[numQueues]);      
+	    lsb_perror(queues[numQueues]);
         else {
             switch (lsberrno) {
             case LSBE_BAD_HOST   :
@@ -144,18 +144,18 @@ main (int argc, char **argv)
         prtQueuesLong(numQueues, queueInfo);
     else
         prtQueuesShort(numQueues, queueInfo);
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
     exit(0);
 
-} 
+}
 
-    
+
 static void
 prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
 {
     struct queueInfoEnt*  qp;
     char                  statusStr[64];
-    char                  userJobLimit[MAX_CHARLEN]; 
+    char                  userJobLimit[MAX_CHARLEN];
     char                  procJobLimit[MAX_CHARLEN];
     char                  hostJobLimit[MAX_CHARLEN];
     char                  maxJobs[MAX_CHARLEN];
@@ -194,52 +194,52 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
             if (qp->qStatus & QUEUE_STAT_RUN) {
 	        strcat(statusStr, I18N_Active);
 	    } else {
-	        strcat(statusStr, I18N_Inact__Win); 
+	        strcat(statusStr, I18N_Inact__Win);
 	    }
 	} else {
-	    strcat(statusStr, I18N_Inact__Adm); 
+	    strcat(statusStr, I18N_Inact__Adm);
 	}
 
-	
-	if (qp->maxJobs < INFINIT_INT) 
+
+	if (qp->maxJobs < INFINIT_INT)
             strcpy(maxJobs, prtValue(QUEUE_MAX_LENGTH, qp->maxJobs) );
-        else 
+        else
             strcpy(maxJobs, prtDash(QUEUE_MAX_LENGTH) );
 
-	
+
 	if (qp->userJobLimit < INFINIT_INT)
-            strcpy(userJobLimit, 
+            strcpy(userJobLimit,
                    prtValue(QUEUE_JL_U_LENGTH, qp->userJobLimit) );
-        else 
+        else
             strcpy(userJobLimit, prtDash(QUEUE_JL_U_LENGTH) );
 
-	
+
         if (qp->procJobLimit < INFINIT_FLOAT) {
             sprintf(fomt, "%%%d.1f ", QUEUE_JL_P_LENGTH);
             sprintf (procJobLimit, fomt, qp->procJobLimit);
 	}
-        else 
+        else
             strcpy(procJobLimit, prtDash(QUEUE_JL_P_LENGTH) );
 
-	
+
         if (qp->hostJobLimit < INFINIT_INT)
-            strcpy(hostJobLimit, 
+            strcpy(hostJobLimit,
                    prtValue(QUEUE_JL_H_LENGTH, qp->hostJobLimit) );
-        else 
+        else
             strcpy(hostJobLimit, prtDash(QUEUE_JL_H_LENGTH) );
 
         if (i > 0)
             printf("-------------------------------------------------------------------------------\n\n");
-        printf("%s: %s\n", _i18n_msg_get(ls_catd,NL_SETN,1210, 
+        printf("%s: %s\n", _i18n_msg_get(ls_catd,NL_SETN,1210,
 	    "QUEUE"), qp->queue); /* catgets  1210  */
 
         printf("  -- %s", qp->description);
 	if (qp->qAttrib & Q_ATTRIB_DEFAULT) {
             if (numDefaults == 1)
-	       printf("  %s.\n\n", _i18n_msg_get(ls_catd,NL_SETN,1211, 
+	       printf("  %s.\n\n", _i18n_msg_get(ls_catd,NL_SETN,1211,
 		   "This is the default queue")); /* catgets  1211  */
             else
-	       printf("  %s.\n\n", _i18n_msg_get(ls_catd,NL_SETN,1212, 
+	       printf("  %s.\n\n", _i18n_msg_get(ls_catd,NL_SETN,1212,
 		   "This is one of the default queues")); /* catgets  1212  */
         } else
 	    printf("\n\n");
@@ -284,23 +284,23 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
                                                   QUEUE_JL_H_LENGTH );
 	    printf(fomt,
                    maxJobs, userJobLimit, procJobLimit, hostJobLimit);
-	};	    
-	
-        sprintf(fomt, "%%%dd %%%dd %%%dd %%%dd %%%dd %%%dd\n", 
+	};
+
+        sprintf(fomt, "%%%dd %%%dd %%%dd %%%dd %%%dd %%%dd\n",
                                                   QUEUE_NJOBS_LENGTH,
                                                   QUEUE_PEND_LENGTH,
                                                   QUEUE_RUN_LENGTH,
                                                   QUEUE_SSUSP_LENGTH,
                                                   QUEUE_USUSP_LENGTH,
                                                   QUEUE_RSV_LENGTH );
-	printf(fomt, 
+	printf(fomt,
                 qp->numJobs, qp->numPEND, qp->numRUN,
                 qp->numSSUSP, qp->numUSUSP, qp->numRESERVE);
-	    
+
 	if ( qp->mig < INFINIT_INT )
-       	    printf((_i18n_msg_get(ls_catd,NL_SETN,1215, 
+       	    printf((_i18n_msg_get(ls_catd,NL_SETN,1215,
 	        "Migration threshold is %d minutes\n")), qp->mig); /* catgets  1215  */
-	
+
         if ( qp->schedDelay < INFINIT_INT )
 	    printf((_i18n_msg_get(ls_catd,NL_SETN,1216, "Schedule delay for a new job is %d seconds\n")),  /* catgets  1216  */
 		    qp->schedDelay);
@@ -308,7 +308,7 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
         if ( qp->acceptIntvl < INFINIT_INT )
 	    printf((_i18n_msg_get(ls_catd,NL_SETN,1217, "Interval for a host to accept two jobs is %d seconds\n")), /* catgets  1217  */
 		    qp->acceptIntvl);
-        
+
         if (((qp->defLimits[LSF_RLIMIT_CPU] != INFINIT_INT) &&
              (qp->defLimits[LSF_RLIMIT_CPU] > 0 )) ||
             ((qp->defLimits[LSF_RLIMIT_RUN] != INFINIT_INT) &&
@@ -347,86 +347,89 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
             || (qp->qAttrib & Q_ATTRIB_BACKFILL)
             || (qp->qAttrib & Q_ATTRIB_IGNORE_DEADLINE)
             || (qp->qAttrib & Q_ATTRIB_ONLY_INTERACTIVE)
-	    || (qp->qAttrib & Q_ATTRIB_NO_INTERACTIVE)) {	    
-            printf("\n%s:", _i18n_msg_get(ls_catd,NL_SETN,1219, 
+	    || (qp->qAttrib & Q_ATTRIB_NO_INTERACTIVE)) {
+            printf("\n%s:", _i18n_msg_get(ls_catd,NL_SETN,1219,
 		"SCHEDULING POLICIES")); /* catgets  1219  */
             if (qp->qAttrib & Q_ATTRIB_BACKFILL)
-                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1223, 
+                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1223,
 		    "BACKFILL"))); /* catgets  1223  */
             if (qp->qAttrib & Q_ATTRIB_IGNORE_DEADLINE)
-                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1224, 
+                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1224,
 		    "IGNORE_DEADLINE"))); /* catgets  1224  */
             if (qp->qAttrib & Q_ATTRIB_EXCLUSIVE)
-                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1225, 
+                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1225,
 		    "EXCLUSIVE"))); /* catgets  1225  */
             if (qp->qAttrib & Q_ATTRIB_NO_INTERACTIVE)
-                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1226, 
+                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1226,
 		    "NO_INTERACTIVE"))); /* catgets  1226  */
             if (qp->qAttrib & Q_ATTRIB_ONLY_INTERACTIVE)
-                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1227, 
+                printf("  %s", (_i18n_msg_get(ls_catd,NL_SETN,1227,
 		    "ONLY_INTERACTIVE")));	    	     /* catgets  1227  */
 	    printf("\n");
         }
-	
+
         if (strcmp (qp->defaultHostSpec, " ") !=  0)
-            printf("\n%s: %s\n", 
+            printf("\n%s: %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1230, "DEFAULT HOST SPECIFICATION")), qp->defaultHostSpec); /* catgets  1230  */
 
         if (qp->windows && strcmp (qp->windows, " " ) !=0)
-	    printf("\n%s: %s\n", 
+	    printf("\n%s: %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1231, "RUN_WINDOW")), qp->windows); /* catgets  1231  */
         if (strcmp (qp->windowsD, " ")  !=  0)
-	    printf("\n%s: %s\n", 
+	    printf("\n%s: %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1232, "DISPATCH_WINDOW")), qp->windowsD); /* catgets  1232  */
 
 	if (lsbMode_ & LSB_MODE_BATCH) {
-	    if ( strcmp(qp->userList, " ") == 0) { 
-		printf("\n%s:  %s\n", I18N_USERS, 
+	    if ( strcmp(qp->userList, " ") == 0) {
+		printf("\n%s:  %s\n", I18N_USERS,
 		       I18N(408, "all users")); /* catgets 408 */
 	    } else {
 		if (strcmp(qp->userList, " ") != 0 && qp->userList[0] != 0)
-		    printf("\n%s: %s\n", I18N_USERS, qp->userList); 
+		    printf("\n%s: %s\n", I18N_USERS, qp->userList);
 	    }
 	}
-	
+
 	if (strcmp(qp->hostList, " ") == 0) {
 	    if (lsbMode_ & LSB_MODE_BATCH)
-		printf("%s\n", 
+		printf("%s\n",
 			(_i18n_msg_get(ls_catd,NL_SETN,1235, "HOSTS:  all hosts used by the LSF Batch system"))); /* catgets  1235  */
 	    else
-		printf("%s\n", 
+		printf("%s\n",
 			(_i18n_msg_get(ls_catd,NL_SETN,1236, "HOSTS: all hosts used by the LSF JobScheduler system"))); /* catgets  1236  */
         } else {
 	    if (strcmp(qp->hostList, " ") != 0 && qp->hostList[0])
-	        printf("%s:  %s\n", I18N_HOSTS, qp->hostList); 
-        } 
-        if (strcmp (qp->admins, " ") != 0) 
-            printf("%s:  %s\n", 
+	        printf("%s:  %s\n", I18N_HOSTS, qp->hostList);
+        }
+	if (strcmp (qp->prepostUsername, " ") != 0)
+            printf("%s:  %s\n",
+		   (_i18n_msg_get(ls_catd,NL_SETN,1238, "PRE_POST_EXEC_USER")), qp->prepostUsername); /* catgets  1238  */
+        if (strcmp (qp->admins, " ") != 0)
+            printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1239, "ADMINISTRATORS")), qp->admins); /* catgets  1239  */
-        if (strcmp (qp->preCmd, " ") != 0) 
-            printf("%s:  %s\n", 
+        if (strcmp (qp->preCmd, " ") != 0)
+            printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1240, "PRE_EXEC")), qp->preCmd); /* catgets  1240  */
-        if (strcmp (qp->postCmd, " ") != 0) 
-            printf("%s:  %s\n", 
+        if (strcmp (qp->postCmd, " ") != 0)
+            printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1241, "POST_EXEC")), qp->postCmd); /* catgets  1241  */
-        if (strcmp (qp->requeueEValues, " ") != 0) 
-            printf("%s:  %s\n", 
+        if (strcmp (qp->requeueEValues, " ") != 0)
+            printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1242, "REQUEUE_EXIT_VALUES")), qp->requeueEValues); /* catgets  1242  */
-        if (strcmp (qp->resReq, " ") != 0) 
-            printf("%s:  %s\n", 
+        if (strcmp (qp->resReq, " ") != 0)
+            printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1243, "RES_REQ")), qp->resReq); /* catgets  1243  */
-        if (qp->slotHoldTime > 0) 
+        if (qp->slotHoldTime > 0)
 	    printf((_i18n_msg_get(ls_catd,NL_SETN,1244, "Maximum slot reservation time: %d seconds\n")), qp->slotHoldTime); /* catgets  1244  */
         if (strcmp (qp->resumeCond, " ") != 0)
-	    printf("%s:  %s\n", 
+	    printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1245, "RESUME_COND")), qp->resumeCond); /* catgets  1245  */
         if (strcmp (qp->stopCond, " ") != 0)
-	    printf("%s:  %s\n", 
+	    printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1246, "STOP_COND")), qp->stopCond); /* catgets  1246  */
         if (strcmp (qp->jobStarter, " ") != 0)
-	    printf("%s:  %s\n", 
+	    printf("%s:  %s\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1247, "JOB_STARTER")), qp->jobStarter);	 /* catgets  1247  */
-	if ( qp->qAttrib & Q_ATTRIB_RERUNNABLE ) 
+	if ( qp->qAttrib & Q_ATTRIB_RERUNNABLE )
 	   printf((_i18n_msg_get(ls_catd,NL_SETN,1263, "RERUNNABLE :  yes\n"))); /* catgets  1263  */
 
 	if ( qp->qAttrib & Q_ATTRIB_CHKPNT ) {
@@ -434,17 +437,17 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
 	   printf((_i18n_msg_get(ls_catd,NL_SETN,1262, "CHKPNTPERIOD : %d\n")), qp->chkpntPeriod); /* catgets  1262  */
 	}
 
-        
+
 
         printf("\n");
         printFlag = 0;
-        if  ((qp->suspendActCmd != NULL) 
+        if  ((qp->suspendActCmd != NULL)
             && (qp->suspendActCmd[0] != ' '))
                 printFlag = 1;
 
         printFlag1 = 0;
         if  ((qp->resumeActCmd != NULL)
-            && (qp->resumeActCmd[0] != ' ')) 
+            && (qp->resumeActCmd[0] != ' '))
             printFlag1 = 1;
 
         printFlag2 = 0;
@@ -453,7 +456,7 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
             printFlag2 = 1;
 
         if (printFlag || printFlag1 || printFlag2)
-            printf("%s:\n", 
+            printf("%s:\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,1251, "JOB_CONTROLS"))); /* catgets  1251  */
 
 
@@ -494,7 +497,7 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
 
     printf("\n");
 
-} 
+}
 static void
 prtQueuesShort(int numQueues, struct queueInfoEnt *queueInfo)
 {
@@ -502,7 +505,7 @@ prtQueuesShort(int numQueues, struct queueInfoEnt *queueInfo)
     char statusStr[64];
     char first = FALSE;
     int i;
-    char userJobLimit[MAX_CHARLEN], 
+    char userJobLimit[MAX_CHARLEN],
          procJobLimit[MAX_CHARLEN],
          hostJobLimit[MAX_CHARLEN];
     char maxJobs[MAX_CHARLEN];
@@ -518,7 +521,7 @@ prtQueuesShort(int numQueues, struct queueInfoEnt *queueInfo)
                 prtWord(QUEUE_JL_P_LENGTH, I18N_JL_P, -1);
                 prtWord(QUEUE_JL_H_LENGTH, I18N_JL_H, -1);
 	    };
-	
+
         prtWord(QUEUE_NJOBS_LENGTH, I18N_NJOBS, -1);
         prtWord(QUEUE_PEND_LENGTH,  I18N_PEND,  -1);
         prtWord(QUEUE_RUN_LENGTH,   I18N_RUN,   -1);
@@ -541,40 +544,40 @@ prtQueuesShort(int numQueues, struct queueInfoEnt *queueInfo)
             if (qp->qStatus & QUEUE_STAT_RUN) {
 	        strcat(statusStr, I18N_Active);
 	    } else {
-	        strcat(statusStr, I18N_Inact); 
+	        strcat(statusStr, I18N_Inact);
 	    }
 	} else {
-	    strcat(statusStr, I18N_Inact); 
+	    strcat(statusStr, I18N_Inact);
 	}
 
-	
+
 	if (qp->maxJobs < INFINIT_INT)
             strcpy(maxJobs, prtValue(QUEUE_MAX_LENGTH, qp->maxJobs) );
         else
             strcpy(maxJobs, prtDash(QUEUE_MAX_LENGTH) );
 
-	
+
 	if (qp->userJobLimit < INFINIT_INT)
-            strcpy(userJobLimit, 
+            strcpy(userJobLimit,
                    prtValue(QUEUE_JL_U_LENGTH, qp->userJobLimit) );
-        else 
+        else
             strcpy(userJobLimit, prtDash(QUEUE_JL_U_LENGTH) );
 
-	
+
         if (qp->procJobLimit < INFINIT_FLOAT) {
             sprintf(fomt, "%%%d.0f ", QUEUE_JL_P_LENGTH);
             sprintf (procJobLimit, fomt, qp->procJobLimit);
 	}
-        else 
+        else
             strcpy(procJobLimit, prtDash(QUEUE_JL_P_LENGTH) );
 
-	
+
         if (qp->hostJobLimit < INFINIT_INT)
-            strcpy(hostJobLimit, 
+            strcpy(hostJobLimit,
                    prtValue(QUEUE_JL_H_LENGTH, qp->hostJobLimit) );
-        else 
+        else
             strcpy(hostJobLimit, prtDash(QUEUE_JL_H_LENGTH) );
- 
+
         if ( wflag ) {
             prtWordL(QUEUE_NAME_LENGTH, qp->queue);
             prtWordL(QUEUE_PRIO_LENGTH,
@@ -600,11 +603,11 @@ prtQueuesShort(int numQueues, struct queueInfoEnt *queueInfo)
                                                    QUEUE_PEND_LENGTH,
                                                    QUEUE_RUN_LENGTH,
                                                    QUEUE_SUSP_LENGTH );
-	printf(fomt, 
+	printf(fomt,
                 qp->numJobs, qp->numPEND, qp->numRUN,
                 (qp->numSSUSP + qp->numUSUSP) );
 
-    }; 
+    };
 
-}    
-	    
+}
+

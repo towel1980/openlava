@@ -294,6 +294,7 @@ struct jobSpecs {
     char     projectName[MAX_LSB_NAME_LEN];
     char     preCmd[MAXLINELEN];
     char     postCmd[MAXLINELEN];
+    char     prepostUsername[MAX_LSB_NAME_LEN];
     char     execCwd[MAXFILENAMELEN];
     char     execHome[MAXFILENAMELEN];
     int      execUid;

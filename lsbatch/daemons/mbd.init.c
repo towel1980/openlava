@@ -1289,6 +1289,7 @@ freeQData (struct qData *qp, int delete)
     }
     FREEUP (qp->preCmd);
     FREEUP (qp->postCmd);
+    FREEUP (qp->prepostUsername);
     if (qp->requeueEValues) {
         clean_requeue(qp);
     }
@@ -1577,6 +1578,7 @@ initQData (void)
     qp->nAdmins  = 0;
     qp->preCmd   = NULL;
     qp->postCmd = NULL;
+    qp->prepostUsername = NULL;
     qp->requeueEValues = NULL;
     qp->requeEStruct = NULL;
     qp->hJobLimit = INFINIT_INT;
@@ -2520,6 +2522,8 @@ addQData (struct queueConf *queueConf, int mbdInitFlags )
         if (queue->preCmd)
             qp->preCmd = safeSave (queue->preCmd);
 
+	if (queue->prepostUsername)
+	    qp->prepostUsername = safeSave (queue->prepostUsername);
 
         if (queue->postCmd)
             qp->postCmd = safeSave (queue->postCmd);
@@ -2858,6 +2862,7 @@ copyQData (struct qData *fromQp, struct qData *toQp)
     copyString(toQp->resReq, fromQp->resReq);
     copyString(toQp->preCmd, fromQp->preCmd);
     copyString(toQp->postCmd, fromQp->postCmd);
+    copyString(toQp->prepostUsername, fromQp->prepostUsername);
     copyString(toQp->requeueEValues, fromQp->requeueEValues);
     copyString(toQp->windowsD, fromQp->windowsD);
     copyString(toQp->windows, fromQp->windows);

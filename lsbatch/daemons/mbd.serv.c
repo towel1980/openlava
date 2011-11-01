@@ -22,7 +22,7 @@
 #include <dirent.h>
 #include <malloc.h>
 
-#define NL_SETN		10	
+#define NL_SETN		10
 
 static unsigned int     msgcnt = 0;
 extern int numLsbUsable;
@@ -31,9 +31,9 @@ extern int lsb_CheckMode;
 extern int lsb_CheckError;
 extern  sbdReplyType callSbdDebug(struct debugReq *pdebug);
 extern int getXdrStrlen(char *);
-extern  bool_t xdr_resourceInfoReply (XDR *, struct resourceInfoReply *, 
+extern  bool_t xdr_resourceInfoReply (XDR *, struct resourceInfoReply *,
                                                        struct LSFHeader *);
-extern bool_t xdr_resourceInfoReq(XDR *, struct resourceInfoReq *, 
+extern bool_t xdr_resourceInfoReq(XDR *, struct resourceInfoReq *,
 						       struct LSFHeader *);
 
 extern char *jgrpNodeParentPath(struct jgTreeNode *);
@@ -62,7 +62,7 @@ extern void freeHp(struct hostent *);
 int
 do_submitReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
 	      struct LSFHeader *reqHdr, struct sockaddr_in *laddr,
-	      struct lsfAuth *auth, int *schedule, int dispatch, 
+	      struct lsfAuth *auth, int *schedule, int dispatch,
               struct jData **jobData)
 {
     static char             fname[] = "do_submitReq";
@@ -74,22 +74,22 @@ do_submitReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
     if (logclass & (LC_TRACE | LC_EXEC | LC_COMM))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...; host=%s, socket=%d", fname, hostName, chanSock_(chfd));
 
-    
+
     initSubmit(&first, &subReq, &submitReply);
 
-    
+
     if (!xdr_submitReq(xdrs, &subReq, reqHdr)) {
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_submitReq");
 	goto sendback;
     }
 
-    
+
     if (!(subReq.options & SUB_RLIMIT_UNIT_IS_KB)) {
 	convertRLimit(subReq.rLimits, 1);
     }
 
-    reply = newJob (&subReq, &submitReply, chfd, auth, schedule, dispatch, 
+    reply = newJob (&subReq, &submitReply, chfd, auth, schedule, dispatch,
                     jobData);
 sendback:
     if (reply != 0 || submitReply.jobId <= 0 ) {
@@ -130,17 +130,17 @@ sendback:
     }
     return (0);
 
-} 
+}
 
 int
 checkUseSelectJgrps(struct LSFHeader *reqHdr, struct jobInfoReq *req)
 {
-    
+
     if (req->jobId != 0 && !(req->options & JGRP_ARRAY_INFO))
         return(FALSE);
- 
-    
-    if ((req->jobName[0] == '\0') &&  
+
+
+    if ((req->jobName[0] == '\0') &&
          !(req->options & JGRP_ARRAY_INFO))
 	return(FALSE);
 
@@ -153,7 +153,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
                struct LSFHeader *reqHdr, int schedule)
 {
     static char             fname[] = "do_jobInfoReq";
-    char                    *reply_buf = NULL;	
+    char                    *reply_buf = NULL;
     char                   *buf = NULL;
     XDR                     xdrs2;
     struct jobInfoReq       jobInfoReq;
@@ -162,7 +162,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     int                     i, len, listSize = 0;
     struct LSFHeader        replyHdr;
     struct nodeList        *jgrplist = NULL;
-    struct jData          **joblist = NULL; 
+    struct jData          **joblist = NULL;
     int                     selectJgrpsFlag = FALSE;
 
     if (logclass & (LC_TRACE | LC_COMM))
@@ -175,7 +175,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_jobInfoReq");
     }
-    if (jobInfoReq.host[0] != '\0'      
+    if (jobInfoReq.host[0] != '\0'
         && getHGrpData(jobInfoReq.host) == NULL
         && !isValidHost_(jobInfoReq.host)
         && (strcmp(jobInfoReq.host, LOST_AND_FOUND) != 0))
@@ -188,7 +188,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
         else {
 	    reply = selectJobs(&jobInfoReq, &joblist, &listSize);
 
-	    
+
             jgrplist = (struct nodeList *) calloc(listSize,
                                                   sizeof(struct nodeList));
             for (i = 0; i < listSize; i++){
@@ -200,15 +200,15 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     }
 
 
-    
 
-    
+
+
     xdr_lsffree(xdr_jobInfoReq, (char *) &jobInfoReq, reqHdr);
 
     jobInfoHead.numJobs = listSize;
 
     if (jobInfoHead.numJobs > 0)
-        jobInfoHead.jobIds = (LS_LONG_INT *)my_calloc (listSize, sizeof(LS_LONG_INT), fname); 
+        jobInfoHead.jobIds = (LS_LONG_INT *)my_calloc (listSize, sizeof(LS_LONG_INT), fname);
     for (i = 0; i < listSize; i++){
 	if (!jgrplist[i].isJData)
             jobInfoHead.jobIds[i] = 0;
@@ -218,7 +218,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 
     jobInfoHead.numHosts = 0;
     if (jobInfoReq.options & HOST_NAME) {
-        jobInfoHead.hostNames = (char **) my_calloc (numofhosts, 
+        jobInfoHead.hostNames = (char **) my_calloc (numofhosts,
                                           sizeof(char *), fname);
         for (i = 1; i <= numofhosts; i++)
             jobInfoHead.hostNames[i-1] = hDataPtrTb[i]->host;
@@ -226,27 +226,27 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
         jobInfoHead.numHosts = numofhosts;
     }
 
-    len = sizeof(struct jobInfoHead) 
+    len = sizeof(struct jobInfoHead)
 	  + jobInfoHead.numJobs * sizeof(LS_LONG_INT)
           + jobInfoHead.numHosts * (sizeof(char *) + MAXHOSTNAMELEN)
           + 100;
-       
+
     reply_buf = (char *)my_malloc (len, fname);
     xdrmem_create(&xdrs2, reply_buf, len, XDR_ENCODE);
     replyHdr.opCode = reply;
 
-    if (!xdr_encodeMsg(&xdrs2, (char *) &jobInfoHead, &replyHdr, 
+    if (!xdr_encodeMsg(&xdrs2, (char *) &jobInfoHead, &replyHdr,
                        xdr_jobInfoHead, 0, NULL)) {
         FREEUP (reply_buf);
         freeJobHead (&jobInfoHead);
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, 
+	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname,
 	    "xdr_encodeMsg", "jobInfoHead");
         xdr_destroy(&xdrs2);
 	FREEUP (jgrplist);
 	return(-1);
     }
     len = XDR_GETPOS(&xdrs2);
-    
+
     {
         if (chanWrite_(chfd, reply_buf, len) != len) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanWrite_");
@@ -261,29 +261,29 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 
     xdr_destroy(&xdrs2);
     freeJobHead (&jobInfoHead);
-    if (reply != LSBE_NO_ERROR || 
+    if (reply != LSBE_NO_ERROR ||
         (jobInfoReq.options & (JOBID_ONLY|JOBID_ONLY_ALL))) {
 	FREEUP (jgrplist);
 	return(0);
     }
 
     for (i = 0; i < listSize; i++) {
-        if (jgrplist[i].isJData && 
-            ((len = packJobInfo ((struct jData *)jgrplist[i].info, 
+        if (jgrplist[i].isJData &&
+            ((len = packJobInfo ((struct jData *)jgrplist[i].info,
                                     listSize - 1 - i,  &buf, schedule,
 				 jobInfoReq.options, reqHdr->version)) < 0)) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "packJobInfo");
             FREEUP (jgrplist);
             return(-1);
         }
-        if ( !jgrplist[i].isJData && 
-             ((len = packJgrpInfo ((struct jgTreeNode *)jgrplist[i].info, 
+        if ( !jgrplist[i].isJData &&
+             ((len = packJgrpInfo ((struct jgTreeNode *)jgrplist[i].info,
                                     listSize - 1 - i, &buf, schedule, reqHdr->version)) < 0)) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "packJgrpInfo");
             FREEUP (jgrplist);
             return(-1);
         }
-	
+
 	{
             if (chanWrite_(chfd, buf, len) != len) {
                 ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanWrite_");
@@ -297,8 +297,8 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     FREEUP (jgrplist);
 
     chanClose_(chfd);
-    return(0);           
-} 
+    return(0);
+}
 
 static int
 packJgrpInfo(struct jgTreeNode * jgNode, int remain, char **replyBuf, int schedule, int version)
@@ -313,7 +313,7 @@ packJgrpInfo(struct jgTreeNode * jgNode, int remain, char **replyBuf, int schedu
 
     jobInfoReply.jobId        = 0;
     jobInfoReply.numReasons   = 0;
-    jobInfoReply.reasons      = 0; 
+    jobInfoReply.reasons      = 0;
     jobInfoReply.subreasons   = 0;
 
     jobInfoReply.startTime    = 0;
@@ -346,14 +346,14 @@ packJgrpInfo(struct jgTreeNode * jgNode, int remain, char **replyBuf, int schedu
 
     request_buf = (char *) my_malloc(len, "packJgrpInfo");
     xdrmem_create(&xdrs, request_buf, len, XDR_ENCODE);
-    
+
     setHdrReserved(&hdr, remain);
-    
+
 
     hdr.version = version;
     if (!xdr_encodeMsg(&xdrs, (char *) &jobInfoReply,
 		       &hdr, xdr_jobInfoReply, 0, NULL)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, 
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname,
 	    "xdr_encodeMsg", "jobInfoReply");
 	xdr_destroy(&xdrs);
 	FREEUP (request_buf);
@@ -364,51 +364,51 @@ packJgrpInfo(struct jgTreeNode * jgNode, int remain, char **replyBuf, int schedu
     xdr_destroy(&xdrs);
     return (i);
 
-} 
+}
 
-static int 
+static int
 jobInfoReplyXdrBufLen(struct jobInfoReply *jobInfoReplyPtr)
 {
-    struct jobInfoReply jobInfoReply = *jobInfoReplyPtr; 
+    struct jobInfoReply jobInfoReply = *jobInfoReplyPtr;
     int len = 0;
     int i;
 
     len = sizeof(struct jobInfoReply);
-    len += jobInfoReply.numReasons * sizeof(int); 
+    len += jobInfoReply.numReasons * sizeof(int);
     len += jobInfoReply.numToHosts * ALIGNWORD_(MAXHOSTNAMELEN);
-    len += 2 * jobInfoReply.nIdx * sizeof(float); 
-    len += ALIGNWORD_(MAXLSFNAMELEN); 
+    len += 2 * jobInfoReply.nIdx * sizeof(float);
+    len += ALIGNWORD_(MAXLSFNAMELEN);
     len += ALIGNWORD_(strlen(jobInfoReply.execUsername) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.execHome) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.execCwd) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.parentGroup) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.jName) + 1);
-    
+
     len += sizeof(jobInfoReply.runRusage);
     len += jobInfoReply.runRusage.npgids * sizeof(int);
 
-    
+
 
     len += jobInfoReply.runRusage.npids * (NET_INTSIZE_ + sizeof(struct pidInfo));
- 
+
     len += sizeof(struct submitReq);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->jobName) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->queue) + 1);
     for (i = 0; i < jobInfoReply.jobBill->numAskedHosts; i++)
 	len += ALIGNWORD_(strlen(jobInfoReply.jobBill->askedHosts[i]) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->resReq) + 1);
-    len += ALIGNWORD_(MAXHOSTNAMELEN);	
+    len += ALIGNWORD_(MAXHOSTNAMELEN);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->dependCond) + 1);
-    len += ALIGNWORD_(MAXFILENAMELEN);	
-    len += ALIGNWORD_(MAXFILENAMELEN);	 
-    len += ALIGNWORD_(MAXFILENAMELEN); 	 
-    len += ALIGNWORD_(MAXFILENAMELEN);	 
+    len += ALIGNWORD_(MAXFILENAMELEN);
+    len += ALIGNWORD_(MAXFILENAMELEN);
+    len += ALIGNWORD_(MAXFILENAMELEN);
+    len += ALIGNWORD_(MAXFILENAMELEN);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->command) + 1);
-    len += ALIGNWORD_(MAXFILENAMELEN);	
+    len += ALIGNWORD_(MAXFILENAMELEN);
     len += jobInfoReply.jobBill->nxf * sizeof(struct xFile);
-    len += ALIGNWORD_(MAXFILENAMELEN);	
-    len += ALIGNWORD_(MAXHOSTNAMELEN);	
-    len += ALIGNWORD_(MAXFILENAMELEN);	
+    len += ALIGNWORD_(MAXFILENAMELEN);
+    len += ALIGNWORD_(MAXHOSTNAMELEN);
+    len += ALIGNWORD_(MAXFILENAMELEN);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->preExecCmd) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->mailUser) + 1);
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->projectName) + 1);
@@ -416,7 +416,7 @@ jobInfoReplyXdrBufLen(struct jobInfoReply *jobInfoReplyPtr)
     len += ALIGNWORD_(strlen(jobInfoReply.jobBill->schedHostType) + 1);
 
     return(len);
-}	
+}
 
 static int
 packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
@@ -430,16 +430,16 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
     int                      *reasonTb = NULL;
     int                      *jReasonTb;
     XDR                      xdrs;
-    int                      i, 
-	                     k, 
+    int                      i,
+	                     k,
 	                     len;
-    int                      svReason, 
-	                     *pkHReasonTb, 
-                             *pkQReasonTb,  
+    int                      svReason,
+	                     *pkHReasonTb,
+                             *pkQReasonTb,
                              *pkUReasonTb;
     float                    *loadSched = NULL,
                              *loadStop = NULL;
-    float                    *cpuFactor, 
+    float                    *cpuFactor,
                              one = 1.0;
     float		     cpuF;
     char		     fullName[MAXPATHLEN];
@@ -451,8 +451,8 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
     job_reasonTb = jobData->reasonTb;
 
     if (reasonTb == NULL) {
-       reasonTb = (int *) my_calloc (numofhosts + 1, sizeof(int), fname); 
-       jReasonTb = (int *) my_calloc (numofhosts + 1, sizeof(int), fname); 
+       reasonTb = (int *) my_calloc (numofhosts + 1, sizeof(int), fname);
+       jReasonTb = (int *) my_calloc (numofhosts + 1, sizeof(int), fname);
     }
 
     jobInfoReply.jobId = jobData->jobId;
@@ -466,22 +466,22 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
 	jobInfoReply.status = JOB_STAT_UNKWN;
     else
 	jobInfoReply.status = jobData->jStatus;
-    jobInfoReply.status &= MASK_INT_JOB_STAT;	
+    jobInfoReply.status &= MASK_INT_JOB_STAT;
 
     if (IS_SUSP (jobData->jStatus))
 	jobInfoReply.reasons = (~SUSP_MBD_LOCK & jobData->newReason);
     else
-        jobInfoReply.reasons = jobData->newReason; 
+        jobInfoReply.reasons = jobData->newReason;
     jobInfoReply.subreasons = jobData->subreasons;
-    jobInfoReply.reasonTb = reasonTb;           
+    jobInfoReply.reasonTb = reasonTb;
 
     if (logclass & LC_PEND)
         ls_syslog(LOG_DEBUG3, "%s: job=%s, rs=%d, nrs=%d srs=%d, qNrs=%d, jNrs=%d nLsb=%d nQU=%d mStage=%d", fname, lsb_jobid2str(jobData->jobId), jobData->oldReason, jobData->newReason, jobData->subreasons, jobData->qPtr->numReasons, job_numReasons, numLsbUsable, jobData->qPtr->numUsable, mSchedStage);
 
-    
+
     if (IS_PEND (jobData->jStatus) && !(options & NO_PEND_REASONS)) {
         int useNewRs = TRUE;
-        
+
 	if (mSchedStage != 0 && !(jobData->processed & JOB_STAGE_DISP))
             useNewRs = FALSE;
         if (useNewRs) {
@@ -492,29 +492,29 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
 
         jobInfoReply.numReasons = 0;
         if (svReason) {
-	    
+
 	    jobInfoReply.reasonTb[jobInfoReply.numReasons++] = svReason;
         } else {
-	    
+
 	    pkHReasonTb = hReasonTb[0];
 	    pkQReasonTb = jobData->qPtr->reasonTb[0];
 	    pkUReasonTb = jobData->uPtr->reasonTb[0];
             for (i = 0; i <= numofhosts; i ++) {
-                if (i > 0 && jobData->numAskedPtr > 0 
-                    && jobData->askedOthPrio < 0)     
-		    jReasonTb[i] = PEND_HOST_USR_SPEC;     
+                if (i > 0 && jobData->numAskedPtr > 0
+                    && jobData->askedOthPrio < 0)
+		    jReasonTb[i] = PEND_HOST_USR_SPEC;
                 else
-		    jReasonTb[i] = 0;                      
+		    jReasonTb[i] = 0;
             }
-	    
+
 	    for (i = 0; i < jobData->numAskedPtr; i++) {
 	        k = jobData->askedPtr[i].hData->hostId;
-	        jReasonTb[k] = 0;         
+	        jReasonTb[k] = 0;
 	    }
             for (i = 0; i < job_numReasons; i++) {
                 if (job_reasonTb[i]) {
                     GET_HIGH(k, job_reasonTb[i]);
-                    if (k > numofhosts 
+                    if (k > numofhosts
                         || jReasonTb[k] == PEND_HOST_USR_SPEC)
                         continue;
                     jReasonTb[k] = job_reasonTb[i];
@@ -525,40 +525,40 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
 		    ls_syslog(LOG_DEBUG2, "%s: Get h/u/q reasons", fname);
                 k = 0;
 		for (i = 1; i <= numofhosts; i ++) {
-                    
+
                     if (jReasonTb[i] == PEND_HOST_USR_SPEC) {
-                        continue;       
+                        continue;
                     }
 		    if (pkQReasonTb[i] == PEND_HOST_QUE_MEMB)
-                        continue;          
+                        continue;
                     if (!isHostQMember(hDataPtrTb[i], jobData->qPtr)){
-                        continue;           
+                        continue;
                     }
 		    if (pkHReasonTb[i]) {
 			jobInfoReply.reasonTb[k] = pkHReasonTb[i];
                         PUT_HIGH(jobInfoReply.reasonTb[k], i);
-                        k++;               
+                        k++;
 			if (debug && (logclass & LC_PEND))
-			    ls_syslog(LOG_DEBUG2, "%s: hReasonTb[%d]=%d", 
-					    fname, i, pkHReasonTb[i]); 
+			    ls_syslog(LOG_DEBUG2, "%s: hReasonTb[%d]=%d",
+					    fname, i, pkHReasonTb[i]);
                         continue;
                     }
 		    if (pkQReasonTb[i]) {
 			jobInfoReply.reasonTb[k] = pkQReasonTb[i];
 			PUT_HIGH(jobInfoReply.reasonTb[k], i);
-                        k++;               
+                        k++;
 			if (debug && (logclass & LC_PEND))
-			    ls_syslog(LOG_DEBUG2, "%s: qReason[%d]=%d", 
-			          fname, i, pkQReasonTb[i]); 
+			    ls_syslog(LOG_DEBUG2, "%s: qReason[%d]=%d",
+			          fname, i, pkQReasonTb[i]);
                         continue;
 		    }
 		    if (pkUReasonTb[i]) {
 			jobInfoReply.reasonTb[k] = pkUReasonTb[i];
 			PUT_HIGH(jobInfoReply.reasonTb[k], i);
-                        k++;               
+                        k++;
 			if (debug && (logclass & LC_PEND))
-			    ls_syslog(LOG_DEBUG2, "%s: uReason[%d]=%d", 
-			          fname, i, pkUReasonTb[i]); 
+			    ls_syslog(LOG_DEBUG2, "%s: uReason[%d]=%d",
+			          fname, i, pkUReasonTb[i]);
                         continue;
 		    }
 		    if (jReasonTb[i]) {
@@ -566,19 +566,19 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
 			if (debug && (logclass & LC_PEND)) {
                             int rs;
 			    GET_LOW(rs, jReasonTb[i]);
-			    ls_syslog(LOG_DEBUG2, "%s: jReason[%d]=%d", 
-						    fname, i, rs); 
+			    ls_syslog(LOG_DEBUG2, "%s: jReason[%d]=%d",
+						    fname, i, rs);
                         }
                         continue;
 		    }
 		}
-                
+
                 if (jReasonTb[0] != 0) {
-		    
-		    jobInfoReply.reasonTb[k++] = jReasonTb[0];        
+
+		    jobInfoReply.reasonTb[k++] = jReasonTb[0];
 		    if (debug && (logclass & LC_PEND)) {
-			ls_syslog(LOG_DEBUG2, "%s: jReason[0]=%d", 
-						    fname, jReasonTb[0]); 
+			ls_syslog(LOG_DEBUG2, "%s: jReason[0]=%d",
+						    fname, jReasonTb[0]);
 		    }
                 }
             }
@@ -602,7 +602,7 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
         if ((!loadSched) || (!loadStop)) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
             mbdDie(MASTER_FATAL);
-        }   
+        }
     }
 
     if ((jobData->numHostPtr > 0) && (jobData->hPtr[0] != NULL)) {
@@ -643,7 +643,7 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
     jobInfoReply.jobBill = &jobBill;
     copyJobBill (&jobData->shared->jobBill, jobInfoReply.jobBill, FALSE);
     if (jobInfoReply.jobBill->options2 & SUB2_USE_DEF_PROCLIMIT) {
-	
+
 	jobInfoReply.jobBill->numProcessors = 1;
 	jobInfoReply.jobBill->maxNumProcessors = 1;
     }
@@ -655,7 +655,7 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
         FREEUP(jobInfoReply.jobBill->queue);
     jobInfoReply.jobBill->queue = safeSave(jobData->qPtr->queue);
 
-    
+
     cpuFactor = NULL;
     if ((jobData->numHostPtr > 0) && (jobData->hPtr[0] != NULL)
 	  && !IS_PEND (jobData->jStatus)
@@ -686,47 +686,47 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
 	}
    }
    if (cpuFactor != NULL && *cpuFactor > 0) {
-       
+
        if (jobInfoReply.jobBill->rLimits[LSF_RLIMIT_CPU] > 0)
 	   jobInfoReply.jobBill->rLimits[LSF_RLIMIT_CPU] /= *cpuFactor;
        if (jobInfoReply.jobBill->rLimits[LSF_RLIMIT_RUN] > 0)
 	   jobInfoReply.jobBill->rLimits[LSF_RLIMIT_RUN] /= *cpuFactor;
    }
 
-    
+
     jgNode = jobData->jgrpNode;
     jobInfoReply.jType    = jobData->nodeType;
     jobInfoReply.parentGroup = jgrpNodeParentPath(jgNode);
     jobInfoReply.jName        = jgNode->name;
 
-    
+
     if ( jgNode->nodeType == JGRP_NODE_ARRAY ) {
         for (i=0; i<NUM_JGRP_COUNTERS; i++)
             jobInfoReply.counter[i] = ARRAY_DATA(jgNode)->counts[i];
     }
 
-    
+
 
     jobInfoReply.jRusageUpdateTime = jobData->jRusageUpdateTime;
 
-    memcpy((char *) &jobInfoReply.runRusage, 
+    memcpy((char *) &jobInfoReply.runRusage,
            (char *) &jobData->runRusage, sizeof(struct jRusage));
 
     len = jobInfoReplyXdrBufLen(&jobInfoReply);
-    len += 1024; 
+    len += 1024;
 
     FREEUP (request_buf);
     request_buf = (char *) my_malloc(len, "packJobInfo");
     xdrmem_create(&xdrs, request_buf, len, XDR_ENCODE);
-     
+
     setHdrReserved(&hdr, remain);
-     
-    
-    hdr.version = version; 
+
+
+    hdr.version = version;
 
     if (!xdr_encodeMsg(&xdrs, (char *) &jobInfoReply,
 		       &hdr, xdr_jobInfoReply, 0, NULL)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, 
+        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname,
 	    "xdr_encodeMsg", "jobInfoReply");
 	xdr_destroy(&xdrs);
 	freeJobInfoReply (&jobInfoReply);
@@ -747,7 +747,7 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
     xdr_destroy(&xdrs);
     return (i);
 
-} 
+}
 
 int
 do_jobPeekReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
@@ -796,7 +796,7 @@ do_jobPeekReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
     FREEUP(jobPeekReply.outFile);
     return 0;
 
-}				
+}
 
 int
 do_signalReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
@@ -821,7 +821,7 @@ do_signalReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
 	    reply = LSBE_NO_JOB;
 	} else {
 	    reply = signalJob(&signalReq, auth);
-	} 	    	
+	}
     } else {
 	reply = signalJob(&signalReq, auth);
     }
@@ -842,15 +842,15 @@ Reply:
     xdr_destroy(&xdrs2);
     return 0;
 
-}				
+}
 
 int
 do_jobMsg(struct bucket *bucket,
-	  XDR *xdrs, 
-	  int chfd, 
-	  struct sockaddr_in * from, 
+	  XDR *xdrs,
+	  int chfd,
+	  struct sockaddr_in * from,
 	  char *hostName,
-	  struct LSFHeader * reqHdr, 
+	  struct LSFHeader * reqHdr,
 	  struct lsfAuth * auth)
 {
     static char             fname[] = "do_jobMsg";
@@ -875,13 +875,13 @@ do_jobMsg(struct bucket *bucket,
 	goto Reply;
     }
 
-    
+
     jmsg.header->msgId = msgcnt;
     msgcnt++;
 
-    
+
     LSBMSG_CACHE_BUFFER(bucket, jmsg);
-    
+
     sndhdr.opCode = BATCH_JOB_MSG;
     xdrmem_create(&bucket->xdrs, buf->data, buf->len, XDR_ENCODE);
 
@@ -894,10 +894,10 @@ do_jobMsg(struct bucket *bucket,
     }
     xdr_destroy(&bucket->xdrs);
     xdrmem_create(&bucket->xdrs, buf->data, buf->len, XDR_DECODE);
-    
-    
+
+
     if ((jpbw = getJobData(jmsg.header->jobId)) == NULL) {
-	reply = LSBE_NO_JOB;	
+	reply = LSBE_NO_JOB;
 	goto Reply;
     }
 
@@ -908,12 +908,12 @@ do_jobMsg(struct bucket *bucket,
 
     log_jobmsg(jpbw, &jmsg, jmsg.header->usrId);
 
-    
+
     msgq = jpbw->hPtr[0]->msgq[MSG_STAT_QUEUED];
     eventPending = TRUE;
 
     if (logclass & (LC_SIGNAL))
-        ls_syslog(LOG_DEBUG2, "%s: A message for job %s; eP=%d", 
+        ls_syslog(LOG_DEBUG2, "%s: A message for job %s; eP=%d",
 		  fname, lsb_jobid2str(jpbw->jobId), eventPending);
 
     QUEUE_APPEND(bucket, msgq);
@@ -937,7 +937,7 @@ Reply:
     xdr_destroy(&xdrs2);
     return 0;
 
-}				
+}
 
 
 int
@@ -994,7 +994,7 @@ Reply:
     xdr_destroy(&xdrs2);
     return 0;
 
-} 
+}
 
 int
 do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
@@ -1019,28 +1019,28 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
 	    errorBack(chfd, LSBE_PERMISSION, from);
 	return -1;
     }
-#endif 
+#endif
 
     if (!portok(from)) {
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7824,
 	    "%s: Received status report from bad port <%s>"), /* catgets 7824 */
-	    fname, 
-	    sockAdd2Str_(from)); 
+	    fname,
+	    sockAdd2Str_(from));
 	if (reqHdr->opCode != BATCH_RUSAGE_JOB)
 	    errorBack(chfd, LSBE_PORT, from);
-	return -1;		
+	return -1;
     }
     hp = (struct hostent *)getHostEntryByAddr_(&(from->sin_addr));
     if (hp == NULL) {
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_", 
+	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
 	    sockAdd2Str_(from));
-	if (reqHdr->opCode != BATCH_RUSAGE_JOB)	
+	if (reqHdr->opCode != BATCH_RUSAGE_JOB)
 	    errorBack(chfd, LSBE_BAD_HOST, from);
 	return (-1);
     }
 
     cpHostent(&hpBuf, hp);
-    
+
     if (!xdr_statusReq(xdrs, &statusReq, reqHdr)) {
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_statusReq");
@@ -1058,7 +1058,7 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
 	default:
 	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7827,
 		"%s: Unknown request %d"),  /* catgets 7827 */
-		fname, 
+		fname,
 		reqHdr->opCode);
 	    reply = LSBE_PROTOCOL;
 	}
@@ -1090,17 +1090,17 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
 	return -1;
     }
     xdr_destroy(&xdrs2);
-   
+
     if ((hData = getHostData(hpBuf.h_name)) != NULL)
-	hStatChange(hData, 0);	
+	hStatChange(hData, 0);
 
     freeHp(&hpBuf);
     return 0;
 
-}				
+}
 
 int
-do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, 
+do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 		  int *schedule, struct LSFHeader * reqHdr)
 {
     static char             fname[] = "do_chunkStatusReq()";
@@ -1122,36 +1122,36 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 	errorBack(chfd, LSBE_PERMISSION, from);
 	return -1;
     }
-#endif 
+#endif
 
     if (!portok(from)) {
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7824,
 	    "%s: Received status report from bad port <%s>"), /* catgets 7824 */
-	    fname, 
-	    sockAdd2Str_(from)); 
+	    fname,
+	    sockAdd2Str_(from));
 	errorBack(chfd, LSBE_PORT, from);
-	return -1;		
+	return -1;
     }
     hp = (struct hostent *)getHostEntryByAddr_(&(from->sin_addr));
     if (hp == NULL) {
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_", 
+	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
 	    sockAdd2Str_(from));
 	errorBack(chfd, LSBE_BAD_HOST, from);
 	return (-1);
     }
- 
+
     cpHostent(&hpBuf, hp);
-    
+
     if (!xdr_chunkStatusReq(xdrs, &chunkStatusReq, reqHdr)) {
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_chunkStatusReq");
     } else {
-	
+
 	for (i=0; i<chunkStatusReq.numStatusReqs; i++) {
-	    
+
 	    statusJob(chunkStatusReq.statusReqs[i], &hpBuf, schedule);
 	}
-	
+
 	reply = LSBE_NO_ERROR;
     }
 
@@ -1176,12 +1176,12 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     xdr_destroy(&xdrs2);
 
     if ((hData = getHostData(hpBuf.h_name)) != NULL)
-	hStatChange(hData, 0);	
+	hStatChange(hData, 0);
 
     freeHp(&hpBuf);
     return 0;
 
-}				
+}
 
 
 int
@@ -1207,7 +1207,7 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 	    fname,
 	    sockAdd2Str_(from));
 	errorBack(chfd, LSBE_PORT, from);
-	return -1;		
+	return -1;
     }
 
     officialName = getHostOfficialByAddr_(&(from->sin_addr));
@@ -1223,9 +1223,9 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "getHostData",
 	    officialNameBuf);
 	errorBack(chfd, LSBE_BAD_HOST, from);
-	return (-1); 
+	return (-1);
     }
-    hStatChange(hData, 0);	
+    hStatChange(hData, 0);
 
     if ((sbdPackage.numJobs = countNumSpecs(hData)) > 0)
 	sbdPackage.jobs = (struct jobSpecs *) my_calloc(sbdPackage.numJobs,
@@ -1268,7 +1268,7 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 	free(sbdPackage.jobs);
     return 0;
 
-}				
+}
 
 int
 do_hostInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader * reqHdr)
@@ -1284,7 +1284,7 @@ do_hostInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader
     struct hostDataReply    hostsReply;
 
 
-    
+
     hostsReply.numHosts = 0;
     hostsReply.hosts = NULL;
     if (!xdr_infoReq(xdrs, &hostsReq, reqHdr)) {
@@ -1297,7 +1297,7 @@ do_hostInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader
     if (logclass & (LC_EXEC)) {
 	int i;
 	for (i=0; i < hostsReply.numHosts; i++)
-	   ls_syslog(LOG_DEBUG, "%s, host[%d]'s name is %s", fname, i, 
+	   ls_syslog(LOG_DEBUG, "%s, host[%d]'s name is %s", fname, i,
 		     hostsReply.hosts[i].host);
     }
     count = hostsReply.numHosts * (sizeof(struct hostInfoEnt)
@@ -1330,7 +1330,7 @@ do_hostInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader
     xdr_destroy(&xdrs2);
     FREEUP (reply_buf);
     return(0);
-}				
+}
 
 int
 do_userInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader * reqHdr)
@@ -1350,7 +1350,7 @@ do_userInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_infoReq");
     } else {
-	count = userInfoReq.numNames == 0 ? uDataList.numEnts	
+	count = userInfoReq.numNames == 0 ? uDataList.numEnts
 	    : userInfoReq.numNames;
 	userInfoReply.users = (struct userInfoEnt *) my_calloc(count,
 			      sizeof(struct userInfoEnt), "do_userInfoReq");
@@ -1388,7 +1388,7 @@ do_userInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader
     FREEUP(userInfoReply.users);
     return 0;
 
-}				
+}
 
 
 int
@@ -1410,6 +1410,7 @@ xdrsize_QueueInfoReply(struct queueInfoReply * qInfoReply)
             + getXdrStrlen(qInfoReply->queues[i].admins)
             + getXdrStrlen(qInfoReply->queues[i].preCmd)
             + getXdrStrlen(qInfoReply->queues[i].postCmd)
+            + getXdrStrlen(qInfoReply->queues[i].prepostUsername)
             + getXdrStrlen(qInfoReply->queues[i].requeueEValues)
             + getXdrStrlen(qInfoReply->queues[i].resReq)
             + getXdrStrlen(qInfoReply->queues[i].resumeCond)
@@ -1428,8 +1429,8 @@ xdrsize_QueueInfoReply(struct queueInfoReply * qInfoReply)
 }
 
 int
-do_queueInfoReq (XDR* xdrs, 
-		 int chfd, 
+do_queueInfoReq (XDR* xdrs,
+		 int chfd,
 		 struct sockaddr_in* from,
                  struct LSFHeader* reqHdr)
 {
@@ -1455,8 +1456,8 @@ do_queueInfoReq (XDR* xdrs,
     } else {
 	reply = checkQueues(&qInfoReq, &qInfoReply);
 
-	
-        
+
+
         len = sizeof(struct LSFHeader);
         len += xdrsize_QueueInfoReply(&qInfoReply);
     }
@@ -1468,10 +1469,10 @@ do_queueInfoReq (XDR* xdrs,
 	replyStruct = (char *) &qInfoReply;
     else
 	replyStruct = (char *) 0;
-    if (!xdr_encodeMsg (&xdrs2, 
-			replyStruct, 
-			&replyHdr, 
-			xdr_queueInfoReply, 
+    if (!xdr_encodeMsg (&xdrs2,
+			replyStruct,
+			&replyHdr,
+			xdr_queueInfoReply,
 			0,
 			NULL)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
@@ -1493,7 +1494,7 @@ do_queueInfoReq (XDR* xdrs,
     xdr_destroy(&xdrs2);
     return(0);
 
-} 
+}
 
 int
 do_groupInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
@@ -1510,32 +1511,32 @@ do_groupInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     char *                  replyStruct;
     struct groupInfoReply   groupInfoReply;
 
-    
-    memset((struct groupInfoReply *)&groupInfoReply, 0, 
+
+    memset((struct groupInfoReply *)&groupInfoReply, 0,
 	   sizeof(struct groupInfoReply));
-	   
+
     if (!xdr_infoReq(xdrs, &groupInfoReq, reqHdr)) {
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_infoReq");
 	gplist  = NULL;
-    } 
-    
+    }
+
     if (groupInfoReq.options & HOST_GRP) {
 	gplist = hostgroups;
-	
+
 	if (numofhgroups == 0) {
 	    reply = LSBE_NO_HOST_GROUP;
 	} else {
-	    
+
 	    groupInfoReply.groups = (struct groupInfoEnt *)
 		my_calloc(numofhgroups,
-			  sizeof(struct groupInfoEnt), 
+			  sizeof(struct groupInfoEnt),
 			  "do_groupInfoReq");
-	    
+
 	    reply = checkGroups(&groupInfoReq, &groupInfoReply);
-	    
+
 	}
-    } else {	
+    } else {
 	if (numofugroups == 0) {
 	    reply = LSBE_NO_USER_GROUP;
 	} else {
@@ -1545,10 +1546,10 @@ do_groupInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 	}
     }
 
-    
+
     len =  sizeofGroupInfoReply(&groupInfoReply);
 
-    
+
     len += ALIGNWORD_(sizeof(struct LSFHeader));
 
     reply_buf = (char *)my_malloc(len, "do_groupInfoReq");
@@ -1562,10 +1563,10 @@ do_groupInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     else
 	replyStruct = (char *) NULL;
 
-    if (!xdr_encodeMsg(&xdrs2, 
-		       replyStruct, 
-		       &replyHdr, 
-		       xdr_groupInfoReply, 
+    if (!xdr_encodeMsg(&xdrs2,
+		       replyStruct,
+		       &replyHdr,
+		       xdr_groupInfoReply,
 		       0,
 		       NULL)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
@@ -1575,8 +1576,8 @@ do_groupInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 	return(-1);
     }
 
-    if ((chanWrite_(chfd, 
-		    reply_buf, 
+    if ((chanWrite_(chfd,
+		    reply_buf,
 		    XDR_GETPOS(&xdrs2))) <= 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "chanWrite_",
 	    XDR_GETPOS(&xdrs2));
@@ -1592,7 +1593,7 @@ do_groupInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 
     return(0);
 
-} 
+}
 
 int
 do_paramInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
@@ -1621,7 +1622,7 @@ do_paramInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 	jobSpoolDirLen = 4;
     }
 
-    
+
 
     count = sizeof(struct parameterInfo) + strlen(paramInfo.defaultQueues)
 	+ strlen(paramInfo.defaultHostSpec)
@@ -1629,7 +1630,7 @@ do_paramInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 
     reply_buf = (char *) my_malloc(count, "do_paramInfoReq");
     xdrmem_create(&xdrs2, reply_buf, count, XDR_ENCODE);
-    
+
     initLSFHeader_(&replyHdr);
     replyHdr.opCode = reply;
     replyStruct = (char *) &paramInfo;
@@ -1651,10 +1652,10 @@ do_paramInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     xdr_destroy(&xdrs2);
     FREEUP(reply_buf);
     return 0;
-}				
+}
 
 int
-do_queueControlReq (XDR *xdrs, int chfd, struct sockaddr_in *from, 
+do_queueControlReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
      char *hostName, struct LSFHeader *reqHdr, struct lsfAuth *auth)
 {
     static char             fname[] = "do_queueControlReq()";
@@ -1689,7 +1690,7 @@ do_queueControlReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     xdr_destroy(&xdrs2);
     return 0;
 
-}				
+}
 
 int
 do_mbdShutDown (XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
@@ -1711,11 +1712,11 @@ do_mbdShutDown (XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "b_write_fix",
 	    XDR_GETPOS(&xdrs2));
     xdr_destroy(&xdrs2);
-    millisleep_(3000);		
+    millisleep_(3000);
     mbdDie(MASTER_RECONFIG);
     return 0;
 
-}				
+}
 
 int
 do_reconfigReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
@@ -1739,19 +1740,19 @@ do_reconfigReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
     xdr_destroy(&xdrs2);
 
     if ( getHdrReserved(reqHdr) == MBD_RESTART ) {
-	ls_syslog(LOG_DEBUG, I18N(7914, 
+	ls_syslog(LOG_DEBUG, I18N(7914,
 		"do_reconfigReq: restart a new mbatchd")); /* catgets 7914 */
-        millisleep_(3000);		
+        millisleep_(3000);
         mbdDie(MASTER_RECONFIG);
-    } else { 
-	ls_syslog(LOG_DEBUG, I18N(7915, 
+    } else {
+	ls_syslog(LOG_DEBUG, I18N(7915,
 		"do_reconfigReq: reread the configuration files")); /* catgets 7915 */
         if (mSchedStage != M_STAGE_REPLAY)
             mbdReConf(RECONFIG_CONF);
     }
     return 0;
 
-}				
+}
 
 int
 do_hostControlReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
@@ -1790,7 +1791,7 @@ checkout:
     xdr_destroy(&xdrs2);
     return 0;
 
-}				
+}
 
 int
 do_jobSwitchReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
@@ -1826,7 +1827,7 @@ do_jobSwitchReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
     }
     xdr_destroy(&xdrs2);
     return 0;
-}				
+}
 
 int
 do_jobMoveReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
@@ -1868,7 +1869,7 @@ do_jobMoveReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
     xdr_destroy(&xdrs2);
     return 0;
 
-}				
+}
 
 int
 do_modifyReq(XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
@@ -1880,17 +1881,17 @@ do_modifyReq(XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
     static struct modifyReq modifyReq;
     int                     reply;
 
-    
+
     initSubmit(&first, &(modifyReq.submitReq), &submitReply);
 
-    
+
     if (!xdr_modifyReq(xdrs, &modifyReq, reqHdr)) {
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_modifyReq");
 	goto sendback;
     }
 
-    
+
     if (!(modifyReq.submitReq.options & SUB_RLIMIT_UNIT_IS_KB)) {
 	convertRLimit(modifyReq.submitReq.rLimits, 1);
     }
@@ -1901,7 +1902,7 @@ sendback:
 	return (-1);
     return (0);
 
-} 
+}
 
 static void
 initSubmit(int *first, struct submitReq *subReq,
@@ -1911,7 +1912,7 @@ initSubmit(int *first, struct submitReq *subReq,
 
 
     if (*first == TRUE) {
-	
+
 	subReq->fromHost = (char *) my_malloc(MAXHOSTNAMELEN, fname);
 	subReq->jobFile = (char *) my_malloc(MAXFILENAMELEN, fname);
 	subReq->inFile = (char *) my_malloc(MAXFILENAMELEN, fname);
@@ -1925,28 +1926,28 @@ initSubmit(int *first, struct submitReq *subReq,
 	subReq->hostSpec = (char *) my_malloc(MAXHOSTNAMELEN, fname);
 	submitReply->badJobName = (char *) my_malloc(MAX_CMD_DESC_LEN, fname);
 	*first = FALSE;
-    } else { 
+    } else {
         FREEUP(subReq->chkpntDir);
         FREEUP(submitReply->badJobName);
         subReq->chkpntDir = (char *) my_malloc(MAXFILENAMELEN, fname);
         submitReply->badJobName = (char *) my_malloc(MAX_CMD_DESC_LEN, fname);
     }
-    
+
 
     subReq->askedHosts = NULL;
     subReq->numAskedHosts = 0;
 
-    
+
     subReq->nxf = 0;
     subReq->xf = NULL;
 
-    
+
     submitReply->jobId = 0;
     submitReply->queue = "";
 
-    strcpy (submitReply->badJobName, "");	
+    strcpy (submitReply->badJobName, "");
 
-}				
+}
 
 static int
 sendBack (int reply, struct submitReq *submitReq,
@@ -1975,7 +1976,7 @@ sendBack (int reply, struct submitReq *submitReq,
     xdr_destroy(&xdrs2);
     return (0);
 
-}				
+}
 
 
 void
@@ -1990,11 +1991,11 @@ doNewJobReply(struct sbdNode *sbdPtr, int exception)
     struct Buffer *buf;
     struct LSFHeader hdr;
     int cc, s, svReason, replayReason;
-    
+
     if (logclass & LC_COMM)
 	ls_syslog(LOG_DEBUG, "%s: Entering ...", fname);
 
-    
+
     if (jData->jobPid != 0)
 	return;
 
@@ -2002,26 +2003,26 @@ doNewJobReply(struct sbdNode *sbdPtr, int exception)
         if (exception == TRUE)
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7887,
 		"%s: Exception bit of <%d> is set for job <%s>"), /* catgets 7887 */
-                fname, sbdPtr->chanfd, lsb_jobid2str(jData->jobId)); 
+                fname, sbdPtr->chanfd, lsb_jobid2str(jData->jobId));
         else
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S, 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S,
 		fname,
-		lsb_jobid2str(jData->jobId), 
+		lsb_jobid2str(jData->jobId),
 		"chanRecv_");
 
 	if (IS_START(jData->jStatus)) {
 	    jData->newReason = PEND_JOB_START_FAIL;
-    	    jStatusChange(jData, JOB_STAT_PEND, LOG_IT, fname);	
+    	    jStatusChange(jData, JOB_STAT_PEND, LOG_IT, fname);
         }
 	return;
     }
 
     xdrmem_create(&xdrs, buf->data, buf->len, XDR_DECODE);
-    
+
     if (!xdr_LSFHeader(&xdrs, &replyHdr)) {
-	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S, 
+	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S,
 	    fname,
-	    lsb_jobid2str(jData->jobId), 
+	    lsb_jobid2str(jData->jobId),
 	    "xdr_LSFHeader");
 
 	if (IS_START(jData->jStatus)) {
@@ -2041,11 +2042,11 @@ doNewJobReply(struct sbdNode *sbdPtr, int exception)
 	}
 	goto Leave;
     }
-#endif 
-    
+#endif
+
     if (replyHdr.opCode != ERR_NO_ERROR) {
 	if (IS_START(jData->jStatus)) {
-            
+
 	    replayReason = jobStartError(jData, (sbdReplyType) replyHdr.opCode);
 	    svReason = jData->newReason;
 	    jData->newReason = replayReason;
@@ -2053,7 +2054,7 @@ doNewJobReply(struct sbdNode *sbdPtr, int exception)
 	    jData->newReason = svReason;
         }
 	goto Leave;
-    }	
+    }
 
     if(!xdr_jobReply(&xdrs, &jobReply, &replyHdr)) {
 	ls_syslog(LOG_ERR, I18N_JOB_FAIL_S,
@@ -2070,10 +2071,10 @@ doNewJobReply(struct sbdNode *sbdPtr, int exception)
         jData->jobPGid = jobReply.jobPGid;
 
 	log_startjobaccept(jData);
-	
+
 	if (daemonParams[LSB_MBD_BLOCK_SEND].paramValue == NULL) {
 	    struct Buffer *replyBuf;
-	    
+
 	    if (chanAllocBuf_(&replyBuf, sizeof(struct LSFHeader)) < 0) {
 		ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanAllocBuf_");
 		goto Leave;
@@ -2083,34 +2084,34 @@ doNewJobReply(struct sbdNode *sbdPtr, int exception)
 		   LSF_HEADER_LEN);
 
 	    replyBuf->len = LSF_HEADER_LEN;
-	    
+
 	    if (chanEnqueue_(sbdPtr->chanfd, replyBuf) < 0) {
 		ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanEnqueue");
 		chanFreeBuf_(replyBuf);
 	    } else {
-			    
+
 		sbdPtr->reqCode = MBD_NEW_JOB_KEEP_CHAN;
 	    }
 	} else {
-		
+
 	    hdr.opCode = LSBE_NO_ERROR;
-		
+
 	    s = chanSock_(sbdPtr->chanfd);
 	    io_block_(s);
 
 	    if ((cc = writeEncodeHdr_(sbdPtr->chanfd, &hdr, chanWrite_)) < 0) {
-		ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_MM, 
+		ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_MM,
 		    fname, lsb_jobid2str(jData->jobId), "writeEncodeHdr");
 	    }
 	}
     }
-    
+
   Leave:
 
     xdr_destroy(&xdrs);
-    chanFreeBuf_(buf);    
+    chanFreeBuf_(buf);
 
-} 
+}
 
 
 void
@@ -2121,7 +2122,7 @@ doProbeReply(struct sbdNode *sbdPtr, int exception)
     XDR xdrs;
     char *toHost = sbdPtr->hData->host;
     struct Buffer *buf;
-    
+
     if (logclass & LC_COMM)
 	ls_syslog(LOG_DEBUG, "%s: Entering ...", fname);
 
@@ -2129,9 +2130,9 @@ doProbeReply(struct sbdNode *sbdPtr, int exception)
         if (exception == TRUE)
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7894,
 		"%s: Exception bit of <%d> is set for host <%s>"), /* catgets 7894 */
-                fname, 
-		sbdPtr->chanfd, 
-		toHost); 
+                fname,
+		sbdPtr->chanfd,
+		toHost);
         else
 	    ls_syslog(LOG_ERR, I18N_HOST_FAIL,
 		fname,
@@ -2142,7 +2143,7 @@ doProbeReply(struct sbdNode *sbdPtr, int exception)
     }
 
     xdrmem_create(&xdrs, buf->data, buf->len, XDR_DECODE);
-    
+
     if (!xdr_LSFHeader(&xdrs, &replyHdr)) {
         ls_syslog(LOG_ERR, I18N_HOST_FAIL,
 	    fname,
@@ -2156,8 +2157,8 @@ doProbeReply(struct sbdNode *sbdPtr, int exception)
 		      toHost, "authSbdRequest");
 	    sbdPtr->hData->flags |= HOST_NEEDPOLL;
 	} else {
-#endif 
-    
+#endif
+
 	    if (replyHdr.opCode != ERR_NO_ERROR) {
 		ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7897,
 						 "%s: sbatchd replied <%d> for host <%s>"), /* catgets 7897 */
@@ -2173,9 +2174,9 @@ doProbeReply(struct sbdNode *sbdPtr, int exception)
     }
 
     xdr_destroy(&xdrs);
-    chanFreeBuf_(buf);    
+    chanFreeBuf_(buf);
 
-} 
+}
 
 void
 doSwitchJobReply(struct sbdNode *sbdPtr, int exception)
@@ -2188,40 +2189,40 @@ doSwitchJobReply(struct sbdNode *sbdPtr, int exception)
     struct jobReply jobReply;
     struct Buffer *buf;
 
-    
+
     if (logclass & LC_COMM)
 	ls_syslog(LOG_DEBUG, "%s: Entering ...", fname);
 
-    if (!IS_START (jData->jStatus)) 
-	
+    if (!IS_START (jData->jStatus))
+
 	return;
 
     if (exception == TRUE || chanRecv_(sbdPtr->chanfd, &buf) < 0) {
         if (exception == TRUE)
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7898,
 		"%s: Exception bit of <%d> is set for job <%s>"), /* catgets 7898 */
-                fname, 
-		sbdPtr->chanfd, 
-		lsb_jobid2str(jData->jobId)); 
+                fname,
+		sbdPtr->chanfd,
+		lsb_jobid2str(jData->jobId));
         else
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S, 
+	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S,
 		fname,
 		lsb_jobid2str(jData->jobId),
 		"chanRecv_");
 	jData->pendEvent.notSwitched = TRUE;
-	eventPending = TRUE;	
+	eventPending = TRUE;
 	return;
     }
 
     xdrmem_create(&xdrs, buf->data, buf->len, XDR_DECODE);
-    
+
     if (!xdr_LSFHeader(&xdrs, &replyHdr)) {
         ls_syslog(LOG_ERR, I18N_JOB_FAIL_S,
-	    fname, 
+	    fname,
 	    lsb_jobid2str(jData->jobId),
 	    "xdr_LSFHeader");
 	jData->pendEvent.notSwitched = TRUE;
-	eventPending = TRUE;		
+	eventPending = TRUE;
 	goto Leave;
     }
 
@@ -2233,32 +2234,32 @@ doSwitchJobReply(struct sbdNode *sbdPtr, int exception)
 	eventPending = TRUE;
 	goto Leave;
     }
-#endif 
-    
+#endif
+
     switch (replyHdr.opCode) {
     case ERR_NO_ERROR:
-        if (!xdr_jobReply (&xdrs, &jobReply, &replyHdr) 
+        if (!xdr_jobReply (&xdrs, &jobReply, &replyHdr)
               || jData->jobId != jobReply.jobId ) {
             if (jData->jobId != jobReply.jobId )
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7901,
 		    "%s: Got bad jobId <%s> for job <%s>"), /* catgets 7901 */
-		    fname, 
-		    lsb_jobid2str(jobReply.jobId), 
-		    lsb_jobid2str(jData->jobId)); 
-            else 
-                ls_syslog(LOG_ERR, I18N_JOB_FAIL_S, 
+		    fname,
+		    lsb_jobid2str(jobReply.jobId),
+		    lsb_jobid2str(jData->jobId));
+            else
+                ls_syslog(LOG_ERR, I18N_JOB_FAIL_S,
 		    fname, lsb_jobid2str(jData->jobId),
 		    "xdr_jobReply");
         }
 	break;
-    case ERR_NO_JOB:        
-        job_abort(jData, JOB_MISSING);  
-        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 7913, "%s: Job <%s> was missing by sbatchd on host <%s>\n")), fname, lsb_jobid2str(jData->jobId), toHost);  
+    case ERR_NO_JOB:
+        job_abort(jData, JOB_MISSING);
+        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 7913, "%s: Job <%s> was missing by sbatchd on host <%s>\n")), fname, lsb_jobid2str(jData->jobId), toHost);
 	/* catgets 7913 */
-        break; 
+        break;
     case ERR_JOB_FINISH:
         break;
-    case ERR_BAD_REQ:             
+    case ERR_BAD_REQ:
 	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7903,
 	    "%s: Job <%s>: sbatchd on host <%s> complained of bad request"), fname, lsb_jobid2str(jData->jobId), toHost); /* catgets 7903 */
 	break;
@@ -2270,9 +2271,9 @@ doSwitchJobReply(struct sbdNode *sbdPtr, int exception)
   Leave:
 
     xdr_destroy(&xdrs);
-    chanFreeBuf_(buf);    
+    chanFreeBuf_(buf);
 
-} 
+}
 
 
 void
@@ -2285,26 +2286,26 @@ doSignalJobReply(struct sbdNode *sbdPtr, int exception)
 
     struct jobReply jobReply;
     struct Buffer *buf;
-    
+
     if (logclass & LC_COMM)
 	ls_syslog(LOG_DEBUG, "%s: Entering ...", fname);
 
     if (IS_FINISH(jData->jStatus)) {
-	
+
 	return;
     } else if (IS_PEND (jData->jStatus)) {
-	
+
 	if (sbdPtr->sigVal != SIG_CHKPNT && sbdPtr->sigVal != SIG_CHKPNT_COPY) {
-	    sigPFjob (jData, sbdPtr->sigVal, 0, now); 
+	    sigPFjob (jData, sbdPtr->sigVal, 0, now);
         }
 	return;
-    }       
+    }
 
     if (exception == TRUE || chanRecv_(sbdPtr->chanfd, &buf) < 0) {
         if (exception == TRUE)
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7905,
 		"%s: Exception bit of <%d> is set for job <%s>"), /* catgets 7905 */
-                fname, sbdPtr->chanfd, lsb_jobid2str(jData->jobId)); 
+                fname, sbdPtr->chanfd, lsb_jobid2str(jData->jobId));
         else
 	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M,
 		fname,
@@ -2316,10 +2317,10 @@ doSignalJobReply(struct sbdNode *sbdPtr, int exception)
 
 
     xdrmem_create(&xdrs, buf->data, buf->len, XDR_DECODE);
-    
+
     if (!xdr_LSFHeader(&xdrs, &replyHdr)) {
-        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, 
-	    fname, 
+        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M,
+	    fname,
 	    lsb_jobid2str(jData->jobId),
 	    "xdr_LSFHeader");
         addPendSigEvent(sbdPtr);
@@ -2333,8 +2334,8 @@ doSignalJobReply(struct sbdNode *sbdPtr, int exception)
 	addPendSigEvent(sbdPtr);
 	goto Leave;
     }
-#endif 
-    
+#endif
+
     if (logclass & LC_SIGNAL)
 	ls_syslog(LOG_DEBUG, "%s: Job <%s> sigVal %d got reply code=%d",
 		  fname, lsb_jobid2str(jData->jobId),
@@ -2360,48 +2361,48 @@ doSignalJobReply(struct sbdNode *sbdPtr, int exception)
 			    sbdPtr->sigFlags, &jobReply);
 	}
 	break;
-	
+
     case ERR_NO_JOB:
         if (getJobData (jData->jobId) != NULL)
             addPendSigEvent(sbdPtr);
         break;
-        
+
     default:
-	addPendSigEvent(sbdPtr);	
+	addPendSigEvent(sbdPtr);
     }
 
   Leave:
 
     xdr_destroy(&xdrs);
-    chanFreeBuf_(buf);    
+    chanFreeBuf_(buf);
 
-} 
+}
 
 
- 
+
 static void
 addPendSigEvent(struct sbdNode *sbdPtr)
 {
     struct jData *jData = sbdPtr->jData;
-    
+
     if ((sbdPtr->sigVal == SIG_CHKPNT) || (sbdPtr->sigVal == SIG_CHKPNT_COPY)) {
-        
+
         if (jData->pendEvent.sig1 == SIG_NULL) {
             jData->pendEvent.sig1 = sbdPtr->sigVal;
             jData->pendEvent.sig1Flags = sbdPtr->sigFlags;
         }
-    } else { 
+    } else {
 	if (jData->pendEvent.sig == SIG_NULL)
 	    jData->pendEvent.sig = sbdPtr->sigVal;
-    } 
+    }
 
     eventPending = TRUE;
-    
-} 
-    
+
+}
 
 
-int 
+
+int
 ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
 {
     static char fname[]="ctrlMbdDebug";
@@ -2412,10 +2413,10 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
 
     memset(logFileName, 0, sizeof(logFileName));
     memset(lsfLogDir, 0, sizeof(lsfLogDir));
- 
+
     if (!isAuthManager(auth) && auth->uid != 0 ) {
-        ls_syslog(LOG_CRIT, 
-	  I18N(7916,"ctrlMbdDebug: uid <%d> not allowed to perform control operation"),/*catgets 7916*/ 
+        ls_syslog(LOG_CRIT,
+	  I18N(7916,"ctrlMbdDebug: uid <%d> not allowed to perform control operation"),/*catgets 7916*/
 	  auth->uid);
         return (LSBE_PERMISSION);
      }
@@ -2424,15 +2425,15 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
     level = pdebug->level;
     newClass = pdebug->logClass;
     options  = pdebug->options;
- 
+
     if (pdebug->logFileName[0] != '\0') {
-	if (((dir=strrchr(pdebug->logFileName,'/')) != NULL) ||  
+	if (((dir=strrchr(pdebug->logFileName,'/')) != NULL) ||
 	    ((dir=strrchr(pdebug->logFileName,'\\')) != NULL)) {
 	    dir++;
 	    ls_strcat(logFileName, sizeof(logFileName), dir);
 	    *(--dir)='\0';
 	    ls_strcat(lsfLogDir, sizeof(lsfLogDir), pdebug->logFileName);
-	}         
+	}
 	else {
 	    ls_strcat(logFileName, sizeof(logFileName), pdebug->logFileName);
             if (daemonParams[LSF_LOGDIR].paramValue
@@ -2450,25 +2451,25 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
 	ls_strcat(logFileName, sizeof(logFileName), "mbatchd");
 	if (daemonParams[LSF_LOGDIR].paramValue
 	    && *(daemonParams[LSF_LOGDIR].paramValue)) {
-	    ls_strcat(lsfLogDir, sizeof(lsfLogDir), 
+	    ls_strcat(lsfLogDir, sizeof(lsfLogDir),
 		      daemonParams[LSF_LOGDIR].paramValue);
 	} else {
 	    lsfLogDir[0] = '\0';
 	}
     }
 
-    if (options==1) { 
-  
+    if (options==1) {
+
         struct config_param *plp;
 
         for (plp = daemonParams; plp->paramName != NULL; plp++) {
-	     if (plp->paramValue != NULL) 
+	     if (plp->paramValue != NULL)
 		     FREEUP(plp->paramValue);
 	 }
 
         if (initenv_(daemonParams, env_dir) < 0) {
 	    ls_openlog("mbatchd", daemonParams[LSF_LOGDIR].paramValue,
-                       (debug > 1 || lsb_CheckMode), 
+                       (debug > 1 || lsb_CheckMode),
 		       daemonParams[LSF_LOG_MASK].paramValue);
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "initenv_");
 
@@ -2479,7 +2480,7 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
            return(lsb_CheckError);
          }
 
-         
+
          getLogClass_(daemonParams[LSB_DEBUG_MBD].paramValue,
    		     daemonParams[LSB_TIME_MBD].paramValue);
 
@@ -2492,7 +2493,7 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
 	     ls_openlog("mbatchd", daemonParams[LSF_LOGDIR].paramValue, TRUE,
 	                  daemonParams[LSF_LOG_MASK].paramValue);
          else
-	      ls_openlog("mbatchd", daemonParams[LSF_LOGDIR].paramValue, 
+	      ls_openlog("mbatchd", daemonParams[LSF_LOGDIR].paramValue,
 			 FALSE, daemonParams[LSF_LOG_MASK].paramValue);
          if (logclass & LC_TRACE)
 	     ls_syslog(LOG_DEBUG, "%s: logclass=%x", fname, logclass);
@@ -2503,19 +2504,19 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
     if (opCode==MBD_DEBUG) {
 
         if (logclass & LC_TRACE)
-            ls_syslog(LOG_DEBUG, 
+            ls_syslog(LOG_DEBUG,
 	         "ctrMbdDebug:filename= %s: newclass=%x, level = %d",
 	         logFileName, newClass, level);
 	putMaskLevel(level,  &(daemonParams[LSF_LOG_MASK].paramValue));
 
 	if (logclass & LC_TRACE)
-	   ls_syslog(LOG_DEBUG, "%s: LSF_LOG_MASK =%s", fname, daemonParams[LSF_LOG_MASK].paramValue); 
+	   ls_syslog(LOG_DEBUG, "%s: LSF_LOG_MASK =%s", fname, daemonParams[LSF_LOG_MASK].paramValue);
 
         if (newClass >= 0)
             logclass = newClass;
 
         if ( pdebug->level>=0 ){
-	    
+
 
             closelog();
 
@@ -2523,17 +2524,17 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
 	        ls_openlog(logFileName, lsfLogDir,
 			   TRUE, daemonParams[LSF_LOG_MASK].paramValue);
 	    else
-	        ls_openlog(logFileName, lsfLogDir, 
+	        ls_openlog(logFileName, lsfLogDir,
 	  		FALSE, daemonParams[LSF_LOG_MASK].paramValue);
          }
 
-       
+
   }
-  else if (opCode == MBD_TIMING) { 
-       
+  else if (opCode == MBD_TIMING) {
+
       if (level>=0)
           timinglevel = level;
-      if (pdebug->logFileName[0] != '\0') { 
+      if (pdebug->logFileName[0] != '\0') {
 	  closelog();
           if (debug > 1)
 	      ls_openlog(logFileName, lsfLogDir, TRUE,
@@ -2550,7 +2551,7 @@ ctrlMbdDebug(struct debugReq *pdebug,  struct lsfAuth *auth)
 
   return (LSBE_NO_ERROR);
 
-} 
+}
 
 
 int
@@ -2561,7 +2562,7 @@ do_debugReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
      struct debugReq   debugReq;
      char                reply_buf[MSGSIZE];
      XDR                 xdrs2;
-     int                 reply; 
+     int                 reply;
      struct LSFHeader        replyHdr;
 
      if (!xdr_debugReq(xdrs, &debugReq, reqHdr)) {
@@ -2571,7 +2572,7 @@ do_debugReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
          if ( debugReq.opCode == 1 || debugReq.opCode == 2)
               reply = ctrlMbdDebug(&debugReq, auth);
          else if ( debugReq.opCode == 3 || debugReq.opCode == 4){
-                  
+
  	          reply = callSbdDebug(&debugReq);
 		  if (reply == ERR_NO_ERROR)
 		      reply = LSBE_NO_ERROR;
@@ -2579,7 +2580,7 @@ do_debugReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 		      reply = LSBE_SBATCHD;
                 }
 
-         else 
+         else
 	    {
 	      ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7912,
 		  "%s: Bad opCode <%d>"), /* catgets 7912 */
@@ -2598,10 +2599,10 @@ do_debugReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
           xdr_destroy(&xdrs2);
           return -1;
         }
-  
+
      if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {
          ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,
-	     fname, 
+	     fname,
 	     "chanWrite_",
 	     XDR_GETPOS(&xdrs2));
          xdr_destroy(&xdrs2);
@@ -2610,7 +2611,7 @@ do_debugReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
      xdr_destroy(&xdrs2);
      return 0;
 
- }      
+ }
 
 int
 do_resourceInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
@@ -2629,7 +2630,7 @@ do_resourceInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 
     if (logclass & LC_TRACE)
 	ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", fname);
-    
+
     resInfoReply.numResources = 0;
     resInfoReply.resources = NULL;
 
@@ -2647,14 +2648,14 @@ do_resourceInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
         } else {
             reply = checkResources (&resInfoReq, &resInfoReply);
 
-	    len = ALIGNWORD_(resInfoReply.numResources 
+	    len = ALIGNWORD_(resInfoReply.numResources
 		  * (sizeof(struct lsbSharedResourceInfo) + MAXLSFNAMELEN)) + 100;
 
 	    for (i = 0; i < resInfoReply.numResources; i++) {
 	        for (j = 0; j < resInfoReply.resources[i].nInstances; j++) {
 		    len += ALIGNWORD_(sizeof (struct lsbSharedResourceInstance)
-			   + MAXLSFNAMELEN 
-			   + (resInfoReply.resources[i].instances[j].nHosts 
+			   + MAXLSFNAMELEN
+			   + (resInfoReply.resources[i].instances[j].nHosts
 			       * MAXHOSTNAMELEN)) + 4;
                 }
             }
@@ -2668,7 +2669,7 @@ do_resourceInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
         replyStruct = (char *) &resInfoReply;
     else
         replyStruct = (char *) 0;
-    if (!xdr_encodeMsg (&xdrs2, replyStruct, &replyHdr, 
+    if (!xdr_encodeMsg (&xdrs2, replyStruct, &replyHdr,
         xdr_lsbShareResourceInfoReply, 0 , NULL))
     {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
@@ -2679,7 +2680,7 @@ do_resourceInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     }
     if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M,
-	    fname, 
+	    fname,
 	    "b_write_fix",
 	    XDR_GETPOS(&xdrs2));
         xdr_destroy(&xdrs2);
@@ -2692,7 +2693,7 @@ do_resourceInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     freeShareResourceInfoReply (&resInfoReply);
     return(0);
 
-}		
+}
 
 
 static void
@@ -2704,7 +2705,7 @@ freeJobHead (struct jobInfoHead *jobInfoHead)
     FREEUP (jobInfoHead->jobIds);
     FREEUP (jobInfoHead->hostNames);
 
-} 
+}
 
 static void
 freeJobInfoReply (struct jobInfoReply *job)
@@ -2714,14 +2715,14 @@ freeJobInfoReply (struct jobInfoReply *job)
     if (job == NULL)
         return;
 
-    
+
     freeSubmitReq (job->jobBill);
     if (job->numToHosts > 0) {
 	for (i = 0; i < job->numToHosts; i++)
 	    FREEUP(job->toHosts[i]);
 	FREEUP(job->toHosts);
     }
-} 
+}
 
 static void
 freeShareResourceInfoReply (struct  lsbShareResourceInfoReply *reply)
@@ -2743,11 +2744,11 @@ freeShareResourceInfoReply (struct  lsbShareResourceInfoReply *reply)
     }
     FREEUP (reply->resources);
 
-} 
+}
 
 int
-do_runJobReq(XDR*                 xdrs, 
-	     int                  chfd, 
+do_runJobReq(XDR*                 xdrs,
+	     int                  chfd,
 	     struct sockaddr_in*  from,
 	     struct lsfAuth *     auth,
 	     struct LSFHeader*    reqHeader)
@@ -2759,46 +2760,46 @@ do_runJobReq(XDR*                 xdrs,
     char                 reply_buf[MSGSIZE/2];
     int                  reply;
 
-    memset((struct runJobRequest *)&runJobRequest, 0, 
+    memset((struct runJobRequest *)&runJobRequest, 0,
 	   sizeof(struct runJobRequest));
 
-    
+
     if (!xdr_runJobReq(xdrs, &runJobRequest, reqHeader)) {
 	reply = LSBE_XDR;
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_runJobReq");
 	goto Reply;
     }
-    
-    
+
+
     reply = runJob(&runJobRequest, auth);
 
 Reply:
-    
-    
+
+
     xdr_lsffree(xdr_runJobReq, (char *)&runJobRequest, reqHeader);
 
-    
-    xdrmem_create(&replyXdr, 
-		  reply_buf, 
-		  MSGSIZE/2, 
+
+    xdrmem_create(&replyXdr,
+		  reply_buf,
+		  MSGSIZE/2,
 		  XDR_ENCODE);
 
     lsfHeader.opCode = reply;
 
-    if (!xdr_encodeMsg(&replyXdr, 
-		       NULL, 
-		       &lsfHeader, 
-		       xdr_int, 
-		       0, 
+    if (!xdr_encodeMsg(&replyXdr,
+		       NULL,
+		       &lsfHeader,
+		       xdr_int,
+		       0,
 		       NULL)) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
 	xdr_destroy(&replyXdr);
 	return(-1);
     }
 
-    
-    if (chanWrite_(chfd, 
-		   reply_buf, 
+
+    if (chanWrite_(chfd,
+		   reply_buf,
 		   XDR_GETPOS(&replyXdr)) <= 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "chanWrite_");
 	xdr_destroy(&replyXdr);
@@ -2824,9 +2825,9 @@ do_setJobAttr(XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
     if (!xdr_jobAttrReq(xdrs, &jobAttr, reqHdr)) {
         reply = LSBE_XDR;
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_jobAttrReq");
-    } else {  
+    } else {
 
-   	
+
         if ((job = getJobData (jobAttr.jobId)) == NULL) {
     	    reply = LSBE_NO_JOB;
 	    ls_syslog(LOG_DEBUG, "do_setJobAttr: no such job (%s)",
@@ -2835,16 +2836,16 @@ do_setJobAttr(XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
 	    reply = LSBE_JOB_FINISH;
 	    ls_syslog(LOG_DEBUG, "do_setJobAttr: job (%s) finished already",
 	        lsb_jobid2str(jobAttr.jobId));
-	} else if (!isJobOwner(auth, job)) { 
+	} else if (!isJobOwner(auth, job)) {
 	    reply = LSBE_PERMISSION;
 	    ls_syslog(LOG_DEBUG, "do_setJobAttr: no permission for job (%s)",
 	        lsb_jobid2str(jobAttr.jobId));
-	} else if (IS_START(job->jStatus)) { 
+	} else if (IS_START(job->jStatus)) {
 	    reply = LSBE_NO_ERROR;
 	    job->port = jobAttr.port;
 	    strcpy(jobAttr.hostname, job->hPtr[0]->host);
 	    log_jobattrset(&jobAttr, auth->uid);
-	} else { 
+	} else {
   	    reply = LSBE_JOB_MODIFY;
 	    ls_syslog(LOG_DEBUG, "do_setJobAttr: job (%s) is not modified",
 	        lsb_jobid2str(jobAttr.jobId));
@@ -2866,7 +2867,7 @@ do_setJobAttr(XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
     }
     xdr_destroy(&xdrs2);
     return (0);
-} 
+}
 
 
 #ifdef INTER_DAEMON_AUTH
@@ -2881,7 +2882,7 @@ authSbdRequest(struct sbdNode *sbdPtr,
     sprintf(buf, "mbatchd@%s", clusterName);
     return authDaemonRequest(sbdPtr ? sbdPtr->chanfd : -1, xdrs, reqHdr, from_host,
                              "sbatchd", buf);
-} 
+}
 
 int
 authDaemonRequest(int chanfd,
@@ -2891,13 +2892,13 @@ authDaemonRequest(int chanfd,
                   char *client,
                   char *server)
 {
-    static char fname[] = "authDaemonRequest"; 
+    static char fname[] = "authDaemonRequest";
     int s, rc, from_len;
     struct sockaddr_in from;
     struct lsfAuth auth;
 
 
-    
+
     if (daemonParams[LSF_AUTH_DAEMONS].paramValue == NULL)
 	return LSBE_NO_ERROR;
 
@@ -2913,13 +2914,13 @@ authDaemonRequest(int chanfd,
     else {
 	memcpy(&from, from_host, sizeof(from));
     }
-    
+
     if (!xdr_lsfAuth(xdrs, &auth, reqHdr)) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_lsfAuth");
 	return (LSBE_XDR);
     }
 
-    
+
     putEauthClientEnvVar(client);
     putEauthServerEnvVar(server);
     rc = verifyEAuth_(&auth, &from);
@@ -2927,9 +2928,9 @@ authDaemonRequest(int chanfd,
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "verifyEAuth");
         return (LSBE_PERMISSION);
     }
- 
+
     return (LSBE_NO_ERROR);
 
-} 
+}
 
-#endif 
+#endif

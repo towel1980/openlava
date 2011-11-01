@@ -3904,11 +3904,12 @@ runQPost (struct jobCard *jp)
 
     if (logclass & LC_TRACE) {
 	chuser(batchId);
-        ls_syslog(LOG_DEBUG, "runQPost: queue's post-command <%s> pre-command <%s> execJobFlag <%x> for job <%s> status %x",
-		  jp->jobSpecs.postCmd ? jp->jobSpecs.postCmd : "NULL",
-		  jp->jobSpecs.preCmd ? jp->jobSpecs.preCmd : "NULL",
-		  jp->execJobFlag, lsb_jobid2str(jp->jobSpecs.jobId),
-		  jp->w_status);
+        ls_syslog(LOG_DEBUG, "runQPost: queue's post-command <%s> pre-command <%s> prepostUsername <%s> execJobFlag <%x> for job <%s> status %x",
+                  jp->jobSpecs.postCmd ? jp->jobSpecs.postCmd : "NULL",
+                  jp->jobSpecs.preCmd ? jp->jobSpecs.preCmd : "NULL",
+                  jp->jobSpecs.prepostUsername ? jp->jobSpecs.prepostUsername : "NULL",
+                   jp->execJobFlag, lsb_jobid2str(jp->jobSpecs.jobId),
+                   jp->w_status);
 	chuser(jp->jobSpecs.execUid);
     }
 
@@ -4064,6 +4065,7 @@ chPrePostUser(struct jobCard *jp)
     static char fname[] = "chPrePostUser";
     int uid, gid;
     char *userName;
+    uid_t prepostUid;
 
     {
 	uid = jp->jobSpecs.execUid;
@@ -4072,22 +4074,23 @@ chPrePostUser(struct jobCard *jp)
     }
 
 
-
     if (initgroups(userName, gid) < 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_D_FAIL_M, fname,
                 "initgroups", userName, gid);
     }
-
-
 
     if (setgid(gid) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,
 	    "setgid", gid);
     }
 
-    if (lsfSetUid(uid) < 0) {
+    if (getOSUid_(jp->jobSpecs.prepostUsername, &prepostUid) < 0) {
+	prepostUid = jp->jobSpecs.execUid;
+    }
+
+    if (lsfSetUid(prepostUid) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,
-	    "setuid", uid);
+                  "setuid", prepostUid);
 	return (-1);
     }
 
