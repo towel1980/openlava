@@ -77,7 +77,8 @@ struct config_param limParams[] =
     {"LSF_MASTER_LIST", NULL},
     {"LSF_REJECT_NONLSFHOST", NULL},
     {"LSF_LIM_JACKUP_BUSY", NULL},
-    {"OPENLAVA_RSYNC_CONFIG", NULL},
+    {"LIM_RSYNC_CONFIG", NULL},
+    {"LIM_SLAVE_ONLY", NULL},
     {NULL, NULL},
 };
 
@@ -304,7 +305,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
         if (pimPid == -1)
             startPIM(argc, argv);
 
-        ls_syslog(LOG_DEBUG, "\
+        ls_syslog(LOG_DEBUG2, "\
 %s: Before select: timer %dsec", __func__, timer.tv_sec);
 
         cc = chanSelect_(&sockmask, &chanmask, &timer);
@@ -336,7 +337,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
             alarmed = 0;
         }
 
-        ls_syslog(LOG_DEBUG,"\
+        ls_syslog(LOG_DEBUG2,"\
 %s: After select: cc %d alarmed %d timer %dsec",
                   __func__, cc, alarmed, timer.tv_sec);
 
@@ -609,7 +610,7 @@ initAndConfig(int checkMode, int *kernelPerm)
      * contact the master and retrieve the shared file
      * and the cluster file.
      */
-    if (limParams[OPENLAVA_RSYNC_CONFIG].paramValue) {
+    if (limParams[LIM_RSYNC_CONFIG].paramValue) {
         cc = getClusterConfig();
         if (cc < 0) {
             ls_syslog(LOG_ERR, "\
@@ -1054,7 +1055,7 @@ getClusterConfig(void)
     int cc;
     FILE *fp;
 
-    if (! limParams[OPENLAVA_RSYNC_CONFIG].paramValue)
+    if (! limParams[LIM_RSYNC_CONFIG].paramValue)
         return 0;
 
     ls_syslog(LOG_DEBUG, "\

@@ -47,13 +47,13 @@ static void copyResValues (struct loadVectorStruct, struct hostNode *);
 void
 sendLoad(void)
 {
-    static char fname[] = "sendLoad";
     static int noSendCount = 0;
     struct loadVectorStruct myLoadVector;
     enum   loadstruct loadType;
     struct hostNode *hPtr;
     struct sockaddr_in toAddr;
-    int    i, bufSize;
+    int    i;
+    int    bufSize;
     enum   limReqCode limReqCode;
     XDR    xdrs;
     char   *repBuf;
@@ -64,27 +64,31 @@ sendLoad(void)
     resInactivityCount++;
 
     if (resInactivityCount > resInactivityLimit) {
-	myHostPtr->status[0] |= LIM_RESDOWN;
+        myHostPtr->status[0] |= LIM_RESDOWN;
     }
 
     if (time(0) - lastSbdActiveTime > SBD_ACTIVE_TIME)
-	myHostPtr->status[0] |= LIM_SBDDOWN;
+        myHostPtr->status[0] |= LIM_SBDDOWN;
 
     if (logclass & LC_TRACE)
-       ls_syslog(LOG_DEBUG, "%s: Entering ..", fname);
+       ls_syslog(LOG_DEBUG, "%s: Entering ..", __func__);
 
     if (masterMe) {
 
         for (hPtr = myClusterPtr->hostList; hPtr; hPtr = hPtr->nextPtr) {
-            if (hPtr != myHostPtr) {
+
+            if (hPtr == myHostPtr)
+                continue;
+
                 hPtr->hostInactivityCount++;
                 if (hPtr->hostInactivityCount > 10000)
                     hPtr->hostInactivityCount = 100;
 
                 if (! LS_ISUNAVAIL(hPtr->status)) {
                     if (hPtr->hostInactivityCount > (hostInactivityLimit + retryLimit)) {
-                        ls_syslog(LOG_DEBUG,
-                                  "%s: Declaring %s unavailable inactivity Count=%d", fname, hPtr->hostName, hPtr->hostInactivityCount);
+                        ls_syslog(LOG_DEBUG, "\
+%s: Declaring %s unavailable inactivity Count=%d", __func__,
+                                  hPtr->hostName, hPtr->hostInactivityCount);
 
                         hPtr->status[0] |= LIM_UNAVAIL;
                         hPtr->infoValid = FALSE;
@@ -101,66 +105,83 @@ sendLoad(void)
                                 }
                             }
                         }
-			hPtr->loadMask  = 0;
-			hPtr->infoMask  = 0;
-		    }
-	            if ( (hPtr->hostInactivityCount > hostInactivityLimit) &&
-	                 (hPtr->hostInactivityCount <= (hostInactivityLimit + retryLimit))) {
-		        if (logclass & LC_COMM) {
-			    ls_syslog(LOG_DEBUG3,
-			      "%s: Asking %s to send load info %d %d", fname,
-			      hPtr->hostName, hPtr->hostInactivityCount,
-			      hostInactivityLimit + retryLimit);
-			}
-		        announceMasterToHost(hPtr, SEND_LOAD_INFO);
-		    }
-		}
-	    }
-	}
+                        hPtr->loadMask  = 0;
+                        hPtr->infoMask  = 0;
+                    }
+                    if ( (hPtr->hostInactivityCount > hostInactivityLimit) &&
+                         (hPtr->hostInactivityCount <= (hostInactivityLimit + retryLimit))) {
+                        if (logclass & LC_COMM) {
+                            ls_syslog(LOG_DEBUG3,
+                              "%s: Asking %s to send load info %d %d", __func__,
+                              hPtr->hostName, hPtr->hostInactivityCount,
+                              hostInactivityLimit + retryLimit);
+                        }
+                        announceMasterToHost(hPtr, SEND_LOAD_INFO);
+                    }
+                }
+        }
+
     } else {
 
         myClusterPtr->masterInactivityCount++;
 
-	if (logclass & LC_COMM) {
-	    ls_syslog (LOG_DEBUG3, "%s: masterInactivityCount=%d, hostInactivityLimit=%d, masterKnown=%d, retryLimit=%d",
-	    fname, myClusterPtr->masterInactivityCount,
-	    hostInactivityLimit,  myClusterPtr->masterKnown, retryLimit);
-	}
+        ls_syslog (LOG_DEBUG, "\
+%s: masterInactivityCount=%d, hostInactivityLimit=%d, masterKnown=%d, retryLimit=%d",
+                   __func__, myClusterPtr->masterInactivityCount,
+                   hostInactivityLimit,  myClusterPtr->masterKnown,
+                   retryLimit);
 
         if (myClusterPtr->masterInactivityCount > hostInactivityLimit) {
 
-            if ( myClusterPtr->masterKnown &&
-                (myClusterPtr->masterInactivityCount > hostInactivityLimit) &&
-                (myClusterPtr->masterInactivityCount <= hostInactivityLimit + retryLimit)) {
-		if (logclass & LC_COMM) {
-		    ls_syslog(LOG_DEBUG3, "%s: Attempting to probe master %s",
-			fname, myClusterPtr->masterPtr->hostName);
-		}
+            if (myClusterPtr->masterKnown
+                && myClusterPtr->masterInactivityCount > hostInactivityLimit
+                && (myClusterPtr->masterInactivityCount <= hostInactivityLimit + retryLimit)) {
+                ls_syslog(LOG_WARNING, "\
+%s: Attempting to probe master %s", __func__,
+                          myClusterPtr->masterPtr->hostName);
+
                 mustSendLoad = TRUE;
-                sendInfo     = SEND_MASTER_ANN;
+                sendInfo = SEND_MASTER_ANN;
             }
 
-            if (myClusterPtr->masterKnown &&
-                (myClusterPtr->masterInactivityCount > hostInactivityLimit+ retryLimit)) {
-		myClusterPtr->masterPtr->status[0] = LIM_UNAVAIL;
+            if (myClusterPtr->masterKnown
+                && (myClusterPtr->masterInactivityCount
+                    > hostInactivityLimit + retryLimit)) {
+
+                myClusterPtr->masterPtr->status[0] = LIM_UNAVAIL;
                 myClusterPtr->masterKnown  = FALSE;
                 myClusterPtr->prevMasterPtr = myClusterPtr->masterPtr;
-                myClusterPtr->masterPtr = (struct hostNode *) NULL;
-		ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5619, "%s: Master LIM unknown now")), fname);   /* catgets 5619 */
+                myClusterPtr->masterPtr = NULL;
+                ls_syslog(LOG_INFO, "%s: Master LIM unknown now", __func__);
+                if (limParams[LIM_SLAVE_ONLY].paramValue)
+                    ls_syslog(LOG_INFO, "\
+%s: slave only host will not try to take over mastership", __func__);
             }
-            if (myClusterPtr->masterInactivityCount > hostInactivityLimit
-                  + myHostPtr->hostNo * masterInactivityLimit) {
 
-                if (probeMasterTcp(myClusterPtr) < 0 ) {
+            /* Try to take over the current master only if
+             * I am not a slave only server and the master inactivity
+             * counter has reached its limit times my position in
+             * the cluster file.
+             */
+            if (limParams[LIM_SLAVE_ONLY].paramValue == NULL
+                && (myClusterPtr->masterInactivityCount > hostInactivityLimit
+                    + myHostPtr->hostNo * masterInactivityLimit)) {
 
+                if (probeMasterTcp(myClusterPtr) < 0) {
+                    /* Let's do a TCP connect towards the
+                     * last known master. This is kinda half
+                     * baked because of the master is hanging
+                     * the TCP connect is going to succeed
+                     * fooling me into believing the master
+                     * is all right, the cluster is going
+                     * to stall.
+                     */
                     initNewMaster();
                     return;
-
-                } else {
-                    myClusterPtr->masterInactivityCount = 0;
-                    myClusterPtr->masterKnown  = TRUE;
-                    myClusterPtr->masterPtr = myClusterPtr->prevMasterPtr;
                 }
+                myClusterPtr->masterInactivityCount = 0;
+                myClusterPtr->masterKnown  = TRUE;
+                myClusterPtr->masterPtr = myClusterPtr->prevMasterPtr;
             }
         }
 
@@ -171,20 +192,18 @@ sendLoad(void)
 
     if (!mustSendLoad) {
         for (i = 0; i < allInfo.numIndx; i++) {
-	    if (fabs(myHostPtr->loadIndex[i] - li[i].valuesent) >
-                li[i].exchthreshold) {
-		mustSendLoad = TRUE;
-		break;
-	    }
+            if (fabs(myHostPtr->loadIndex[i] - li[i].valuesent)
+                > li[i].exchthreshold) {
+                mustSendLoad = TRUE;
+                break;
+            }
         }
     }
 
     if (!mustSendLoad && noSendCount < hostInactivityLimit - 2 ) {
-
         noSendCount++;
         return;
     }
-
 
     for (i = 0; i < allInfo.numIndx; i++)
         li[i].valuesent = myHostPtr->loadIndex[i];
@@ -201,46 +220,47 @@ sendLoad(void)
         myLoadVector.numIndx   = allInfo.numIndx;
         myLoadVector.numUsrIndx = allInfo.numUsrIndx;
         myLoadVector.numResPairs = myHostPtr->numInstances;
+
         if (myLoadVector.numResPairs > 0) {
             if ((myLoadVector.resPairs  = getResPairs (myHostPtr)) == NULL) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "getResPairs");
-                 return;
+                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __func__, "getResPairs");
+                return;
             }
         } else
             myLoadVector.resPairs = NULL;
-	myLoadVector.li = myHostPtr->loadIndex;
-	bufSize = sizeof (struct loadVectorStruct)
-		  + allInfo.numIndx *sizeof (float)
-		  + GET_INTNUM(allInfo.numIndx) * sizeof (int)
-		  + myLoadVector.numResPairs * sizeof (struct resPair)
-		  + 100;
+        myLoadVector.li = myHostPtr->loadIndex;
+        bufSize = sizeof (struct loadVectorStruct)
+                  + allInfo.numIndx *sizeof (float)
+                  + GET_INTNUM(allInfo.numIndx) * sizeof (int)
+                  + myLoadVector.numResPairs * sizeof (struct resPair)
+                  + 100;
         for (i = 0; i < myLoadVector.numResPairs; i++ ){
-            bufSize += ALIGNWORD_(strlen(myLoadVector.resPairs[i].name)*sizeof(char) + 1) + 4;
-            bufSize += ALIGNWORD_(strlen(myLoadVector.resPairs[i].value)*sizeof(char) + 1) + 4;
+            bufSize += ALIGNWORD_(strlen(myLoadVector.resPairs[i].name) * sizeof(char) + 1) + 4;
+            bufSize += ALIGNWORD_(strlen(myLoadVector.resPairs[i].value) * sizeof(char) + 1) + 4;
         }
 
         if (bufSize > MSGSIZE) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5620,
-                "%s: message bigger then receive buf(%d)"), fname, bufSize);
-                /* catgets 5620 */
+            ls_syslog(LOG_ERR, "\
+%s: message bigger then receive buf(%d)", __func__, bufSize);
             return;
         }
-        if ((repBuf = (char *)malloc(bufSize)) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+
+        if ((repBuf = malloc(bufSize)) == NULL) {
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, __func__, "malloc");
             return;
         }
 
         xdrmem_create(&xdrs, repBuf, bufSize, XDR_ENCODE);
-	initLSFHeader_(&reqHdr);
+        initLSFHeader_(&reqHdr);
         reqHdr.opCode  = (short) limReqCode;
         reqHdr.refCode =  0;
 
         if (!(xdr_LSFHeader(&xdrs, &reqHdr) &&
               xdr_enum(&xdrs, (int *) &loadType) &&
               xdr_loadvector(&xdrs, &myLoadVector, &reqHdr))) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_enum/xdr_loadvector");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __func__, "xdr_enum/xdr_loadvector");
             xdr_destroy(&xdrs);
-	    FREEUP (repBuf);
+            FREEUP (repBuf);
             return;
         }
 
@@ -248,26 +268,26 @@ sendLoad(void)
         toAddr.sin_port   = lim_port;
 
         if (!getHostNodeIPAddr(myClusterPtr->masterPtr,&toAddr)) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "getHostNodeIPAddr");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __func__, "getHostNodeIPAddr");
             xdr_destroy(&xdrs);
             FREEUP (repBuf);
             return;
         }
 
-	logcnt(1);
+        logcnt(1);
 
 
-	if (logclass & LC_COMM)
-            ls_syslog(LOG_DEBUG,
-		      "sendLoad: sending to %s (len=%d,port=%d)",
-		      sockAdd2Str_(&toAddr), XDR_GETPOS(&xdrs),
-		      ntohs(lim_port));
+        if (logclass & LC_COMM)
+            ls_syslog(LOG_DEBUG, "\
+sendLoad: sending to %s (len=%d,port=%d)",
+                      sockAdd2Str_(&toAddr), XDR_GETPOS(&xdrs),
+                      ntohs(lim_port));
 
         if (chanSendDgram_(limSock, repBuf, XDR_GETPOS(&xdrs), &toAddr) < 0) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "chanSendDgram_",
-		sockAdd2Str_(&toAddr));
+            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, __func__, "chanSendDgram_",
+                      sockAdd2Str_(&toAddr));
             xdr_destroy(&xdrs);
-	    FREEUP (repBuf);
+            FREEUP (repBuf);
             return;
         }
         xdr_destroy(&xdrs);
@@ -276,7 +296,6 @@ sendLoad(void)
 
     mustSendLoad = FALSE;
     noSendCount = 0;
-    return;
 
 }
 
@@ -320,24 +339,24 @@ rcvLoad(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
 
 
     if (from->sin_port != lim_port) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5600,
-	    "%s: Update not from LIM: <%s>, expected %d"),  /* catgets 5600 */
-	    fname, sockAdd2Str_(from), ntohs(lim_port));
+        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5600,
+            "%s: Update not from LIM: <%s>, expected %d"),  /* catgets 5600 */
+            fname, sockAdd2Str_(from), ntohs(lim_port));
         return;
     }
 
 
     if (!xdr_enum(xdrs, (int *) &loadType)) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_enum");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_enum");
         return;
     }
 
     if (loadType == e_vec)
         rcvLoadVector(xdrs, from, hdr);
     else  {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5601,
-	    "%s: Invalide load type (%d) from host <%s>"),  /* catgets 5601 */
-	    fname, loadType, sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5601,
+            "%s: Invalide load type (%d) from host <%s>"),  /* catgets 5601 */
+            fname, loadType, sockAdd2Str_(from));
         return;
     }
 }
@@ -353,21 +372,21 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
     int i;
 
     if (loadVector == NULL) {
-	if ((loadVector = (struct loadVectorStruct *)
-	      malloc (sizeof (struct loadVectorStruct))) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+        if ((loadVector = (struct loadVectorStruct *)
+              malloc (sizeof (struct loadVectorStruct))) == NULL) {
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return;
         }
         if ((loadVector->li = (float *)
-		      malloc(allInfo.numIndx*sizeof(float))) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+                      malloc(allInfo.numIndx*sizeof(float))) == NULL) {
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return;
         }
 
-	if ((loadVector->status = (int *)
-		   malloc((1 + GET_INTNUM(allInfo.numIndx)) * sizeof(int)))
-							          == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+        if ((loadVector->status = (int *)
+                   malloc((1 + GET_INTNUM(allInfo.numIndx)) * sizeof(int)))
+                                                                  == NULL) {
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return;
         }
     }
@@ -375,20 +394,20 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
     if (!xdr_loadvector(xdrs, loadVector, hdr)) {
 
         ls_syslog(LOG_DEBUG, "%s: Error on xdr_loadvector from %s", fname,
-		  sockAdd2Str_(from));
+                  sockAdd2Str_(from));
         return;
     }
 
     if (masterMe) {
 
         if ( (myClusterPtr->checkSum != loadVector->checkSum)
-	     &&
+             &&
              (checkSumMismatch < 5)
-	     &&
-	     (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) ) {
-	    ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5602,
-	        "%s: Sender (%s) may have different config?."), /* catgets 5602 */
-		fname, sockAdd2Str_(from));
+             &&
+             (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) ) {
+            ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5602,
+                "%s: Sender (%s) may have different config?."), /* catgets 5602 */
+                fname, sockAdd2Str_(from));
             checkSumMismatch++;
         }
 
@@ -401,16 +420,16 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
 
 
         if (findHostbyList(myClusterPtr->hostList, hPtr->hostName) == NULL) {
-	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5604,
-		"%s: Got load from client-only host %s.  Kill LIM on %s"), /* catgets 5604 */
-		fname, sockAdd2Str_(from), sockAdd2Str_(from));
+            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5604,
+                "%s: Got load from client-only host %s.  Kill LIM on %s"), /* catgets 5604 */
+                fname, sockAdd2Str_(from), sockAdd2Str_(from));
             return;
         }
 
 
 
-	if (hPtr->infoValid != TRUE) {
-	    return;
+        if (hPtr->infoValid != TRUE) {
+            return;
         }
 
         if (logclass & LC_COMM)
@@ -418,14 +437,14 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
 
 
 
-	hPtr->hostInactivityCount = 0;
-	int masterLock = FALSE;
+        hPtr->hostInactivityCount = 0;
+        int masterLock = FALSE;
 
-	if (hPtr->status[0] & LIM_LOCKEDM) {
-	    masterLock = TRUE;
+        if (hPtr->status[0] & LIM_LOCKEDM) {
+            masterLock = TRUE;
         }
         hPtr->status[0] = loadVector->status[0];
-	if ( masterLock) {
+        if ( masterLock) {
             hPtr->status[0] |= LIM_LOCKEDM;
         } else {
             hPtr->status[0] &= ~LIM_LOCKEDM;
@@ -436,15 +455,15 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
         hPtr->loadMask  = 0;
 
 
-	if ((loadVector->seqNo - hPtr->lastSeqNo > 2) &&
-	    (loadVector->seqNo > hPtr->lastSeqNo) && (hPtr->lastSeqNo != 0) )
-	    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5605,
-	        "%s: host %s lastSeqNo=%d seqNo=%d. Packets being dropped?"), /* catgets 5605 */
-		fname, hPtr->hostName, hPtr->lastSeqNo, loadVector->seqNo);
-	hPtr->lastSeqNo = loadVector->seqNo;
+        if ((loadVector->seqNo - hPtr->lastSeqNo > 2) &&
+            (loadVector->seqNo > hPtr->lastSeqNo) && (hPtr->lastSeqNo != 0) )
+            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5605,
+                "%s: host %s lastSeqNo=%d seqNo=%d. Packets being dropped?"), /* catgets 5605 */
+                fname, hPtr->hostName, hPtr->lastSeqNo, loadVector->seqNo);
+        hPtr->lastSeqNo = loadVector->seqNo;
 
 
-	copyResValues (*loadVector, hPtr);
+        copyResValues (*loadVector, hPtr);
 
         copyIndices(loadVector->li, loadVector->numIndx, loadVector->numUsrIndx, hPtr);
 
@@ -457,7 +476,7 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
     } else {
 
         ls_syslog(LOG_DEBUG, "%s: %s thinks I am the master, but I'm not",
-	 	  fname, sockAdd2Str_(from));
+                  fname, sockAdd2Str_(from));
         return;
     }
 }
@@ -522,11 +541,11 @@ copyResValues (struct loadVectorStruct loadVector, struct hostNode *hPtr)
                 continue;
         }
         if ((temp = putstr_(loadVector.resPairs[i].value)) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
              return;
         }
-	FREEUP (instance->value);
-	instance->value = temp;
+        FREEUP (instance->value);
+        instance->value = temp;
         instance->updHost = hostPtr;
     }
 
@@ -542,30 +561,30 @@ logcnt(int sendlog)
     char   *sp;
 
     if (first) {
-	first = FALSE;
+        first = FALSE;
         if ((sp = getenv("SLIM_LOG")) == NULL)
-	    sloglimit = 0;
+            sloglimit = 0;
         else
-	    sloglimit = atoi(sp);
+            sloglimit = atoi(sp);
         if ((sp = getenv("RLIM_LOG")) == NULL)
-	    rloglimit = 0;
-	else
-	    rloglimit = atoi(sp);
+            rloglimit = 0;
+        else
+            rloglimit = atoi(sp);
     }
 
     if (sendlog)
-	sendcnt++;
+        sendcnt++;
     else
-	recvcnt++;
+        recvcnt++;
 
     if (sloglimit == 0 && rloglimit == 0)
-	return;
+        return;
 
     if (sendcnt > sloglimit || recvcnt > rloglimit) {
-	ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5621, "%s: sendcnt=%d recvcnt=%d sloglimit=%d rloglimit=%d")), /* catgets 5621 */ "logcnt",
-		  sendcnt, recvcnt, sloglimit, rloglimit);
-	sendcnt = 0;
-	recvcnt = 0;
+        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5621, "%s: sendcnt=%d recvcnt=%d sloglimit=%d rloglimit=%d")), /* catgets 5621 */ "logcnt",
+                  sendcnt, recvcnt, sloglimit, rloglimit);
+        sendcnt = 0;
+        recvcnt = 0;
         return;
     }
 
@@ -581,19 +600,19 @@ copyIndices(float *lindx, int numIndx, int numUsrIndx, struct hostNode *hPtr)
 
 
     for (i = 0; (i < myBuiltIn) && (i < slaveBuiltIn); i++) {
-	int nprocs = hPtr->statInfo.maxCpus;
-	float cpuf = (hPtr->hModelNo >= 0) ?
-	    shortInfo.cpuFactors[hPtr->hModelNo] : 1.0;
-	float rawql;
+        int nprocs = hPtr->statInfo.maxCpus;
+        float cpuf = (hPtr->hModelNo >= 0) ?
+            shortInfo.cpuFactors[hPtr->hModelNo] : 1.0;
+        float rawql;
 
-	if (i==R15S || i==R1M || i==R15M ) {
-	    rawql = lindx[i];
-	    hPtr->loadIndex[i] = normalizeRq(rawql,cpuf,nprocs);
-	    hPtr->uloadIndex[i] = rawql;
-	} else {
-	    hPtr->loadIndex[i] = lindx[i];
-	    hPtr->uloadIndex[i] = lindx[i];
-	}
+        if (i==R15S || i==R1M || i==R15M ) {
+            rawql = lindx[i];
+            hPtr->loadIndex[i] = normalizeRq(rawql,cpuf,nprocs);
+            hPtr->uloadIndex[i] = rawql;
+        } else {
+            hPtr->loadIndex[i] = lindx[i];
+            hPtr->uloadIndex[i] = lindx[i];
+        }
     }
 
 
@@ -622,7 +641,7 @@ normalizeRq(float rawql, float cpuFactor, int nprocs)
         return(0.0);
 
     if (rawql >= INFINIT_LOAD)
-	return(rawql);
+        return(rawql);
 
     if (nprocs >= 1) {
         ifloor = rawql/nprocs;
@@ -633,14 +652,12 @@ normalizeRq(float rawql, float cpuFactor, int nprocs)
         slope = MIN(slope,0.9);
         f  = slope*(-k1 + 1.0)/(1.0 - k2);
     } else {
-
-        return( (rawql + 1) / cpuFactor);
+        return((rawql + 1) / cpuFactor);
     }
 
-    nrq = (f*ifloor + (1.0-f)*rawql/nprocs + 1) / cpuFactor;
+    nrq = (f * ifloor + (1.0-f) * rawql/nprocs + 1) / cpuFactor;
     if (nrq < 0)
         return (0.0);
 
     return (nrq);
-
 }

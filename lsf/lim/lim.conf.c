@@ -3974,13 +3974,11 @@ addCluster(char *clName, char *candlist)
         return(NULL);
     }
 
-    myClusterPtr = (struct clusterNode *)malloc(sizeof(struct clusterNode));
+    myClusterPtr = calloc(1, sizeof(struct clusterNode));
     if (myClusterPtr == (struct clusterNode *)NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
         return NULL;
     }
-
-    memset((char *) myClusterPtr, 0, sizeof(struct clusterNode));
 
     myClusterPtr->clName = putstr_(clName);
     myClusterPtr->clusterNo = nextClNo++;
@@ -3991,6 +3989,7 @@ addCluster(char *clName, char *candlist)
     sp = (char *) candlist;
     i = 0;
     while ( ((word = getNextWord_(&sp)) != NULL) && (i < MAXCANDHOSTS)) {
+
         hp = (struct hostent *)getHostEntryByName_(word);
         if (!hp) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5358,
@@ -4002,19 +4001,20 @@ addCluster(char *clName, char *candlist)
         myClusterPtr->candAddrList[i] =  *((u_int *) hp->h_addr);
         i++;
     }
-    myClusterPtr->candAddrList[i] = (u_int)0;
+
+    myClusterPtr->candAddrList[i] = 0;
     myClusterPtr->status = CLUST_ACTIVE | CLUST_STAT_UNAVAIL;
     myClusterPtr->masterKnown = FALSE;
     myClusterPtr->masterInactivityCount = 0;
-    myClusterPtr->masterPtr = (struct hostNode *)NULL;
-    myClusterPtr->prevMasterPtr = (struct hostNode *)NULL;
-    myClusterPtr->hostList = (struct hostNode *)NULL;
-    myClusterPtr->clientList = (struct hostNode *)NULL;
-    myClusterPtr->eLimArgs   = (char *)NULL;
-    myClusterPtr->eLimArgv   = (char **)NULL;
+    myClusterPtr->masterPtr = NULL;
+    myClusterPtr->prevMasterPtr = NULL;
+    myClusterPtr->hostList = NULL;
+    myClusterPtr->clientList = NULL;
+    myClusterPtr->eLimArgs   = NULL;
+    myClusterPtr->eLimArgv   = NULL;
     myClusterPtr->currentAddr = 0;
-    myClusterPtr->masterName = (char *)NULL;
-    myClusterPtr->managerName = (char *)NULL;
+    myClusterPtr->masterName = NULL;
+    myClusterPtr->managerName = NULL;
     myClusterPtr->resClass = 0;
     myClusterPtr->typeClass = 0;
     myClusterPtr->modelClass = 0;
@@ -4030,7 +4030,7 @@ addCluster(char *clName, char *candlist)
     myClusterPtr->hostTypeBitMaps = NULL;
     myClusterPtr->hostModelBitMaps = NULL;
 
-    return(myClusterPtr);
+    return myClusterPtr;
 }
 
 static char *

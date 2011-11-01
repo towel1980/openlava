@@ -17,3 +17,16 @@ config.h
 config.log
 config.status
 stamp-h1
+config/lsb.hosts
+config/lsb.params
+config/lsb.queues
+config/lsb.users
+config/lsf.cluster.openlava
+config/lsf.conf
+config/lsf.shared
+config/lsf.task
+config/openlava
+config/openlava.csh
+config/openlava.setup
+config/openlava.sh
+

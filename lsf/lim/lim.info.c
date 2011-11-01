@@ -258,15 +258,15 @@ clusNameReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
 void
 masterInfoReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
 {
-    static char fname[] = "masterInfoReq()";
+    static char buf[MSGSIZE];
     XDR  xdrs2;
-    char buf[MSGSIZE];
     enum limReplyCode limReplyCode;
     struct hostNode *masterPtr;
     struct LSFHeader replyHdr;
     struct masterInfo masterInfo;
 
-    memset((char*)&buf, 0, sizeof(buf));
+    memset(&buf, 0, sizeof(buf));
+
     initLSFHeader_(&replyHdr);
     if (!myClusterPtr->masterKnown && myClusterPtr->prevMasterPtr == NULL)
         limReplyCode = LIME_MASTER_UNKNW;
@@ -276,8 +276,10 @@ masterInfoReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
     xdrmem_create(&xdrs2, buf, MSGSIZE, XDR_ENCODE);
     replyHdr.opCode  = (short) limReplyCode;
     replyHdr.refCode = reqHdr->refCode;
+
     if (!xdr_LSFHeader(&xdrs2, &replyHdr)) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_LSFHeader");
+	ls_syslog(LOG_ERR, "\
+%s: failed encode xdr_LSFHeader() to %s", __func__, sockAdd2Str_(from));
         xdr_destroy(&xdrs2);
         return;
     }
@@ -288,16 +290,18 @@ masterInfoReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
         masterInfo.addr   =  masterPtr->addr[0];
         masterInfo.portno =  masterPtr->statInfo.portno;
 
-        if(!xdr_masterInfo(&xdrs2, &masterInfo, &replyHdr)) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_masterInfo");
+        if (! xdr_masterInfo(&xdrs2, &masterInfo, &replyHdr)) {
+            ls_syslog(LOG_ERR, "\
+%s: failed encode xdr_masterInfo() to %s", __func__, sockAdd2Str_(from));
             xdr_destroy(&xdrs2);
             return;
         }
     }
 
     if (chanSendDgram_(limSock, buf, XDR_GETPOS(&xdrs2), from) < 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "chanSendDgram_",
-	    sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, "\
+%s: failed chanSendDgram_() %d bytes to %s", __func__,
+                  XDR_GETPOS(&xdrs2), sockAdd2Str_(from));
         xdr_destroy(&xdrs2);
         return;
     }
@@ -305,7 +309,6 @@ masterInfoReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
     xdr_destroy(&xdrs2);
 }
 
-
 void
 hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
             struct LSFHeader *reqHdr, int s)
