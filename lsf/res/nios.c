@@ -1612,25 +1612,27 @@ acceptCallBack(int asock)
         struct sockaddr_in   sin;
         socklen_t            len = sizeof(sin);
 
-        if (getpeername(sock, (struct sockaddr *) &sin, &len) < 0) {
+        if (getpeername(sock, (struct sockaddr *)&sin, &len) < 0) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "getpeername");
         } else {
-            const char *officialName;
+            struct hostent *hp;
 
-            if ((officialName = getHostOfficialByAddr_(&sin.sin_addr)) == NULL) {
-                ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M,
-                          fname, "getHostOfficialByAddr_");
+            hp = Gethostbyaddr_((char *)&sin.sin_addr,
+                                sizeof(struct in_addr),
+                                AF_INET);
+            if (hp == NULL) {
+                ls_syslog(LOG_ERR, "\
+%s: gethostbyaddr() failed for %s", __func__, sockAdd2Str_(&sin));
+
             } else {
-                fprintf(stderr, I18N(806,
-                    "<<Starting on %s>>\r\n"), /* catgets 806 */
-                    officialName);
+                fprintf(stderr, "\
+<<Starting on %s>>\r\n", hp->h_name);
             }
         }
     }
 
     if (!usepty)
         return (sock);
-
 
     redirect = 0;
     if (isatty(0)) {

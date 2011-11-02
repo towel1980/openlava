@@ -425,20 +425,10 @@ my_gethostbyaddr(char *faddr)
         }
     }
     fclose(hfile);
-    return((struct hostent *)NULL);
-} /* my_gethostbyaddr */
 
+    return NULL;
+}
 
-
-/*
- *--------------------------------------------------------------------------
- *  Gethostbyaddr_(addr, len, type) --
- *
- *     Return official host entry given an address.  Multiple addresses
- * for a given host are cached.
- *
- *------------------------------------------------------------------------
- */
 struct hostent *
 Gethostbyaddr_(char *addr, int len, int type)
 {
@@ -450,10 +440,6 @@ Gethostbyaddr_(char *addr, int len, int type)
     if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG, "Gethostbyaddr_: %x %x %x %x len %d",
                   addr[0], addr[1], addr[2], addr[3], len);
-#ifdef _SPP_UX
-    /* In the buggy SPP-UX 4.2, type = 0, this is used to fix it */
-    type = AF_INET;
-#endif
 
     if ((hp = getHpCacheByAddr(addr))) {
         return (hp);

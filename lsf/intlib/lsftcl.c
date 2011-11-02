@@ -196,12 +196,12 @@ stringValue(ClientData clientData,
             int argc,
             const char *argv[])
 {
-    int    *indx;
-    char   *sp;
-    char   *sp2;
-    char   *value;
-    char   *officialName;
-    char   status[MAXLSFNAMELEN];
+    int *indx;
+    char *sp;
+    char *sp2;
+    char *value;
+    char status[MAXLSFNAMELEN];
+    struct hostent *hp;
 
     if (argc != 3) {
         interp->result = "wrong # args";
@@ -221,9 +221,9 @@ stringValue: arg0 %s arg1 %s arg2 %s indx %d hostname %s",
         case HOSTNAME:
             overRideFromType = TRUE;
             sp = hPtr->hostName;
-            officialName = (char*)getHostOfficialByName_(argv[2]);
-            if (officialName != NULL)
-                sp2 = officialName;
+            hp = Gethostbyname_((char *)argv[2]);
+            if (hp)
+                sp2 = hp->h_name;
             else
                 sp2 = (char *) argv[2];
             break;

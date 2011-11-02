@@ -393,7 +393,7 @@ main (int argc, char **argv)
                 mbdDie(MASTER_RESIGN);
         }
 
-        if (!isValidHost_(myhostnm)) {
+        if (!Gethostbyname_(myhostnm)) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, "main", "isValidHost_");
             if (! lsb_CheckMode)
                 mbdDie(MASTER_FATAL);
@@ -509,8 +509,9 @@ acceptConnection(int socket)
         return;
     }
 
-
-    hp = (struct hostent *)getHostEntryByAddr_(&from.sin_addr);
+    hp = Gethostbyaddr_((char *)&from.sin_addr,
+                        sizeof(struct in_addr),
+                        AF_INET);
     if (hp == NULL) {
         ls_syslog(LOG_WARNING,
                   _i18n_msg_get(ls_catd , NL_SETN, 5010, "%s: Request from unknown host <%s>: %M"), /* catgets 5010 */
@@ -527,7 +528,6 @@ acceptConnection(int socket)
                   fname, hp->h_name, sockAdd2Str_(&from),
                   chanSock_(s));
     }
-
 
     memcpy((char *) &from.sin_addr,
            (char *) hp->h_addr,

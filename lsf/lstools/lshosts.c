@@ -30,7 +30,7 @@
 
 #include <math.h>
 
-#define NL_SETN 27	
+#define NL_SETN 27
 
 
 static void usage(char *);
@@ -72,7 +72,7 @@ stripSpaces(char *field)
     cp = field;
     while (*cp == ' ')
         cp++;
-    
+
     len = strlen(field);
     i = len - 1;
     while((i > 0) && (field[i] == ' '))
@@ -80,14 +80,14 @@ stripSpaces(char *field)
     if (i < len-1)
         field[i] = '\0';
     return(cp);
-} 
+}
 
 static void
 usage(char *cmd)
 {
-    fprintf(stderr, "%s: %s [-h] [-V] [-w | -l] [-R res_req] [host_name ...]\n", I18N_Usage, cmd); 
-    fprintf(stderr, "%s\n %s [-h] [-V] -s [static_resouce_name ...]\n", I18N_or, cmd);  
-} 
+    fprintf(stderr, "%s: %s [-h] [-V] [-w | -l] [-R res_req] [host_name ...]\n", I18N_Usage, cmd);
+    fprintf(stderr, "%s\n %s [-h] [-V] -s [static_resouce_name ...]\n", I18N_or, cmd);
+}
 
 static void
 print_long(struct hostInfo *hostInfo)
@@ -103,16 +103,16 @@ print_long(struct hostInfo *hostInfo)
     char **shareNames, **shareValues, **formats;
     char strbuf1[30],strbuf2[30],strbuf3[30];
 
-    
+
     if (first) {
         char tmpbuf[MAXLSFNAMELEN];
         int  fmtid;
 
-        
+
         if(!(fmt=(struct indexFmt *)
             malloc((hostInfo->numIndx+2)*sizeof (struct indexFmt)))) {
             lserrno=LSE_MALLOC;
-            ls_perror("print_long"); 
+            ls_perror("print_long");
             exit(-1);
         }
         for (i=0; i<NBUILTINDEX+2; i++)
@@ -124,16 +124,16 @@ print_long(struct hostInfo *hostInfo)
             exit(-1);
         }
         for(i=0; indxnames[i]; i++) {
-            if (i > MEM) 	
+            if (i > MEM)
                 fmtid = MEM + 1;
-            else 
-                fmtid = i;	
+            else
+                fmtid = i;
 
             if ((fmtid == MEM +1) && (newIndexLen = strlen(indxnames[i])) >= 7) {
 	        sprintf(newFmt, "%s%d%s", "%", newIndexLen+1, "s");
 		sprintf(tmpbuf, newFmt, indxnames[i]);
-	    }					
-            else 
+	    }
+            else
                 sprintf(tmpbuf, fmt[fmtid].hdr, indxnames[i]);
             strcat(line, tmpbuf);
         }
@@ -142,7 +142,7 @@ print_long(struct hostInfo *hostInfo)
 
     printf("\n%s:  %s\n",
 	_i18n_msg_get(ls_catd,NL_SETN, 1601, "HOST_NAME"), /* catgets 1601 */
-	hostInfo->hostName); 
+	hostInfo->hostName);
     {
         char *buf1, *buf2, *buf3, *buf4, *buf5, *buf6, *buf7, *buf8, *buf9, *buf10;
 
@@ -159,7 +159,7 @@ print_long(struct hostInfo *hostInfo)
 
     	printf("%-10.10s %11.11s %5.5s %5.5s %6.6s %6.6s %6.6s %6.6s %6.6s %6.6s\n",
 	       buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9, buf10);
-	
+
 	FREEUP(buf1);
 	FREEUP(buf2);
 	FREEUP(buf3);
@@ -177,14 +177,14 @@ print_long(struct hostInfo *hostInfo)
 	sprintf(strbuf2,"%11s",hostInfo->hostModel);strbuf2[11]='\0';
 	sprintf(strbuf3,"%5.1f",hostInfo->cpuFactor);strbuf3[5]='\0';
 	printf("%-10s %11s %5s ",strbuf1,strbuf2,strbuf3);
-        if (hostInfo->maxCpus > 0) 
-            printf("%5d %6d %5dM %5dM %5dM %6d %6s\n", 
+        if (hostInfo->maxCpus > 0)
+            printf("%5d %6d %5dM %5dM %5dM %6d %6s\n",
                 hostInfo->maxCpus, hostInfo->nDisks, hostInfo->maxMem,
-                hostInfo->maxSwap, hostInfo->maxTmp, 
+                hostInfo->maxSwap, hostInfo->maxTmp,
                 hostInfo->rexPriority, I18N_Yes);
         else
             printf("%5s %6s %6s %6s %6s %6d %6s\n",
-                "-", "-", "-", "-", "-", hostInfo->rexPriority, 
+                "-", "-", "-", "-", "-", hostInfo->rexPriority,
 		I18N_Yes); /* catgets 1612  */
     } else {
 	sprintf(strbuf1,"%-10s",hostInfo->hostType);strbuf1[10]='\0';
@@ -192,15 +192,15 @@ print_long(struct hostInfo *hostInfo)
 	sprintf(strbuf3,"%5.1f",hostInfo->cpuFactor);strbuf3[5]='\0';
 	printf("%-10s %11s %5s ",strbuf1,strbuf2,strbuf3);
 	printf("%5s %6s %6s %6s %6s %6s %6s\n",
-                "-", "-", "-", "-", "-", "-", 
+                "-", "-", "-", "-", "-", "-",
 	       I18N_No); /* catgets 1613 */
     }
-        
-   
+
+
     if (sharedResConfigured_ == TRUE) {
-        if ((retVal = makeShareField(hostInfo->hostName, TRUE, &shareNames, 
+        if ((retVal = makeShareField(hostInfo->hostName, TRUE, &shareNames,
             &shareValues, &formats)) > 0) {
-            
+
 
             for (i = 0; i < retVal; i++) {
                 printf(formats[i], shareNames[i]);
@@ -214,7 +214,7 @@ print_long(struct hostInfo *hostInfo)
         }
     }
 
-    printf("\n"); 
+    printf("\n");
     printf("%s: ",
 	_i18n_msg_get(ls_catd,NL_SETN,1614, "RESOURCES")); /* catgets 1614 */
     if (hostInfo->nRes) {
@@ -222,7 +222,7 @@ print_long(struct hostInfo *hostInfo)
 	for (i=0; i < hostInfo->nRes; i++) {
             if (! first)
                printf(" ");
-            else 
+            else
                printf("(");
 	    printf("%s", hostInfo->resources[i]);
             first = FALSE;
@@ -239,8 +239,8 @@ print_long(struct hostInfo *hostInfo)
 	if (strcmp(hostInfo->windows, "-") == 0)
 	    fputs(
 		_i18n_msg_get(ls_catd,NL_SETN,1617, " (always open)\n"), /* catgets 1617 */
-		stdout); 
-	else 
+		stdout);
+	else
 	    printf("%s\n", hostInfo->windows);
     } else {
 	printf(_i18n_msg_get(ls_catd,NL_SETN,1618, "Not applicable for client-only host\n")); /* catgets 1618 */
@@ -251,7 +251,7 @@ print_long(struct hostInfo *hostInfo)
 	return;
     }
 
-    
+
     printf("\n");
     printf(_i18n_msg_get(ls_catd,NL_SETN,1626, "LOAD_THRESHOLDS:")); /* catgets 1626 */
     printf("\n%s\n",line);
@@ -260,8 +260,8 @@ print_long(struct hostInfo *hostInfo)
         char tmpfield[MAXLSFNAMELEN];
         int id;
 
-        if (i > MEM)	
-            id = MEM + 1;	
+        if (i > MEM)
+            id = MEM + 1;
         else
             id = i;
         if (fabs(li[i]) >= (double) INFINIT_LOAD)
@@ -270,16 +270,16 @@ print_long(struct hostInfo *hostInfo)
             sprintf(tmpfield, fmt[id].ok,  li[i] * fmt[id].scale);
             sp = stripSpaces(tmpfield);
         }
-	if ((id == MEM + 1) && (newIndexLen = strlen (indxnames[i])) >= 7 ){ 
+	if ((id == MEM + 1) && (newIndexLen = strlen (indxnames[i])) >= 7 ){
 	    sprintf(newFmt, "%s%d%s", "%", newIndexLen+1, "s");
             printf(newFmt, sp);
         }
-	else 
+	else
             printf(fmt[id].hdr, sp);
     }
 
     printf("\n");
-} 
+}
 
 int
 main(int argc, char **argv)
@@ -288,12 +288,12 @@ main(int argc, char **argv)
     char   *namebufs[256];
     struct hostInfo *hostinfo;
     int    numhosts = 0;
-    const char *officialName;
+    struct hostent *hp;
     int    i, j;
     char   *resReq = NULL;
     char   longformat = FALSE;
     char   longname = FALSE;
-    char   staticResource = FALSE, otherOption = FALSE; 
+    char   staticResource = FALSE, otherOption = FALSE;
     int extView = FALSE;
     int achar;
     extern int  optind;
@@ -304,14 +304,14 @@ main(int argc, char **argv)
     int rc;
 
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
     if (ls_initdebug(argv[0]) < 0) {
         ls_perror("ls_initdebug");
         exit(-1);
     }
     if (logclass & (LC_TRACE))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname); 
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0) {
@@ -334,9 +334,9 @@ main(int argc, char **argv)
             }
             optind = i + 1;
             extView = TRUE;
-        } else if (strcmp(argv[i], "-R") == 0 || strcmp(argv[i], "-l") == 0 
+        } else if (strcmp(argv[i], "-R") == 0 || strcmp(argv[i], "-l") == 0
                   || strcmp(argv[i], "-w") == 0) {
-            otherOption = TRUE; 
+            otherOption = TRUE;
             if (staticResource == TRUE) {
                 usage(argv[0]);
                 exit(-1);
@@ -344,7 +344,7 @@ main(int argc, char **argv)
         }
     }
 
-    if (staticResource == TRUE) { 
+    if (staticResource == TRUE) {
         displayShareResource(argc, argv, optind, TRUE, extView );
     } else {
         while ((achar = getopt(argc, argv, "R:lw")) != EOF) {
@@ -380,48 +380,41 @@ main(int argc, char **argv)
 	        fprintf(stderr, "lshosts: %s\n", ls_sysmsg());
                 unknown = 1;
                 continue;
-            } else if ( (isClus == 0) &&
-                ((officialName = getHostOfficialByName_(argv[optind])) == NULL)) {
-                fprintf(stderr, "%s: %s.\n", argv[optind], 
-			_i18n_msg_get(ls_catd,NL_SETN,1627, "unknown host name")); /* catgets 1627 */
+            } else if ((isClus == 0) &&
+                       ((hp = Gethostbyname_(argv[optind])) == NULL)) {
+                fprintf(stderr, "\
+%s: gethostbyname() failed for host %s.\n", __func__, argv[optind]);
                 unknown = 1;
                 continue;
             }
-    	    namebufs[i] = malloc(MAXHOSTNAMELEN);
-	    if (namebufs[i] == NULL)  {
-                fprintf(stderr, I18N_FUNC_FAIL,"main","malloc" );
-	        exit(-1);
-    	    } else
-                officialName = NULL;
-            if (officialName)
-	        strcpy(namebufs[i], officialName);
-            else	
-	        strcpy(namebufs[i], argv[optind]);
+            namebufs[i] = strdup(hp->h_name);
+            if (namebufs[i] == NULL) {
+                perror("strdup()");
+                exit(-1);
+            }
             i++;
         }
-   
-        
-        if ( (i==0) && (unknown == 1))
+
+        if (i == 0 && unknown == 1)
             exit(-1);
 
-	 
         if (i == 0) {
-            TIMEIT(0, (hostinfo = ls_gethostinfo(resReq, &numhosts, NULL, 0, 
-                    options)), "ls_gethostinfo");
+            TIMEIT(0, (hostinfo = ls_gethostinfo(resReq, &numhosts, NULL, 0,
+                                                 options)), "ls_gethostinfo");
             if (hostinfo == NULL) {
                 ls_perror("ls_gethostinfo()");
                 exit(-1);
             }
-        } else {                
+        } else {
     	    TIMEIT(0, (hostinfo = ls_gethostinfo(resReq, &numhosts, namebufs,
-                   i, 0)), "ls_gethostinfo");
+                                                 i, 0)), "ls_gethostinfo");
 	    if (hostinfo == NULL) {
 	        ls_perror("ls_gethostinfo");
 	        exit(-1);
 	    }
         }
 
-        if (!longformat && !longname) { 
+        if (!longformat && !longname) {
 	    char *buf1, *buf2, *buf3, *buf4, *buf5;
 	    char *buf6, *buf7, *buf8, *buf9;
 
@@ -475,7 +468,7 @@ main(int argc, char **argv)
 	    FREEUP(buf8);
 	    FREEUP(buf9);
         }
-    
+
         for (i=0;i<numhosts;i++) {
             char *server;
             int first;
@@ -483,29 +476,29 @@ main(int argc, char **argv)
             if (longformat) {
                 print_long(&hostinfo[i]);
                 continue;
-            } 
+            }
 
             if (hostinfo[i].isServer)
-                server = I18N_Yes; 
+                server = I18N_Yes;
             else
-                server = I18N_No; 
+                server = I18N_No;
 
-            
+
     	    if(longname)
-	        printf("%-25s %10s %11s %5.1f ", hostinfo[i].hostName, 
-	               hostinfo[i].hostType, hostinfo[i].hostModel, 
+	        printf("%-25s %10s %11s %5.1f ", hostinfo[i].hostName,
+	               hostinfo[i].hostType, hostinfo[i].hostModel,
                        hostinfo[i].cpuFactor);
             else
-	        printf("%-11.11s %7.7s %8.8s %5.1f ", hostinfo[i].hostName, 
-	               hostinfo[i].hostType, hostinfo[i].hostModel, 
+	        printf("%-11.11s %7.7s %8.8s %5.1f ", hostinfo[i].hostName,
+	               hostinfo[i].hostType, hostinfo[i].hostModel,
                        hostinfo[i].cpuFactor);
 
-	    if (hostinfo[i].maxCpus > 0) 
+	    if (hostinfo[i].maxCpus > 0)
 	        printf("%5d",hostinfo[i].maxCpus);
 	    else
                 printf("%5.5s", "-");
 
-	    if (hostinfo[i].maxMem > 0) 
+	    if (hostinfo[i].maxMem > 0)
 	        printf(" %5dM",hostinfo[i].maxMem);
 	    else
 	        printf(" %6.6s", "-");
@@ -527,14 +520,14 @@ main(int argc, char **argv)
             }
 
             fputs(")\n", stdout);
-        } 
-        
-        
-        _i18n_end ( ls_catd );			
-        exit(0);
-    } 
+        }
 
-    _i18n_end ( ls_catd );			
+
+        _i18n_end ( ls_catd );
+        exit(0);
+    }
+
+    _i18n_end ( ls_catd );
     return(0);
 }
- 
+

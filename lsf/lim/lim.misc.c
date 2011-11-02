@@ -302,7 +302,9 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
     if (hPtr)
         return (hPtr);
 
-    hp = (struct hostent *)getHostEntryByAddr_(&from->sin_addr);
+    hp = Gethostbyaddr_((char *)&from->sin_addr,
+                        sizeof(struct in_addr),
+                        AF_INET);
     if (hp == NULL) {
 	ls_syslog(LOG_ERR, "\
 %s: Host %s is unknown by %s", fname, sockAdd2Str_(from),

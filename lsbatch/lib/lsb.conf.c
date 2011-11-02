@@ -1563,7 +1563,7 @@ isHostName (char *grpName)
 {
     int i;
 
-    if (Gethostbyname_ex_(grpName, DISABLE_HNAME_SERVER) != NULL)
+    if (Gethostbyname_(grpName) != NULL)
         return TRUE;
 
     for (i = 0; i < numofhosts; i++) {
@@ -1571,7 +1571,7 @@ isHostName (char *grpName)
             && equalHost_(grpName, hosts[i]->host))
             return TRUE;
     }
-    ls_syslog(LOG_DEBUG3, "isHostName: <%s> is not a host name", grpName);
+
     return FALSE;
 
 }
@@ -1677,7 +1677,7 @@ addMember (struct groupInfoEnt *gp, char *word, int grouptype,
 {
     static char pname[] = "addMember";
     struct passwd *pw = NULL;
-    const char *officialName;
+    struct hostent *hp;
     char isgrp = FALSE;
     struct groupInfoEnt *subgrpPtr = NULL;
     char name[MAXHOSTNAMELEN], *myWord;
@@ -1806,15 +1806,14 @@ addMember (struct groupInfoEnt *gp, char *word, int grouptype,
         if (subgrpPtr != NULL) {
             isgrp = TRUE;
         } else {
-            officialName = getHostOfficialByName_(myWord);
-            if (officialName == NULL) {
+            if ((hp = Gethostbyname_(myWord)) == NULL) {
                 ls_syslog(LOG_ERR, I18N(5139,
                                         "%s: File %s%s at line %d: Bad host/group name <%s> in group <%s>; ignored"), pname, fname, section, lineNum, myWord, gp->group); /* catgets 5139 */
                 lsberrno = LSBE_CONF_WARNING;
                 FREEUP(myWord);
                 return (FALSE);
             }
-            strcpy(name, officialName);
+            strcpy(name, hp->h_name);
             if (getHostData(name) == NULL && numofhosts != 0) {
                 ls_syslog(LOG_ERR, I18N(5140,
                                         "%s: File %s%s at line %d: Host <%s> is not used by the batch system; ignored"), pname, fname, section, lineNum, name); /* catgets 5140 */
@@ -2468,7 +2467,7 @@ do_Hosts(struct lsConf *conf, char *fname, int *lineNum, struct lsInfo *info, in
     char *linep;
     struct hostInfo  *hostList;
     char hostname[MAXHOSTNAMELEN];
-    const char *officialName;
+    struct hostent *hp;
     int  i, numSelectedHosts = 0, isTypeOrModel = FALSE;
     struct hTab *tmpHosts = NULL, *nonOverridableHosts = NULL;
     struct hostInfo *hostInfo;
@@ -2576,8 +2575,8 @@ do_Hosts(struct lsConf *conf, char *fname, int *lineNum, struct lsInfo *info, in
         }
 
         if (strcmp (keylist[HKEY_HNAME].val, "default") != 0) {
-            officialName = getHostOfficialByName_(keylist[HKEY_HNAME].val);
-            if (!officialName && options != CONF_NO_CHECK) {
+            hp = Gethostbyname_(keylist[HKEY_HNAME].val);
+            if (!hp && options != CONF_NO_CHECK) {
 
                 for (i = 0; i <info->nModels; i++) {
                     if (strcmp (keylist[HKEY_HNAME].val,
@@ -2620,8 +2619,8 @@ do_Hosts(struct lsConf *conf, char *fname, int *lineNum, struct lsInfo *info, in
                 strcpy (hostname, keylist[HKEY_HNAME].val);
                 isTypeOrModel = TRUE;
             } else {
-                if (officialName)
-                    strcpy (hostname, officialName);
+                if (hp)
+                    strcpy (hostname, hp->h_name);
                 else if (options == CONF_NO_CHECK)
                     strcpy (hostname, keylist[HKEY_HNAME].val);
             }
@@ -3114,7 +3113,7 @@ parseGroups (char *linep, char *fname, int *lineNum, char *section,
     int lastChar;
     struct group *unixGrp;
     struct groupInfoEnt *gp, *mygp = NULL;
-    const char *officialName;
+
     struct passwd *pw;
     int len = 0, hasAllOthers = FALSE, checkAll = TRUE;
     char  hostName[MAXHOSTNAMELEN], *hostGroup = NULL;
@@ -3438,9 +3437,10 @@ parseGroups (char *linep, char *fname, int *lineNum, char *section,
                 FREEUP(myWord);
                 continue;
             } else {
-                if ((officialName = getHostOfficialByName_(myWord)) == NULL) {
-                    ls_syslog(LOG_ERR, I18N(5256,
-                                            "%s: File %s%s at line %d: Host name <%s> cannot be found; ignored"), pname, fname, section, *lineNum, myWord); /* catgets 5256 */
+                if ((Gethostbyname_(myWord)) == NULL) {
+                    ls_syslog(LOG_ERR, "\
+%s: File %s%s at line %d: Host name <%s> cannot be found; ignored",
+                              pname, fname, section, *lineNum, myWord);
                     lsberrno = LSBE_CONF_WARNING;
                     FREEUP(myWord);
                     continue;
@@ -5383,7 +5383,7 @@ static float *
 getHostFactor (char *host)
 {
     static float cpuFactor;
-    const char *officialName;
+    struct hostent *hp;
     int i;
 
     if (host == NULL)
@@ -5391,17 +5391,17 @@ getHostFactor (char *host)
     if (hConf == NULL || hConf->numHosts == 0 || hConf->hosts == NULL)
         return NULL;
 
-    if ((officialName = getHostOfficialByName_(host)) == NULL)
+    if ((hp = Gethostbyname_(host)) == NULL)
         return NULL;
 
     for (i = 0; i < hConf->numHosts; i++) {
-        if (equalHost_(officialName, hConf->hosts[i].host)) {
+        if (equalHost_(hp->h_name, hConf->hosts[i].host)) {
             cpuFactor = hConf->hosts[i].cpuFactor;
-            return (&cpuFactor);
+            return &cpuFactor;
         }
     }
-    return NULL;
 
+    return NULL;
 }
 
 static char *

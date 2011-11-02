@@ -1058,10 +1058,10 @@ addMember (struct gData *groupPtr, char *word, int grouptype, char *filename,
 {
     static char fname[] = "addMember";
     struct passwd *pw = NULL;
-    const char *officialName;
     char isgrp = FALSE;
     struct gData *subgrpPtr = NULL;
     char name[MAXHOSTNAMELEN];
+    struct hostent *hp;
 
     if (grouptype == USER_GRP) {
         subgrpPtr = getGrpData (tempUGData, word, nTempUGroups);
@@ -1110,14 +1110,14 @@ addMember (struct gData *groupPtr, char *word, int grouptype, char *filename,
         if ((subgrpPtr = getGrpData (tempHGData, word, nTempHGroups)) != NULL) {
             isgrp = TRUE;
         } else {
-            officialName = getHostOfficialByName_(word);
-            if (officialName == NULL) {
+            hp = Gethostbyname_(word);
+            if (hp == NULL) {
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6151,
                                                  "%s: Bad host/group name <%s> in group <%s>; ignored"), fname, word, groupPtr->group); /* catgets 6151 */
                 lsb_CheckError = WARNING_ERR;
                 return;
             }
-            strcpy(name, officialName);
+            strcpy(name, hp->h_name);
             if (findHost(name) == NULL && numofhosts != 0) {
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6152,
                                                  "%s: Host <%s> is not used by the batch system; ignored"), fname, name); /* catgets 6152 */
@@ -1342,10 +1342,10 @@ parseGroups (int groupType, struct gData **group, char *line, char *filename)
     int lastChar, i;
     struct group *unixGrp;
     struct gData *gp, *mygp = NULL;
-    const char *officialName;
     struct passwd *pw;
+    struct hostent *hp;
 
-    mygp = (struct gData *) my_malloc(sizeof (struct gData), fname);
+    mygp = my_malloc(sizeof (struct gData), fname);
     *group = mygp;
     mygp->group = "";
     h_initTab_(&mygp->memberTab, 16);
@@ -1420,10 +1420,9 @@ parseGroups (int groupType, struct gData **group, char *line, char *filename)
                 continue;
             }
 
-
-            officialName = getHostOfficialByName_(word);
-            if (officialName != NULL) {
-                word = (char*)officialName;
+            hp = Gethostbyname_(word);
+            if (hp != NULL) {
+                word = hp->h_name;
                 if (numofhosts) {
                     if (!h_getEnt_(&hostTab, word)) {
                         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6170,
@@ -2157,7 +2156,7 @@ addHostData(int numHosts, struct hostInfoEnt *hosts)
             continue;
         }
 
-        if (!isValidHost_(lsfHostInfo[j].hostName)) {
+        if (!Gethostbyname_(lsfHostInfo[j].hostName)) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6242,
                                              "%s: Host <%s> is not a valid host; ignoring"), fname, hosts[i].host); /* catgets 6242 */
             continue;

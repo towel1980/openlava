@@ -764,7 +764,8 @@ mykillpg(struct jobCard *jp, int sig)
 
     sprintf(jobFileName, "/tmp/.sbd/%s.rusage", jp->jobSpecs.jobFile);
     if (logclass & LC_MPI)
-        ls_syslog(LOG_DEBUG3, "mykillpg: job file name = %s\n", jobFileName);
+        ls_syslog(LOG_DEBUG3, "\
+mykillpg: job file name = %s\n", jobFileName);
 
     if (jru) {
 
@@ -1254,9 +1255,10 @@ exeActCmd(struct jobCard *jp, char *actCmd, char *exitFile)
 
   Error:
 
-    sprintf (msg, _i18n_msg_get(ls_catd , NL_SETN, 903,
-        "We are unable to take the action %s on job %s <%s>.\nThe error is: %s"), /* catgets 903 */
-        actCmd, lsb_jobidinstr(SUBMIT_JID(jp)), jp->jobSpecs.command, errMsg);
+    sprintf (msg, "\
+We are unable to take the action %s on job %s <%s>.\nThe error is: %s",
+        actCmd, lsb_jobidinstr(jp->jobSpecs.jobId),
+        jp->jobSpecs.command, errMsg);
 
     lsb_mperr(msg);
 
@@ -1679,12 +1681,11 @@ exeChkpnt(struct jobCard *jp, int chkFlags, char * exitFile)
 
     jobsig(jp, SIGCONT, FALSE);
 
-
-
-
-    if ((hp = (struct hostent *)getHostEntryByName_(jp->jobSpecs.fromHost)) == NULL) {
-        sprintf(errMsg, I18N_FUNC_S_FAIL, fname, "getHostEntryByName_",
-	    jp->jobSpecs.fromHost);
+    if ((hp = Gethostbyname_(jp->jobSpecs.fromHost)) == NULL) {
+        sprintf(errMsg, "\
+%s: gethostbyname() %s failed job %s", __func__,
+                lsb_jobid2str(jp->jobSpecs.jobId),
+                jp->jobSpecs.fromHost);
         goto Error;
     }
 
@@ -1899,9 +1900,10 @@ exeChkpnt(struct jobCard *jp, int chkFlags, char * exitFile)
 
   Error:
 
-    sprintf (msg, _i18n_msg_get(ls_catd , NL_SETN, 925,
-	"We are unable to checkpoint your job %s <%s>.\nThe error is: %s"), /* catgets 925 */
-	lsb_jobid2str(SUBMIT_JID(jp)), jp->jobSpecs.command, errMsg);
+    sprintf (msg, "\
+We are unable to checkpoint your job %s <%s>.\nThe error is: %s",
+             lsb_jobid2str(jp->jobSpecs.jobId),
+             jp->jobSpecs.command, errMsg);
 
 
      if (jp->jobSpecs.options & SUB_MAIL_USER)

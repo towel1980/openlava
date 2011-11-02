@@ -287,7 +287,7 @@ safeSave(char *str)
 /* my_malloc()
  */
 void *
-my_malloc(int len, char *fileName)
+my_malloc(int len, const char *s)
 {
     return(malloc(len));
 

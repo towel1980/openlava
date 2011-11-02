@@ -240,13 +240,10 @@ init_AcceptSock(void)
         resExit_(1);
     }
 
-
     if ((ctrlSock = TcpCreate_(TRUE, 0)) < 0) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "TcpCreate_");
         resExit_(1);
     }
-
-
 
     len = sizeof(ctrlAddr);
     memset((char *) &ctrlAddr, 0, sizeof(ctrlAddr));
@@ -256,11 +253,10 @@ init_AcceptSock(void)
 	resExit_(-1);
     }
 
-
-    if ((hp = (struct hostent *)getHostEntryByName_(Myhost)))
-	memcpy((char *) &ctrlAddr.sin_addr, (char *)hp->h_addr,
+    if ((hp = Gethostbyname_(Myhost)))
+	memcpy((char *) &ctrlAddr.sin_addr,
+               (char *)hp->h_addr,
 	       (int)hp->h_length);
-
 }
 
 #define LOOP_ADDR       0x7F000001
@@ -270,8 +266,6 @@ initChildRes(char *envdir)
 {
     static char fname[]="initChildRes";
     int i, maxfds;
-
-
 
     getLogClass_(resParams[LSF_DEBUG_RES].paramValue,
                  resParams[LSF_TIME_RES].paramValue);
@@ -288,7 +282,7 @@ initChildRes(char *envdir)
     for (i = 0; i < MAXCLIENTS_HIGHWATER_MARK+1; i++) {
         clients[i] = NULL;
     }
-    children = (struct child **) calloc(sysconf(_SC_OPEN_MAX), sizeof(struct children *));
+    children = calloc(sysconf(_SC_OPEN_MAX), sizeof(struct children *));
     if (!children) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "calloc");
         resExit_(-1);
@@ -305,8 +299,6 @@ initChildRes(char *envdir)
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "listCreate");
         resExit_(-1);
     }
-
-
 }
 
 
@@ -332,7 +324,6 @@ resParent(int s, struct passwd *pw, struct lsfAuth *auth,
     } else {
         argv[0] = "res";
     }
-
 
     childInfo.resConnect = connReq;
     childInfo.lsfAuth    = auth;

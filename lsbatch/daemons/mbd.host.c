@@ -308,71 +308,63 @@ struct hData *
 getHostData (char *host)
 {
     hEnt   *hostEnt;
-    const char *officialName;
+    struct hostent *hp;
 
     hostEnt = h_getEnt_(&hostTab, host);
     if (hostEnt != NULL)
-	return ((struct hData *) hostEnt->hData);
+	return (struct hData *)hostEnt->hData;
 
 
     if (strcmp (host, LOST_AND_FOUND) == 0)
-	return (NULL);
-
-
-    if ((officialName = getHostOfficialByName_(host)) == NULL)
 	return NULL;
 
-    hostEnt = h_getEnt_(&hostTab, (char*)officialName);
+    if ((hp = Gethostbyname_(host)) == NULL)
+	return NULL;
+
+    hostEnt = h_getEnt_(&hostTab, hp->h_name);
     if (!hostEnt)
-        return ((struct hData *) NULL);
+        return NULL;
 
-    return ((struct hData *) hostEnt->hData);
-
+    return (struct hData *)hostEnt->hData;
 }
 
 
 struct hData *
 getHostData2 (char *host)
 {
-    hEnt   *hostEnt;
+    hEnt *hostEnt;
     struct hData *hData;
-    const char *officialName;
+    struct hostent *hp;
     char* pHostName;
 
     hData = getHostData(host);
     if (hData)
-        return(hData);
+        return hData;
 
-
-    if ((officialName = getHostOfficialByName_(host)) == NULL) {
-
+    if ((hp = Gethostbyname_(host)) == NULL) {
 	pHostName = host;
     } else {
-	pHostName = (char*)officialName;
+	pHostName = hp->h_name;
     }
 
     hData = initHData(NULL);
-
-
     FREEUP(hData->loadSched);
     FREEUP(hData->loadStop);
     hData->host = safeSave(pHostName);
     hData->hStatus = HOST_STAT_REMOTE;
-
-
     hostEnt = h_addEnt_(&hostTab, pHostName, NULL);
     hostEnt->hData = (int *)hData;
-    return(hData);
+
+    return hData;
 }
 
 float *
-getHostFactor (char *host)
+getHostFactor(char *host)
 {
     struct hData *hD;
     static float cpuFactor;
-    const char *officialName;
     struct hostInfo *hInfo;
-    char   officialNameBuf[MAXHOSTNAMELEN];
+    struct hostent *hp;
 
     if (host == NULL || strlen(host) == 0) {
         if ((hD = getHostData (ls_getmyhostname())) == NULL)
@@ -380,24 +372,22 @@ getHostFactor (char *host)
     } else {
 	if ((hD = getHostData (host)) == NULL) {
 
-	    if ((officialName = getHostOfficialByName_(host)) == NULL)
+	    if ((hp = Gethostbyname_(host)) == NULL)
 		return NULL;
 
-            strcpy(officialNameBuf, officialName);
-	    if ((hD = getHostData ((char*)officialNameBuf)) == NULL) {
-                if ((hInfo = getLsfHostData((char*)officialNameBuf)) != NULL)
-                    return (&hInfo->cpuFactor);
+	    if ((hD = getHostData(hp->h_name)) == NULL) {
+                    if ((hInfo = getLsfHostData(hp->h_name)) != NULL)
+                        return &hInfo->cpuFactor;
 		return NULL;
             }
 	}
     }
 
     if (hD->hStatus & HOST_STAT_REMOTE)
-	return(NULL);
+	return NULL;
 
     cpuFactor = hD->cpuFactor;
-    return (&cpuFactor);
-
+    return &cpuFactor;
 }
 
 float *

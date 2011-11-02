@@ -260,11 +260,10 @@ checkResources (struct resourceInfoReq *resourceInfoReq,
     static char fname[] = "checkResources";
     int i, j, allResources = FALSE, found = FALSE, replyCode;
     struct hData *hPtr;
-    const char *officialName;
-    char officialNameBuf[MAXHOSTNAMELEN];
+    struct hostent *hp;
 
     if (resourceInfoReq->numResourceNames == 1
-	   && !strcmp (resourceInfoReq->resourceNames[0], "")) {
+        && !strcmp (resourceInfoReq->resourceNames[0], "")) {
         allResources = TRUE;
     }
     reply->numResources = 0;
@@ -273,20 +272,21 @@ checkResources (struct resourceInfoReq *resourceInfoReq,
         return LSBE_NO_RESOURCE;
 
     if (resourceInfoReq->hostName == NULL
-	  || (resourceInfoReq->hostName && strcmp (resourceInfoReq->hostName, " ")== 0))
+        || (resourceInfoReq->hostName
+            && strcmp (resourceInfoReq->hostName, " ")== 0))
 	hPtr = NULL;
     else {
 
-        if ((officialName = getHostOfficialByName_(resourceInfoReq->hostName)) == NULL) {
+        if ((hp = Gethostbyname_(resourceInfoReq->hostName)) == NULL) {
             ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "getHostOfficialByName_",
 		resourceInfoReq->hostName);
 	    return LSBE_BAD_HOST;
         }
-        strcpy(officialNameBuf, officialName);
-        if ((hPtr= getHostData ((char*)officialNameBuf)) == NULL) {
+
+        if ((hPtr = getHostData (hp->h_name)) == NULL) {
             ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7703,
-		"%s: Host <%s>  is not used by the batch system"), /* catgets 7703 */
-		fname, resourceInfoReq->hostName);
+                                             "%s: Host <%s>  is not used by the batch system"), /* catgets 7703 */
+                      fname, resourceInfoReq->hostName);
 	    return LSBE_BAD_HOST;
         }
     }

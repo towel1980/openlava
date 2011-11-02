@@ -316,9 +316,7 @@ doacceptconn(void)
         goto doAcceptFail;
     }
 
-
     memcpy((char *) &pwSave, (char *) pw, sizeof(struct passwd));
-
 
     strcpy(pwDir, pw->pw_dir ? pw->pw_dir : "/tmp");
     pwSave.pw_dir = pwDir;
@@ -341,8 +339,12 @@ doacceptconn(void)
     }
 
     if (first) {
-        if ((hostp = (struct hostent *)getHostEntryByAddr_(&local.sin_addr)) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
+        hostp = Gethostbyaddr_((char *)&local.sin_addr,
+                               sizeof(struct in_addr),
+                               AF_INET);
+        if (hostp == NULL) {
+            ls_syslog(LOG_ERR, "\
+%s: gethostbyaddr() for %s failed", __func__,
                       sockAdd2Str_(&local));
             sendReturnCode(s, RESE_REQUEST);
             goto doAcceptFail;
@@ -357,22 +359,27 @@ doacceptconn(void)
 
     local.sin_addr.s_addr = localSave.sin_addr.s_addr;
 
-
-    hostp = (struct hostent *)getHostEntryByAddr_(&from.sin_addr);
+    hostp = Gethostbyaddr_((char *)&from.sin_addr,
+                           sizeof(struct in_addr),
+                           AF_INET);
     if (hostp == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyaddr() for %s failed", __func__,
                   sockAdd2Str_(&from));
         sendReturnCode(s, RESE_NOLSF_HOST);
         goto doAcceptFail;
     }
 
     if (hostOk(hostp->h_name, RECV_FROM_CLUSTERS) < 0) {
-        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5286, "%s: Received request from non-LSF host %s")), /* catgets 5286 */
+        ls_syslog(LOG_INFO, "\
+%s: Received request from non-LSF host %s",
                   fname, hostp->h_name);
         sendReturnCode(s, RESE_NOLSF_HOST);
         goto doAcceptFail;
     }
-    ls_syslog(LOG_DEBUG3, "%s: received connecting request from host %s",
+
+    ls_syslog(LOG_DEBUG, "\
+%s: received connecting request from host %s",
               fname, hostp->h_name);
 
 
@@ -4230,10 +4237,11 @@ pairsocket(int af, int type, int protocol, int *sv)
 
     if (af != AF_INET || type != SOCK_STREAM)
         return(-1);
-    if ((hp = (struct hostent *)getHostEntryByName_(Myhost)) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "gethostbyname",
-                  Myhost);
-        return(-1);
+
+    if ((hp = Gethostbyname_(Myhost)) == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyname() failed for host %s", __func__, Myhost);
+        return -1;
     }
     if ((s = socket(af, type, protocol)) < 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "malloc", "af");
@@ -4811,15 +4819,16 @@ lsbJobStart(char **jargv, u_short retPort, char *host, int usePty)
 
     if (sbdFlags & SBD_FLAG_TERM) {
 
-
-        if ((hp = (struct hostent *)getHostEntryByName_(host)) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "getHostEntryByName_",
-                      host);
+        if ((hp = Gethostbyname_(host)) == NULL) {
+            ls_syslog(LOG_ERR, "\
+%s: gethostbyname() failed for host %s", host);
             resExit_(-1);
         }
 
-        memcpy((char *) &from.sin_addr, (char *) hp->h_addr,
+        memcpy((char *) &from.sin_addr,
+               (char *) hp->h_addr,
                (int) hp->h_length);
+
         from.sin_family = AF_INET;
 
         if (logclass & LC_TRACE) {

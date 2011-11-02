@@ -35,7 +35,7 @@ extern int	optind, opterr;
 extern char	*optarg;
 extern int errno;
 
-#define NL_SETN 27 
+#define NL_SETN 27
 
 
 int
@@ -49,7 +49,7 @@ main(int argc, char **argv)
     int	achar;
     int rc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
 
     if (ls_initdebug(argv[0]) < 0) {
@@ -80,60 +80,58 @@ main(int argc, char **argv)
     {
         if (cc >= MAXLISTSIZE)
 	{
-	    fprintf(stderr, 
+	    fprintf(stderr,
 		_i18n_msg_get(ls_catd,NL_SETN,1951, "%s: too many hostnames (maximum %d)\n"), /* catgets  1951  */
 		fname, MAXLISTSIZE);
 	    usage(argv[0]);
 	}
- 
+
         p = strchr(argv[optind],':');
         if ( (p != NULL) && (*(p+1) != '\0') )  {
              *p++ = '\0';
              placeadvice[cc].numtask = atoi(p);
              if (errno == ERANGE) {
                  fprintf(stderr,
-		     _i18n_msg_get(ls_catd,NL_SETN,1952, "%s: invalid format for number of components\n"), /* catgets 1952 */  
-		     fname); 
+		     _i18n_msg_get(ls_catd,NL_SETN,1952, "%s: invalid format for number of components\n"), /* catgets 1952 */
+		     fname);
                  usage(argv[0]);
              }
         } else {
              placeadvice[cc].numtask = 1;
         }
 
-        if (!isValidHost_(argv[optind])) 
-	{
-	    fprintf(stderr, "%s: %s %s\n",  
-		    fname,  I18N(1953,  "invalid hostname"),/* catgets  1953  */
-		    argv[optind]);
+        if (!Gethostbyname_(argv[optind])) {
+	    fprintf(stderr, "\
+%s: invalid hostname %s\n", __func__, argv[optind]);
 	    usage(argv[0]);
 	}
         strcpy(placeadvice[cc++].hostName, argv[optind]);
     }
 
     if (cc == 0) {
-        
+
 	if ((hname = ls_getmyhostname()) == NULL) {
 	    ls_perror("ls_getmyhostname");
 	    exit(-1);
         }
         strcpy(placeadvice[0].hostName, hname);
-        placeadvice[0].numtask = 1;    
+        placeadvice[0].numtask = 1;
         cc = 1;
     }
 
     if (ls_loadadj(resreq, placeadvice, cc) < 0) {
         ls_perror("lsloadadj");
         exit(-1);
-    } else 
+    } else
 
 
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
 
     exit(0);
-} 
+}
 
 static void usage(char *cmd)
 {
-    printf("%s: %s [-h] [-V] [-R res_req] [host_name[:num_task] host_name[:num_task] ...]\n",I18N_Usage, cmd); 
+    printf("%s: %s [-h] [-V] [-R res_req] [host_name[:num_task] host_name[:num_task] ...]\n",I18N_Usage, cmd);
     exit(-1);
 }

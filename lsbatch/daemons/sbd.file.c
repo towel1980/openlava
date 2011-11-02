@@ -1,4 +1,4 @@
-/* $Id: sbd.file.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -204,7 +204,6 @@ rcpFile(struct jobSpecs *jp, struct xFile *xf, char *host, int op,
 int
 rmJobBufFiles(struct jobCard *jp)
 {
-    static char fname[] = "rmJobBufFiles()";
     char errMsg[MAXLINELEN];
     char lsbDir[MAXFILENAMELEN];
     struct hostent *hp;
@@ -222,9 +221,11 @@ rmJobBufFiles(struct jobCard *jp)
     if (!isAbsolutePathExec(jp->jobSpecs.jobFile))
         return (-1);
 
-    if ((hp = (struct hostent *)getHostEntryByName_(jp->jobSpecs.fromHost)) == NULL) {
-        sprintf(errMsg, I18N_JOB_FAIL_S, fname,
-                lsb_jobid2str(jp->jobSpecs.jobId), "getHostEntryByName_");
+    if ((hp = Gethostbyname_(jp->jobSpecs.fromHost)) == NULL) {
+        sprintf(errMsg, "\
+%s: gethostbyname() %s failed %s", __func__,
+                jp->jobSpecs.fromHost,
+                lsb_jobid2str(jp->jobSpecs.jobId));
         sbdSyslog(LOG_ERR, errMsg);
         return (-1);
     }
@@ -646,10 +647,6 @@ cwdJob(struct jobCard *jp, char *cwd, struct hostent *fromHp)
 
         return (0);
     }
-
-
-
-
 
 
     if (jp->jobSpecs.cwd[0] == '\0')
@@ -1396,7 +1393,7 @@ OpenStdin:
              != NULL ) {
             strcpy( spoolingHost, pStrTmp );
             memcpy(&spoolHostEnt,
-                   (struct hostent*)getHostEntryByName_(spoolingHost),
+                   Gethostbyname_(spoolingHost),
                    sizeof(spoolHostEnt) );
             i=myopen_(filebuf, O_RDONLY, 0, &spoolHostEnt);
         } else {
@@ -1906,11 +1903,12 @@ jobFileExitStatus(struct jobCard *jobCard)
         exit(jobCard->w_status);
     }
 
-    if ((hp = (struct hostent *)getHostEntryByName_(jobCard->jobSpecs.fromHost)) == NULL) {
-        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
-                  lsb_jobid2str(jobCard->jobSpecs.jobId), "getHostEntryByName_",
-                  jobCard->jobSpecs.fromHost);
-        exit(jobCard->w_status);
+    if ((hp = Gethostbyname_(jobCard->jobSpecs.fromHost)) == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyname() %s failed job %s", __func__,
+                  jobCard->jobSpecs.fromHost,
+                  lsb_jobid2str(jobCard->jobSpecs.jobId));
+                  exit(jobCard->w_status);
     }
 
     chuser(jobCard->jobSpecs.execUid);

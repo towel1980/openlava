@@ -218,11 +218,11 @@ do_options(int argc, char **argv, struct bhistReq *bhistReq)
     extern char *optarg;
     char *envHours;
     struct passwd *pwPtr;
-    const char *officialName;
     time_t defaultTime[2];
     int cc;
     float *tempPtr;
     int numJobs, *idxList;
+    struct hostent *hp;
     extern int idxerrno;
 
     defaultTime[1] = time(0);
@@ -355,7 +355,7 @@ do_options(int argc, char **argv, struct bhistReq *bhistReq)
                 if (bhistReq->options & OPT_HOST)
                     usage(argv[0]);
                 bhistReq->options |= OPT_HOST;
-                if ((officialName = getHostOfficialByName_(optarg)) == NULL) {
+                if ((hp = Gethostbyname_(optarg)) == NULL) {
                     fprintf(stderr,
                             (_i18n_msg_get(ls_catd,NL_SETN,3168, "Warning: <%s> is not a valid hostname\n")),  /* catgets  3168  */
                             optarg);
@@ -368,7 +368,7 @@ do_options(int argc, char **argv, struct bhistReq *bhistReq)
                         return  (-1);
                     }
                 } else
-                    strcpy(bhistReq->checkHost, officialName);
+                    strcpy(bhistReq->checkHost, hp->h_name);
                 hspecf = 1;
                 break;
             case 'q':

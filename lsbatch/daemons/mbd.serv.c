@@ -176,7 +176,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     }
     if (jobInfoReq.host[0] != '\0'
         && getHGrpData(jobInfoReq.host) == NULL
-        && !isValidHost_(jobInfoReq.host)
+        && !Gethostbyname_(jobInfoReq.host)
         && (strcmp(jobInfoReq.host, LOST_AND_FOUND) != 0))
         reply = LSBE_BAD_HOST;
     else {
@@ -1006,7 +1006,6 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
     int                     reply;
     struct hData           *hData;
     struct hostent         *hp;
-    struct hostent          hpBuf;
     struct LSFHeader        replyHdr;
 
     if (!portok(from)) {
@@ -1018,7 +1017,9 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
             errorBack(chfd, LSBE_PORT, from);
         return -1;
     }
-    hp = (struct hostent *)getHostEntryByAddr_(&(from->sin_addr));
+    hp = Gethostbyaddr_((char *)&from->sin_addr,
+                        sizeof(struct in_addr),
+                        AF_INET);
     if (hp == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
                   sockAdd2Str_(from));
@@ -1026,8 +1027,6 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
             errorBack(chfd, LSBE_BAD_HOST, from);
         return (-1);
     }
-
-    cpHostent(&hpBuf, hp);
 
     if (!xdr_statusReq(xdrs, &statusReq, reqHdr)) {
         reply = LSBE_XDR;
@@ -1038,10 +1037,10 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
                 reply = statusMsgAck(&statusReq);
                 break;
             case BATCH_STATUS_JOB:
-                reply = statusJob(&statusReq, &hpBuf, schedule);
+                reply = statusJob(&statusReq, hp, schedule);
                 break;
             case BATCH_RUSAGE_JOB:
-                reply = rusageJob(&statusReq, &hpBuf);
+                reply = rusageJob(&statusReq, hp);
                 break;
             default:
                 ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7827,
@@ -1055,7 +1054,6 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
     xdr_lsffree(xdr_statusReq, (char *) &statusReq, reqHdr);
 
     if (reqHdr->opCode == BATCH_RUSAGE_JOB) {
-        freeHp(&hpBuf);
         if (reply == LSBE_NO_ERROR)
             return 0;
         return (-1);
@@ -1068,21 +1066,18 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL, fname, "xdr_LSFHeader",
                   reply);
         xdr_destroy(&xdrs2);
-        freeHp(&hpBuf);
         return -1;
     }
     if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "b_write_fix");
         xdr_destroy(&xdrs2);
-        freeHp(&hpBuf);
         return -1;
     }
     xdr_destroy(&xdrs2);
 
-    if ((hData = getHostData(hpBuf.h_name)) != NULL)
+    if ((hData = getHostData(hp->h_name)) != NULL)
         hStatChange(hData, 0);
 
-    freeHp(&hpBuf);
     return 0;
 
 }
@@ -1098,19 +1093,8 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     int                     reply;
     struct hData           *hData;
     struct hostent         *hp;
-    struct hostent          hpBuf;
     struct LSFHeader        replyHdr;
     int i = 0;
-
-#ifdef INTER_DAEMON_AUTH
-    if (authSbdRequest(NULL, xdrs, reqHdr, from) != LSBE_NO_ERROR) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd, NL_SETN, 7825,
-                                         "%s: Received status report from unauthenticated host <%s>"),
-                  fname, sockAdd2Str_(from));
-        errorBack(chfd, LSBE_PERMISSION, from);
-        return -1;
-    }
-#endif
 
     if (!portok(from)) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7824,
@@ -1120,15 +1104,15 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
         errorBack(chfd, LSBE_PORT, from);
         return -1;
     }
-    hp = (struct hostent *)getHostEntryByAddr_(&(from->sin_addr));
+    hp = Gethostbyaddr_((char *)&from->sin_addr,
+                        sizeof(struct in_addr),
+                        AF_INET);
     if (hp == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
                   sockAdd2Str_(from));
         errorBack(chfd, LSBE_BAD_HOST, from);
         return (-1);
     }
-
-    cpHostent(&hpBuf, hp);
 
     if (!xdr_chunkStatusReq(xdrs, &chunkStatusReq, reqHdr)) {
         reply = LSBE_XDR;
@@ -1137,7 +1121,7 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 
         for (i=0; i<chunkStatusReq.numStatusReqs; i++) {
 
-            statusJob(chunkStatusReq.statusReqs[i], &hpBuf, schedule);
+            statusJob(chunkStatusReq.statusReqs[i], hp, schedule);
         }
 
         reply = LSBE_NO_ERROR;
@@ -1152,21 +1136,18 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL, fname, "xdr_LSFHeader",
                   reply);
         xdr_destroy(&xdrs2);
-        freeHp(&hpBuf);
         return -1;
     }
     if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "b_write_fix");
         xdr_destroy(&xdrs2);
-        freeHp(&hpBuf);
         return -1;
     }
     xdr_destroy(&xdrs2);
 
-    if ((hData = getHostData(hpBuf.h_name)) != NULL)
+    if ((hData = getHostData(hp->h_name)) != NULL)
         hStatChange(hData, 0);
 
-    freeHp(&hpBuf);
     return 0;
 
 }
@@ -1184,8 +1165,7 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     int                     reply;
     struct sbdPackage       sbdPackage;
     int                     cc;
-    const char             *officialName;
-    char                    officialNameBuf[MAXHOSTNAMELEN];
+    struct hostent *hp;
     struct hData           *hData;
     int                    i;
 
@@ -1198,18 +1178,19 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
         return -1;
     }
 
-    officialName = getHostOfficialByAddr_(&(from->sin_addr));
-    if (officialName == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostOfficialByAddr_",
-                  sockAdd2Str_(from));
+    hp = Gethostbyaddr_((char *)&from->sin_addr,
+                        sizeof(struct in_addr),
+                        AF_INET);
+    if (hp == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyaddr() failed for %s", __func__, sockAdd2Str_(from));
         errorBack(chfd, LSBE_BAD_HOST, from);
         return (-1);
     }
-    strcpy( officialNameBuf, officialName);
 
-    if ((hData = getHostData((char*)officialNameBuf)) == NULL) {
+    if ((hData = getHostData(hp->h_name)) == NULL) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "getHostData",
-                  officialNameBuf);
+                  hp->h_name);
         errorBack(chfd, LSBE_BAD_HOST, from);
         return (-1);
     }

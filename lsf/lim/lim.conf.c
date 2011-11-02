@@ -1673,7 +1673,6 @@ parseHostList (char *hostList, char *lsfile, int LineNum, char ***hosts, int *ha
 static char *
 validLocationHost (char *hostName)
 {
-    struct hostent *hp;
     int num;
 
     if (!strcmp (hostName, "default")
@@ -1683,8 +1682,8 @@ validLocationHost (char *hostName)
 
     if (Gethostbyname_(hostName)) {
 
-        if (findHostbyList(myClusterPtr->hostList, hostName) != NULL)
-            return hostName
+        if (findHostbyList(myClusterPtr->hostList, hostName))
+            return hostName;
 
         ls_syslog(LOG_ERR, "\
 %s: Host %s is not used by cluster %s; ignored",
@@ -1693,15 +1692,12 @@ validLocationHost (char *hostName)
     }
 
     if ((num = typeNameToNo(hostName)) > 0)
-
         return hostName;
 
     if ((num = modelNameToNo (hostName)) > 0)
-
         return hostName;
 
     return NULL;
-
 }
 
 static void
@@ -2579,7 +2575,7 @@ setMyClusterName(void)
                 continue;
             }
 
-            if (GetHostByName_(keyList[HOSTNAME_].val)) {
+            if (Gethostbyname_(keyList[HOSTNAME_].val)) {
                 if (! found) {
                     ls_syslog(LOG_ERR, "%\
 s: %s(%d): Invalid hostname %s in section host, host ignored",
@@ -2937,13 +2933,14 @@ int modelNameToNo(char *modelName)
 {
     int i;
 
-    for (i=0; i < allInfo.nModels; i++) {
+    for (i = 0; i < allInfo.nModels; i++) {
         if (strcmp(allInfo.hostModels[i], modelName) == 0)
-            return(i);
+            return i;
     }
 
-    return(-1);
+    return -1;
 }
+
 static struct hostNode *
 addHost(struct clusterNode *clPtr,
         struct hostEntry *hEntPtr,
@@ -2951,43 +2948,45 @@ addHost(struct clusterNode *clPtr,
         char *fileName,
         int *LineNumPtr)
 {
-    static char fname[] = "addHost()";
     struct hostNode *hPtr;
     struct hostent *hp;
     char *word;
     int i;
     int resNo;
 
-    if ((hp = (struct hostent *)getHostEntryByName_(hEntPtr->hostName)) == NULL) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5337,
-                                         "%s: %s(%d): Invalid hostname %s in section host. Ignoring host"), /* catgets 5337 */
-                  fname, fileName, *LineNumPtr, hEntPtr->hostName);
-        return(NULL);
+    if ((hp = Gethostbyname_(hEntPtr->hostName)) == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: %s(%d): Invalid hostname %s in section host. Ignoring host",
+                  __func__, fileName, *LineNumPtr, hEntPtr->hostName);
+        return NULL;
     }
 
-
-    if ((hPtr = findHostbyList(clPtr->hostList, hEntPtr->hostName)) != NULL) {
-        ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5338,
-                                             "%s: %s(%d): host <%s> redefined, using previous definition"), fname, fileName, *LineNumPtr, hEntPtr->hostName); /* catgets 5338 */
-        return ((struct hostNode *)hPtr);
+    hPtr = findHostbyList(clPtr->hostList, hEntPtr->hostName);
+    if (hPtr) {
+        ls_syslog(LOG_WARNING, "\
+%s: %s(%d): host %s redefined, using previous definition",
+                  __func__, fileName, *LineNumPtr, hEntPtr->hostName);
+        return hPtr;
     }
 
     hPtr = findHostbyList(clPtr->clientList, hEntPtr->hostName);
-    if (hPtr != NULL) {
-        ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5339,
-                                             "%s: %s(%d): host <%s> redefined, using previous definition"), fname, fileName, *LineNumPtr, hEntPtr->hostName); /* catgets 5339 */
-        return ((struct hostNode *)hPtr);
-    }
-    if ((hPtr = initHostNode()) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return(NULL);
+    if (hPtr) {
+        ls_syslog(LOG_WARNING, "\
+%s: %s(%d): host %s redefined, using previous definition",
+                  __func__, fileName, *LineNumPtr, hEntPtr->hostName);
+        return hPtr;
     }
 
-    for (i = 0; i<hEntPtr->nRes; i++) {
+    if ((hPtr = initHostNode()) == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: initHostNode() failed %m", __func__);
+        return NULL;
+    }
+
+    for (i = 0; i < hEntPtr->nRes; i++) {
         char *resStr;
         char  dedicated = FALSE;
         int   resNo;
-
 
         if (hEntPtr->resList[i][0] == '!') {
             dedicated = TRUE;
@@ -3007,34 +3006,33 @@ addHost(struct clusterNode *clPtr,
 
         } else {
             lim_CheckError = WARNING_ERR;
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5341,
-                                             "%s: %s(%d): Invalid resource name <%s> for host %s in section %s; ignoring %s"), /* catgets 5341 */
-                      fname, fileName, *LineNumPtr, resStr, hEntPtr->hostName, "Host", resStr);
+            ls_syslog(LOG_ERR, "\
+%s: %s(%d): Invalid resource name %s for host %s in section %s; ignored",
+                      __func__, fileName, *LineNumPtr,
+                      resStr, hEntPtr->hostName, "Host", resStr);
         }
     }
 
-
     if (!hEntPtr->hostModel[0]) {
         hPtr->hModelNo = DETECTMODELTYPE;
-
-    } else if ( (hPtr->hModelNo = modelNameToNo(hEntPtr->hostModel)) < 0) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5342,
-                                         "%s: %s(%d): Unknown host model %s. Ignoring host"), /* catgets 5342 */
-                  fname, fileName, *LineNumPtr, hEntPtr->hostModel);
-        freeHostNodes (hPtr, FALSE);
-        return(NULL);
+    } else if ((hPtr->hModelNo = modelNameToNo(hEntPtr->hostModel)) < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: %s(%d): Unknown host model %s. Ignoring host",
+                  __func__, fileName, *LineNumPtr, hEntPtr->hostModel);
+        freeHostNodes(hPtr, FALSE);
+        return NULL;
     }
 
 
     if (!hEntPtr->hostType[0]) {
         hPtr->hTypeNo = DETECTMODELTYPE;
-
-    } else if ( (hPtr->hTypeNo = typeNameToNo(hEntPtr->hostType)) < 0) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5343,
-                                         "%s: %s(%d): Unknown host type %s. Ignoring host"), /* catgets 5343 */
-                  fname, fileName, *LineNumPtr, hEntPtr->hostType);
-        freeHostNodes (hPtr, FALSE);
-        return(NULL);
+    } else if ((hPtr->hTypeNo = typeNameToNo(hEntPtr->hostType)) < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: %s(%d): Unknown host type %s. Ignoring host",
+                  __func__, fileName,
+                  *LineNumPtr, hEntPtr->hostType);
+        freeHostNodes(hPtr, FALSE);
+        return NULL;
     }
 
     hPtr->hostName = putstr_(hp->h_name);
@@ -3044,27 +3042,28 @@ addHost(struct clusterNode *clPtr,
     else
         hPtr->hostNo = clPtr->clientList ? clPtr->clientList->hostNo + 1 : 0;
 
-
     if (saveHostIPAddr(hPtr, hp) < 0 ) {
-        ls_syslog(LOG_ERR, I18N(5473, "Can not save internet address of host %s"), hp->h_name); /* catgets 5473 */
-        freeHostNodes (hPtr, FALSE);
-        return(NULL);
+        ls_syslog(LOG_ERR, "\
+%s Can not save internet address of host %s",
+                  __func__, hp->h_name);
+        freeHostNodes(hPtr, FALSE);
+        return NULL;
     }
 
     hPtr->statInfo.nDisks = hEntPtr->nDisks;
     hPtr->rexPriority = hEntPtr->rexPriority;
-    for (i=0; i < allInfo.numIndx; i++)
+    for (i = 0; i < allInfo.numIndx; i++)
         hPtr->busyThreshold[i] = hEntPtr->busyThreshold[i];
 
-    for (i=0; i<8; i++)
+    for (i = 0; i < 8; i++)
         hPtr->week[i] = NULL;
     if (window && hEntPtr->rcv) {
         hPtr->windows = putstr_(window);
         while ((word = getNextWord_(&window)) != NULL) {
             if (addWindow(word, hPtr->week, hPtr->hostName) <0) {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5345,
-                                                 "%s: %s(%d): Bad time expression %s; ignored"), /* catgets 5345 */
-                          fname, fileName, *LineNumPtr, word);
+                ls_syslog(LOG_ERR, "\
+%s: %s(%d): Bad time expression %s; ignored",
+                          __func__, fileName, *LineNumPtr, word);
                 lim_CheckError = WARNING_ERR;
                 free(hPtr->windows);
                 hPtr->windows = "-";
@@ -3090,8 +3089,10 @@ addHost(struct clusterNode *clPtr,
 
     if (hEntPtr->rcv)
         for (resNo = 0; resNo < allInfo.nRes; resNo++) {
-            int isSet, j;
-            char *value, *name;;
+            int isSet;
+            int j;
+            char *value;
+            char *name;;
 
             TEST_BIT(resNo, hPtr->resBitMaps, isSet);
             if (isSet == 0)
@@ -3104,67 +3105,51 @@ addHost(struct clusterNode *clPtr,
             else
                 value = "";
         }
+
     numofhosts++;
-    return(hPtr);
+
+    return hPtr;
 }
 
 struct hostNode *
 addFloatClientHost(struct hostent *hp)
 {
-    static char fname[] = "addFloatClientHost()";
     struct hostNode *hPtr, *lastHPtr;
     int i;
 
-
     if (hp == NULL) {
-        ls_syslog(LOG_ERR, I18N(5406,
-                                "%s: Invalid hostAddr. Ignoring host"), /* catgets 5406 */
-                  fname);
-        return(NULL);
+        ls_syslog(LOG_ERR, "\
+%s: Invalid hostAddr. Ignoring host", __func__);
+        return NULL;
     }
 
 
     if (findHostInCluster(hp->h_name)) {
-        ls_syslog(LOG_ERR, I18N(5407,
-                                "%s: <%s> already defined in this cluster"), /* catgets 5407 */
-                  fname, hp->h_name);
-
-        return(NULL);
+        ls_syslog(LOG_ERR, "%\
+s: %s already defined in this cluster",
+            __func__, hp->h_name);
+        return NULL;
     }
 
 
     hPtr = initHostNode();
     if (hPtr == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return(NULL);
+        return NULL;
     }
 
 
     hPtr->hTypeNo = DETECTMODELTYPE;
-
-
     hPtr->hModelNo = DETECTMODELTYPE;
 
 
     hPtr->hostName = putstr_(hp->h_name);
-    if (!hPtr->hostName) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        freeHostNodes (hPtr, FALSE);
-        return(NULL);
-    }
-
-
     hPtr->hostNo = -1;
 
-
-    for (hPtr->naddr=0;hp->h_addr_list && hp->h_addr_list[hPtr->naddr] != NULL; hPtr->naddr++);
+    for (hPtr->naddr = 0;
+         hp->h_addr_list && hp->h_addr_list[hPtr->naddr] != NULL;
+         hPtr->naddr++);
     if (hPtr->naddr){
-        hPtr->addr = (u_int *)malloc(hPtr->naddr*sizeof(u_int));
-        if (!hPtr->addr) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            freeHostNodes (hPtr, FALSE);
-            return(NULL);
-        }
+        hPtr->addr = malloc(hPtr->naddr * sizeof(u_int));
     } else
         hPtr->addr = 0;
 
@@ -3175,11 +3160,6 @@ addFloatClientHost(struct hostent *hp)
         hPtr->week[i] = NULL;
 
     hPtr->windows = putstr_("-");
-    if (!hPtr->windows) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        freeHostNodes (hPtr, FALSE);
-        return(NULL);
-    }
     hPtr->wind_edge = 0;
 
 
@@ -3197,7 +3177,8 @@ addFloatClientHost(struct hostent *hp)
 
     hPtr->hostInactivityCount = -1;
     numofhosts++;
-    return(hPtr);
+
+    return hPtr;
 }
 
 int
@@ -3243,7 +3224,7 @@ removeFloatClientHost(struct hostNode *hPtr)
 
 
 struct hostNode *
-initHostNode (void)
+initHostNode(void)
 {
     struct hostNode *hPtr;
     int i;
@@ -3481,11 +3462,10 @@ getValidHosts (char *hostName, int *numHost, struct sharedResource *resource)
     static char **temp = NULL;
     int num;
     struct hostNode *hPtr;
-    const char *officialName;
 
     *numHost = 0;
     if (temp == NULL) {
-        if ((temp = (char **) malloc (numofhosts * sizeof (char *))) == NULL) {
+        if ((temp = malloc (numofhosts * sizeof (char *))) == NULL) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return NULL;
         }
@@ -3506,7 +3486,7 @@ getValidHosts (char *hostName, int *numHost, struct sharedResource *resource)
         return temp;
     }
 
-    if (GetHostByName_(hostName)) {
+    if (Gethostbyname_(hostName)) {
 
         hPtr = findHostbyList(myClusterPtr->hostList, hostName);
         if (hPtr == NULL) {
@@ -3515,16 +3495,16 @@ getValidHosts (char *hostName, int *numHost, struct sharedResource *resource)
                       fname, hostName, myClusterName);
             return NULL;
         }
-        if (isInHostList (resource, (char *)officialName) != NULL) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5414,
-                                             "%s: Host <%s> is defined in more than one instance for resource <%s>; ignoring"), fname, hostName, resource->resourceName); /* catgets 5414 */
+        if (isInHostList (resource, hostName) != NULL) {
+            ls_syslog(LOG_ERR, "\
+%s: Host %s is defined in more than one instance for resource %s; ignored",
+                      __func__, hostName, resource->resourceName);
             return NULL;
         }
         *numHost = 1;
         temp[0] = hPtr->hostName;
         return temp;
     }
-
 
     if ((num = typeNameToNo (hostName)) > 0) {
         for (hPtr = myClusterPtr->hostList; hPtr; hPtr = hPtr->nextPtr) {
@@ -3965,11 +3945,11 @@ addCluster(char *clName, char *candlist)
     i = 0;
     while ( ((word = getNextWord_(&sp)) != NULL) && (i < MAXCANDHOSTS)) {
 
-        hp = (struct hostent *)getHostEntryByName_(word);
+        hp = Gethostbyname_(word);
         if (!hp) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5358,
-                                             "Invalid host %s for cluster %s, ignoring"), /* catgets 5358 */
-                      word, clName);
+            ls_syslog(LOG_ERR, "\
+%s: Invalid host %s for cluster %s, ignoring",
+                      __func__, word, clName);
             lim_CheckError = WARNING_ERR;
             continue;
         }
@@ -4779,11 +4759,11 @@ static int saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
              hp->h_addr_list[hPtr->naddr] != NULL; hPtr->naddr++);
 
     if (hPtr->naddr){
-        hPtr->addr = (u_int *)malloc(hPtr->naddr*sizeof(u_int));
+        hPtr->addr = malloc(hPtr->naddr * sizeof(u_int));
         if (!hPtr->addr) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             freeHostNodes(hPtr, FALSE);
-            return(-1);
+            return -1;
         }
     } else {
         hPtr->addr = 0;

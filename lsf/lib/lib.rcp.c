@@ -38,10 +38,6 @@
 
 #define NL_SETN   23
 
-extern int cpHostent(struct hostent *, const struct hostent *);
-extern void freeHp(struct hostent *);
-
-
 int
 parseXferArg(char *arg, char **userName, char **hostName, char **fName)
 {
@@ -319,7 +315,7 @@ equivalentXferFile(lsRcpXfer *lsXfer, char *szLocalFile, char *szRemoteFile,
 }
 
 int
-copyFile( lsRcpXfer *lsXfer, char* buf, int option )
+copyFile(lsRcpXfer *lsXfer, char* buf, int option )
 {
     char szThisHost[MAXHOSTNAMELEN];
     struct stat sLstat, sRstat;
@@ -340,13 +336,12 @@ copyFile( lsRcpXfer *lsXfer, char* buf, int option )
     }
 
     if (pheHostBuf.h_name != NULL) {
-       freeHp(&pheHostBuf);
+        free(pheHostBuf.h_name);
     }
 
     if (pheDestBuf.h_name != NULL) {
-       freeHp(&pheDestBuf);
+        free(pheDestBuf.h_name);
     }
-
 
     strcpy(szThisHost, ls_getmyhostname());
 
@@ -365,7 +360,7 @@ copyFile( lsRcpXfer *lsXfer, char* buf, int option )
         return -1;
     }
 
-    cpHostent(&pheHostBuf, hp1);
+    pheHostBuf.h_name = strdup(hp1->h_name);
     lsXfer->pheHost = &pheHostBuf;
 
     if ((hp2 = Gethostbyname_(lsXfer->szDest)) == NULL) {
@@ -374,7 +369,7 @@ copyFile( lsRcpXfer *lsXfer, char* buf, int option )
         return -1;
     }
 
-    cpHostent(&pheDestBuf, hp2);
+    pheDestBuf.h_name = strdup(hp2->h_name);
     lsXfer->pheDest = &pheDestBuf;
 
     if ((strcmp(szThisHost, lsXfer->szHost) == 0)
@@ -396,26 +391,26 @@ copyFile( lsRcpXfer *lsXfer, char* buf, int option )
             }
         }
 
-		if (logclass & (LC_FILE))
+        if (logclass & (LC_FILE))
             ls_syslog(LOG_DEBUG,"copyFile(), myopen_() for file '%s' on '%s'",
-                    lsXfer->ppszHostFnames[0], lsXfer->szHost);
+                      lsXfer->ppszHostFnames[0], lsXfer->szHost);
 
         if ((lfd = myopen_(lsXfer->ppszHostFnames[0], O_RDONLY, 0600,
                            lsXfer->pheHost)) == -1) {
-	    	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, "copyFile", "myopen_");
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, "copyFile", "myopen_");
             return(-1);
         }
 
-		if (logclass & (LC_FILE))
+        if (logclass & (LC_FILE))
             ls_syslog(LOG_DEBUG," copyFile(), myopen_() for file '%s' on '%s'",
-                    lsXfer->ppszDestFnames[0], lsXfer->szDest);
+                      lsXfer->ppszDestFnames[0], lsXfer->szDest);
 
         mode = sLstat.st_mode;
 
         if ((rfd = myopen_(lsXfer->ppszDestFnames[0], O_CREAT | O_WRONLY |
-                 			(lsXfer->iOptions & O_APPEND ? O_APPEND : O_TRUNC),
-		 					mode,
-		 					lsXfer->pheDest)) == -1) {
+                           (lsXfer->iOptions & O_APPEND ? O_APPEND : O_TRUNC),
+                           mode,
+                           lsXfer->pheDest)) == -1) {
 	    	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M,
                         "copyFile", "myopen_" );
             close(lfd);

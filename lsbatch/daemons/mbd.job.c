@@ -461,7 +461,7 @@ chkAskedHosts(int inNumAskedHosts, char **inAskedHosts, int numProcessors,
     struct hData *hData;
     char hName[MAXHOSTNAMELEN];
     int len, priority;
-    const char *officialName;
+    struct hostent *hp;
     int allSpecified = FALSE;
     int firstHostIndex = -1;
 #define FIRST_HOST_PRIORITY (unsigned)-1/2
@@ -596,9 +596,9 @@ chkAskedHosts(int inNumAskedHosts, char **inAskedHosts, int numProcessors,
                 FREEUP(gHosts);
             }
         } else {
-            if ((officialName = getHostOfficialByName_(hName)) == NULL
-                || (hData = getHostData ((char*)officialName)) == NULL
-                || strcmp (hData->host, LOST_AND_FOUND) == 0
+            if ((hp = Gethostbyname_(hName)) == NULL
+                || (hData = getHostData(hp->h_name)) == NULL
+                || strcmp(hData->host, LOST_AND_FOUND) == 0
                 || (hData->hStatus & HOST_STAT_REMOTE)) {
                 if (!returnBadHost)
                     continue;
@@ -2268,12 +2268,12 @@ packJobSpecs (struct jData *jDataPtr, struct jobSpecs *jobSpecs)
             strcpy (jobSpecs->postCmd, jDataPtr->queuePostCmd);
         }
     }
-    
-    if (!qp->prepostUsername) { 
-	strcpy (jobSpecs->prepostUsername, ""); 
+
+    if (!qp->prepostUsername) {
+	strcpy (jobSpecs->prepostUsername, "");
     }
     else {
-	strcpy (jobSpecs->prepostUsername, qp->prepostUsername); 
+	strcpy (jobSpecs->prepostUsername, qp->prepostUsername);
     }
 
     if ((jDataPtr->shared->jobBill.options & SUB_RESTART) && (jDataPtr->execCwd))
@@ -6176,7 +6176,7 @@ checkJobParams (struct jData *job, struct submitReq *subReq,
         subReq->options |= SUB_PROJECT_NAME;
     }
 
-    if (!isValidHost_(subReq->fromHost)) {
+    if (!Gethostbyname_(subReq->fromHost)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "IsValidHost_");
         return (LSBE_BAD_HOST);
     }
@@ -7357,10 +7357,11 @@ breakCallback(struct jData *jData, bool_t termWhiPendStatus)
 
     len = sizeof(from);
 
-    if ((hp = (struct hostent *)getHostEntryByName_(jData->shared->jobBill.fromHost)) == NULL) {
-        ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_S_M, fname,
-                  lsb_jobid2str(jData->jobId), "getHostEntryByName_",
-                  jData->shared->jobBill.fromHost);
+    if ((hp = Gethostbyname_(jData->shared->jobBill.fromHost)) == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyname() %s failed job %s", __func__,
+                  jData->shared->jobBill.fromHost,
+                  lsb_jobid2str(jData->jobId));
         exit(-1);
     }
 
@@ -7369,13 +7370,12 @@ breakCallback(struct jData *jData, bool_t termWhiPendStatus)
 
     if (logclass & LC_TRACE) {
         ls_syslog(LOG_DEBUG, "\
-%s: Nios on <%s> Port=<%d> jobId=<%s> exitStatus <%x> <%d>", fname,
+%s: Nios on %s port %d jobId %s exitStatus %x %d", fname,
                   jData->shared->jobBill.fromHost,
                   jData->shared->jobBill.niosPort,
                   lsb_jobid2str(jData->jobId),
                   jData->exitStatus, termWhiPendStatus);
     }
-
 
     if ((s = niosCallback_(&from,
                            htons(jData->shared->jobBill.niosPort),

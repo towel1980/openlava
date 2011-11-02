@@ -39,7 +39,7 @@ extern char **filterToNames(char *);
 extern int num_loadindex;
 
 
-#define NL_SETN  27 
+#define NL_SETN  27
 
 
 void
@@ -48,7 +48,7 @@ usage(char *cmd)
     fprintf(stderr,I18N_Usage );
     fprintf(stderr,
        ":\n%s [-h] [-V] [-N|-E] [-l | -w] [-R res_req] [-I index_list] [-n num_hosts] [host_name ... | cluster_name ...]\n", cmd);
-    fprintf(stderr, "%s\n%s [-h] [-V] -s [ shared_resource_name ... ]\n", I18N_or, cmd); 
+    fprintf(stderr, "%s\n%s [-h] [-V] -s [ shared_resource_name ... ]\n", I18N_or, cmd);
     exit(-1);
 }
 
@@ -82,7 +82,7 @@ main(int argc, char **argv)
     numneeded = 0;
     opterr = 0;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
 
     if (ls_initdebug(argv[0]) < 0) {
@@ -90,9 +90,9 @@ main(int argc, char **argv)
         exit(-1);
     }
     if (logclass & (LC_TRACE))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname); 
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
-    
+
     for (i = 1; i < argc; i++) {
        if (strcmp(argv[i], "-h") == 0) {
            usage(argv[0]);
@@ -149,13 +149,13 @@ main(int argc, char **argv)
 	    break;
 
         case 'E':
-	    if (options & NORMALIZE) 
+	    if (options & NORMALIZE)
 		usage(argv[0]);
              options = EFFECTIVE;
 	     break;
 	case 'n':
             numneeded = atoi(optarg);
-            if (numneeded <= 0) 
+            if (numneeded <= 0)
                 usage(argv[0]);
             break;
 
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	    if (wideFormat == TRUE)
 		usage(argv[0]);
 	    break;
-	
+
 	case 'w':
 	    wideFormat = TRUE;
 	    if (longFormat == TRUE)
@@ -194,29 +194,28 @@ main(int argc, char **argv)
             badHost = TRUE;
 	    continue;
 	} else if ( (isClus == 0) &&
-		    (!isValidHost_(argv[optind])) ) {
-	    fprintf(stderr, "lsload: %s %s\n", 
-		    I18N(1952, "unknown host name") /* catgets 1952 */,
-		    argv[optind]); 
+		    (!Gethostbyname_(argv[optind])) ) {
+	    fprintf(stderr, "\
+%s: invalid hostname %s\n", __func__, argv[optind]);
             badHost = TRUE;
             continue;
 	}
         hostnames[num] = argv[optind];
         num++;
     }
- 
+
     if (num == 0 && badHost)
         exit(-1);
-    
+
     if (!longFormat) {
-        if (indexfilter) 
+        if (indexfilter)
             nlp = filterToNames(indexfilter);
         else
             nlp = defaultindex;
-    } else {  
+    } else {
         nlp = NULL;
-    } 
-        
+    }
+
     TIMEIT(0, (hosts = ls_loadinfo(resreq, &numneeded, options, 0, hostnames, num, &nlp)), "ls_loadinfo");
 
     if (!hosts) {
@@ -224,9 +223,9 @@ main(int argc, char **argv)
         exit(-10);
     }
 
-    if (longFormat) 
+    if (longFormat)
         printf("%s", formatHeader(nlp, longFormat));
-    else 
+    else
 	if (wideFormat)
 	    printf("%s\n", wideformatHeader(nlp, longFormat));
         else
@@ -246,8 +245,8 @@ main(int argc, char **argv)
 	    if (LS_ISRESDOWN(hosts[i].status))
 		strcat(statusbuf, "-");
 	    if (LS_ISOKNRES(hosts[i].status)) {
-		strcat(statusbuf, I18N_ok); 
-	    } else if (LS_ISBUSY(hosts[i].status) 
+		strcat(statusbuf, I18N_ok);
+	    } else if (LS_ISBUSY(hosts[i].status)
 			&& !LS_ISLOCKED(hosts[i].status)) {
 		    strcat(statusbuf, I18N(1958, "busy")); /* catgets 1958 */
  	    } else {
@@ -265,16 +264,16 @@ main(int argc, char **argv)
 	}
 
         if (longFormat) {
-            retVal = makeShareField(hosts[i].hostName, FALSE, &shareNames, 
+            retVal = makeShareField(hosts[i].hostName, FALSE, &shareNames,
                                     &shareValues, &formats);
 	    if (i == 0) {
-		
+
 		if (retVal > 0) {
-		    
+
 		    for (j = 0; j < retVal; j++) {
 			printf(formats[j], shareNames[j]);
 		    }
-		} 
+		}
 		putchar('\n');
 	    }
 	    printf("%-23s %6s", hosts[i].hostName, statusbuf);
@@ -290,7 +289,7 @@ main(int argc, char **argv)
 	    nf = makeFields(&hosts[i], loadval, nlp);
             for(j = 0; j < nf; j++)
                 printf("%s",loadval[j]);
-            if (retVal > 0) { 
+            if (retVal > 0) {
                 for (j = 0; j < retVal; j++) {
                     printf(formats[j], shareValues[j]);
                 }
@@ -299,7 +298,7 @@ main(int argc, char **argv)
 	putchar('\n');
     }
 
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
 
     exit (0);
 }

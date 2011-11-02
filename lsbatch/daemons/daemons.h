@@ -266,21 +266,16 @@ struct jobSpecs {
     int       umask;
     char      cwd[MAXFILENAMELEN];
     int       restartPid;
-
     int       nxf;
     struct    xFile *xf;
-
     time_t    submitTime;
-
     char      chkpntDir[MAXFILENAMELEN];
     int       chkSig;
     int       actPid;
     time_t    chkPeriod;
     time_t    migThresh;
     time_t    lastSSuspTime;
-
     char    preExecCmd[MAXLINELEN];
-
     float   lastCpuTime;
     char     mailUser[MAXLINELEN];
     char     clusterName[MAX_LSB_NAME_LEN];
@@ -298,7 +293,6 @@ struct jobSpecs {
     int      niosPort;
     char     resumeCond[MAXLINELEN];
     char     stopCond[MAXLINELEN];
-
     char   suspendActCmd[MAXLINELEN];
     char   resumeActCmd[MAXLINELEN];
     char   terminateActCmd[MAXLINELEN];
@@ -535,7 +529,7 @@ extern FILE *smail(char *to, char *tohost);
 extern uid_t chuser(uid_t uid);
 extern int get_ports(void);
 extern void die(int sig);
-extern void *my_malloc(int size, char *caller);
+extern void *my_malloc(int size, const char *);
 extern void *my_calloc(int, int, const char *);
 extern void lsb_merr(char *s);
 extern void merr_user(char *user, char *host, char *msg, char *type);
