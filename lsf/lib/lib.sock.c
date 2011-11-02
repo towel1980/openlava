@@ -19,7 +19,7 @@
 #include "lib.h"
 #include "lproto.h"
 #include <unistd.h>
-#include <fcntl.h>    
+#include <fcntl.h>
 
 extern int totsockets_;
 extern int currentsocket_;
@@ -33,11 +33,11 @@ CreateSock_(int protocol)
     static char fname[] = "CreateSock_";
     struct sockaddr_in cliaddr;
     int s;
-    static ushort port; 
+    static ushort port;
     static ushort i;
     static char isroot = FALSE;
 
-    if (geteuid() == 0) 
+    if (geteuid() == 0)
     {
         if (! isroot) {
             port = IPPORT_RESERVED -1;
@@ -48,7 +48,7 @@ CreateSock_(int protocol)
         port = 0;
     }
 
-    if (isroot && port < IPPORT_RESERVED/2)   
+    if (isroot && port < IPPORT_RESERVED/2)
         port = IPPORT_RESERVED -1;
 
     if ((s = Socket_(AF_INET, protocol, 0)) < 0) {
@@ -67,10 +67,10 @@ CreateSock_(int protocol)
         if (isroot) {
             port--;
         }
-        if (bind(s, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0) 
+        if (bind(s, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0)
             break;
 
-        
+
         if (!isroot) {
             closesocket(s);
             lserrno = LSE_SOCK_SYS;
@@ -85,12 +85,12 @@ CreateSock_(int protocol)
             return (-1);
         }
 
-        
-        if (isroot && port < IPPORT_RESERVED/2) 
+
+        if (isroot && port < IPPORT_RESERVED/2)
             port = IPPORT_RESERVED - 1;
     }
-    
-    
+
+
     if (isroot && i == IPPORT_RESERVED/2) {
 	if(logclass & LC_COMM)
 	    ls_syslog(LOG_DEBUG,"%s: went through all , %s",fname,strerror(errno));
@@ -100,16 +100,16 @@ CreateSock_(int protocol)
     }
 
 # if defined(FD_CLOEXEC)
-    fcntl(s, F_SETFD, (fcntl(s, F_GETFD) | FD_CLOEXEC)); 
-# else 
+    fcntl(s, F_SETFD, (fcntl(s, F_GETFD) | FD_CLOEXEC));
+# else
 #  if defined(FIOCLEX)
     (void)ioctl(s, FIOCLEX, (char *)NULL);
-#  endif 
-# endif 
+#  endif
+# endif
 
     return (s);
 
-} 
+}
 
 int
 CreateSockEauth_(int protocol)
@@ -117,11 +117,11 @@ CreateSockEauth_(int protocol)
     static char fname[] = "CreateSock_";
     struct sockaddr_in cliaddr;
     int s;
-    static ushort port; 
+    static ushort port;
     static ushort i;
     static char isroot = FALSE;
 
-    
+
     if ((geteuid() == 0) && (genParams_[LSF_AUTH].paramValue == NULL))
     {
         if (! isroot) {
@@ -133,7 +133,7 @@ CreateSockEauth_(int protocol)
         port = 0;
     }
 
-    if (isroot && port < IPPORT_RESERVED/2)   
+    if (isroot && port < IPPORT_RESERVED/2)
         port = IPPORT_RESERVED -1;
 
     if ((s = Socket_(AF_INET, protocol, 0)) < 0) {
@@ -152,10 +152,10 @@ CreateSockEauth_(int protocol)
         if (isroot) {
             port--;
         }
-        if (bind(s, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0) 
+        if (bind(s, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) == 0)
             break;
 
-        
+
         if (!isroot) {
             closesocket(s);
             lserrno = LSE_SOCK_SYS;
@@ -170,12 +170,12 @@ CreateSockEauth_(int protocol)
             return (-1);
         }
 
-        
-        if (isroot && port < IPPORT_RESERVED/2) 
+
+        if (isroot && port < IPPORT_RESERVED/2)
             port = IPPORT_RESERVED - 1;
     }
-    
-    
+
+
     if (isroot && i == IPPORT_RESERVED/2) {
 	if(logclass & LC_COMM)
 	    ls_syslog(LOG_DEBUG,"%s: went through all , %s",fname,strerror(errno));
@@ -185,16 +185,16 @@ CreateSockEauth_(int protocol)
     }
 
 # if defined(FD_CLOEXEC)
-    fcntl(s, F_SETFD, (fcntl(s, F_GETFD) | FD_CLOEXEC)); 
-# else 
+    fcntl(s, F_SETFD, (fcntl(s, F_GETFD) | FD_CLOEXEC));
+# else
 #  if defined(FIOCLEX)
     (void)ioctl(s, FIOCLEX, (char *)NULL);
-#  endif 
-# endif 
+#  endif
+# endif
 
     return (s);
 
-} 
+}
 
 
 int
@@ -217,7 +217,7 @@ get_nonstd_desc_(int desc)
             break;
         default:
             return (-1);
-        } 
+        }
 
         desc = dup(desc);
     }
@@ -231,7 +231,7 @@ get_nonstd_desc_(int desc)
 
     return (desc);
 
-} 
+}
 
 
 
@@ -265,19 +265,19 @@ TcpCreate_(int service, int port)
 
     return (s);
 
-} 
+}
 
-int 
+int
 io_nonblock_(int s)
 {
     return (fcntl(s, F_SETFL, O_NONBLOCK));
-} 
+}
 
-int 
+int
 io_block_(int s)
 {
     return (fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK));
-} 
+}
 
 
 int
@@ -287,7 +287,7 @@ setLSFChanSockOpt_(int newOpt)
 
     mLSFChanSockOpt = newOpt;
     return oldOpt;
-} 
+}
 
 
 int
@@ -308,53 +308,53 @@ Socket_(int domain, int type, int protocol)
     if (s1 < 0)
         close(s0);
     return (s1);
-} 
+}
 
 /* svrsockCreate_()
  */
 ls_svrsock_t *
-svrsockCreate_(u_short port, 
-               int backlog, 
-               struct sockaddr_in *addr, 
+svrsockCreate_(u_short port,
+               int backlog,
+               struct sockaddr_in *addr,
                int options)
 {
     ls_svrsock_t         *svrsock;
-    struct sockaddr_in   *svrAddr; 
-    int                  acceptSock; 
+    struct sockaddr_in   *svrAddr;
+    int                  acceptSock;
     socklen_t            length;
-   
+
     if ((svrsock = malloc(sizeof(ls_svrsock_t))) == NULL) {
         lserrno = LSE_MALLOC;
 	return (NULL);
     }
 
     svrAddr = malloc(sizeof(struct sockaddr_in));
-    if (svrAddr == NULL) {	
+    if (svrAddr == NULL) {
         lserrno = LSE_MALLOC;
         free(svrsock);
         return (NULL);
     }
     svrsock->localAddr = svrAddr;
 
-    if (addr != NULL) { 
+    if (addr != NULL) {
         port = ntohs(addr->sin_port);
         (*svrAddr) = (*addr);
-    } else { 
-        memset((char *) svrAddr, 0, sizeof(struct sockaddr_in)); 
+    } else {
+        memset((char *) svrAddr, 0, sizeof(struct sockaddr_in));
         svrAddr->sin_family = AF_INET;
         svrAddr->sin_port = htons(port);
         svrAddr->sin_addr.s_addr = INADDR_ANY;
     }
-    
+
     if ((acceptSock = socket(svrAddr->sin_family, SOCK_STREAM, 0)) < 0) {
         lserrno = LSE_SOCK_SYS;
         free(svrsock->localAddr);
         free(svrsock);
         return (NULL);
     }
-    
-    if (bind(acceptSock, 
-             (struct sockaddr *)svrAddr, 
+
+    if (bind(acceptSock,
+             (struct sockaddr *)svrAddr,
              sizeof(struct sockaddr_in)) < 0) {
         (void) close(acceptSock);
         lserrno = LSE_SOCK_SYS;
@@ -370,10 +370,10 @@ svrsockCreate_(u_short port,
         return (NULL);
     }
 
-    if (port == 0) { 
+    if (port == 0) {
         length = sizeof(struct sockaddr_in);
-        if (getsockname(acceptSock, 
-                        (struct sockaddr *)svrAddr, 
+        if (getsockname(acceptSock,
+                        (struct sockaddr *)svrAddr,
                         &length) < 0) {
             lserrno = LSE_SOCK_SYS;
             (void) closesocket(acceptSock);
@@ -390,11 +390,11 @@ svrsockCreate_(u_short port,
     svrsock->options = options;
     if (backlog == 0)
         svrsock->backlog = 50;
-    else 
+    else
         svrsock->backlog = backlog;
 
     return svrsock;
-} 
+}
 
 /* svrsockAccept_()
  */
@@ -408,7 +408,7 @@ svrsockAccept_(ls_svrsock_t *svrsock, int timeout)
     if (svrsock == NULL) {
         lserrno = LSE_BAD_ARGS;
         return (-1);
-    } 
+    }
 
     s = -1;
     len = sizeof(from);
@@ -419,7 +419,7 @@ svrsockAccept_(ls_svrsock_t *svrsock, int timeout)
     }
 
     return s;
-} 
+}
 
 char *
 svrsockToString_(ls_svrsock_t *svrsock)
@@ -442,7 +442,7 @@ svrsockToString_(ls_svrsock_t *svrsock)
     sprintf(string, "%s:%u", hostname, svrsock->port);
 
     return string;
-} 
+}
 
 void
 svrsockDestroy_(ls_svrsock_t *svrsock)
@@ -450,7 +450,7 @@ svrsockDestroy_(ls_svrsock_t *svrsock)
     (void) close(svrsock->sockfd);
     free(svrsock->localAddr);
     free(svrsock);
-} 
+}
 
 int
 TcpConnect_(char *hostname, u_short port, struct timeval *timeout)
@@ -462,13 +462,13 @@ TcpConnect_(char *hostname, u_short port, struct timeval *timeout)
     fd_set wm;
 
     server.sin_family = AF_INET;
-    if ((hp = (struct hostent *)getHostEntryByName_(hostname)) == NULL) {
+    if ((hp = Gethostbyname_(hostname)) == NULL) {
         lserrno = LSE_BAD_HOST;
         return (-1);
     }
 
-    memcpy((char *) &server.sin_addr, 
-           (char *) hp->h_addr, 
+    memcpy((char *) &server.sin_addr,
+           (char *) hp->h_addr,
            (int) hp->h_length);
 
     server.sin_port = htons(port);
@@ -490,7 +490,7 @@ TcpConnect_(char *hostname, u_short port, struct timeval *timeout)
         return (-1);
     }
 
-    for (i = 0; i < 2; i++) { 
+    for (i = 0; i < 2; i++) {
         FD_ZERO(&wm);
         FD_SET(sock, &wm);
         nwRdy = select(sock+1, NULL, &wm, NULL, timeout);
@@ -510,7 +510,7 @@ TcpConnect_(char *hostname, u_short port, struct timeval *timeout)
     }
 
     return sock;
-} 
+}
 
 
 char *
@@ -547,4 +547,4 @@ getMsgBuffer_(int fd, int *bufferSize)
 	return (NULL);
     }
     return msgBuffer;
-} 
+}

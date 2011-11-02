@@ -1,4 +1,4 @@
-/* $Id: lib.rf.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,23 +27,23 @@
 
 #define ABS(i) ((i) < 0 ? -(i) : (i))
 
-static int maxOpen = NOFILE; 
+static int maxOpen = NOFILE;
 
 static struct rHosts {
     char *hname;
     int sock;
-    time_t atime; 
+    time_t atime;
     struct rHosts *next;
-    int nopen; 
-} *rHosts = NULL; 
+    int nopen;
+} *rHosts = NULL;
 
 static struct rfTab {
-    struct rHosts *host; 
-    int fd; 
+    struct rHosts *host;
+    int fd;
 } *ft = NULL;
 
-static int nrh = 0; 
-static int maxnrh = RF_MAXHOSTS; 
+static int nrh = 0;
+static int maxnrh = RF_MAXHOSTS;
 
 static struct rHosts *rhConnect(char *host);
 static struct rHosts *rhFind(char *host);
@@ -55,12 +55,11 @@ static int rxFlags = 0;
 static struct rHosts *
 rhConnect(char *host)
 {
+    struct hostent *hp;
     char *argv[2], *hname;
     int tid;
-    const char *officialName;
     struct rHosts *rh;
     int sock, i;
-    char officialHostNameBuf[MAXHOSTNAMELEN];
 
     if (ft == NULL) {
 	if ((ft = (struct rfTab *) calloc(maxOpen, sizeof(struct rfTab)))
@@ -68,55 +67,51 @@ rhConnect(char *host)
 	    lserrno = LSE_MALLOC;
 	    return NULL;
 	}
-	
+
 	for (i = 0; i < maxOpen; i++)
 	    ft[i].host = NULL;
     }
 
-    if ((officialName = getHostOfficialByName_(host)) == NULL) {
+    if ((hp = Gethostbyname_(host)) == NULL) {
 	lserrno = LSE_BAD_HOST;
 	return (NULL);
     }
 
-    strcpy(officialHostNameBuf, officialName);
-    if ((rh = (struct rHosts *)rhFind((char*)officialHostNameBuf))) {
+    if ((rh = (struct rHosts *)rhFind(hp->h_name))) {
 	rh->atime = time(NULL);
 	return (rh);
     }
-    
-    
 
-    
     argv[0] = RF_SERVERD;
     argv[1] = NULL;
     if ((tid = ls_rtask(host, argv, REXF_TASKPORT | rxFlags)) < 0) {
 	return (NULL);
     }
 
-    if ((sock = ls_conntaskport(tid)) < 0) 
+    if ((sock = ls_conntaskport(tid)) < 0)
 	return (NULL);
 
 
-    
 
-    
-    if ((hname = putstr_(officialHostNameBuf)) == NULL) {
+
+
+    if ((hname = putstr_(hp->h_name)) == NULL) {
 	closesocket(sock);
 	lserrno = LSE_MALLOC;
 	return (NULL);
     }
-    
+
     if (nrh >= maxnrh) {
-	
+
 	for (rh = rHosts->next; rh; rh = rh->next) {
 	    if (rh->nopen == 0)
 		break;
 	}
 
 	if (rh) {
-	    
+
 	    struct rHosts *lrurh = rh;
-	    
+
 	    for (rh = rh->next; rh; rh = rh->next) {
 		if (rh->atime < lrurh->atime && rh->nopen == 0)
 		    lrurh = rh;
@@ -128,7 +123,7 @@ rhConnect(char *host)
 	    }
 	}
     }
-    
+
     if ((rh = allocRH()) == NULL) {
 	free(hname);
 	closesocket(sock);
@@ -140,27 +135,27 @@ rhConnect(char *host)
     rh->atime = time(NULL);
     rh->hname = hname;
     rh->nopen = 0;
-						   
+
     return (rh);
-    
-} 
+
+}
 
 static struct rHosts *
 allocRH(void)
 {
     struct rHosts *rh, *tmp;
-    
+
     if ((rh = (struct rHosts *) malloc(sizeof(struct rHosts))) == NULL) {
 	return (NULL);
     }
-    
+
     tmp = rHosts;
     rHosts = rh;
     rh->next = tmp;
     nrh++;
 
     return (rh);
-} 
+}
 
 static struct rHosts *
 rhFind(char *host)
@@ -173,9 +168,9 @@ rhFind(char *host)
     }
 
     return (NULL);
-} 
+}
 
-    
+
 int
 ls_ropen(char *host, char *fn, int flags, int mode)
 {
@@ -201,16 +196,16 @@ ls_ropen(char *host, char *fn, int flags, int mode)
 	    lserrno = LSE_MALLOC;
 	    return (-1);
 	}
-	
+
 	ft = tmpft;
 	for (i = maxOpen; i < maxOpen + NOFILE; i++)
 	    ft[i].host = NULL;
-	    
+
 	maxOpen += NOFILE;
     }
 
     req.fn = fn;
-    
+
     req.flags = flags;
     req.mode = mode;
 
@@ -235,7 +230,7 @@ ls_ropen(char *host, char *fn, int flags, int mode)
     ft[fd].fd = hdr.opCode;
     rh->nopen++;
     return (fd);
-} 
+}
 
 int
 ls_rclose(int fd)
@@ -249,7 +244,7 @@ ls_rclose(int fd)
 	lserrno = LSE_BAD_ARGS;
 	return (-1);
     }
-    
+
     rh = ft[fd].host;
     reqfd = ft[fd].fd;
 
@@ -263,7 +258,7 @@ ls_rclose(int fd)
 	< 0) {
 	return (-1);
     }
-    
+
     ft[fd].host = NULL;
     rh->nopen--;
     if (rh->nopen == 0 && nrh > maxnrh)
@@ -274,9 +269,9 @@ ls_rclose(int fd)
 	lserrno = LSE_FILE_SYS;
 	return (-1);
     }
-	
+
     return (0);
-} 
+}
 
 
 int
@@ -294,9 +289,9 @@ ls_rwrite(int fd, char *buf, int len)
 	lserrno = LSE_BAD_ARGS;
 	return (-1);
     }
-    
+
     rh = ft[fd].host;
-    
+
     req.fd = ft[fd].fd;
     req.len = len;
 
@@ -305,7 +300,7 @@ ls_rwrite(int fd, char *buf, int len)
 		   xdr_rrdwrReq, SOCK_WRITE_FIX, NULL) < 0) {
 	return (-1);
     }
-    
+
     if (SOCK_WRITE_FIX(rh->sock, buf, len) != len) {
 	lserrno = LSE_MSG_SYS;
 	return (-1);
@@ -315,7 +310,7 @@ ls_rwrite(int fd, char *buf, int len)
 		   SOCK_READ_FIX) < 0) {
 	return (-1);
     }
-					      
+
     if (hdr.opCode < 0) {
 	errno = errnoDecode_(ABS(hdr.opCode));
 	lserrno = LSE_FILE_SYS;
@@ -323,7 +318,7 @@ ls_rwrite(int fd, char *buf, int len)
     }
 
     return (hdr.length);
-} 
+}
 
 
 int
@@ -336,7 +331,7 @@ ls_rread(int fd, char *buf, int len)
 	struct rrdwrReq __;
     } msgBuf;
     struct rHosts *rh;
-    
+
     if (fd < 0 || fd >= maxOpen || ft[fd].host == NULL) {
 	lserrno = LSE_BAD_ARGS;
 	return (-1);
@@ -369,7 +364,7 @@ ls_rread(int fd, char *buf, int len)
 	return (-1);
     }
     return (hdr.length);
-} 
+}
 
 
 off_t
@@ -382,14 +377,14 @@ ls_rlseek(int fd, off_t offset, int whence)
 	struct rlseekReq __;
     } msgBuf;
     struct rHosts *rh;
-    
+
     if (fd < 0 || fd >= maxOpen || ft[fd].host == NULL) {
 	lserrno = LSE_BAD_ARGS;
 	return (-1);
     }
-    
+
     rh = ft[fd].host;
-    
+
     req.fd = ft[fd].fd;
     req.offset = offset;
     req.whence = whence;
@@ -398,12 +393,12 @@ ls_rlseek(int fd, off_t offset, int whence)
 		   sizeof(msgBuf), xdr_rlseekReq, SOCK_WRITE_FIX, NULL) < 0) {
 	return (-1);
     }
-    
+
     if (lsRecvMsg_(rh->sock, (char *) &msgBuf, sizeof(hdr), &hdr, NULL, NULL,
 		   SOCK_READ_FIX) < 0) {
 	return (-1);
     }
-					      
+
     if (hdr.opCode < 0) {
 	errno = errnoDecode_(ABS(hdr.opCode));
 	lserrno = LSE_FILE_SYS;
@@ -411,7 +406,7 @@ ls_rlseek(int fd, off_t offset, int whence)
     }
 
     return ((off_t) hdr.length);
-} 
+}
 
 
 int
@@ -426,7 +421,7 @@ ls_rfstat(int fd, struct stat *st)
 	lserrno = LSE_BAD_ARGS;
 	return (-1);
     }
-    
+
     rh = ft[fd].host;
 
     reqfd = ft[fd].fd;
@@ -436,7 +431,7 @@ ls_rfstat(int fd, struct stat *st)
 		   SOCK_WRITE_FIX, NULL) < 0) {
 	return (-1);
     }
-    
+
     if (lsRecvMsg_(rh->sock, buf, MSGSIZE, &hdr,
 		   (char *) st, xdr_stat, SOCK_READ_FIX) < 0) {
 	return (-1);
@@ -447,9 +442,9 @@ ls_rfstat(int fd, struct stat *st)
 	lserrno = LSE_FILE_SYS;
 	return (-1);
     }
-    
+
     return (0);
-} 
+}
 
 
 int
@@ -458,7 +453,7 @@ ls_rfcontrol(int command, int arg)
     switch (command) {
       case RF_CMD_MAXHOSTS:
 	if (arg < 1) {
-	    lserrno = LSE_BAD_ARGS;	
+	    lserrno = LSE_BAD_ARGS;
 	    return (-1);
 	}
 	maxnrh = arg;
@@ -472,7 +467,7 @@ ls_rfcontrol(int command, int arg)
 	lserrno = LSE_BAD_ARGS;
 	return (-1);
     }
-} 
+}
 
 int
 ls_rfterminate(char *host)
@@ -483,44 +478,44 @@ ls_rfterminate(char *host)
 static
 int rhTerminate(char *host)
 {
+    struct hostent *hp;
     struct rHosts *rh, *prev;
-    const char *officialName;
     struct LSFHeader buf;
     int i;
 
-    if ((officialName = getHostOfficialByName_(host)) == NULL) {
+    if ((hp = Gethostbyname_(host)) == NULL) {
 	lserrno = LSE_BAD_HOST;
 	return (-1);
     }
 
     for (prev = NULL, rh = rHosts; rh; prev = rh, rh = rh->next) {
-	if (equalHost_(officialName, rh->hname)) {
+	if (equalHost_(hp->h_name, rh->hname)) {
 	    if (prev == NULL)
 		rHosts = rh->next;
 	    else
 		prev->next = rh->next;
-	    
+
 	    lsSendMsg_(rh->sock, RF_TERMINATE, 0, NULL, (char *) &buf,
 		       sizeof(buf), NULL, SOCK_WRITE_FIX, NULL);
 	    closesocket(rh->sock);
-    
+
 	    for (i = 0; i < maxOpen; i++) {
 		if (ft[i].host == rh)
 		    ft[i].host = NULL;
 	    }
-	
+
 	    free(rh->hname);
 	    free(rh);
 	    nrh--;
 	    return (0);
 	}
     }
-    
+
     lserrno = LSE_BAD_HOST;
     return (-1);
-} 
+}
 
-    
+
 int
 ls_rstat(char *host, char *fn, struct stat *st)
 {
@@ -551,9 +546,9 @@ ls_rstat(char *host, char *fn, struct stat *st)
 	lserrno = LSE_FILE_SYS;
 	return (-1);
     }
-    
+
     return (0);
-} 
+}
 
 char *
 ls_rgetmnthost(char *host, char *fn)
@@ -589,13 +584,13 @@ ls_rgetmnthost(char *host, char *fn)
 	lserrno = LSE_FILE_SYS;
 	return (NULL);
     }
-    
+
     return (hostname);
-} 
+}
 
 /* ls_conntaskport()
  */
-int 
+int
 ls_conntaskport(int rpid)
 {
     struct tid           *tid;
@@ -605,8 +600,8 @@ ls_conntaskport(int rpid)
     int                  resTimeout;
     socklen_t            sinLen;
 
-    
-    if (genParams_[LSF_RES_TIMEOUT].paramValue) 
+
+    if (genParams_[LSF_RES_TIMEOUT].paramValue)
         resTimeout = atoi(genParams_[LSF_RES_TIMEOUT].paramValue);
     else
 	resTimeout = RES_TIMEOUT;
@@ -627,9 +622,9 @@ ls_conntaskport(int rpid)
 
     sin.sin_port = tid->taskPort;
 
-    cc = b_connect_(sock, 
-                    (struct sockaddr *)&sin, 
-                    sizeof(sin), 
+    cc = b_connect_(sock,
+                    (struct sockaddr *)&sin,
+                    sizeof(sin),
                     resTimeout);
     if (cc < 0) {
         closesocket(sock);
@@ -676,8 +671,8 @@ ls_runlink(char *host, char *fn)
 	lserrno = LSE_FILE_SYS;
 	return (-1);
     }
-    
+
     return (0);
-} 
+}
 
 

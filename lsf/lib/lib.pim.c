@@ -26,17 +26,17 @@
 #include "../lsf.h"
 #include "lproto.h"
 
-#define NL_SETN   23   
+#define NL_SETN   23
 static struct config_param pimParams[] =
 {
-#define LSF_PIM_INFODIR 0    
+#define LSF_PIM_INFODIR 0
     {"LSF_PIM_INFODIR", NULL},
-#define LSF_PIM_SLEEPTIME 1    
+#define LSF_PIM_SLEEPTIME 1
     {"LSF_PIM_SLEEPTIME", NULL},
-#define LSF_LIM_DEBUG 2    
+#define LSF_LIM_DEBUG 2
     {"LSF_LIM_DEBUG", NULL},
-#define LSF_LOGDIR 3    
-    {"LSF_LOGDIR", NULL},    
+#define LSF_LOGDIR 3
+    {"LSF_LOGDIR", NULL},
 #define LSF_PIM_SLEEPTIME_UPDATE 4
     {"LSF_PIM_SLEEPTIME_UPDATE", NULL},
     {NULL, NULL}
@@ -86,7 +86,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
     time_t now;
     static time_t pimSleepTime = PIM_SLEEP_TIME;
     static bool_t periodicUpdateOnly = FALSE;
-    
+
     now = time(0);
 
     if (logclass & LC_PIM)
@@ -103,7 +103,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
                  FREEUP (plp->paramValue);
              }
         }
- 	
+
 	if (initenv_(pimParams, NULL) < 0) {
 	    if (logclass & LC_PIM)
 		ls_syslog(LOG_DEBUG, "%s: initenv_() failed: %M", fname);
@@ -116,7 +116,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 			  "%s: ls_getmyhostname() failed: %m", fname);
 	    return (NULL);
 	}
-	
+
 	if (pimParams[LSF_PIM_INFODIR].paramValue)
 	    sprintf(pfile, "%s/pim.info.%s",
 		    pimParams[LSF_PIM_INFODIR].paramValue, myHost);
@@ -131,7 +131,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 		sprintf(pfile, "/tmp/pim.info.%s", myHost);
 	    }
 	}
-	
+
 	if (pimParams[LSF_PIM_SLEEPTIME].paramValue) {
 	    if ((pimSleepTime =
 		 atoi(pimParams[LSF_PIM_SLEEPTIME].paramValue)) < 0) {
@@ -142,17 +142,14 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 	}
 
         if (pimParams[LSF_PIM_SLEEPTIME_UPDATE].paramValue != NULL
-            && strcasecmp(pimParams[LSF_PIM_SLEEPTIME_UPDATE].paramValue, "y") == 0) { 
+            && strcasecmp(pimParams[LSF_PIM_SLEEPTIME_UPDATE].paramValue, "y") == 0) {
             periodicUpdateOnly = TRUE;
             if (logclass & LC_PIM)
                 ls_syslog(LOG_DEBUG, "%s: Only to call pim each PIM_SLEEP_TIME interval", fname);
         }
 
-	if ((hp = (struct hostent *)getHostEntryByName_(myHost)) == 0) {
-	    if (logclass & LC_PIM)
-		ls_syslog(LOG_DEBUG, "%s: getHostEntryByName_(%s) failed: %M",
-			  fname, myHost);
-	    return (NULL);
+	if ((hp = Gethostbyname_(myHost)) == NULL) {
+	    return NULL;
 	}
 
 	memset((char *) &pimAddr, 0, sizeof(pimAddr));
@@ -165,7 +162,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
     if (now - lastUpdateNow >= pimSleepTime || (options & PIM_API_UPDATE_NOW)) {
         if (logclass & LC_PIM)
 	    ls_syslog(LOG_DEBUG,"%s: update now", fname);
-	lastUpdateNow = now;	
+	lastUpdateNow = now;
 
 	if ((s = TcpCreate_(FALSE, 0)) < 0) {
 	    if (logclass & LC_PIM)
@@ -177,7 +174,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 	    close(s);
 	    return (NULL);
 	}
-	
+
 	if (b_connect_(s, (struct sockaddr *) &pimAddr, sizeof(pimAddr), 0)
 	    == -1) {
 	    if (logclass & LC_PIM)
@@ -189,7 +186,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 
 	initLSFHeader_(&sendHdr);
 	initLSFHeader_(&recvHdr);
-    
+
 	sendHdr.opCode = options;
 	sendHdr.refCode = (short) now & 0xffff;
 	setHdrReserved(&sendHdr, cpgid);
@@ -231,7 +228,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
         if (logclass & LC_PIM)
 	    ls_syslog(LOG_DEBUG,"%s updated now",fname);
 	if (!readPIMFile(pfile)) {
-		ls_syslog(LOG_ERR, I18N_FUNC_FAIL,  fname, "readPIMFile"); 
+		ls_syslog(LOG_ERR, I18N_FUNC_FAIL,  fname, "readPIMFile");
 		return(NULL);
 	}
     }
@@ -239,7 +236,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
     lastTime = now;
 
     if ((jru = readPIMInfo(npgid, pgid)) == NULL &&
-	!(options & PIM_API_UPDATE_NOW) 
+	!(options & PIM_API_UPDATE_NOW)
 	&& (periodicUpdateOnly == FALSE
 	    || (periodicUpdateOnly == TRUE
 		&& now - lastUpdateNow >= pimSleepTime))) {
@@ -253,9 +250,9 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 	}
     }
     return jru;
-	
-	
-} 
+
+
+}
 
 static char *
 readPIMBuf(char *pfile)
@@ -268,16 +265,16 @@ readPIMBuf(char *pfile)
 	pimInfoLen = 0;
 
 	if (stat(pfile,&bstat) < 0) {
-		ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "stat", pfile);  
+		ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "stat", pfile);
 		return(NULL);
 	}
 	pimInfoLen = bstat.st_size;
 	if ((pimInfoBuf = (char *)malloc(pimInfoLen+1)) == NULL) {
-		ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M,  fname, "malloc"); 
+		ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M,  fname, "malloc");
 		return(NULL);
 	}
         if ((fp = openPIMFile(pfile)) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "openPIMFile", pfile); 
+	    ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "openPIMFile", pfile);
    	    return (FALSE);
         }
 	if (fread(pimInfoBuf,sizeof(char),pimInfoLen,fp) <= 0) {
@@ -322,7 +319,7 @@ readPIMFile(char *pfile)
 	char pimString[MAXLINELEN];
 
 	if ((buffer=readPIMBuf(pfile))==NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "readPIMBuf"); 
+	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "readPIMBuf");
 	    return(FALSE);
 	}
 
@@ -330,11 +327,11 @@ readPIMFile(char *pfile)
 	npinfoList = 0;
 	pinfoList = (struct lsPidInfo *)malloc(sizeof(struct lsPidInfo) * MAX_NUM_PID);
 	if (pinfoList == NULL) {
-		ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,  "malloc", 
-				sizeof(struct lsPidInfo) * MAX_NUM_PID); 
+		ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,  "malloc",
+				sizeof(struct lsPidInfo) * MAX_NUM_PID);
 		return(FALSE);
 	}
-        
+
 	tmpbuf = getNextString(buffer,pimString);
 	if (tmpbuf == NULL) {
 		ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5908,
@@ -342,7 +339,7 @@ readPIMFile(char *pfile)
 		return(FALSE);
 	}
 	buffer = tmpbuf;
-    
+
         while ((tmpbuf = getNextString(buffer,pimString))!=NULL) {
 	    buffer = tmpbuf;
             if (logclass & LC_PIM)
@@ -354,7 +351,7 @@ readPIMFile(char *pfile)
 		  &pinfoList[npinfoList].cutime, &pinfoList[npinfoList].cstime,
 		  &pinfoList[npinfoList].proc_size, &pinfoList[npinfoList].resident_size,
 		  &pinfoList[npinfoList].stack_size,
-		  (int *)&pinfoList[npinfoList].status); 
+		  (int *)&pinfoList[npinfoList].status);
 
 		npinfoList ++;
 		if (npinfoList % MAX_NUM_PID == 0) {
@@ -380,12 +377,12 @@ readPIMInfo(int inNPGids, int *inPGid)
     static struct jRusage jru;
     int found = FALSE;
     int cc, i, j, pinfoNum;
-    static int *activeInPGid = NULL; 
+    static int *activeInPGid = NULL;
 
     FREEUP(pgidList);
     FREEUP(pidList);
     FREEUP(activeInPGid);
-    
+
     memset((char *) &jru, 0, sizeof(jru));
 
     activeInPGid = (int *) malloc(inNPGids * sizeof(int));
@@ -398,11 +395,11 @@ readPIMInfo(int inNPGids, int *inPGid)
     memset((char *) activeInPGid, 0, inNPGids * sizeof(int));
 
     pgidList = (int *) malloc((inNPGids < PGID_LIST_SIZE ?
-		   			  PGID_LIST_SIZE : 
+		   			  PGID_LIST_SIZE :
 			       inNPGids + PGID_LIST_SIZE) * sizeof(int));
     if (pgidList == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc", 
-                 (inNPGids < PGID_LIST_SIZE ? PGID_LIST_SIZE : 
+        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",
+                 (inNPGids < PGID_LIST_SIZE ? PGID_LIST_SIZE :
                                 inNPGids + PGID_LIST_SIZE) * sizeof(int));
 	return (NULL);
     }
@@ -414,11 +411,11 @@ readPIMInfo(int inNPGids, int *inPGid)
 
     if (pidList == NULL) {
 	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",
-                                PID_LIST_SIZE * sizeof(struct pidInfo)); 
+                                PID_LIST_SIZE * sizeof(struct pidInfo));
 	return (NULL);
     }
     npidList = 0;
-    
+
     for (pinfoNum = 0;pinfoNum < npinfoList; pinfoNum ++) {
 	if (argOptions & PIM_API_TREAT_JID_AS_PGID)
 	    pinfoList[pinfoNum].pgid = pinfoList[pinfoNum].jobid;
@@ -427,7 +424,7 @@ readPIMInfo(int inNPGids, int *inPGid)
 	    if (pinfoList[pinfoNum].pgid == inPGid[i])
 		activeInPGid[i] = TRUE;
 	}
-	
+
 	if ((cc = inAddPList(pinfoList+pinfoNum)) == 1) {
 	    if (pinfoList[pinfoNum].status != LS_PSTAT_ZOMBI &&
 		pinfoList[pinfoNum].status != LS_PSTAT_EXITING) {
@@ -455,7 +452,7 @@ readPIMInfo(int inNPGids, int *inPGid)
 			      (int) pinfoList[pinfoNum].status);
 
 		if (pinfoList[pinfoNum].pid > -1)
-		    found = TRUE;		
+		    found = TRUE;
 	    }
 	} else {
 	    if (cc == -1) {
@@ -468,11 +465,11 @@ readPIMInfo(int inNPGids, int *inPGid)
 	int n;
 
 	n = inNPGids;
-	
+
 	for (i = 0; i < n; i++) {
 	    if (!activeInPGid[i]) {
 		npgidList--;
-		
+
 		for (j = i; j < npgidList; j++) {
 		    pgidList[j] = pgidList[j+1];
 		}
@@ -483,16 +480,16 @@ readPIMInfo(int inNPGids, int *inPGid)
 		}
 	    }
 	}
-	
+
         jru.npids = npidList;
         jru.pidInfo = pidList;
 	jru.npgids = npgidList;
-	jru.pgid = pgidList;			
+	jru.pgid = pgidList;
 	return (&jru);
     }
-    
+
     return (NULL);
-} 
+}
 
 static int
 inAddPList(struct lsPidInfo *pinfo)
@@ -511,15 +508,15 @@ inAddPList(struct lsPidInfo *pinfo)
 
     if (pinfo->pid < 0)
 	return (0);
-    
+
     for (i = 0; i < npidList; i++) {
 	if (pinfo->ppid == pidList[i].pid) {
 	    pgidList[npgidList] = pinfo->pgid;
 	    npgidList++;
-	    
+
 	    if (npgidList % PGID_LIST_SIZE == 0) {
 		int *tmpPtr;
-		    
+
 		tmpPtr = (int *) realloc((char *) pgidList,
 					 (npgidList + PGID_LIST_SIZE) *
 					 sizeof(int));
@@ -533,13 +530,13 @@ inAddPList(struct lsPidInfo *pinfo)
 
 	    if (intoPidList(pinfo) == -1)
 		return (-1);
-	    
+
 	    return (1);
 	}
     }
 
     return (0);
-} 
+}
 
 
 static int
@@ -549,17 +546,17 @@ intoPidList(struct lsPidInfo *pinfo)
     pidList[npidList].ppid = pinfo->ppid;
     pidList[npidList].pgid = pinfo->pgid;
     pidList[npidList].jobid = pinfo->jobid;
- 
+
     npidList++;
-    
+
     if (npidList % PID_LIST_SIZE == 0) {
 	struct pidInfo *tmpPtr;
-		    
+
 	tmpPtr = (struct pidInfo *) realloc((char *) pidList,
 					    (npidList + PID_LIST_SIZE) *
 					    sizeof(struct pidInfo));
 	if (tmpPtr == NULL) {
-	    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, "intoPidList", "realloc", 
+	    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, "intoPidList", "realloc",
 			(npidList + PID_LIST_SIZE) * sizeof(struct pidInfo));
 	    return (-1);
 	}
@@ -567,7 +564,7 @@ intoPidList(struct lsPidInfo *pinfo)
     }
 
     return (0);
-} 
+}
 
 
 static int
@@ -575,18 +572,18 @@ pimPort(struct sockaddr_in *pimAddr, char *pfile)
 {
     FILE *fp;
     int port;
-    
+
     if ((fp = openPIMFile(pfile)) == NULL)
 	return (-1);
-    
+
     fscanf(fp, "%d", &port);
 
     fclose(fp);
 
     pimAddr->sin_port = htons(port);
     return (0);
-} 
-    
+}
+
 
 static FILE *
 openPIMFile(char *pfile)
@@ -605,5 +602,5 @@ openPIMFile(char *pfile)
     }
 
     return (fp);
-} 
+}
 

@@ -26,18 +26,18 @@
 #include "lib.channel.h"
 #include "../res/resout.h"
 #include "lib.pim.h"
-#include "lsi18n.h" 
+#include "lsi18n.h"
 
 #include <sys/socket.h>
 #include <signal.h>
 
 #define BIND_RETRY_TIMES 100
 
-	
-struct keymap { 
-    char *key;       
-    char *val;       
-    int   position;   
+
+struct keymap {
+    char *key;
+    char *val;
+    int   position;
 };
 
 struct admins {
@@ -47,7 +47,7 @@ struct admins {
     char **adminNames;
 };
 
-struct debugReq {   
+struct debugReq {
     int opCode;
     int level;
     int logClass;
@@ -155,22 +155,22 @@ extern int sharedResConfigured_;
 
 #define GET_INTNUM(i) ((i)/INTEGER_BITS + 1)
 #define SET_BIT(bitNo, integers)           \
-    integers[(bitNo)/INTEGER_BITS] |= (1<< (bitNo)%INTEGER_BITS);    
+    integers[(bitNo)/INTEGER_BITS] |= (1<< (bitNo)%INTEGER_BITS);
 #define CLEAR_BIT(bitNo, integers)           \
-    integers[(bitNo)/INTEGER_BITS] &= ~(1<< (bitNo)%INTEGER_BITS);    
+    integers[(bitNo)/INTEGER_BITS] &= ~(1<< (bitNo)%INTEGER_BITS);
 #define TEST_BIT(bitNo, integers, isSet)  \
    {  \
       if (integers[(bitNo)/INTEGER_BITS] & (1<<(bitNo)%INTEGER_BITS))  \
           isSet = 1;         \
       else                   \
           isSet = 0;         \
-   }    
+   }
 
 #define FOR_EACH_WORD_IN_SPACE_DELIMITED_STRING(String, Word) \
     if ((String) != NULL) { \
 	char *Word; \
 	while (((Word) = getNextWord_(&String)) != NULL) { \
-	    
+
 #define END_FOR_EACH_WORD_IN_SPACE_DELIMITED_STRING }}
 
 #define LSF_LIM_ERESOURCE_OBJECT        "liblimvcl.so"
@@ -187,15 +187,15 @@ extern int ackAsyncReturnCode_(int, struct LSFHeader *);
 extern int resRC2LSErr_(int);
 extern int ackReturnCode_(int);
 
- 
-#define LSF_O_RDONLY    00000 
+
+#define LSF_O_RDONLY    00000
 #define LSF_O_WRONLY    00001
 #define LSF_O_RDWR      00002
 #define LSF_O_NDELAY    00004
 #define LSF_O_NONBLOCK  00010
 #define LSF_O_APPEND    00020
 #define LSF_O_CREAT     00040
-#define LSF_O_TRUNC     00100    
+#define LSF_O_TRUNC     00100
 #define LSF_O_EXCL      00200
 #define LSF_O_NOCTTY    00400
 
@@ -234,7 +234,7 @@ extern void sw_remtty(int);
 extern void sw_loctty(int);
 
 extern int doAcceptResCallback_(int s, struct niosConnect *connReq);
-extern int niosCallback_(struct sockaddr_in *from, u_short port, 
+extern int niosCallback_(struct sockaddr_in *from, u_short port,
 	   int rpid, int exitStatus, int terWhiPendStatus);
 
 extern int sig_encode(int);
@@ -285,41 +285,15 @@ extern char *sockAdd2Str_(struct sockaddr_in *);
 
 extern struct hostent *Gethostbyname_ (char *);
 extern struct hostent *Gethostbyaddr_(char *, int, int);
-
 extern int isValidHost_(const char* hname);
-extern const char* getHostOfficialByName_(const char* hname);
-extern const char* getHostOfficialByAddr_(const struct in_addr *addr);
-extern const struct hostent* getHostEntryByName_(const char* hname);
-extern const struct hostent* getHostEntryByAddr_(const struct in_addr *addr);
-extern const struct in_addr* getHostFirstAddr_(const char* hname);
-
-extern const struct in_addr* refreshHostAddr_(const char* hname);
-extern const char* refreshHostName_(const struct in_addr *addr);
-extern const struct hostent* setHostEntry_(const struct hostent* hp);
-extern void updateHostCacheAttrib_(void);
-
-#define LOCAL_HATTRIB_UPDATE_INTERVAL        (30*60)    
-#define HOSTNS_HATTRIB_UPDATE_INTERVAL       (24*60*60) 
-#define INFINITE_HATTRIB_UPDATE_INTERVAL     (-1)       
-
 extern int (*getHostAttribFuncP)(char *hname, int updateIntvl);
 extern int daemonId;
-
-#define DISABLE_HNAME_SERVER    (0x0001) 
-#define HOSTNS_NEED_MAPPING       (0x0002) 
-#define HOSTNS_REFRESH_CACHE      (0x0004) 
-#define HOSTNS_ENTRY_ONLY         (0x0008) 
-
-extern struct hostent *Gethostbyname_ex_ (char *, int options);
 
 #define DAEMON_ID_RES           (1)
 #define DAEMON_ID_SBD           (2)
 #define DAEMON_ID_LIM           (3)
 #define DAEMON_ID_MLIM          (4)
 #define DAEMON_ID_MBD           (5)
-
-extern int whichDaemonAmI(void);
-extern int isInDHCPEnv(void);
 
 extern int getAskedHosts_(char *, char ***, int *, int *, int);
 extern int lockHost_(time_t duration, char *hname);
@@ -413,9 +387,9 @@ extern int errnoDecode_(int);
 
 extern int getLogClass_ (char *, char *);
 extern int getLogMask(char **, char *);
-extern void ls_openlog(const char *, const char *, int, char *); 
+extern void ls_openlog(const char *, const char *, int, char *);
 extern void ls_closelog(void);
-extern int  ls_setlogmask(int maskpri); 
+extern int  ls_setlogmask(int maskpri);
 
 extern void initkeylist(struct keymap *, int, int, struct lsInfo *);
 extern void freekeyval(struct keymap *);
@@ -450,5 +424,5 @@ extern int getLSFUserByUid_(uid_t uid, char *lsfUserName, unsigned int lsfUserNa
 extern int getOSUserName_(const char *lsfUserName,
                           char *osUserName, unsigned int osUserNameSize);
 extern int getOSUid_(const char *lsfUserName, uid_t *uid);
-                         
-#endif 
+
+#endif

@@ -1,4 +1,4 @@
-/* $Id: lib.hosta.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,21 +30,20 @@ getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
 {
     int num = 64, i;
     char *word, **tmp, *hname;
-    const char *officialName;
     int foundBadHost = FALSE;
     static char **hlist = NULL;
     static int nhlist = 0;
     char host[MAXHOSTNAMELEN];
-    
+
     if (hlist) {
 	for (i = 0; i < nhlist; i++)
 	    free(hlist[i]);
 	free(hlist);
 	hlist = NULL;
     }
-    
-    nhlist = 0;    
-    if ((hlist = (char **) calloc(num, sizeof (char *))) == NULL)  {
+
+    nhlist = 0;
+    if ((hlist = calloc(num, sizeof (char *))) == NULL)  {
 	lserrno = LSE_MALLOC;
         return (-1);
     }
@@ -57,16 +56,16 @@ getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
             if (checkHost == FALSE) {
                 hname = host;
             } else {
-                if ((officialName = getHostOfficialByName_(host)) == NULL) {
+                if (Gethostbyname_(host) == NULL) {
 	            if (!foundBadHost) {
 		        foundBadHost = TRUE;
 		        *badIdx = nhlist;
                     }
 	            hname = host;
 	        } else {
-	            hname = (char*)officialName;
+	            hname = host;
 	        }
-            } 
+            }
         } else
             hname = host;
 
@@ -94,7 +93,7 @@ getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
 	lserrno = LSE_BAD_HOST;
 	return (-1);
     }
-    
+
     return (0);
 
   Error:
@@ -104,4 +103,4 @@ getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
     hlist = NULL;
     nhlist = 0;
     return (-1);
-} 
+}

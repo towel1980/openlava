@@ -1,94 +1,53 @@
-/* $Id: lib.host.c 397 2007-11-26 19:04:00Z mblack $
- * Copyright (C) 2007 Platform Computing Inc
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of version 2 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
-
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
- *
- */
 
 #include <unistd.h>
 #include "lib.h"
 #include "lproto.h"
-#include "mls.h"
-#include <malloc.h>
 #include <ctype.h>
 #include <arpa/inet.h>
 
-#undef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN (128)
+#define HP_CACHE_SIZE 1200
+#define HP_VALID_PERIOD (24*60*60)
+static struct {
+    struct hostent hp;
+    time_t cacheTime;
+    time_t lastAccessTime;
+} hpCache[HP_CACHE_SIZE];
+static int firstHPCache = TRUE;
 
-
-#define NL_SETN 23 
-
-
-int cpHostent(struct hostent *, const struct hostent *);
-void freeHp(struct hostent *);
-static struct hostent *my_gethostbyaddr(const char *);
-
-static struct hostent * getHostEntByName(
-    const char *hostName, int options);
-static struct hostent *getHostEntByAddr(
-    const struct in_addr *hostAddr, int options);
-static char* unifyOfficialName(const char* hname);
-static int loadHostEntByName(const char *hostName, int options,
-                             struct hostent *hostEntP);
-static int loadHostEntByAddr(const struct in_addr *hostAddr, int options,
-                             struct hostent *hostEntP);
-static int packHostEnt(const struct hostent *hp,
-                       struct hostent *hostEntP);
-int daemonId = 0;
-
-static struct hostent globalHostEnt;
-
-
-#define IS_SERVER_OR_NOT_LOCAL(hostAttrib)                              \
-    ((hostAttrib & HOST_ATTR_SERVER) || (hostAttrib & HOST_ATTR_NOT_LOCAL))
-#define IS_LOCAL_CLIENT(hostAttrib)                                     \
-    ((hostAttrib & HOST_ATTR_CLIENT) && !(hostAttrib & HOST_ATTR_NOT_LOCAL))
-
-
+static int cpHostent(struct hostent *, struct hostent *);
+static void freeHp(struct hostent *);
+static struct hostent *getHpCache(char *);
+static struct hostent *putHpCache(char *, struct hostent *);
+static struct hostent *getHpCacheByAddr(char *);
+static struct hostent *my_gethostbyaddr(char *);
 
 char *
 ls_getmyhostname(void)
 {
-    static char hname[MAXHOSTNAMELEN];
-    const char* sp;
+   static char hname[MAXHOSTNAMELEN];
+   struct hostent *hp;
 
+   if (hname[0] == 0) {
+       gethostname(hname, MAXHOSTNAMELEN);
+       hp = Gethostbyname_(hname);
+       if (hp != NULL) {
+           strcpy(hname, hp->h_name);
+       } else {
+           hname[0] = 0;
+           return(NULL);
+       }
+   }
 
-    if(hname[0] == 0) {
-        gethostname(hname, MAXHOSTNAMELEN);
-        sp = getHostOfficialByName_(hname);
-        if(sp) {
-	    strcpy(hname, sp);
-        } else {
-	    hname[0] = 0;
-            return(NULL);
-        }
-    }
-
-    return (hname);
-
-} 
-
-struct hostent *
-my_gethostbyname(char *name)
-{
+   return hname;
+}
 
 #define MY_HOSTSFILE "hosts"
 #define MY_LINESIZE 1024
 #define MY_NUMALIASES 36
 
-    static char fname[] = "my_gethostbyname";
+struct hostent *
+my_gethostbyname(char *name)
+{
     FILE *hfile;
     static char buf[MY_LINESIZE];
     char *addrstr;
@@ -97,647 +56,321 @@ my_gethostbyname(char *name)
     static u_int addr;
     int n, found = 0;
 
-    if(logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG,"%s: Entering...for %s",fname,name);
+    if (initenv_(NULL, NULL) < 0)
+        return NULL;
 
-    if (initenv_(NULL, NULL) < 0) 
-	return NULL;
+    sprintf(buf, "%s/%s", genParams_[LSF_CONFDIR].paramValue, MY_HOSTSFILE);
 
-    memset(buf,0,sizeof(buf));
-    ls_strcat(buf,sizeof(buf),genParams_[LSF_CONFDIR].paramValue);
-    ls_strcat(buf,sizeof(buf),"/");
-    ls_strcat(buf,sizeof(buf),MY_HOSTSFILE);
+    if ((hfile = fopen(buf, "r")) == NULL)
+        return NULL;
 
-    if (NULL == (hfile = fopen (buf, "r"))) {
-
-	if(logclass & LC_TRACE)
-            ls_syslog(LOG_DEBUG,"%s: failed to open %s",fname,buf);
-        return((struct hostent *)NULL);
-    }
-
-    while (NULL != fgets (buf, MY_LINESIZE, hfile)) {
+    while (fgets(buf, MY_LINESIZE, hfile)) {
         char *tmp;
         n = 0;
 
-        
-        if (NULL != (tmp = strpbrk (buf, "\n#")))
+        if ((tmp = strpbrk (buf, "\n#")))
             *tmp='\0';
 
-        
-        if (NULL == (addrstr = strtok (buf, " \t"))) 
+        if ((addrstr = strtok (buf, " \t")))
             continue;
-        addr = inet_addr (addrstr);
 
-        while (NULL != (names[n] = strtok(NULL, " \t"))) {
+        addr = inet_addr(addrstr);
+
+        while ((names[n] = strtok(NULL, " \t"))) {
             if (equalHost_(names[n], name))
                 found++;
             n++;
         }
-        if(found) {
+
+        if (found) {
             host.h_name = names[0];
-            host.h_aliases = names+1;
+            host.h_aliases = names + 1;
             host.h_addrtype = AF_INET;
             host.h_length = sizeof(addr);
             addrs[1] = NULL;
             addrs[0] = (char *)&addr;
             host.h_addr_list = addrs;
-	    fclose(hfile);
+            fclose(hfile);
+
             return(&host);
         }
     }
+
     fclose(hfile);
-    if(logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG,"%s: host <%s> not in hostfile",fname,name);
 
-    return((struct hostent *)NULL);
-} 
-
+    return NULL;
+}
 
 struct hostent *
 Gethostbyname_(char *hname)
 {
-    return (Gethostbyname_ex_(hname, 0));
-} 
-
-
-struct hostent *
-Gethostbyname_ex_(
-    char *hname,  
-    int options)  
-		  
-{
-    static char fname[] = "Gethostbyname_ex_";
-    struct hostent *hostEntP;
+    char *sp;
+    char *strip;
+    struct hostent *hp;
+    int hnlen;
+    static struct hostent hostent;
+    static char lsfHname[MAXHOSTNAMELEN];
     char lhname[MAXHOSTNAMELEN];
-   
-    if(logclass &  LC_TRACE)
-        ls_syslog(LOG_DEBUG,"%s: Entering, for host :<%s>" ,fname,hname);	
+
     if (strlen(hname) >= MAXHOSTNAMELEN) {
-	lserrno = LSE_BAD_HOST;
-	return (NULL);
-    }
-    
-    strcpy(lhname, hname);
-    strToLower_(lhname);
-
-    hostEntP = getHostEntByName(lhname, options);
-    if(hostEntP) {
-	if(hostEntP->h_addr == NULL) {
-	    return (NULL);
-	}
-        if(logclass &  LC_TRACE)
-            ls_syslog(LOG_DEBUG,
-                      "%s: Exiting this routine, resolved hostent for host: <%s>",
-                      fname,hname);
-	return (hostEntP);
-    } else {
-	if(lserrno == LSE_MALLOC) {
-            ls_syslog(LOG_ERR,
-                      I18N(6150,"%s: getHostEntByName() failed for host: <%s>, %M"), /*catgets 6150*/
-                      fname, hname);
-	} else {
-            ls_syslog(LOG_DEBUG,
-                      "%s: getHostEntByName() failed for host: <%s>, %M",
-                      fname,hname);
-	}
-	return (NULL);
-    } 
-}  
-
-
-int
-isValidHost_(const char* hname)
-{
-    static char fname[] = "isValidHost_";
-    struct hostent *hostEntP;
-
-    hostEntP = getHostEntByName(hname, 0);
-    if(!hostEntP) {
-        ls_syslog(LOG_DEBUG,
-                  "%s failed for host <%s>: %M",
-                  fname,hname);
-        return 0;
-    }
-
-    return 1;
-} 
-
-
-const char*
-getHostOfficialByName_(const char* hname)
-{
-    static char fname[] = "getHostOfficialByName_";
-    static char hnameBuf[MAXHOSTNAMELEN];
-    struct hostent *hostEntP;
-
-    hostEntP = getHostEntByName(hname, 0);
-    if(!hostEntP) {
-        ls_syslog(LOG_DEBUG,
-                  "%s:getHostEntByName() : Couldn't get the official name for <%s>. Maybe <%s> is not a host: %M",
-                  fname,hname,hname);
-        return NULL;
-    }
-    strcpy(hnameBuf, hostEntP->h_name);
-    return (hnameBuf);
-} 
-
-
-const char*
-getHostOfficialByAddr_(
-    const struct in_addr *addr) 
-{
-    static char fname[] = "getHostOfficialByAddr_";
-    struct hostent *hostEntP;
-    static char hname[MAXHOSTNAMELEN];
-
-    hostEntP = getHostEntByAddr(addr, 0);
-    if(!hostEntP) {
-        ls_syslog(LOG_DEBUG,
-                  "%s: getHostEntByAddr() failed for host <%s>: %M",
-                  fname, inet_ntoa(*addr));
+        lserrno = LSE_BAD_HOST;
         return NULL;
     }
 
-    strcpy(hname, hostEntP->h_name);
-    return (hname);
-} 
+    strcpy(lsfHname, hname);
+    strToLower_(lsfHname);
+    strcpy(lhname, lsfHname);
 
+    if ((hp = getHpCache(lsfHname)))
+        return hp;
 
-const struct in_addr*
-getHostFirstAddr_(const char* hname)
-{
-    static char fname[] = "getHostFirstAddr_";
-    struct hostent *hostEntP;
+    if ((hp = my_gethostbyname(lsfHname)) == NULL)
+        hp = gethostbyname(lsfHname);
 
-    hostEntP = getHostEntByName(hname, 0);
-    if(!hostEntP) {
-        ls_syslog(LOG_DEBUG,
-                  "%s: getHostEntByName() failed for host <%s>: %M",
-                  fname,hname);
+    if (! hp) {
+        lserrno = LSE_BAD_HOST;
         return NULL;
     }
 
-    return (struct in_addr*) (hostEntP->h_addr);  
-} 
+    memcpy((char *)&hostent, (char *) hp, sizeof (struct hostent));
+    hostent.h_name = lsfHname;
+    strcpy(hostent.h_name, hp->h_name);
 
+    if (stripDomains_ != NULL) {
 
-const struct hostent*
-getHostEntryByName_(const char* hname)
-{
-    static char fname[] = "getHostEntryByName_";
-    struct hostent *hostEntP;
+        hnlen = strlen(hostent.h_name);
+        for (strip = stripDomains_ ; *strip ; strip += (*strip + 1)) {
 
-    hostEntP = getHostEntByName(hname, 0);
-    if(!hostEntP) {
-        ls_syslog(LOG_DEBUG,
-                  "%s: getHostEntByName() failed for host <%s>: %M",
-                  fname,hname);
-        return NULL;
+            if (*strip >= hnlen)
+                     continue;
+
+            sp = hostent.h_name + hnlen - *strip;
+            if (strncasecmp(sp, (strip + 1), *strip) == 0) {
+                if (sp > hostent.h_name && sp[-1] == '.')
+                    sp[-1] = '\0';
+                else
+                    *sp = '\0';
+                break;
+            }
+        }
     }
 
-    if(hostEntP->h_addr == NULL) {
+    strToLower_(hostent.h_name);
+    putHpCache(lhname, &hostent);
+
+    return hp;
+
+}  /* Gethostbyname_ */
+
+
+static struct hostent *
+putHpCache(char *hname, struct hostent *hp)
+{
+    time_t now, oldestTime = 0;
+    int oldest = 0, i, j;
+    char **t;
+
+    time(&now);
+
+    for (i = 0; i < HP_CACHE_SIZE; i++) {
+        if (hpCache[i].hp.h_name == NULL) {
+            break;
+        } else if (hpCache[i].cacheTime - now > HP_VALID_PERIOD) {
+            freeHp(&hpCache[i].hp);
+            break;
+        }
+
+        if (hpCache[i].lastAccessTime > oldestTime)
+            oldest = i;
+    }
+
+    if (i == HP_CACHE_SIZE) {
+        i = oldest;
+        freeHp(&hpCache[i].hp);
+    }
+
+    if (cpHostent(&hpCache[i].hp, hp) == -1) {
         return (NULL);
     }
 
-    return hostEntP;
-} 
+    hpCache[i].cacheTime = now;
+    hpCache[i].lastAccessTime = now;
 
-
-const struct hostent*
-getHostEntryByAddr_(const struct in_addr *addr)
-{
-    static char fname[] = "getHostEntryByAddr_";
-    struct hostent *hostEntP;
-
-    hostEntP = getHostEntByAddr(addr, 0);
-    if(!hostEntP) {
-        ls_syslog(LOG_DEBUG,
-                  "%s: getHostEntByAddr() failed for host <%s>: %M",
-                  fname, inet_ntoa(*addr));
-        return NULL;
+    if (! equalHost_(hname, hpCache[i].hp.h_name)) {
+        for (j = 0; hpCache[i].hp.h_aliases[j]; j++) {
+            if (equalHost_(hname, hpCache[i].hp.h_aliases[j]))
+                break;
+        }
+        if (!hpCache[i].hp.h_aliases[j]) {
+            if ((t = (char **) realloc((char *) hpCache[i].hp.h_aliases,
+                                       (j + 2) * sizeof(char *)))) {
+                hpCache[i].hp.h_aliases = t;
+                if ((hpCache[i].hp.h_aliases[j] = putstr_(hname)))
+                    hpCache[i].hp.h_aliases[j+1] = NULL;
+            }
+        }
     }
 
-    return hostEntP;
-} 
-
-int
-whichDaemonAmI(void)
-{
-    return daemonId;
+    return (&hpCache[i].hp);
 }
 
 
-
 static struct hostent *
-getHostEntByName(const char *hostName, int options)
+getHpCache(char *hname)
 {
-    static char fname[] = "getHostEntByName";
-    struct hostent *hostEntP = NULL;
+    time_t now;
+    int i, j;
 
-
-    if(logclass &  LC_TRACE)
-        ls_syslog(LOG_DEBUG3,
-                  "%s: Enter this routine, hostName = %s, options = %d",
-                  fname, hostName, options);
-
-    if(hostName == NULL) {
-	lserrno = LSE_BAD_ARGS;
-        ls_syslog(LOG_ERR,I18N(6151, "%s Exiting: hostName == NULL, %M"), fname); /*catgets 6151 */
-	goto cleanup;
-    }
-
-    
-    freeHp(&globalHostEnt);
-
-    memset(&globalHostEnt, 0, sizeof(struct hostent));
-        
-    if(loadHostEntByName(hostName, options, &globalHostEnt) < 0) {
-        goto cleanup;
-    } 
-
-    hostEntP = &globalHostEnt;
-
-	
-
-cleanup:
-
-    if(logclass &  LC_TRACE) {
-        if(hostEntP == NULL) {
-            ls_syslog(LOG_DEBUG3,
-                      "%s: Exit this routine, hostent = NULL",
-                      fname);
-        } else if(hostEntP->h_addr) {
-            ls_syslog(LOG_DEBUG3,
-                      "%s: Exit this routine, official = %s, addr = %s",
-                      fname, hostEntP->h_name, 
-                      inet_ntoa(*(struct in_addr*)hostEntP->h_addr));
-        } else {
-            ls_syslog(LOG_DEBUG3,
-                      "%s: Exit this routine, official = %s, addr = NULL",
-                      fname, hostEntP->h_name);
-	}
-    }
-
-    return hostEntP;
-} 
-
-
-static struct hostent *
-getHostEntByAddr(const struct in_addr *hostAddr, int options)
-{
-
-    static char fname[] = "getHostEntByAddr";
-    struct hostent *hostEntP = NULL;
-
-
-    if(logclass &  LC_TRACE)
-        ls_syslog(LOG_DEBUG3,
-                  "%s: Enter this routine, hostAddr = %s, options = %d",
-                  fname, inet_ntoa(*hostAddr) , options);
-
-    if(hostAddr == NULL) {
-	lserrno = LSE_BAD_ARGS;
-        ls_syslog(LOG_ERR,I18N(6151, "%s Exiting: hostAddr == NULL, %M"), fname); /*catgets 6151 */
-	goto cleanup;
-    }
-
-    freeHp(&globalHostEnt);
-    memset(&globalHostEnt, 0, sizeof(struct hostent));
-        
-    if(loadHostEntByAddr(hostAddr, options, &globalHostEnt) < 0) {
-        goto cleanup;
-    } 
-
-    hostEntP = &globalHostEnt;
-
-	
-
-cleanup:
-
-    if(logclass &  LC_TRACE) {
-        if(hostEntP == NULL) {
-            ls_syslog(LOG_DEBUG3,
-                      "%s: Exit this routine, hostent = NULL",
-                      fname);
-        } else if(hostEntP->h_addr) {
-            ls_syslog(LOG_DEBUG3,
-                      "%s: Exit this routine, official = %s, addr = %s",
-                      fname, hostEntP->h_name, 
-                      inet_ntoa(*(struct in_addr*)hostEntP->h_addr));
-        } else {
-            ls_syslog(LOG_DEBUG3,
-                      "%s: Exit this routine, official = %s, addr = NULL",
-                      fname, hostEntP->h_name);
-	}
-    }
-
-    return hostEntP;
-
-} 
-
-void
-stripDomain_(char *hname)
-{
-    char *p;
-    for (p = hname; *p != '\0'; p++) {
-        if (*p == '.') {
-            *p = '\0';
-            break;
+    if (firstHPCache) {
+        for (i = 0; i < HP_CACHE_SIZE; i++) {
+            hpCache[i].hp.h_name = NULL;
         }
-    }
-} 
-
-static char*
-unifyOfficialName(const char* hname)
-{
-    static char fname[] = "unifyOfficialName";
-    char *officialNameP;
-    int hnlen;
-    char *strip;
-    char *sp;
-
-    officialNameP = strdup(hname);
-    if(officialNameP == NULL) {
-	ls_syslog(LOG_ERR,I18N(6153, "%s: strdup for hname failed"), fname); /*catgets 6153*/
-	lserrno = LSE_MALLOC;
-        return NULL;
+        firstHPCache = FALSE;
+        return (NULL);
     }
 
-    if (stripDomains_ != NULL) {
-	hnlen = strlen(hname);
-	for (strip = stripDomains_ ; *strip ; strip += (*strip + 1)) {
-	    
-	    if (*strip >= hnlen)
-		
-		continue;
-	    
-	    sp = officialNameP + hnlen - *strip;
-	    if (strncasecmp(sp, (strip + 1), *strip) == 0) {
-		
-		if (sp > officialNameP && *(sp-1) == '.')
-		    *(sp-1) = '\0';
-		else
-		    *sp = '\0';
-		break;
-	    }
-	}
-    }
+    time(&now);
 
-    strToLower_(officialNameP);
-
-    return officialNameP;
-} 
-
-
-static int
-loadHostEntByName(const char *hostName, int options,
-                  struct hostent *hostEntP)
-{
-    static char fname[] = "loadHostEntByName";
-    struct hostent *hp;
-
-    if(logclass &  LC_TRACE)
-        ls_syslog(LOG_DEBUG3,
-                  "%s: Enter this routine, load hostent for host <%s>",
-                  fname,hostName);
-
-    
-    if((hp = my_gethostbyname((char*)hostName)) == NULL
-       && !(options & DISABLE_HNAME_SERVER)
-       && !(getenv("DISABLE_HNAME_SERVER"))) {
-        if(logclass & LC_TRACE)
-            ls_syslog(LOG_DEBUG3, "%s: Calling gethostbyname(%s) ...", 
-                      fname, hostName);
-        hp = gethostbyname(hostName);
-    }
-
-    if (! hp) {
-	lserrno = LSE_BAD_HOST;
-        return -1;
-    }
-
-    return packHostEnt(hp, hostEntP);
-} 
-
-
-static int
-loadHostEntByAddr(const struct in_addr *hostAddr, int options,
-                  struct hostent* hostEntP)
-{
-    static char fname[] = "loadHostEntByAddr";
-    struct hostent *hp;
-    struct hostent tmpHostEnt;
-    char hostInStr[MAXHOSTNAMELEN];
-    char *officialNameP;
-    char **spp;
-    int i, rtnVal;
-
-    strcpy(hostInStr, inet_ntoa(*hostAddr)); 
-
-    if(logclass &  LC_TRACE)
-        ls_syslog(LOG_DEBUG,
-                  "%s: Enter this routine, load hostent for host <%s>",
-                  fname,hostInStr);
-
-    
-    if((hp = my_gethostbyaddr((const char *)hostAddr)) == NULL
-       && !(options & DISABLE_HNAME_SERVER)
-       && !(getenv("DISABLE_HNAME_SERVER"))) {
-        if(logclass & LC_TRACE)
-            ls_syslog(LOG_DEBUG, "%s: Calling gethostbyaddr(%s) ...", 
-                      fname, hostInStr);
-        hp = gethostbyaddr((const char *)hostAddr, sizeof(struct in_addr),
-                           AF_INET);
-    }
-
-    if (! hp) {
-	lserrno = LSE_BAD_HOST;
-        return -1;
-    }
-
-    
-    officialNameP = unifyOfficialName(hp->h_name);
-    if(officialNameP == NULL) {
-        return -1;
-    }
-
-    
-    if((hp = my_gethostbyname((char*)officialNameP)) == NULL
-       && !(options & DISABLE_HNAME_SERVER)
-       && !(getenv("DISABLE_HNAME_SERVER"))) {
-        if(logclass & LC_TRACE)
-            ls_syslog(LOG_DEBUG, "%s: Calling gethostbyname(%s) ...", 
-                      fname, officialNameP);
-        hp = gethostbyname(officialNameP);
-    }
-
-    FREEUP(officialNameP);
-
-    if (! hp) {
-	lserrno = LSE_BAD_HOST;
-        return -1;
-    }
-
-    for (i = 0; hp->h_addr_list[i]; i++) {
-        if (!memcmp(hp->h_addr_list[i], hostAddr, hp->h_length)) {
-	    
-            return (packHostEnt(hp, hostEntP));
+    for (i = 0; i < HP_CACHE_SIZE; i++) {
+        if (hpCache[i].hp.h_name) {
+            if (now - hpCache[i].cacheTime < HP_VALID_PERIOD) {
+                if (equalHost_(hpCache[i].hp.h_name, hname)) {
+                    hpCache[i].lastAccessTime = now;
+                    return (&hpCache[i].hp);
+                }
+                for (j = 0; hpCache[i].hp.h_aliases[j]; j++) {
+                    if (equalHost_(hpCache[i].hp.h_aliases[j], hname)) {
+                        hpCache[i].lastAccessTime = now;
+                        return (&hpCache[i].hp);
+                    }
+                }
+            } else {
+                freeHp(&hpCache[i].hp);
+            }
         }
     }
 
-    
-    if(cpHostent(&tmpHostEnt, hp) == -1) {
-        return (packHostEnt(hp, hostEntP));
-    }
+    return (NULL);
+}
 
-    if ((spp = (char **) realloc((char *) tmpHostEnt.h_addr_list,
-                                 (i + 2) * sizeof(char *))) == NULL) {
-        freeHp(&tmpHostEnt);
-        return (packHostEnt(hp, hostEntP));
-    }
-
-    tmpHostEnt.h_addr_list = spp;
-
-    if ((tmpHostEnt.h_addr_list[i] = (char *) malloc(tmpHostEnt.h_length))
-        == NULL) {
-        freeHp(&tmpHostEnt);
-        return (packHostEnt(hp, hostEntP));
-    }
-
-    memcpy(tmpHostEnt.h_addr_list[i], hostAddr, tmpHostEnt.h_length);
-    tmpHostEnt.h_addr_list[i+1] = NULL;
-
-    rtnVal = packHostEnt(&tmpHostEnt, hostEntP);
-
-    freeHp(&tmpHostEnt);
-
-    return rtnVal;
-} 
-
-
-static int
-packHostEnt(const struct hostent *hp, struct hostent *hostEntP)
-{
-    char *officialNameP;
-    int rtn = 0;
-
-    
-    officialNameP = unifyOfficialName(hp->h_name);
-    if(officialNameP == NULL) {
-        return -1;
-    }
-
-
-    if(cpHostent(hostEntP, hp) == -1) {
-	lserrno = LSE_MALLOC;
-	free(officialNameP);
-        return -1;
-    }
-    FREEUP(hostEntP->h_name);
-    hostEntP->h_name = officialNameP;
-
-    return rtn;
-} 
-
-
-void
+static void
 freeHp(struct hostent *hp)
 {
     int i;
-    
-    if(hp->h_name) {
-        if(hp->h_addr_list) {
-            for (i = 0; hp->h_addr_list[i]; i++)
-	        if(hp->h_addr_list[i]) free(hp->h_addr_list[i]);
-            free(hp->h_addr_list);
-	    hp->h_addr_list = NULL;
-	}
-    
-        if(hp->h_aliases) {
-            for (i = 0; hp->h_aliases[i]; i++)
-	        if(hp->h_aliases[i]) free(hp->h_aliases[i]);
-            free(hp->h_aliases);
-	    hp->h_aliases = NULL;
-	}
-    
-        free(hp->h_name);
-        hp->h_name = NULL;
-    }
-} 
-    
 
-int
-cpHostent(struct hostent *to, const struct hostent *from)
+    for (i = 0; hp->h_addr_list[i]; i++)
+        free(hp->h_addr_list[i]);
+    free(hp->h_addr_list);
+
+    for (i = 0; hp->h_aliases[i]; i++)
+        free(hp->h_aliases[i]);
+    free(hp->h_aliases);
+
+    free(hp->h_name);
+    hp->h_name = NULL;
+}
+
+static int
+cpHostent(struct hostent *to, struct hostent *from)
 {
     int i, j, n;
-    
+
     if ((to->h_name = putstr_(from->h_name)) == NULL)
-	return (-1);
+        return (-1);
 
-    if(from->h_aliases) {
-        for (n = 0; from->h_aliases[n]; n++);
-    
-        if ((to->h_aliases = (char **) calloc(n+1, sizeof(char *))) == NULL) {
-	    free(to->h_name);
-	    to->h_name = NULL;
-	    return (-1);
-        }
+    for (n = 0; from->h_aliases[n]; n++);
 
-        for (j = 0; j < n; j++) {
-	    if ((to->h_aliases[j] = putstr_(from->h_aliases[j])) == NULL) {
-	        while(j--)
-		    free(to->h_aliases[j]);
-	        free(to->h_aliases);
-	        free(to->h_name);
-	        to->h_name = NULL;
-	        return (-1);
-	    }
-        }
-        to->h_aliases[n] = NULL;
-    } else {
-        to->h_aliases = NULL;
+    if ((to->h_aliases = (char **) calloc(n+1, sizeof(char *))) == NULL) {
+        free(to->h_name);
+        to->h_name = NULL;
+        return (-1);
     }
-    
+
+    for (j = 0; j < n; j++) {
+        if ((to->h_aliases[j] = putstr_(from->h_aliases[j])) == NULL) {
+            while(j--)
+                free(to->h_aliases[j]);
+            free(to->h_aliases);
+            free(to->h_name);
+            to->h_name = NULL;
+            return (-1);
+        }
+    }
+    to->h_aliases[n] = NULL;
+
+
     to->h_addrtype = from->h_addrtype;
     to->h_length = from->h_length;
-	    
-    if(from->h_addr_list) {
-        for (n = 0; from->h_addr_list[n]; n++);
-    
-        if ((to->h_addr_list = calloc(n + 1, sizeof(char *))) == NULL) {
-    for (j = 0; to->h_aliases[j]; j++)
-        free(to->h_aliases[j]);
-    free(to->h_aliases);
-	    free(to->h_name);
-	    to->h_name = NULL;
-	    return (-1);
-        }
 
-        for (i = 0; i < n; i++) {
-   if ((to->h_addr_list[i] = malloc(from->h_length)) == NULL) {
-        while(i--)
-	    free(to->h_addr_list[i]);
-        free(to->h_addr_list);
+    for (n = 0; from->h_addr_list[n]; n++)
+        ;
+
+    if ((to->h_addr_list = (char **) calloc(n+1, sizeof(char *))) == NULL) {
         for (j = 0; to->h_aliases[j]; j++)
-	    free(to->h_aliases[j]);
+            free(to->h_aliases[j]);
         free(to->h_aliases);
         free(to->h_name);
         to->h_name = NULL;
         return (-1);
     }
-    memcpy(to->h_addr_list[i], from->h_addr_list[i], from->h_length);
-       }
-        to->h_addr_list[n] = NULL;
-    } else {
-        to->h_addr_list = NULL;
+
+    for (i = 0; i < n; i++) {
+        if ((to->h_addr_list[i] = (char *) malloc(from->h_length)) == NULL) {
+            while(i--)
+                free(to->h_addr_list[i]);
+            free(to->h_addr_list);
+            for (j = 0; to->h_aliases[j]; j++)
+                free(to->h_aliases[j]);
+            free(to->h_aliases);
+            free(to->h_name);
+            to->h_name = NULL;
+            return (-1);
+        }
+        memcpy(to->h_addr_list[i], from->h_addr_list[i], from->h_length);
     }
 
+    to->h_addr_list[n] = NULL;
     return (0);
-} 
-
+}
 
 static struct hostent *
-my_gethostbyaddr(const char *faddr)
+getHpCacheByAddr(char *addr)
+{
+
+    time_t now;
+    int i, j;
+
+    if (firstHPCache) {
+        for (i = 0; i < HP_CACHE_SIZE; i++) {
+            hpCache[i].hp.h_name = NULL;
+        }
+        firstHPCache = FALSE;
+        return (NULL);
+    }
+
+    time(&now);
+
+    for (i = 0; i < HP_CACHE_SIZE; i++) {
+        if (hpCache[i].hp.h_name) {
+            if (now - hpCache[i].cacheTime < HP_VALID_PERIOD) {
+                for (j = 0; hpCache[i].hp.h_addr_list[j]; j++) {
+                    if (!memcmp(addr, hpCache[i].hp.h_addr_list[j],
+                                hpCache[i].hp.h_length)) {
+                        hpCache[i].lastAccessTime = now;
+                        return (&hpCache[i].hp);
+                    }
+                }
+            } else {
+                freeHp(&hpCache[i].hp);
+            }
+        }
+    }
+
+    return (NULL);
+}
+
+static struct hostent *
+my_gethostbyaddr(char *faddr)
 {
     FILE *hfile;
     static char buf[MY_LINESIZE];
@@ -747,30 +380,33 @@ my_gethostbyaddr(const char *faddr)
     static u_int addr;
     int n;
 
-    if (initenv_(NULL, NULL) < 0) 
-	return NULL;
+    if (initenv_(NULL, NULL) < 0)
+        return NULL;
 
-    memset(buf,0,sizeof(buf));
-    ls_strcat(buf,sizeof(buf),genParams_[LSF_CONFDIR].paramValue);
-    ls_strcat(buf,sizeof(buf),"/");
-    ls_strcat(buf,sizeof(buf),MY_HOSTSFILE);
+    sprintf(buf, "%s/%s", genParams_[LSF_CONFDIR].paramValue, MY_HOSTSFILE);
 
-    if (NULL == (hfile = fopen (buf, "r"))) {
-
+    if (NULL == (hfile = fopen (buf, "r")))
         return((struct hostent *)NULL);
-    }
 
     while (NULL != fgets (buf, MY_LINESIZE, hfile)) {
         char *tmp;
         n = 0;
-        
+
+        /* get rid of newlines and comments */
         if (NULL != (tmp = strpbrk (buf, "\n#")))
             *tmp='\0';
-        
-        if (NULL == (addrstr = strtok (buf, " \t"))) 
+
+        /* get address, skip blank lines */
+        if (NULL == (addrstr = strtok (buf, " \t")))
             continue;
 
         addr = inet_addr (addrstr);
+#ifdef _CRAY
+        addr <<= 32;
+        if (logclass & LC_TRACE)
+            ls_syslog(LOG_DEBUG, "my_gethostbyaddr: addr %x faddr %x",
+                      addr, (*(u_int *) faddr));
+#endif /* cray */
 
         if (!memcmp((char *) &addr, faddr, sizeof(u_int))) {
             while (NULL != (names[n] = strtok(NULL, " \t"))) {
@@ -784,68 +420,137 @@ my_gethostbyaddr(const char *faddr)
             addrs[1] = NULL;
             addrs[0] = (char *)&addr;
             host.h_addr_list = addrs;
-	    fclose(hfile);
+            fclose(hfile);
             return(&host);
         }
     }
     fclose(hfile);
     return((struct hostent *)NULL);
-} 
+} /* my_gethostbyaddr */
 
+
+
+/*
+ *--------------------------------------------------------------------------
+ *  Gethostbyaddr_(addr, len, type) --
+ *
+ *     Return official host entry given an address.  Multiple addresses
+ * for a given host are cached.
+ *
+ *------------------------------------------------------------------------
+ */
 struct hostent *
 Gethostbyaddr_(char *addr, int len, int type)
 {
-    static char      fname[] = "Gethostbyaddr_()";
-    struct hostent   *hostEntP;
+    struct hostent *hp;
+    char hname[MAXHOSTNAMELEN];
+    char **t;
+    int i;
 
     if (logclass & LC_TRACE)
-	ls_syslog(LOG_DEBUG, "\
-%s: %x %x %x %x len %d", fname,
+        ls_syslog(LOG_DEBUG, "Gethostbyaddr_: %x %x %x %x len %d",
                   addr[0], addr[1], addr[2], addr[3], len);
+#ifdef _SPP_UX
+    /* In the buggy SPP-UX 4.2, type = 0, this is used to fix it */
+    type = AF_INET;
+#endif
 
-    hostEntP = getHostEntByAddr((const struct in_addr *)addr, 0);
+    if ((hp = getHpCacheByAddr(addr))) {
+        return (hp);
+    }
 
-    if(hostEntP) {
-        if(logclass &  LC_TRACE)
-            ls_syslog(LOG_DEBUG,
-                      "%s: Exiting this routine, cache for host: <%s>",
-                      fname, hostEntP->h_name);
-	return (hostEntP);
-    } else {
-        ls_syslog(LOG_DEBUG,
-                  "%s: getHostEntByAddr() failed for host: <%s>, %M",
-                  fname,(char*)inet_ntoa(*(struct in_addr *)addr));
-	return (NULL);
-    } 
-} 
-    
-#define ISBOUNDARY(h1, h2, len)  ( (h1[len]=='.' || h1[len]=='\0') &&   \
-                                   (h2[len]=='.' || h2[len]=='\0') )
+    if ((hp = my_gethostbyaddr(addr)) == NULL) {
+        if ((hp = gethostbyaddr(addr, len, type)) == NULL) {
+            lserrno = LSE_BAD_HOST;
+            return (NULL);
+        }
+    }
 
+    strcpy(hname, hp->h_name);
+    if ((hp = Gethostbyname_(hname)) == NULL)
+        return (NULL);
+
+    /* Add the new address if hp is from cache.  This is a hack. */
+    for (i = 0; i < HP_CACHE_SIZE; i++) {
+        if (hp == &hpCache[i].hp)
+            break;
+    }
+
+    if (i == HP_CACHE_SIZE) /* hp is not from cache */
+        return (hp);
+
+    for (i = 0; hp->h_addr_list[i]; i++) {
+        if (!memcmp(hp->h_addr_list[i], addr, hp->h_length))
+            return (hp);
+    }
+
+    if ((t = (char **) realloc((char *) hp->h_addr_list,
+                               (i + 2) * sizeof(char *))) == NULL)
+        return (hp);
+
+    hp->h_addr_list = t;
+
+    if ((hp->h_addr_list[i] = (char *) malloc(hp->h_length)) == NULL)
+        return (hp);
+
+    memcpy(hp->h_addr_list[i], addr, hp->h_length);
+    hp->h_addr_list[i+1] = NULL;
+    return (hp);
+} /* Getbostbyaddr_ */
+
+#define ISBOUNDARY(h1, h2, len)  ( (h1[len]=='.' || h1[len]=='\0') && \
+                                (h2[len]=='.' || h2[len]=='\0') )
+
+/*
+ *------------------------------------------------------------------------
+ *
+ *  equalHost_ --
+ *
+ *     Check if host1 and host2 are the same host.
+ *     nosy.white, nosy, nosy.white.toronto.edu will be considered equal.
+ *
+ *     nosy and nosy1 will not be equal.
+ *
+ *     nosy.white.toronto.edu and nosy.cs.york.edu are not eaul.
+ *
+ *     Return TRUE if same, otherwise return FALSE.
+ *------------------------------------------------------------------------
+*/
 int
 equalHost_(const char *host1, const char *host2)
 {
-    int   len;
+    int len;
 
     if (strlen(host1) > strlen(host2))
-	len = strlen(host2);
+        len = strlen(host2);
     else
-	len = strlen(host1);
-    
-    if ((strncasecmp(host1, host2, len) == 0) 
-        && ISBOUNDARY(host1, host2, len))
+        len = strlen(host1);
+
+    /* Note: nosy and nosy1 are not the same. nosy and nosy.white are
+     * the same.
+     */
+    if ((strncasecmp(host1, host2, len) == 0) && ISBOUNDARY(host1, host2, len))
         return TRUE;
 
     return FALSE;
-} 
+} /* equalHost_ */
 
+/*
+ *----------------------------------------------------------------------
+ *
+ *  sockAdd2Str_ -
+ *
+ *  Convert socket address into a string: a.b.c.d:p,
+ *  where p is the port number.
+ *----------------------------------------------------------------------
+*/
 char *
 sockAdd2Str_(struct sockaddr_in *from)
 {
-    static char   adbuf[24];
+    static char adbuf[24];
 
-    sprintf(adbuf, "%s:%d", inet_ntoa(from->sin_addr), 
-            (int) ntohs(from->sin_port)); 
-
+    sprintf(adbuf, "\
+%s:%d", inet_ntoa(from->sin_addr), (int)ntohs(from->sin_port));
     return adbuf;
-} 
+
+} /* sockAdd2Str_ */

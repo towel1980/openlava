@@ -299,13 +299,13 @@ callLimUdp_(char *reqbuf, char *repbuf, int len, struct LSFHeader *reqHdr,
         id = PRIMARY;
     } else if (host != NULL) {
 
-        if ((hp = (struct hostent *)getHostEntryByName_(host)) == (struct hostent *)NULL)
-            return (-1);
+        if ((hp = Gethostbyname_(host)) == NULL)
+            return -1;
 
         if (options & _USE_PRIMARY_) {
             id = PRIMARY;
             if (memcmp((char *)&sockIds_[PRIMARY].sin_addr,
-                        hp->h_addr, hp->h_length))
+                       hp->h_addr, hp->h_length))
                 CLOSECD(limchans_[PRIMARY]);
 
         } else {

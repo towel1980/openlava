@@ -1,4 +1,4 @@
-/* $Id: lib.conn.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -158,26 +158,24 @@ gethostbysock_(int sock, char *hostName)
 int *
 _gethostdata_(char *hostName)
 {
-    hEnt         *ent;
-    int          *sp;
-    const char   *officialName;
-    char         official[MAXHOSTNAMELEN];
+    hEnt *ent;
+    int  *sp;
+    struct hostent *hp;
 
-    officialName = getHostOfficialByName_(hostName);
-    if (!officialName)
-        return ((int *)NULL);
+    hp = Gethostbyname_(hostName);
+    if (hp == NULL)
+        return NULL;
 
-    strcpy(official, officialName);
-    ent = h_getEnt_(&conn_table, official);
+    ent = h_getEnt_(&conn_table, hp->h_name);
     if (ent == NULL)
-        return (NULL);
+        return NULL;
 
     if (ent->hData == NULL)
-        return (NULL);
+        return NULL;
 
     sp = ent->hData;
 
-    return (sp);
+    return sp;
 }
 
 int
@@ -223,36 +221,31 @@ int
 ls_isconnected(char *hostName)
 {
     hEnt *hEntPtr;
-    const char *officialName;
-    char official[MAXHOSTNAMELEN];
+    struct hostent *hp;
 
-    officialName = getHostOfficialByName_(hostName);
-    if (!officialName)
-        return (FALSE);
+    hp = Gethostbyname_(hostName);
+    if (hp == NULL)
+        return FALSE;
 
-    strcpy(official, officialName);
-    hEntPtr = h_getEnt_(&conn_table, official);
+    hEntPtr = h_getEnt_(&conn_table, hp->h_name);
     if (hEntPtr == NULL)
-        return (FALSE);
+        return FALSE;
 
-    return (TRUE);
-
+    return TRUE;
 }
 
 int
 getConnectionNum_(char *hostName)
 {
-    hEnt         *hEntPtr;
-    const char   *officialName;
-    char         official[MAXHOSTNAMELEN];
-    int          *connNum;
+    hEnt *hEntPtr;
+    int *connNum;
+    struct hostent *hp;
 
-    officialName = getHostOfficialByName_(hostName);
-    if (!officialName)
-	return -1;
+    hp = Gethostbyname_(hostName);
+    if (hp == NULL)
+        return -1;
 
-    strcpy(official, officialName);
-    if ((hEntPtr = h_getEnt_(&conn_table, official)) == NULL)
+    if ((hEntPtr = h_getEnt_(&conn_table, hp->h_name)) == NULL)
 	return -1;
 
     connNum = hEntPtr->hData;

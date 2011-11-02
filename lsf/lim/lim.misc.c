@@ -329,7 +329,6 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
     hPtr->naddr++;
 
     return hPtr;
-
 }
 
 
