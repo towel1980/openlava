@@ -34,16 +34,14 @@
 
 struct LSFHeader {
     unsigned short refCode;
-    short opCode;
+    unsigned short opCode;
+    unsigned short version;
     unsigned int length;
-    unsigned char version;
-    struct reserved0 {
-        unsigned char High;
-        unsigned short  Low;
-    } reserved0;
+    unsigned int reserved0;
+    unsigned short reserved1;
 };
 
-#define LSF_HEADER_LEN 12
+#define LSF_HEADER_LEN (sizeof(struct LSFHeader))
 
 
 struct stringLen {
@@ -57,7 +55,7 @@ struct lenData {
 };
 
 #define AUTH_HOST_NT  0x01
-#define AUTH_HOST_UX  0x02   
+#define AUTH_HOST_UX  0x02
 
 struct lsfAuth {
     int uid;
@@ -75,7 +73,7 @@ struct lsfAuth {
     } k;
     int options;
 };
-    
+
 
 struct lsfLimit {
     int rlim_curl;
@@ -88,14 +86,14 @@ struct lsfLimit {
 extern bool_t xdr_LSFHeader(XDR *, struct LSFHeader *);
 extern bool_t xdr_packLSFHeader(char *, struct LSFHeader *);
 
-#define ENMSG_USE_LENGTH 1   
-			
+#define ENMSG_USE_LENGTH 1
+
 extern bool_t xdr_encodeMsg(XDR *, char *, struct LSFHeader *,
 			     bool_t (*)(), int, struct lsfAuth *);
 
 
 
-    
+
 extern bool_t xdr_arrayElement(XDR *, char *, struct LSFHeader *,
 				bool_t (*)(), ...);
 extern bool_t xdr_LSFlong(XDR *, long *);

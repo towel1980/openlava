@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2011 David Bigagli
+ * Copyright (C) 2007 Platform Computing Inc
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of version 2 of the GNU General Public License as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ *
+ */
 
 #include <unistd.h>
 #include <string.h>
@@ -87,9 +105,11 @@ Gethostbyname_(char *hname)
                 (in_addr_t **)hp->h_addr_list,
                 hp->h_aliases);
 
-    cc = 0;
-    while (hp->h_addr_list[cc]) {
-        { /* dybag */
+    if (0) {
+        /* dybag
+         */
+        cc = 0;
+        while (hp->h_addr_list[cc]) {
             char *p;
             struct in_addr a;
             memcpy(&a, hp->h_addr_list[cc], sizeof(a));

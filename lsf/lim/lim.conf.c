@@ -1139,13 +1139,16 @@ static int
 doresourcemap(FILE *fp, char *lsfile, int *LineNum)
 {
     static char fname[] = "doresourcemap()";
+    enum {
+        RKEY_RESOURCE_NAME,
+        RKEY_LOCATION};
     int isDefault;
     char *linep;
     int resNo = 0;
+    int cc;
     struct keymap keyList[] = {
-#define RKEY_RESOURCE_NAME  0
+
         {"RESOURCENAME", NULL, 0},
-#define RKEY_LOCATION    1
         {"LOCATION", NULL, 0},
         {NULL, NULL, 0}
     };
@@ -1239,10 +1242,14 @@ doresourcemap(FILE *fp, char *lsfile, int *LineNum)
                         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, "doresourcemap",  "malloc");
                         return -1;
                     }
-                    for (hPtr = myClusterPtr->hostList; hPtr; hPtr = hPtr->nextPtr) {
+                    for (hPtr = myClusterPtr->hostList;
+                         hPtr; hPtr = hPtr->nextPtr) {
+
                         array.hosts[array.size] = strdup(hPtr->hostName);
                         if (!array.hosts[array.size]) {
-                            freeSA_(array.hosts, array.size);
+                            for (cc = 0; cc < array.size; cc++)
+                                FREEUP(array.hosts[cc]);
+                            FREEUP(array.hosts);
                             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, "doresourcemap",  "malloc");
                             return -1;
                         }
@@ -1258,7 +1265,9 @@ doresourcemap(FILE *fp, char *lsfile, int *LineNum)
                         ls_syslog(LOG_WARNING, I18N(5398, "%s: %s(%d): convertNegNotation_: Wrong syntax \'%s\'"), /* catgets 5398 */
                                   fname, lsfile, *LineNum, keyList[RKEY_LOCATION].val);
                     }
-                    freeSA_(array.hosts, array.size);
+                    for (cc = 0; cc < array.size; cc++)
+                        FREEUP(array.hosts[cc]);
+                    FREEUP(array.hosts);
                 }
 
                 if (addResourceMap (keyList[RKEY_RESOURCE_NAME].val,
@@ -3776,7 +3785,6 @@ validResource(const char *resName)
         return (-1);
 
     return(i);
-
 }
 
 int
@@ -4746,26 +4754,86 @@ stripIllegalChars(char *str)
 static int
 saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
 {
-    static char fname[] = "saveHostIPAddr";
     int i;
 
     for (hPtr->naddr = 0;
          hp->h_addr_list && hp->h_addr_list[hPtr->naddr] != NULL;
          hPtr->naddr++);
 
+    hPtr->addr = NULL;
     if (hPtr->naddr) {
-        hPtr->addr = malloc(hPtr->naddr * sizeof(u_int));
+        hPtr->addr = calloc(hPtr->naddr, sizeof(in_addr_t));
         if (!hPtr->addr) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+            ls_syslog(LOG_ERR, "\
+%s: calloc() %dbytes failed %m", __func__,
+                      hPtr->naddr * sizeof(in_addr_t));
             freeHostNodes(hPtr, FALSE);
             return -1;
         }
-    } else {
-        hPtr->addr = 0;
     }
 
     for (i = 0; i < hPtr->naddr; i++)
         memcpy(&hPtr->addr[i], hp->h_addr_list[i], hp->h_length);
+
+    return 0;
+}
+
+int
+simulateHost(struct clusterNode *clPtr,
+             const char *name,
+             const char *model,
+             const char *type,
+             const char *resources)
+{
+    struct hostEntry *hPtr;
+    char *p;
+    char *word;
+    int i;
+    int n;
+
+    hPtr = calloc(1, sizeof(struct hostEntry));
+    hPtr->busyThreshold =  calloc(allInfo.numIndx,sizeof(float));
+
+    hPtr->resList = calloc(allInfo.nRes , sizeof(char *));
+    hPtr->nRes = 0;
+
+    strcpy(hPtr->hostType, type);
+    strcpy(hPtr->hostModel, model);
+    strcpy(hPtr->hostName, name);
+    hPtr->nDisks = 1;
+
+    for (i = R15S; i < 13; i++)
+        hPtr->busyThreshold[i] = INFINIT_LOAD;
+
+    for (i = NBUILTINDEX; i < allInfo.numIndx; i++) {
+        ;
+    }
+
+    for (i = NBUILTINDEX+allInfo.numUsrIndx; i < allInfo.numIndx; i++)
+        hPtr->busyThreshold[i] = INFINIT_LOAD;
+
+    n = 0;
+    p = strdup(resources);
+    while ((word = getNextWord_(&p)) != NULL) {
+        hPtr->resList[n] = strdup(word);
+        n++;
+    }
+    hPtr->resList[n] = NULL;
+    hPtr->nRes = n;
+
+    hPtr->rexPriority = DEF_REXPRIORITY;
+    hPtr->rcv = 1;
+
+    if (!addHost(clPtr, hPtr, "", "", NULL)) {
+        ls_syslog(LOG_ERR, "\
+%s: failed adding on the fly host %s", __func__, name);
+        /* free the shit...
+         */
+        return -1;
+    }
+
+    /* free the shit...
+     */
 
     return 0;
 }

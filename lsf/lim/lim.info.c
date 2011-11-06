@@ -310,8 +310,11 @@ masterInfoReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
 }
 
 void
-hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
-            struct LSFHeader *reqHdr, int s)
+hostInfoReq(XDR *xdrs,
+            struct hostNode *fromHostP,
+            struct sockaddr_in *from,
+            struct LSFHeader *reqHdr,
+            int s)
 {
     static char fname[]="hostInfoReq";
     char *buf;
@@ -329,7 +332,7 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
     if (logclass & (LC_TRACE | LC_HANG | LC_COMM))
         ls_syslog(LOG_DEBUG1, "%s: Entering this routine...", fname);
 
-    initResVal (&resVal);
+    initResVal(&resVal);
 
     ignDedicatedResource = TRUE;
 
@@ -338,23 +341,30 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
 	goto Reply1;
     }
 
-    if (! (hostInfoRequest.ofWhat == OF_HOSTS && hostInfoRequest.numPrefs == 2
-	&& equalHost_(hostInfoRequest.preferredHosts[1], myHostPtr->hostName))){
+    if (! (hostInfoRequest.ofWhat == OF_HOSTS
+           && hostInfoRequest.numPrefs == 2
+           && equalHost_(hostInfoRequest.preferredHosts[1],
+                         myHostPtr->hostName))){
 
         if (!masterMe) {
 	    char tmpBuf[MSGSIZE];
 
             wrongMaster(from, tmpBuf, reqHdr, s);
-            for (i=0; i < hostInfoRequest.numPrefs; i++)
+            for (i = 0; i < hostInfoRequest.numPrefs; i++)
                 free(hostInfoRequest.preferredHosts[i]);
             free(hostInfoRequest.preferredHosts);
             return;
         }
     }
 
-    if (!validHosts(hostInfoRequest.preferredHosts, hostInfoRequest.numPrefs, &clName, hostInfoRequest.options)){
+    if (!validHosts(hostInfoRequest.preferredHosts,
+                    hostInfoRequest.numPrefs,
+                    &clName,
+                    hostInfoRequest.options)){
 	limReplyCode = LIME_UNKWN_HOST;
-        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 7404, "%s: validHosts() failed for bad cluster/host name requested for <%s>")), fname, sockAdd2Str_(from));       /* catgets 7404 */
+        ls_syslog(LOG_INFO, "\
+%s: validHosts() failed for bad cluster/host name requested for <%s>",
+                  __func__, sockAdd2Str_(from));
         goto Reply;
     }
 
@@ -364,9 +374,11 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
 
     getTclHostData (&tclHostData, myHostPtr, myHostPtr, TRUE);
     tclHostData.ignDedicatedResource = ignDedicatedResource;
-    cc=parseResReq(hostInfoRequest.resReq, &resVal, &allInfo, propt);
-    if (cc != PARSE_OK ||
-        evalResReq(resVal.selectStr, &tclHostData, hostInfoRequest.options &  DFT_FROMTYPE) < 0) {
+    cc = parseResReq(hostInfoRequest.resReq, &resVal, &allInfo, propt);
+    if (cc != PARSE_OK
+        || evalResReq(resVal.selectStr,
+                      &tclHostData,
+                      hostInfoRequest.options &  DFT_FROMTYPE) < 0) {
         if (cc == PARSE_BAD_VAL)
             limReplyCode = LIME_UNKWN_RVAL;
         else if (cc == PARSE_BAD_NAME)
@@ -380,11 +392,12 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
 	   (fromHostP->hTypeNo >= 0) ?
 	   shortInfo.hostTypes[fromHostP->hTypeNo] : "unknown");
 
-
     fromHostPtr = fromHostP;
 
-    ncandidates = getEligibleSites(&resVal, &hostInfoRequest, 1, &fromEligible);
-
+    ncandidates = getEligibleSites(&resVal,
+                                   &hostInfoRequest,
+                                   1,
+                                   &fromEligible);
     if (ncandidates <= 0) {
 	limReplyCode = ncandidates ? LIME_NO_MEM : LIME_NO_OKHOST;
         goto Reply;
@@ -392,15 +405,15 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
     hostInfoReply.shortLsInfo = getCShortInfo(reqHdr);
     hostInfoReply.nHost = ncandidates;
     hostInfoReply.nIndex = allInfo.numIndx;
-    hostInfoReply.hostMatrix = (struct shortHInfo*)
-	  calloc(ncandidates, sizeof (struct shortHInfo));
+    hostInfoReply.hostMatrix = calloc(ncandidates,
+                                      sizeof (struct shortHInfo));
     if (hostInfoReply.hostMatrix == NULL) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
         limReplyCode = LIME_NO_MEM;
         goto Reply;
     }
 
-    for (i=0; i < ncandidates; i++) {
+    for (i = 0; i < ncandidates; i++) {
 	struct shortHInfo *infoPtr;
 	infoPtr = &hostInfoReply.hostMatrix[i];
 	if (candidates[i]->infoValid){
@@ -417,8 +430,6 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
 	    infoPtr->maxSwap = 0;
 	    infoPtr->maxTmp  = 0;
 	    infoPtr->nDisks  = 0;
-
-
             infoPtr->resBitMaps = candidates[i]->resBitMaps;
             infoPtr->nRInt = GET_INTNUM(allInfo.nRes);
 	}
@@ -440,7 +451,7 @@ hostInfoReq(XDR *xdrs, struct hostNode *fromHostP, struct sockaddr_in *from,
     limReplyCode = LIME_NO_ERR;
 
 Reply:
-    for (i=0;i<hostInfoRequest.numPrefs;i++)
+    for (i = 0; i < hostInfoRequest.numPrefs; i++)
 	free(hostInfoRequest.preferredHosts[i]);
     free(hostInfoRequest.preferredHosts);
 
@@ -449,32 +460,40 @@ Reply1:
     initLSFHeader_(&replyHdr);
     replyHdr.opCode  = (short) limReplyCode;
     replyHdr.refCode = reqHdr->refCode;
+
     if (limReplyCode == LIME_NO_ERR) {
         replyStruct = (char *)&hostInfoReply;
-        bufSize = ALIGNWORD_(MSGSIZE + hostInfoReply.nHost * (128 +
-				hostInfoReply.nIndex*4));
+        bufSize = ALIGNWORD_(MSGSIZE
+                             + hostInfoReply.nHost * (128 + hostInfoReply.nIndex*4));
         bufSize = MAX(bufSize, 4*MSGSIZE);
-    }else {
-        replyStruct = (char *)NULL;
+    } else {
+        replyStruct = NULL;
         bufSize = 512;
     }
 
-    buf = (char *)malloc(bufSize);
+    buf = malloc(bufSize);
     if (!buf) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
         if (limReplyCode == LIME_NO_ERR)
 	    free(hostInfoReply.hostMatrix);
         return ;
     }
+
     xdrmem_create(&xdrs2, buf, bufSize, XDR_ENCODE);
 
-    if (!xdr_encodeMsg(&xdrs2, replyStruct, &replyHdr, xdr_hostInfoReply, 0, NULL)) {
+    if (!xdr_encodeMsg(&xdrs2,
+                       replyStruct,
+                       &replyHdr,
+                       xdr_hostInfoReply,
+                       0,
+                       NULL)) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
 	xdr_destroy(&xdrs2);
         if (limReplyCode == LIME_NO_ERR)
 	    free(hostInfoReply.hostMatrix);
 	return;
     }
+
     if (limReplyCode == LIME_NO_ERR)
         free(hostInfoReply.hostMatrix);
 
@@ -486,8 +505,11 @@ Reply1:
     free(buf);
 
     if (cc < 0) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7400,
-	    "%s: Failed in sending lsload reply to %s (len=%d): %m"), fname, sockAdd2Str_(from), XDR_GETPOS(&xdrs2)); /* catgets 7400 */
+	ls_syslog(LOG_ERR, "\
+%s: Failed in sending lshosts reply to %s len %d: %m",
+                  __func__,
+                  sockAdd2Str_(from),
+                  XDR_GETPOS(&xdrs2));
         xdr_destroy(&xdrs2);
         return;
     }

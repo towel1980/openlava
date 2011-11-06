@@ -53,8 +53,6 @@ extern void open_kern(void);
 extern void scan_procs(void);
 
 
-extern int getHdrReserved(struct LSFHeader *);
-
 #define NPIDS_SIZE 32
 #define NPGIDS_SIZE 300
 #define DEFAULT_UPDATE_PERIOD 15*60
@@ -420,7 +418,7 @@ doServ(void)
                     int sleptTime = now - lastUpdateTime;
 
                     option = hdr.opCode;
-                    newPGid(getHdrReserved(&hdr));
+                    newPGid(hdr.reserved1);
 
                     if (logclass & LC_PIM)
                         ls_syslog(LOG_DEBUG, "%s: got opCode = %d", fname,

@@ -181,8 +181,6 @@ extern void  kill_self(int, int);
 
 extern int  JobStateInfo(LS_LONG_INT jid);
 
-extern int gerHdrReserved(struct LSFHeader *hdr);
-
 int
 ls_niosetdebug(int debug)
 {
@@ -518,7 +516,7 @@ ls_nioselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
                     xdr_destroy(&xdrs);
 
-                    conn[i].rtag = getHdrReserved(&msgHdr);
+                    conn[i].rtag = msgHdr.reserved0;
 
                     if (nioDebug)
                         ls_syslog(LOG_DEBUG, "\
@@ -851,12 +849,10 @@ ls_niowrite(char *buf, int len)
                 break;
         }
         if (i < lastConn) {
-            reqHdr.reserved0.High = (conn[i].wtag >> 16 ) & 0xFF;
-            reqHdr.reserved0.Low = conn[i].wtag  & 0x0000FFFF;
+            reqHdr.reserved0 = conn[i].wtag;
         }
         else {
-            reqHdr.reserved0.High = 0;
-            reqHdr.reserved0.Low = 0;
+            reqHdr.reserved0 = 0;
         }
         xdrmem_create(&xdrs, bp, sizeof(struct LSFHeader), XDR_ENCODE);
         if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
@@ -991,10 +987,11 @@ deliver_eof()
     reqHdr.opCode = NIOS2RES_EOF;
     reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
-    reqHdr.reserved0.High = 0;
-    reqHdr.reserved0.Low = 0;
+    reqHdr.reserved0 = 0;
 
-    xdrmem_create(&xdrs, (char *) &buf, sizeof(struct LSFHeader),
+    xdrmem_create(&xdrs,
+                  (char *)&buf,
+                  sizeof(struct LSFHeader),
                   XDR_ENCODE);
     if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
         xdr_destroy(&xdrs);
@@ -1007,9 +1004,6 @@ deliver_eof()
 
     for (i = 0 ; i < lastConn ; i++) {
         if (C_CONNECTED(conn[i])) {
-
-
-
             numTimeout = 0;
         RETRY:
             if (NB_SOCK_WRITE_FIX(conn[i].sock.fd, (char *)&buf, len) < 0 &&
@@ -1979,8 +1973,7 @@ deliver_signal(int sigval)
 
     initLSFHeader_(&reqHdr);
     reqHdr.opCode = NIOS2RES_SIGNAL;
-    reqHdr.reserved0.High = 0;
-    reqHdr.reserved0.Low  = 0;
+    reqHdr.reserved0 = 0;
     sig.pid = getpid();
     sig.sigval = sig_encode(sigval);
 
@@ -2429,8 +2422,8 @@ notify_task(int tid, int opCode)
     reqHdr.opCode = opCode;
     reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
-    reqHdr.reserved0.High = (tid >> 16) & 0xFF;
-    reqHdr.reserved0.Low = tid & 0xFFFF;
+    reqHdr.reserved0 = tid;
+    reqHdr.reserved0;
 
     if (conn[connIndex].rpid > 0 && conn[connIndex].sock.fd != -1) {
         xdrmem_create(&xdrs, (char *) &buf, sizeof(struct LSFHeader),
@@ -2621,8 +2614,7 @@ sendHeartbeat(void)
     reqHdr.opCode = NIOS2RES_HEARTBEAT;
     reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
-    reqHdr.reserved0.High = 0;
-    reqHdr.reserved0.Low = 0;
+    reqHdr.reserved0 = 0;
 
     xdrmem_create(&xdrs, (char *) &buf, sizeof(struct LSFHeader),
                   XDR_ENCODE);

@@ -26,7 +26,7 @@
 
 int
 getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
-	       int *badIdx, int checkHost)
+               int *badIdx, int checkHost)
 {
     int num = 64, i;
     char *word, **tmp, *hname;
@@ -36,52 +36,52 @@ getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
     char host[MAXHOSTNAMELEN];
 
     if (hlist) {
-	for (i = 0; i < nhlist; i++)
-	    free(hlist[i]);
-	free(hlist);
-	hlist = NULL;
+        for (i = 0; i < nhlist; i++)
+            free(hlist[i]);
+        free(hlist);
+        hlist = NULL;
     }
 
     nhlist = 0;
     if ((hlist = calloc(num, sizeof (char *))) == NULL)  {
-	lserrno = LSE_MALLOC;
+        lserrno = LSE_MALLOC;
         return (-1);
     }
 
     *badIdx = 0;
 
     while((word = getNextWord_(&optarg)) != NULL) {
-	strncpy(host, word, sizeof(host));
+        strncpy(host, word, sizeof(host));
         if (ls_isclustername(host) <= 0) {
             if (checkHost == FALSE) {
                 hname = host;
             } else {
                 if (Gethostbyname_(host) == NULL) {
-	            if (!foundBadHost) {
-		        foundBadHost = TRUE;
-		        *badIdx = nhlist;
+                    if (!foundBadHost) {
+                        foundBadHost = TRUE;
+                        *badIdx = nhlist;
                     }
-	            hname = host;
-	        } else {
-	            hname = host;
-	        }
+                    hname = host;
+                } else {
+                    hname = host;
+                }
             }
         } else
             hname = host;
 
-	if ((hlist[nhlist] = putstr_(hname)) == NULL) {
-	    lserrno = LSE_MALLOC;
-	    goto Error;
-	}
+        if ((hlist[nhlist] = putstr_(hname)) == NULL) {
+            lserrno = LSE_MALLOC;
+            goto Error;
+        }
 
-	nhlist++;
+        nhlist++;
         if (nhlist == num) {
             if ((tmp = realloc(hlist, 2 * num * sizeof(char *)))
-		== NULL) {
-		lserrno = LSE_MALLOC;
-		goto Error;
-	    }
-	    hlist = tmp;
+                == NULL) {
+                lserrno = LSE_MALLOC;
+                goto Error;
+            }
+            hlist = tmp;
             num = 2 * num;
         }
     }
@@ -90,15 +90,15 @@ getAskedHosts_(char *optarg, char ***askedHosts, int *numAskedHosts,
     *askedHosts = hlist;
 
     if (foundBadHost) {
-	lserrno = LSE_BAD_HOST;
-	return (-1);
+        lserrno = LSE_BAD_HOST;
+        return (-1);
     }
 
     return (0);
 
   Error:
     for (i = 0; i < nhlist; i++)
-	free(hlist[i]);
+        free(hlist[i]);
     free(hlist);
     hlist = NULL;
     nhlist = 0;

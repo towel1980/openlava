@@ -120,7 +120,7 @@ struct hostNode {
     short   hTypeNo;
     short   hostNo;
     u_short naddr;
-    u_int   *addr;
+    in_addr_t   *addr;
     struct  statInfo statInfo;
     char    infoValid;
     unsigned char protoVersion;
@@ -138,7 +138,6 @@ struct hostNode {
     int     *status;
     float   *busyThreshold;
     float   *loadIndex;
-
     float   *uloadIndex;
     char    conStatus;
     u_int   lastSeqNo;

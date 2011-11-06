@@ -471,8 +471,9 @@ enqueueTaskMsg_(int s, int taskID, struct LSFHeader *msgHdr)
 	return (0);
     }
 
-    if (msgHdr->reserved0.High == 0xFF
-        && msgHdr->reserved0.Low == 0xFFFF
+    /* or 0xffff ?
+     */
+    if (msgHdr->reserved0 == 0
 	&& msgHdr->length == 0)
     {
 	header->type = LSTMSG_EOF;
@@ -1427,8 +1428,7 @@ lsMsgSnd2_(int *sock, int opcode, char *buffer, int len, int options)
     header.opCode = opcode;
     header.refCode = currentSN = REQUESTSN;
     header.length = len;
-    header.reserved0.High = 0xFF;
-    header.reserved0.Low = 0xFFFF;
+    header.reserved0 = 0;
 
     gethostbysock_(*sock, hostname);
     if (strcmp(hostname, "LSF_HOST_NULL"))
@@ -1507,8 +1507,7 @@ lsMsgSnd_(int taskid, char *buffer, int len, int options)
     header.opCode = RES_NONRES;
     header.refCode = currentSN = REQUESTSN;
     header.length = len;
-    header.reserved0.High = (taskid >> 16 ) & 0xFF;
-    header.reserved0.Low  = taskid & 0xFFFF;
+    header.reserved0 = taskid;
 
     gethostbysock_(tEnt->sock, hostname);
     if (strcmp(hostname, "LSF_HOST_NULL"))

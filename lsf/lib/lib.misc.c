@@ -368,12 +368,8 @@ int putEnv(char *env, char *val)
 void
 initLSFHeader_ (struct LSFHeader *hdr)
 {
-    hdr->refCode = 0;
+    memset(hdr, 0, sizeof(struct LSFHeader));
     hdr->version = OPENLAVA_VERSION;
-    hdr->reserved0.High = 0;
-    hdr->reserved0.Low = 0;
-    hdr->length    = 0;
-
 }
 
 void *

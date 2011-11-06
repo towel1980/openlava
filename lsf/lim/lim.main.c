@@ -97,6 +97,8 @@ static int getClusterConfig(void);
 extern struct extResInfo *getExtResourcesDef(char *);
 extern char *getExtResourcesLoc(char *);
 extern char *getExtResourcesVal(char *);
+extern int
+simulateHost(struct clusterNode *, const char *, const char *, const char *, const char *);
 
 /* UDP message buffer.
  */
@@ -692,6 +694,12 @@ initAndConfig(int checkMode, int *kernelPerm)
     }
 
     getLastActiveTime();
+
+    simulateHost(myClusterPtr,
+                 "bobrock",
+                 "IntelI5",
+                 "linux",
+                 "cs");
 
     return 0;
 }
