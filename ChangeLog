@@ -1,3 +1,14 @@
+2011-11-07  David Bigagli  <david@openlava.net>
+
+	* lib.host.c Rewrote the caching code to read the hosts file only
+	once and add the host in the cache. Removed the cache timeout
+	and simplified the entire implementation to use only two interface
+	functions: Gethostbyname_() and Gethostbyaddr_().
+	Change the old C types u_int and casta to char *
+	into the current linux types whenever required.
+	Modified the daemons code to use the new host library
+	implementation.
+
 2011-10-30  David Bigagli  <david@openlava.net>
 
 	* mbd.policy.c Developed a little round robin scheduler absed on the number of jobs a user has running.

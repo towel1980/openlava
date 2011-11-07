@@ -266,16 +266,11 @@ sendLoad(void)
 
         toAddr.sin_family = AF_INET;
         toAddr.sin_port   = lim_port;
-
-        if (!getHostNodeIPAddr(myClusterPtr->masterPtr,&toAddr)) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __func__, "getHostNodeIPAddr");
-            xdr_destroy(&xdrs);
-            FREEUP (repBuf);
-            return;
-        }
+        memcpy(&toAddr.sin_addr.s_addr,
+               &myClusterPtr->masterPtr->addr[0],
+               sizeof(in_addr_t));
 
         logcnt(1);
-
 
         if (logclass & LC_COMM)
             ls_syslog(LOG_DEBUG, "\

@@ -987,22 +987,22 @@ mkexld(struct hostNode *hn1, struct hostNode *hn2, int lidx, float *exld1,
 }
 
 static void
-loadAdj(struct jobXfer *jobXferPtr, struct hostNode **destHostPtr, int num,
+loadAdj(struct jobXfer *jobXferPtr,
+        struct hostNode **destHostPtr,
+        int num,
         char child)
 {
     static char fname[] = "loadAdj()";
+    static char buf[MSGSIZE];
     XDR xdrs;
-    char buf[MSGSIZE];
     int i, len;
     struct sockaddr_in addr;
     enum limReqCode limReqCode;
     struct LSFHeader reqHdr;
 
-
-    if( limSock < 0 ) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5824,
-                                         "%s: invalid channel(limSock=%d)"), /* catgets 5824 */
-                  fname,limSock);
+    if (limSock < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: invalid limSock%d", fname, limSock);
         return;
     }
 
@@ -1012,18 +1012,16 @@ loadAdj(struct jobXfer *jobXferPtr, struct hostNode **destHostPtr, int num,
 
     if (child) {
 
-
-        if (!getHostNodeIPAddr(myClusterPtr->masterPtr,&addr)) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "getHostNodeIPAddr");
-            return;
-        }
-
+        memcpy(&addr.sin_addr,
+               &myClusterPtr->masterPtr->addr[0],
+               sizeof(struct in_addr));
         xdrmem_create(&xdrs, buf, MSGSIZE, XDR_ENCODE);
         initLSFHeader_(&reqHdr);
         reqHdr.opCode  = limReqCode;
         reqHdr.refCode = 0;
-        if (!(xdr_LSFHeader(&xdrs, &reqHdr) &&
-              xdr_jobXfer(&xdrs, jobXferPtr, &reqHdr))) {
+
+        if (!(xdr_LSFHeader(&xdrs, &reqHdr)
+              && xdr_jobXfer(&xdrs, jobXferPtr, &reqHdr))) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname,
                       "xdr_LSFHeader/xdr_jobXfer");
             xdr_destroy(&xdrs);
@@ -1032,8 +1030,8 @@ loadAdj(struct jobXfer *jobXferPtr, struct hostNode **destHostPtr, int num,
         len = XDR_GETPOS(&xdrs);
 
         if (logclass & LC_COMM)
-            ls_syslog(LOG_DEBUG,
-                      "loadAdj: tell master(%s) of job xfer (len=%d)",
+            ls_syslog(LOG_DEBUG, "\
+loadAdj: tell master(%s) of job xfer (len=%d)",
                       sockAdd2Str_(&addr), len);
 
         if (chanSendDgram_(limSock, buf, len, &addr) < 0 ) {
@@ -1049,10 +1047,10 @@ loadAdj(struct jobXfer *jobXferPtr, struct hostNode **destHostPtr, int num,
         updExtraLoad(destHostPtr, jobXferPtr->resReq, num);
     }
 
+    for (i = 0; i < num; i++) {
 
-    for (i=0; i < num; i++) {
-        if (myClusterPtr->masterKnown &&
-            destHostPtr[i] == myClusterPtr->masterPtr)
+        if (myClusterPtr->masterKnown
+            && destHostPtr[i] == myClusterPtr->masterPtr)
             continue;
 
         if (destHostPtr[i] == myHostPtr) {
@@ -1060,21 +1058,16 @@ loadAdj(struct jobXfer *jobXferPtr, struct hostNode **destHostPtr, int num,
             continue;
         }
 
-
         if (!destHostPtr[i]->addr)
             continue;
 
-
-        if (!getHostNodeIPAddr(destHostPtr[i],&addr)) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5808,
-                                             "%s: getHostNodeIPAddr failed for host %s"),
-                      fname,destHostPtr[i]->hostName); /* catgets 5808 */
-            continue;
-        }
-
+        memcpy(&addr.sin_addr,
+               destHostPtr[i]->addr,
+               sizeof(struct in_addr));
         xdrmem_create(&xdrs, buf, MSGSIZE, XDR_ENCODE);
         reqHdr.opCode  = limReqCode;
         reqHdr.refCode = 0;
+
         if (!(xdr_LSFHeader(&xdrs, &reqHdr) &&
               xdr_jobXfer(&xdrs, jobXferPtr, &reqHdr))) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname,

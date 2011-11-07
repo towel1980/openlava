@@ -21,4 +21,4 @@ install-data-local:
 # Tell automake to install during distcheck the
 # configuration and etc files. 
 #
-EXTRA_DIST = $(etc_DATA)
+#EXTRA_DIST = $(etc_DATA)

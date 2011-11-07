@@ -18,7 +18,7 @@ AC_ARG_VAR([openlavacluster], "")
 AM_INIT_AUTOMAKE
 
 # Clean output if possible
-#m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 # Check for programs
 AC_PROG_CC

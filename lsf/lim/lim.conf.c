@@ -2575,7 +2575,7 @@ setMyClusterName(void)
                 continue;
             }
 
-            if (Gethostbyname_(keyList[HOSTNAME_].val)) {
+            if (Gethostbyname_(keyList[HOSTNAME_].val) == NULL) {
                 if (! found) {
                     ls_syslog(LOG_ERR, "%\
 s: %s(%d): Invalid hostname %s in section host, host ignored",
@@ -3052,11 +3052,13 @@ addHost(struct clusterNode *clPtr,
 
     hPtr->statInfo.nDisks = hEntPtr->nDisks;
     hPtr->rexPriority = hEntPtr->rexPriority;
+
     for (i = 0; i < allInfo.numIndx; i++)
         hPtr->busyThreshold[i] = hEntPtr->busyThreshold[i];
 
     for (i = 0; i < 8; i++)
         hPtr->week[i] = NULL;
+
     if (window && hEntPtr->rcv) {
         hPtr->windows = putstr_(window);
         while ((word = getNextWord_(&window)) != NULL) {
@@ -3123,7 +3125,6 @@ addFloatClientHost(struct hostent *hp)
         return NULL;
     }
 
-
     if (findHostInCluster(hp->h_name)) {
         ls_syslog(LOG_ERR, "%\
 s: %s already defined in this cluster",
@@ -3131,37 +3132,33 @@ s: %s already defined in this cluster",
         return NULL;
     }
 
-
     hPtr = initHostNode();
     if (hPtr == NULL) {
         return NULL;
     }
 
-
     hPtr->hTypeNo = DETECTMODELTYPE;
     hPtr->hModelNo = DETECTMODELTYPE;
-
-
     hPtr->hostName = putstr_(hp->h_name);
     hPtr->hostNo = -1;
 
     for (hPtr->naddr = 0;
          hp->h_addr_list && hp->h_addr_list[hPtr->naddr] != NULL;
          hPtr->naddr++);
+
     if (hPtr->naddr){
         hPtr->addr = malloc(hPtr->naddr * sizeof(u_int));
     } else
         hPtr->addr = 0;
 
-    for (i=0; i < hPtr->naddr; i++)
+    for (i = 0; i < hPtr->naddr; i++)
         memcpy((char *)&hPtr->addr[i], hp->h_addr_list[i], hp->h_length);
 
-    for (i=0; i<8; i++)
+    for (i = 0; i < 8; i++)
         hPtr->week[i] = NULL;
 
     hPtr->windows = putstr_("-");
     hPtr->wind_edge = 0;
-
 
     if (myClusterPtr->clientList == NULL) {
 
@@ -3916,24 +3913,19 @@ addHostModel(char *model, char *arch, float factor)
 static struct clusterNode *
 addCluster(char *clName, char *candlist)
 {
-    static char fname[] = "addCluster()";
-    char *sp, *word;
+    char *sp;
+    char *word;
     int i;
     struct hostent *hp;
     static int nextClNo = 0;
 
     if (myClusterPtr != NULL) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5356,
-                                         "%s: Ignoring duplicate cluster %s"), /* catgets 5356 */
-                  fname, clName);
-        return(NULL);
+        ls_syslog(LOG_ERR, "\
+%s: Ignoring duplicate cluster %s", __func__, clName);
+        return NULL;
     }
 
     myClusterPtr = calloc(1, sizeof(struct clusterNode));
-    if (myClusterPtr == (struct clusterNode *)NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        return NULL;
-    }
 
     myClusterPtr->clName = putstr_(clName);
     myClusterPtr->clusterNo = nextClNo++;
@@ -3941,9 +3933,10 @@ addCluster(char *clName, char *candlist)
     if (!candlist || candlist[0] == '\0')
         candlist = findClusterServers(clName);
 
-    sp = (char *) candlist;
+    sp = candlist;
     i = 0;
-    while ( ((word = getNextWord_(&sp)) != NULL) && (i < MAXCANDHOSTS)) {
+    while ((word = getNextWord_(&sp)) != NULL
+           && i < MAXCANDHOSTS) {
 
         hp = Gethostbyname_(word);
         if (!hp) {
@@ -3953,7 +3946,7 @@ addCluster(char *clName, char *candlist)
             lim_CheckError = WARNING_ERR;
             continue;
         }
-        myClusterPtr->candAddrList[i] =  *((u_int *) hp->h_addr);
+        myClusterPtr->candAddrList[i] =  *(in_addr_t *)hp->h_addr_list[0];
         i++;
     }
 
@@ -4750,15 +4743,17 @@ stripIllegalChars(char *str)
     return str;
 }
 
-static int saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
+static int
+saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
 {
     static char fname[] = "saveHostIPAddr";
     int i;
 
-    for (hPtr->naddr = 0; hp->h_addr_list &&
-             hp->h_addr_list[hPtr->naddr] != NULL; hPtr->naddr++);
+    for (hPtr->naddr = 0;
+         hp->h_addr_list && hp->h_addr_list[hPtr->naddr] != NULL;
+         hPtr->naddr++);
 
-    if (hPtr->naddr){
+    if (hPtr->naddr) {
         hPtr->addr = malloc(hPtr->naddr * sizeof(u_int));
         if (!hPtr->addr) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
@@ -4770,7 +4765,7 @@ static int saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
     }
 
     for (i = 0; i < hPtr->naddr; i++)
-        memcpy((char *)&hPtr->addr[i], hp->h_addr_list[i], hp->h_length);
+        memcpy(&hPtr->addr[i], hp->h_addr_list[i], hp->h_length);
 
     return 0;
 }

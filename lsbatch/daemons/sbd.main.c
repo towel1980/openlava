@@ -827,8 +827,8 @@ get_new_master(struct sockaddr_in *from)
     static char mHost[MAXHOSTNAMELEN];
     struct hostent *hp;
 
-    hp = Gethostbyaddr_((char *)&from->sin_addr,
-                        sizeof(struct in_addr),
+    hp = Gethostbyaddr_(&from->sin_addr.s_addr,
+                        sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
         ls_syslog(LOG_ERR, "\
@@ -1060,8 +1060,8 @@ authCmdRequest(struct clientNode *client,
     struct hostent *hp;
 
     s = chanSock_(client->chanfd);
-    hp = Gethostbyaddr_((char *)&client->from.sin_addr,
-                        sizeof(struct in_addr),
+    hp = Gethostbyaddr_(&client->from.sin_addr.s_addr,
+                        sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
 	ls_syslog(LOG_ERR, "\

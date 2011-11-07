@@ -1009,19 +1009,19 @@ do_statusReq(XDR * xdrs, int chfd, struct sockaddr_in * from, int *schedule,
     struct LSFHeader        replyHdr;
 
     if (!portok(from)) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7824,
-                                         "%s: Received status report from bad port <%s>"), /* catgets 7824 */
-                  fname,
-                  sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, "\
+%s: Received status report from bad port %s",
+                  __func__, sockAdd2Str_(from));
         if (reqHdr->opCode != BATCH_RUSAGE_JOB)
             errorBack(chfd, LSBE_PORT, from);
         return -1;
     }
-    hp = Gethostbyaddr_((char *)&from->sin_addr,
-                        sizeof(struct in_addr),
+    hp = Gethostbyaddr_(&from->sin_addr.s_addr,
+                        sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyaddr() failed %s", __func__,
                   sockAdd2Str_(from));
         if (reqHdr->opCode != BATCH_RUSAGE_JOB)
             errorBack(chfd, LSBE_BAD_HOST, from);
@@ -1097,17 +1097,20 @@ do_chunkStatusReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     int i = 0;
 
     if (!portok(from)) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7824,
-                                         "%s: Received status report from bad port <%s>"), /* catgets 7824 */
-                  fname,
-                  sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, "\
+%s: Received status report from bad port %s",
+                  __func__, sockAdd2Str_(from));
         errorBack(chfd, LSBE_PORT, from);
         return -1;
     }
-    hp = Gethostbyaddr_((char *)&from->sin_addr,
-                        sizeof(struct in_addr),
+    hp = Gethostbyaddr_(&from->sin_addr.s_addr,
+                        sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: gethostbyaddr() failed %s", __func__,
+                  sockAdd2Str_(from));
+
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_MM, fname, "getHostEntryByAddr_",
                   sockAdd2Str_(from));
         errorBack(chfd, LSBE_BAD_HOST, from);
@@ -1170,20 +1173,20 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     int                    i;
 
     if (!portok(from)) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7824,
-                                         "%s: Received status report from bad port <%s>"),
-                  fname,
-                  sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, "\
+%s: Received request from bad port %s",
+                  __func__, sockAdd2Str_(from));
         errorBack(chfd, LSBE_PORT, from);
         return -1;
     }
 
-    hp = Gethostbyaddr_((char *)&from->sin_addr,
-                        sizeof(struct in_addr),
+    hp = Gethostbyaddr_(&from->sin_addr.s_addr,
+                        sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: gethostbyaddr() failed for %s", __func__, sockAdd2Str_(from));
+%s: gethostbyaddr() failed %s", __func__,
+                  sockAdd2Str_(from));
         errorBack(chfd, LSBE_BAD_HOST, from);
         return (-1);
     }

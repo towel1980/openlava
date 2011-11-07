@@ -382,3 +382,34 @@ subNewLine_(char* instr) {
         }
     }
 }
+
+/* Get the next meaningful line from the configuration
+ * file, meaningful is a line that is not isspace()
+ * and that does not start with a comment # character.
+ */
+char *
+nextline_(FILE *fp)
+{
+    static char  buf[BUFSIZ];
+    char         *p;
+
+    p = NULL;
+    while (fgets(buf, BUFSIZ, fp)) {
+        p = buf;
+        while (isspace(*p))
+            ++p;
+        if (*p == '#'
+            || *p == 0) {
+	    /* If this is the last or only
+	     * line do not return the
+	     * previous buffer to the caller.
+	     */
+	    p = NULL;
+            continue;
+	}
+        break;
+    }
+
+    return(p);
+
+} /* nextline_() */

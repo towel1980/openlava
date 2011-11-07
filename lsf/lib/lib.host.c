@@ -1,116 +1,57 @@
 
 #include <unistd.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "lib.h"
 #include "lproto.h"
-#include <ctype.h>
-#include <arpa/inet.h>
+#include "lib.table.h"
 
-#define HP_CACHE_SIZE 1200
-#define HP_VALID_PERIOD (24*60*60)
-static struct {
-    struct hostent hp;
-    time_t cacheTime;
-    time_t lastAccessTime;
-} hpCache[HP_CACHE_SIZE];
-static int firstHPCache = TRUE;
+#define MAX_HOSTALIAS 64
+#define MAX_HOSTIPS   32
 
-static int cpHostent(struct hostent *, struct hostent *);
-static void freeHp(struct hostent *);
-static struct hostent *getHpCache(char *);
-static struct hostent *putHpCache(char *, struct hostent *);
-static struct hostent *getHpCacheByAddr(char *);
-static struct hostent *my_gethostbyaddr(char *);
+static hTab *nameTab;
+static hTab *addrTab;
 
+static int mkHostTab(void);
+static void stripDomain(char *);
+static void addHost2Tab(const char *,
+                        in_addr_t **,
+                        char **);
+/* ls_getmyhostname()
+ */
 char *
 ls_getmyhostname(void)
 {
    static char hname[MAXHOSTNAMELEN];
    struct hostent *hp;
 
-   if (hname[0] == 0) {
-       gethostname(hname, MAXHOSTNAMELEN);
-       hp = Gethostbyname_(hname);
-       if (hp != NULL) {
-           strcpy(hname, hp->h_name);
-       } else {
-           hname[0] = 0;
-           return(NULL);
-       }
+   if (hname[0] != 0)
+       return hname;
+
+   gethostname(hname, MAXHOSTNAMELEN);
+   hp = Gethostbyname_(hname);
+   if (hp == NULL) {
+       hname[0] = 0;
+       return NULL;
    }
+
+   strcpy(hname, hp->h_name);
 
    return hname;
 }
 
-#define MY_HOSTSFILE "hosts"
-#define MY_LINESIZE 1024
-#define MY_NUMALIASES 36
-
-struct hostent *
-my_gethostbyname(char *name)
-{
-    FILE *hfile;
-    static char buf[MY_LINESIZE];
-    char *addrstr;
-    static struct hostent host;
-    static char *names[MY_NUMALIASES], *addrs[2];
-    static u_int addr;
-    int n, found = 0;
-
-    if (initenv_(NULL, NULL) < 0)
-        return NULL;
-
-    sprintf(buf, "%s/%s", genParams_[LSF_CONFDIR].paramValue, MY_HOSTSFILE);
-
-    if ((hfile = fopen(buf, "r")) == NULL)
-        return NULL;
-
-    while (fgets(buf, MY_LINESIZE, hfile)) {
-        char *tmp;
-        n = 0;
-
-        if ((tmp = strpbrk (buf, "\n#")))
-            *tmp='\0';
-
-        if ((addrstr = strtok (buf, " \t")))
-            continue;
-
-        addr = inet_addr(addrstr);
-
-        while ((names[n] = strtok(NULL, " \t"))) {
-            if (equalHost_(names[n], name))
-                found++;
-            n++;
-        }
-
-        if (found) {
-            host.h_name = names[0];
-            host.h_aliases = names + 1;
-            host.h_addrtype = AF_INET;
-            host.h_length = sizeof(addr);
-            addrs[1] = NULL;
-            addrs[0] = (char *)&addr;
-            host.h_addr_list = addrs;
-            fclose(hfile);
-
-            return(&host);
-        }
-    }
-
-    fclose(hfile);
-
-    return NULL;
-}
-
+/* Gethostbyname_()
+ */
 struct hostent *
 Gethostbyname_(char *hname)
 {
-    char *sp;
-    char *strip;
+    int cc;
+    hEnt *e;
     struct hostent *hp;
-    int hnlen;
-    static struct hostent hostent;
-    static char lsfHname[MAXHOSTNAMELEN];
-    char lhname[MAXHOSTNAMELEN];
+    char lsfHname[MAXHOSTNAMELEN];
 
     if (strlen(hname) >= MAXHOSTNAMELEN) {
         lserrno = LSE_BAD_HOST;
@@ -118,390 +59,81 @@ Gethostbyname_(char *hname)
     }
 
     strcpy(lsfHname, hname);
+    /* openlava strips all hostnames
+     * of thier domain names and lowercase
+     * them.
+     */
+    stripDomain(lsfHname);
     strToLower_(lsfHname);
-    strcpy(lhname, lsfHname);
 
-    if ((hp = getHpCache(lsfHname)))
+    if (nameTab == NULL)
+        mkHostTab();
+
+    e = h_getEnt_(nameTab, lsfHname);
+    if (e) {
+        hp = e->hData;
         return hp;
+    }
 
-    if ((hp = my_gethostbyname(lsfHname)) == NULL)
-        hp = gethostbyname(lsfHname);
-
-    if (! hp) {
+    hp = gethostbyname(lsfHname);
+    if (hp == NULL) {
         lserrno = LSE_BAD_HOST;
         return NULL;
     }
 
-    memcpy((char *)&hostent, (char *) hp, sizeof (struct hostent));
-    hostent.h_name = lsfHname;
-    strcpy(hostent.h_name, hp->h_name);
+    /* add the new host to the host hash table
+     */
+    addHost2Tab(hp->h_name,
+                (in_addr_t **)hp->h_addr_list,
+                hp->h_aliases);
 
-    if (stripDomains_ != NULL) {
-
-        hnlen = strlen(hostent.h_name);
-        for (strip = stripDomains_ ; *strip ; strip += (*strip + 1)) {
-
-            if (*strip >= hnlen)
-                     continue;
-
-            sp = hostent.h_name + hnlen - *strip;
-            if (strncasecmp(sp, (strip + 1), *strip) == 0) {
-                if (sp > hostent.h_name && sp[-1] == '.')
-                    sp[-1] = '\0';
-                else
-                    *sp = '\0';
-                break;
-            }
+    cc = 0;
+    while (hp->h_addr_list[cc]) {
+        { /* dybag */
+            char *p;
+            struct in_addr a;
+            memcpy(&a, hp->h_addr_list[cc], sizeof(a));
+            p = inet_ntoa(a);
+            fprintf(stderr, "%s\n", p); /* could be closed */
+            ++cc;
         }
     }
-
-    strToLower_(hostent.h_name);
-    putHpCache(lhname, &hostent);
 
     return hp;
-
-}  /* Gethostbyname_ */
-
-
-static struct hostent *
-putHpCache(char *hname, struct hostent *hp)
-{
-    time_t now, oldestTime = 0;
-    int oldest = 0, i, j;
-    char **t;
-
-    time(&now);
-
-    for (i = 0; i < HP_CACHE_SIZE; i++) {
-        if (hpCache[i].hp.h_name == NULL) {
-            break;
-        } else if (hpCache[i].cacheTime - now > HP_VALID_PERIOD) {
-            freeHp(&hpCache[i].hp);
-            break;
-        }
-
-        if (hpCache[i].lastAccessTime > oldestTime)
-            oldest = i;
-    }
-
-    if (i == HP_CACHE_SIZE) {
-        i = oldest;
-        freeHp(&hpCache[i].hp);
-    }
-
-    if (cpHostent(&hpCache[i].hp, hp) == -1) {
-        return (NULL);
-    }
-
-    hpCache[i].cacheTime = now;
-    hpCache[i].lastAccessTime = now;
-
-    if (! equalHost_(hname, hpCache[i].hp.h_name)) {
-        for (j = 0; hpCache[i].hp.h_aliases[j]; j++) {
-            if (equalHost_(hname, hpCache[i].hp.h_aliases[j]))
-                break;
-        }
-        if (!hpCache[i].hp.h_aliases[j]) {
-            if ((t = (char **) realloc((char *) hpCache[i].hp.h_aliases,
-                                       (j + 2) * sizeof(char *)))) {
-                hpCache[i].hp.h_aliases = t;
-                if ((hpCache[i].hp.h_aliases[j] = putstr_(hname)))
-                    hpCache[i].hp.h_aliases[j+1] = NULL;
-            }
-        }
-    }
-
-    return (&hpCache[i].hp);
 }
 
-
-static struct hostent *
-getHpCache(char *hname)
-{
-    time_t now;
-    int i, j;
-
-    if (firstHPCache) {
-        for (i = 0; i < HP_CACHE_SIZE; i++) {
-            hpCache[i].hp.h_name = NULL;
-        }
-        firstHPCache = FALSE;
-        return (NULL);
-    }
-
-    time(&now);
-
-    for (i = 0; i < HP_CACHE_SIZE; i++) {
-        if (hpCache[i].hp.h_name) {
-            if (now - hpCache[i].cacheTime < HP_VALID_PERIOD) {
-                if (equalHost_(hpCache[i].hp.h_name, hname)) {
-                    hpCache[i].lastAccessTime = now;
-                    return (&hpCache[i].hp);
-                }
-                for (j = 0; hpCache[i].hp.h_aliases[j]; j++) {
-                    if (equalHost_(hpCache[i].hp.h_aliases[j], hname)) {
-                        hpCache[i].lastAccessTime = now;
-                        return (&hpCache[i].hp);
-                    }
-                }
-            } else {
-                freeHp(&hpCache[i].hp);
-            }
-        }
-    }
-
-    return (NULL);
-}
-
-static void
-freeHp(struct hostent *hp)
-{
-    int i;
-
-    for (i = 0; hp->h_addr_list[i]; i++)
-        free(hp->h_addr_list[i]);
-    free(hp->h_addr_list);
-
-    for (i = 0; hp->h_aliases[i]; i++)
-        free(hp->h_aliases[i]);
-    free(hp->h_aliases);
-
-    free(hp->h_name);
-    hp->h_name = NULL;
-}
-
-static int
-cpHostent(struct hostent *to, struct hostent *from)
-{
-    int i, j, n;
-
-    if ((to->h_name = putstr_(from->h_name)) == NULL)
-        return (-1);
-
-    for (n = 0; from->h_aliases[n]; n++);
-
-    if ((to->h_aliases = (char **) calloc(n+1, sizeof(char *))) == NULL) {
-        free(to->h_name);
-        to->h_name = NULL;
-        return (-1);
-    }
-
-    for (j = 0; j < n; j++) {
-        if ((to->h_aliases[j] = putstr_(from->h_aliases[j])) == NULL) {
-            while(j--)
-                free(to->h_aliases[j]);
-            free(to->h_aliases);
-            free(to->h_name);
-            to->h_name = NULL;
-            return (-1);
-        }
-    }
-    to->h_aliases[n] = NULL;
-
-
-    to->h_addrtype = from->h_addrtype;
-    to->h_length = from->h_length;
-
-    for (n = 0; from->h_addr_list[n]; n++)
-        ;
-
-    if ((to->h_addr_list = (char **) calloc(n+1, sizeof(char *))) == NULL) {
-        for (j = 0; to->h_aliases[j]; j++)
-            free(to->h_aliases[j]);
-        free(to->h_aliases);
-        free(to->h_name);
-        to->h_name = NULL;
-        return (-1);
-    }
-
-    for (i = 0; i < n; i++) {
-        if ((to->h_addr_list[i] = (char *) malloc(from->h_length)) == NULL) {
-            while(i--)
-                free(to->h_addr_list[i]);
-            free(to->h_addr_list);
-            for (j = 0; to->h_aliases[j]; j++)
-                free(to->h_aliases[j]);
-            free(to->h_aliases);
-            free(to->h_name);
-            to->h_name = NULL;
-            return (-1);
-        }
-        memcpy(to->h_addr_list[i], from->h_addr_list[i], from->h_length);
-    }
-
-    to->h_addr_list[n] = NULL;
-    return (0);
-}
-
-static struct hostent *
-getHpCacheByAddr(char *addr)
-{
-
-    time_t now;
-    int i, j;
-
-    if (firstHPCache) {
-        for (i = 0; i < HP_CACHE_SIZE; i++) {
-            hpCache[i].hp.h_name = NULL;
-        }
-        firstHPCache = FALSE;
-        return (NULL);
-    }
-
-    time(&now);
-
-    for (i = 0; i < HP_CACHE_SIZE; i++) {
-        if (hpCache[i].hp.h_name) {
-            if (now - hpCache[i].cacheTime < HP_VALID_PERIOD) {
-                for (j = 0; hpCache[i].hp.h_addr_list[j]; j++) {
-                    if (!memcmp(addr, hpCache[i].hp.h_addr_list[j],
-                                hpCache[i].hp.h_length)) {
-                        hpCache[i].lastAccessTime = now;
-                        return (&hpCache[i].hp);
-                    }
-                }
-            } else {
-                freeHp(&hpCache[i].hp);
-            }
-        }
-    }
-
-    return (NULL);
-}
-
-static struct hostent *
-my_gethostbyaddr(char *faddr)
-{
-    FILE *hfile;
-    static char buf[MY_LINESIZE];
-    char *addrstr;
-    static struct hostent host;
-    static char *names[MY_NUMALIASES], *addrs[2];
-    static u_int addr;
-    int n;
-
-    if (initenv_(NULL, NULL) < 0)
-        return NULL;
-
-    sprintf(buf, "%s/%s", genParams_[LSF_CONFDIR].paramValue, MY_HOSTSFILE);
-
-    if (NULL == (hfile = fopen (buf, "r")))
-        return((struct hostent *)NULL);
-
-    while (NULL != fgets (buf, MY_LINESIZE, hfile)) {
-        char *tmp;
-        n = 0;
-
-        /* get rid of newlines and comments */
-        if (NULL != (tmp = strpbrk (buf, "\n#")))
-            *tmp='\0';
-
-        /* get address, skip blank lines */
-        if (NULL == (addrstr = strtok (buf, " \t")))
-            continue;
-
-        addr = inet_addr (addrstr);
-#ifdef _CRAY
-        addr <<= 32;
-        if (logclass & LC_TRACE)
-            ls_syslog(LOG_DEBUG, "my_gethostbyaddr: addr %x faddr %x",
-                      addr, (*(u_int *) faddr));
-#endif /* cray */
-
-        if (!memcmp((char *) &addr, faddr, sizeof(u_int))) {
-            while (NULL != (names[n] = strtok(NULL, " \t"))) {
-                n++;
-            }
-
-            host.h_name = names[0];
-            host.h_aliases = names+1;
-            host.h_addrtype = AF_INET;
-            host.h_length = sizeof(addr);
-            addrs[1] = NULL;
-            addrs[0] = (char *)&addr;
-            host.h_addr_list = addrs;
-            fclose(hfile);
-            return(&host);
-        }
-    }
-    fclose(hfile);
-
-    return NULL;
-}
-
+/* Gethostbyaddr_()
+ */
 struct hostent *
-Gethostbyaddr_(char *addr, int len, int type)
+Gethostbyaddr_(in_addr_t *addr, socklen_t len, int type)
 {
     struct hostent *hp;
-    char hname[MAXHOSTNAMELEN];
-    char **t;
-    int i;
+    static char ipbuf[32];
+    hEnt *e;
 
-    if (logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG, "Gethostbyaddr_: %x %x %x %x len %d",
-                  addr[0], addr[1], addr[2], addr[3], len);
+    sprintf(ipbuf, "%u", *addr);
 
-    if ((hp = getHpCacheByAddr(addr))) {
-        return (hp);
+    e = h_getEnt_(addrTab, ipbuf);
+    if (e) {
+        hp = e->hData;
+        return hp;
     }
 
-    if ((hp = my_gethostbyaddr(addr)) == NULL) {
-        if ((hp = gethostbyaddr(addr, len, type)) == NULL) {
-            lserrno = LSE_BAD_HOST;
-            return (NULL);
-        }
+    hp = gethostbyaddr(addr, len, type);
+    if (hp == NULL) {
+        lserrno = LSE_BAD_HOST;
+        return NULL;
     }
 
-    strcpy(hname, hp->h_name);
-    if ((hp = Gethostbyname_(hname)) == NULL)
-        return (NULL);
-
-    /* Add the new address if hp is from cache.  This is a hack. */
-    for (i = 0; i < HP_CACHE_SIZE; i++) {
-        if (hp == &hpCache[i].hp)
-            break;
-    }
-
-    if (i == HP_CACHE_SIZE) /* hp is not from cache */
-        return (hp);
-
-    for (i = 0; hp->h_addr_list[i]; i++) {
-        if (!memcmp(hp->h_addr_list[i], addr, hp->h_length))
-            return (hp);
-    }
-
-    if ((t = (char **) realloc((char *) hp->h_addr_list,
-                               (i + 2) * sizeof(char *))) == NULL)
-        return (hp);
-
-    hp->h_addr_list = t;
-
-    if ((hp->h_addr_list[i] = (char *) malloc(hp->h_length)) == NULL)
-        return (hp);
-
-    memcpy(hp->h_addr_list[i], addr, hp->h_length);
-    hp->h_addr_list[i+1] = NULL;
-    return (hp);
-} /* Getbostbyaddr_ */
+    addHost2Tab(hp->h_name,
+                (in_addr_t **)hp->h_addr_list,
+                hp->h_aliases);
+    return hp;
+}
 
 #define ISBOUNDARY(h1, h2, len)  ( (h1[len]=='.' || h1[len]=='\0') && \
                                 (h2[len]=='.' || h2[len]=='\0') )
 
-/*
- *------------------------------------------------------------------------
- *
- *  equalHost_ --
- *
- *     Check if host1 and host2 are the same host.
- *     nosy.white, nosy, nosy.white.toronto.edu will be considered equal.
- *
- *     nosy and nosy1 will not be equal.
- *
- *     nosy.white.toronto.edu and nosy.cs.york.edu are not eaul.
- *
- *     Return TRUE if same, otherwise return FALSE.
- *------------------------------------------------------------------------
-*/
 int
 equalHost_(const char *host1, const char *host2)
 {
@@ -512,24 +144,15 @@ equalHost_(const char *host1, const char *host2)
     else
         len = strlen(host1);
 
-    /* Note: nosy and nosy1 are not the same. nosy and nosy.white are
-     * the same.
-     */
-    if ((strncasecmp(host1, host2, len) == 0) && ISBOUNDARY(host1, host2, len))
+    if ((strncasecmp(host1, host2, len) == 0)
+        && ISBOUNDARY(host1, host2, len))
         return TRUE;
 
     return FALSE;
-} /* equalHost_ */
+}
 
-/*
- *----------------------------------------------------------------------
- *
- *  sockAdd2Str_ -
- *
- *  Convert socket address into a string: a.b.c.d:p,
- *  where p is the port number.
- *----------------------------------------------------------------------
-*/
+/* sockAdd2Str_()
+ */
 char *
 sockAdd2Str_(struct sockaddr_in *from)
 {
@@ -539,4 +162,162 @@ sockAdd2Str_(struct sockaddr_in *from)
 %s:%d", inet_ntoa(from->sin_addr), (int)ntohs(from->sin_port));
     return adbuf;
 
-} /* sockAdd2Str_ */
+}
+
+/* stripDomain()
+ */
+static inline void
+stripDomain(char *name)
+{
+    char *p;
+
+    if ((p = strchr(name, '.')))
+        *p = 0;
+}
+
+/* mkHostTab()
+ */
+static int
+mkHostTab(void)
+{
+    static char fbuf[BUFSIZ];
+    char *buf;
+    FILE *fp;
+
+    if (nameTab) {
+        assert(addrTab);
+        return -1;
+    }
+
+    nameTab = calloc(1, sizeof(hTab));
+    addrTab = calloc(1, sizeof(hTab));
+
+    h_initTab_(nameTab, 101);
+    h_initTab_(addrTab, 101);
+
+    if (initenv_(NULL, NULL) < 0)
+        return -1;
+
+    sprintf(fbuf, "\
+%s/%s", genParams_[LSF_CONFDIR].paramValue, "hosts");
+
+    if ((fp = fopen(fbuf, "r")) == NULL)
+        return -1;
+
+    while ((buf = nextline_(fp))) {
+        char *addrstr;
+        char *name;
+        char *p;
+        char *alias[MAX_HOSTALIAS];
+        in_addr_t *addr[2];
+        in_addr_t x;
+        int cc;
+
+        memset(alias, 0, sizeof(char *) * MAX_HOSTALIAS);
+
+        addrstr = getNextWord_(&buf);
+        if (addrstr == NULL)
+            continue;
+
+        x = inet_addr(addrstr);
+        addr[0] = &x;
+        addr[1] = NULL;
+
+        name = getNextWord_(&buf);
+        if (name == NULL)
+            continue;
+
+        stripDomain(name);
+        strToLower_(name);
+
+        cc = 0;
+        while ((p = getNextWord_(&buf))
+               && cc < MAX_HOSTALIAS) {
+            alias[cc] = strdup(p);
+            ++cc;
+        }
+        /* multihomed hosts are
+         * listed multiple times
+         * in the host file each time
+         * with the same name but different
+         * addr.
+         *
+         * 192.168.7.1 jumbo
+         * 192.168.7.4 jumbo
+         *     ...
+         */
+        addHost2Tab(name, addr, alias);
+
+        cc = 0;
+        while (alias[cc]) {
+            FREEUP(alias[cc]);
+            ++cc;
+        }
+
+    } /* while() */
+
+    fclose(fp);
+
+    return 0;
+}
+
+/* addHost2Tab()
+ */
+static void
+addHost2Tab(const char *name,
+            in_addr_t **addrs,
+            char **aliases)
+{
+    struct hostent *hp;
+    char ipbuf[32];
+    hEnt *e;
+    hEnt *e2;
+    int new;
+    int cc;
+
+    /* add the host to the table by its name
+     * if it exists already we must be processing
+     * another ipaddr for it.
+     */
+    e = h_addEnt_(nameTab, name, &new);
+    if (new) {
+        hp = calloc(1, sizeof(struct hostent));
+        hp->h_name = strdup(name);
+        hp->h_addrtype = AF_INET;
+        hp->h_length = 4;
+        e->hData = hp;
+    } else {
+        hp = (struct hostent*)e->hData;
+    }
+
+    cc = 0;
+    while (aliases[cc])
+        ++cc;
+    hp->h_aliases = calloc(cc + 1, sizeof(char *));
+    cc = 0;
+    while (aliases[cc]) {
+        hp->h_aliases[cc] = strdup(aliases[cc]);
+        ++cc;
+    }
+
+    cc = 0;
+    while (addrs[cc])
+        ++cc;
+    hp->h_addr_list = calloc(cc + 1, sizeof(char *));
+    cc = 0;
+    while (addrs[cc]) {
+        hp->h_addr_list[cc] = calloc(1, sizeof(in_addr_t));
+        memcpy(hp->h_addr_list[cc], addrs[cc], sizeof(in_addr_t));
+        /* now hash the host by its addr,
+         * there can be N addrs but each
+         * must be unique...
+         */
+        sprintf(ipbuf, "%u", *(addrs[cc]));
+        e2 = h_addEnt_(addrTab, ipbuf, &new);
+        assert(new);
+        e2->hData = hp;
+
+        ++cc; /* nexte */
+    }
+}
+

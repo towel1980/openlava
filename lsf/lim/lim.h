@@ -169,9 +169,7 @@ struct clusterNode {
     short clusterNo;
     char *clName;
     int  status;
-
-
-    u_int   candAddrList[MAXCANDHOSTS];
+    in_addr_t   candAddrList[MAXCANDHOSTS];
     int     currentAddr;
     char   *masterName;
     u_int   masterAddr;
@@ -179,7 +177,6 @@ struct clusterNode {
     int     resClass;
     int     typeClass;
     int     modelClass;
-
     char  masterKnown;
     int   masterInactivityCount;
     struct hostNode *masterPtr;
@@ -501,21 +498,10 @@ extern bool_t findHostInCluster(char *);
 extern int  definedSharedResource(struct hostNode *, struct lsInfo *);
 extern struct shortLsInfo *shortLsInfoDup(struct shortLsInfo *);
 extern void shortLsInfoDestroy(struct shortLsInfo *);
-extern int getHostNodeIPAddr(const struct hostNode *, struct sockaddr_in *);
-
 extern void errorBack(struct sockaddr_in *, struct LSFHeader *,
                       enum limReplyCode, int);
 extern int initSock(int);
 extern void initLiStruct(void);
-
-
-#ifdef MEAS
-extern void timingLog(int);
-extern void loadLog(int);
-extern void xferLog(int, char *);
-#endif
-
-
 extern void placeReq(XDR *, struct sockaddr_in *, struct LSFHeader *, int);
 extern void loadadjReq(XDR *, struct sockaddr_in *, struct LSFHeader *, int);
 extern void updExtraLoad(struct hostNode **, char *, int);
@@ -528,21 +514,14 @@ extern int checkValues(struct resVal *, int);
 extern void chkResReq(XDR *, struct sockaddr_in *, struct LSFHeader *);
 extern void getTclHostData (struct tclHostData *, struct hostNode *,
                             struct hostNode *, int);
-
 extern void reconfig(void);
 extern void shutdownLim(void);
-
-
 extern int xdr_loadvector(XDR *, struct loadVectorStruct *,
                           struct LSFHeader *);
 extern int xdr_loadmatrix(XDR *, int, struct loadVectorStruct *,
                           struct LSFHeader *);
 extern int xdr_masterReg(XDR *, struct masterReg *, struct LSFHeader *);
-extern int xdr_statInfo(XDR *xdrs, struct statInfo *sip, struct LSFHeader *);
-extern bool_t xdr_minSLimConfData(XDR *xdrs,
-				  struct minSLimConfData *sLimConfDatap,
-				  struct LSFHeader *hdr);
-
+extern int xdr_statInfo(XDR *, struct statInfo *, struct LSFHeader *);
 extern void clientIO(struct Masks *);
 
 #endif

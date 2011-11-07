@@ -284,20 +284,10 @@ extern int equalHost_(const char *, const char *);
 extern char *sockAdd2Str_(struct sockaddr_in *);
 
 extern struct hostent *Gethostbyname_ (char *);
-extern struct hostent *Gethostbyaddr_(char *, int, int);
-extern int isValidHost_(const char* hname);
-extern int (*getHostAttribFuncP)(char *hname, int updateIntvl);
-extern int daemonId;
-
-#define DAEMON_ID_RES           (1)
-#define DAEMON_ID_SBD           (2)
-#define DAEMON_ID_LIM           (3)
-#define DAEMON_ID_MLIM          (4)
-#define DAEMON_ID_MBD           (5)
-
+extern struct hostent *Gethostbyaddr_(in_addr_t *, socklen_t, int);
 extern int getAskedHosts_(char *, char ***, int *, int *, int);
-extern int lockHost_(time_t duration, char *hname);
-extern int unlockHost_(char *hname);
+extern int lockHost_(time_t, char *);
+extern int unlockHost_(char *);
 
 extern int lsfRu2Str(FILE *, struct lsfRusage *);
 extern int  str2lsfRu(char *, struct lsfRusage *, int *);
@@ -329,6 +319,7 @@ extern void freeStack(struct pStack *);
 extern char *getNextLineD_(FILE *, int *, int);
 extern char *getNextLineC_conf(struct lsConf *, int *, int);
 extern char *getNextLine_conf(struct lsConf *, int);
+extern char *nextline_(FILE *);
 extern void subNewLine_(char*);
 
 extern void doSkipSection(FILE *, int *, char *, char *);

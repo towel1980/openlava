@@ -1,4 +1,4 @@
-/* $Id: lim.common.h 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,9 +19,9 @@
 #include "lim.h"
 #include <math.h>
 
-#define  SWP_INTVL_CNT   45/exchIntvl       
-#define  TMP_INTVL_CNT   120/exchIntvl      
-#define  PAGE_INTVL_CNT   120/exchIntvl      
+#define  SWP_INTVL_CNT   45/exchIntvl
+#define  TMP_INTVL_CNT   120/exchIntvl
+#define  PAGE_INTVL_CNT   120/exchIntvl
 
 #include <utmp.h>
 
@@ -40,13 +40,7 @@ static void getusr(void);
 
 static int numCpus(void);
 
-int  maxnLbHost;        
-int  ncpus=1;           
-
+int  maxnLbHost;
+int  ncpus=1;
 float cpu_usage = 0.0;
-#ifdef MEAS
-float realcla = 0.0;        
-int sd_cnt = 0;
-int rcv_cnt = 0;            
-#endif
 

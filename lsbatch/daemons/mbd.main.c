@@ -505,44 +505,35 @@ acceptConnection(int socket)
 
     s = chanAccept_(socket, (struct sockaddr_in *)&from);
     if (s == -1) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, "main", "accept");
+        ls_syslog(LOG_ERR, "%s accept() failed...", __func__);
         return;
     }
 
-    hp = Gethostbyaddr_((char *)&from.sin_addr,
-                        sizeof(struct in_addr),
+    hp = Gethostbyaddr_(&from.sin_addr.s_addr,
+                        sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
-        ls_syslog(LOG_WARNING,
-                  _i18n_msg_get(ls_catd , NL_SETN, 5010, "%s: Request from unknown host <%s>: %M"), /* catgets 5010 */
-                  fname,
+        ls_syslog(LOG_WARNING, "\
+%s: gethostbyaddr() failed for %s", __func__,
                   sockAdd2Str_(&from));
         errorBack(s, LSBE_PERMISSION, &from);
         chanClose_(s);
         return;
     }
 
-    if (logclass & (LC_COMM | LC_TRACE)) {
-        ls_syslog(LOG_DEBUG1, "\
-%s: Received request from host <%s/%s> on socket <%d>",
-                  fname, hp->h_name, sockAdd2Str_(&from),
-                  chanSock_(s));
-    }
+    ls_syslog(LOG_DEBUG, "\
+%s: Received request from host %s %s on socket %d",
+              __func__, hp->h_name, sockAdd2Str_(&from),
+              chanSock_(s));
 
-    memcpy((char *) &from.sin_addr,
-           (char *) hp->h_addr,
-           (int) hp->h_length);
+    memcpy(&from.sin_addr, hp->h_addr, hp->h_length);
 
     if (logclass & (LC_COMM))
         ls_syslog(LOG_DEBUG1, "%s: Official address is %s",
                   fname, sockAdd2Str_(&from));
 
 
-    client =
-        (struct clientNode *)my_malloc(sizeof(struct clientNode),
-                                       "main");
-
-
+    client = my_calloc(1, sizeof(struct clientNode), __func__);
     client->chanfd = s;
     client->from =  from;
     client->fromHost = safeSave(hp->h_name);
@@ -552,8 +543,9 @@ acceptConnection(int socket)
     inList((struct listEntry *)clientList,
            (struct listEntry *) client);
 
-    if (logclass & LC_COMM )
-        ls_syslog(LOG_DEBUG1, "%s: Accepted connection from host <%s> on channell <%d>", fname, client->fromHost, client->chanfd);
+    ls_syslog(LOG_DEBUG, "\
+%s: Accepted connection from host %s on channel %d",
+              __func__, client->fromHost, client->chanfd);
 
 }
 

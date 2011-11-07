@@ -339,8 +339,8 @@ doacceptconn(void)
     }
 
     if (first) {
-        hostp = Gethostbyaddr_((char *)&local.sin_addr,
-                               sizeof(struct in_addr),
+        hostp = Gethostbyaddr_(&local.sin_addr.s_addr,
+                               sizeof(in_addr_t),
                                AF_INET);
         if (hostp == NULL) {
             ls_syslog(LOG_ERR, "\
@@ -359,8 +359,8 @@ doacceptconn(void)
 
     local.sin_addr.s_addr = localSave.sin_addr.s_addr;
 
-    hostp = Gethostbyaddr_((char *)&from.sin_addr,
-                           sizeof(struct in_addr),
+    hostp = Gethostbyaddr_(&from.sin_addr.s_addr,
+                           sizeof(in_addr_t),
                            AF_INET);
     if (hostp == NULL) {
         ls_syslog(LOG_ERR, "\

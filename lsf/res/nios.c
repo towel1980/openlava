@@ -1617,8 +1617,8 @@ acceptCallBack(int asock)
         } else {
             struct hostent *hp;
 
-            hp = Gethostbyaddr_((char *)&sin.sin_addr,
-                                sizeof(struct in_addr),
+            hp = Gethostbyaddr_(&sin.sin_addr.s_addr,
+                                sizeof(in_addr_t),
                                 AF_INET);
             if (hp == NULL) {
                 ls_syslog(LOG_ERR, "\
