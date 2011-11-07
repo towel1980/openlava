@@ -198,8 +198,10 @@ mkHostTab(void)
     if (initenv_(NULL, NULL) < 0)
         return -1;
 
-    sprintf(fbuf, "\
-%s/%s", genParams_[LSF_CONFDIR].paramValue, "hosts");
+    if (genParams_[HOSTS_FILE].paramValue == NULL)
+        return -1;
+
+    sprintf(fbuf, "%s", genParams_[HOSTS_FILE].paramValue);
 
     if ((fp = fopen(fbuf, "r")) == NULL)
         return -1;

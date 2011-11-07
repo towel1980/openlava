@@ -46,6 +46,7 @@ struct config_param genParams_[] =
     {"LSF_MASTER_LIST", NULL},
     {"LSF_MLS_LOG", NULL},
     {"LSF_INTERACTIVE_STDERR", NULL},
+    {"HOSTS_FILE", NULL},
     {NULL, NULL}
 };
 
