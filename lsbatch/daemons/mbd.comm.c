@@ -479,7 +479,7 @@ probe_slave (struct hData *hData, char sendJobs)
 %s: Probing %s sendJobs %d", fname, toHost, sendJobs);
 
     hdr.refCode = 0;
-    hdr.reserved0 = 0;
+    hdr.reserved = 0;
 
     if (sendJobs) {
 	if ((sbdPackage.numJobs = countNumSpecs (hData)) > 0)

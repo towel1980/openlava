@@ -31,7 +31,6 @@ extern struct limLock limLock;
 extern char mustSendLoad;
 
 static int userNameOk(uid_t, const char *);
-static int userOkForMixed(struct lsfAuth *);
 static void doReopen(void);
 
 void
@@ -53,7 +52,7 @@ reconfigReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
     }
 
     if (! lim_debug) {
-        if (!limPortOk(from) || !userOkForMixed(&auth)) {
+        if (!limPortOk(from)) {
             limReplyCode = LIME_DENIED;
             goto Reply;
         }
@@ -213,7 +212,7 @@ shutdownReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
     }
 
     if (! lim_debug) {
-        if (!limPortOk(from) || !userOkForMixed(&auth)) {
+        if (!limPortOk(from)) {
             limReplyCode = LIME_DENIED;
             goto Reply;
         }
@@ -463,38 +462,6 @@ userNameOk(uid_t uid, const char *lsfUserName)
         }
     }
     return FALSE;
-}
-
-static int
-userOkForMixed(struct lsfAuth *auth)
-{
-    int i;
-    int crossPlatforms;
-
-
-    if (auth->options >= 0) {
-        if (auth->options & AUTH_HOST_UX)
-            crossPlatforms = FALSE;
-        else
-            crossPlatforms = TRUE;
-        if (crossPlatforms &&
-            isAllowCross(limParams[LSF_CROSS_UNIX_NT].paramValue)) {
-            if (nClusAdmins == 0) {
-
-                return TRUE;
-            }
-
-            for (i = 0; i < nClusAdmins; i++) {
-                if ( !strcmp(auth->lsfUserName, clusAdminNames[i]) )
-                    return TRUE;
-            }
-        } else if (crossPlatforms &&
-                   !isAllowCross(limParams[LSF_CROSS_UNIX_NT].paramValue))
-            return FALSE;
-    }
-
-    return (userNameOk(auth->uid, auth->lsfUserName));
-
 }
 
 void

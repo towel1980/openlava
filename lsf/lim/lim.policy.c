@@ -1532,7 +1532,12 @@ Reply1:
     }
 
     xdrmem_create(&xdrs2, buf, bufSize, XDR_ENCODE);
-    if (!xdr_encodeMsg(&xdrs2, replyStruct, &replyHdr, xdr_loadReply, 0, NULL)) {
+    if (!xdr_encodeMsg(&xdrs2,
+                       replyStruct,
+                       &replyHdr,
+                       xdr_loadReply,
+                       0,
+                       NULL)) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
         xdr_destroy(&xdrs2);
         if (limReplyCode == LIME_NO_ERR)

@@ -67,10 +67,6 @@ static char *readPIMBuf(char *);
 
 static int argOptions;
 
-extern void setHdrReserved(struct LSFHeader *, unsigned int);
-
-
-
 struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 {
     static char fname[] = "lib.pim.c/getJInfo_()";
@@ -91,7 +87,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 
     if (logclass & LC_PIM)
        ls_syslog(LOG_DEBUG3,"now = %ld, lastTime = %ld, sleepTime = %ld",
-	   now, lastUpdateNow, pimSleepTime);
+                 now, lastUpdateNow, pimSleepTime);
     argOptions = options;
 
     if (lastTime == 0) {
@@ -189,7 +185,7 @@ struct jRusage *getJInfo_(int npgid, int *pgid, int options, int cpgid)
 
 	sendHdr.opCode = options;
 	sendHdr.refCode = (short) now & 0xffff;
-	setHdrReserved(&sendHdr, cpgid);
+	sendHdr.reserved = cpgid;
 
 	if ((cc = writeEncodeHdr_(s, &sendHdr, b_write_fix)) < 0) {
 	    if (logclass & LC_PIM)

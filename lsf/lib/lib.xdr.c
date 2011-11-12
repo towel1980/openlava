@@ -22,18 +22,19 @@
 #include "lib.xdr.h"
 #include "lproto.h"
 
-
 bool_t
-xdr_LSFHeader (XDR *xdrs, struct LSFHeader *header)
+xdr_LSFHeader(XDR *xdrs, struct LSFHeader *header)
 {
-    /* 2 + 2 + 2 + 4 + 4 + 2 = 16
+    /* openlava 2.0 header
+     * XDR will pack this into 16 bytes so
+     * we do not waste any space.
      */
     if (! xdr_u_short(xdrs, &header->refCode)
         || ! xdr_u_short(xdrs, &header->opCode)
-        || ! xdr_u_short(xdrs, &header->version)
         || ! xdr_u_int(xdrs, &header->length)
-        || ! xdr_u_int(xdrs, &header->reserved0)
-        || ! xdr_u_short(xdrs, &header->reserved1)) {
+        || ! xdr_u_short(xdrs, &header->version)
+        || ! xdr_u_short(xdrs, &header->reserved)
+        || ! xdr_u_int(xdrs, &header->reserved0)) {
         return FALSE;
     }
 
@@ -51,7 +52,7 @@ xdr_packLSFHeader (char *buf, struct LSFHeader *header)
     if (!xdr_LSFHeader(&xdrs, header)) {
         lserrno = LSE_BAD_XDR;
         xdr_destroy(&xdrs);
-        return (FALSE);
+        return FALSE;
     }
 
     memcpy(buf, hdrBuf, XDR_GETPOS(&xdrs));
@@ -59,37 +60,6 @@ xdr_packLSFHeader (char *buf, struct LSFHeader *header)
 
     return TRUE;
 }
-
-#if 0
-/* Good old school packing.
- */
-static
-void encodeHdr(unsigned int *word1,
-               unsigned int *word2,
-               unsigned int *word3,
-               struct LSFHeader *header)
-{
-    *word1 = header->refCode;
-    *word1 = *word1 << 16;
-    *word1 = *word1 | (header->opCode & 0x0000FFFF);
-    *word2 = header->length;
-    *word3 = header->version;
-    *word3 = *word3 << 8;
-    *word3 = *word3 | (header->reserved0.High & 0x000000FF);
-    *word3 = *word3 << 16;
-    *word3 = *word3 | (header->reserved0.Low & 0x0000FFFF);
-
-    if (xdrs->x_op == XDR_DECODE) {
-        header->refCode = word1 >> 16;
-        header->opCode = word1 & 0xFFFF;
-        header->length = word2;
-        header->version = word3 >> 24;
-        header->reserved0.High  = (word3 >> 16) & 0xFF;
-        header->reserved0.Low = word3 & 0xFFFF;
-    }
-
-}
-#endif
 
 bool_t
 xdr_encodeMsg(XDR *xdrs,
@@ -116,8 +86,7 @@ xdr_encodeMsg(XDR *xdrs,
     }
 
     len = XDR_GETPOS(xdrs);
-    if (!(options & ENMSG_USE_LENGTH))
-        hdr->length = len - LSF_HEADER_LEN;
+    hdr->length = len - LSF_HEADER_LEN;
 
     XDR_SETPOS(xdrs, 0);
     if (!xdr_LSFHeader(xdrs, hdr))

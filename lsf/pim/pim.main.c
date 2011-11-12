@@ -418,7 +418,7 @@ doServ(void)
                     int sleptTime = now - lastUpdateTime;
 
                     option = hdr.opCode;
-                    newPGid(hdr.reserved1);
+                    newPGid(hdr.reserved);
 
                     if (logclass & LC_PIM)
                         ls_syslog(LOG_DEBUG, "%s: got opCode = %d", fname,

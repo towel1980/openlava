@@ -22,7 +22,7 @@
 #include "lproto.h"
 
 extern int currentSN;
-    
+
 int
 lsRecvMsg_(int sock, char *buf, int bufLen, struct LSFHeader *hdr,
 	   char *data, bool_t (*xdrFunc)(), int (*readFunc)())
@@ -31,7 +31,7 @@ lsRecvMsg_(int sock, char *buf, int bufLen, struct LSFHeader *hdr,
     int cc;
 
     xdrmem_create(&xdrs, buf, bufLen, XDR_DECODE);
-    
+
     if ((cc = readDecodeHdr_(sock, buf, readFunc, &xdrs, hdr)) < 0) {
 	xdr_destroy(&xdrs);
 	return (cc);
@@ -51,8 +51,8 @@ lsRecvMsg_(int sock, char *buf, int bufLen, struct LSFHeader *hdr,
     }
 
     return (0);
-} 
-	
+}
+
 int lsSendMsg_ (int s, int opCode, int hdrLength, char *data, char *reqBuf,
 		int reqLen, bool_t (*xdrFunc)(), int (*writeFunc)(),
 		struct lsfAuth *auth)
@@ -64,13 +64,17 @@ int lsSendMsg_ (int s, int opCode, int hdrLength, char *data, char *reqBuf,
     hdr.opCode = opCode;
     hdr.refCode = currentSN;
 
-    if (!data) 
+    if (!data)
 	hdr.length = hdrLength;
 
     xdrmem_create(&xdrs, reqBuf, reqLen, XDR_ENCODE);
 
-    if (!xdr_encodeMsg(&xdrs, data, &hdr, xdrFunc,
-		       (data == NULL) ? ENMSG_USE_LENGTH : 0, auth)) {
+    if (!xdr_encodeMsg(&xdrs,
+                       data,
+                       &hdr,
+                       xdrFunc,
+		       0,
+                       auth)) {
 	xdr_destroy(&xdrs);
 	lserrno = LSE_BAD_XDR;
 	return(-1);
@@ -82,8 +86,8 @@ int lsSendMsg_ (int s, int opCode, int hdrLength, char *data, char *reqBuf,
 	lserrno = LSE_MSG_SYS;
         return (-2);
     }
-    
-    xdr_destroy(&xdrs);    
+
+    xdr_destroy(&xdrs);
 
     return (0);
-} 
+}

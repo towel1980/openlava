@@ -25,24 +25,19 @@
 #endif
 #include <sys/stat.h>
 
-#ifdef VENDOR
-#define VENDOR_CODE 1000
-#else
-#define VENDOR_CODE 0
-#endif
-
-
+/* openlava 2.0 header breaks compatibility with
+ * 1.0 but offers more flexibility and room for growth.
+ */
 struct LSFHeader {
     unsigned short refCode;
     unsigned short opCode;
-    unsigned short version;
     unsigned int length;
+    unsigned short version;
+    unsigned short reserved;
     unsigned int reserved0;
-    unsigned short reserved1;
 };
 
 #define LSF_HEADER_LEN (sizeof(struct LSFHeader))
-
 
 struct stringLen {
     char *name;
@@ -86,13 +81,8 @@ struct lsfLimit {
 extern bool_t xdr_LSFHeader(XDR *, struct LSFHeader *);
 extern bool_t xdr_packLSFHeader(char *, struct LSFHeader *);
 
-#define ENMSG_USE_LENGTH 1
-
 extern bool_t xdr_encodeMsg(XDR *, char *, struct LSFHeader *,
-			     bool_t (*)(), int, struct lsfAuth *);
-
-
-
+                            bool_t (*)(), int, struct lsfAuth *);
 
 extern bool_t xdr_arrayElement(XDR *, char *, struct LSFHeader *,
 				bool_t (*)(), ...);

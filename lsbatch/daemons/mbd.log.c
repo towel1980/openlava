@@ -186,7 +186,7 @@ init_log(void)
 
     if (sbuf.st_uid != managerId) {
         ls_syslog(LOG_ERR, "\
-%s: Log directory <%s> not owned by LSF administrator <%s/%d> (owner ID is %d)",
+%s: Log directory %s not owned by LSF administrator: %s/%d (directory owner ID is %d)",
                   fname,
                   dirbuf,
                   lsbManager,

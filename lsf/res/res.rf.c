@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include "../lib/lib.h"
 #include "../lib/lib.rf.h"
 #include "res.h"
 #include "resout.h"
@@ -65,8 +66,7 @@ rfServ_(int acceptSock)
 
     sock = accept(acceptSock, (struct sockaddr *)&from, &fromLen);
     if (sock < 0) {
-        ls_errlog(stderr, I18N_FUNC_S_FAIL_M, fname, "accept",
-                  acceptSock);
+        ls_errlog(stderr, I18N_FUNC_FAIL_MM, fname, "readDecodeHdr_");
         closesocket(acceptSock);
         return;
     }

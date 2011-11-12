@@ -1,4 +1,4 @@
-/* $Id: resout.h 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,68 +27,68 @@
 
 #if !defined(TIOCGWINSZ)
 struct winsize {
-    unsigned short  ws_row;     
-    unsigned short  ws_col;     
-    unsigned short  ws_xpixel;  
-    unsigned short  ws_ypixel;  
+    unsigned short  ws_row;
+    unsigned short  ws_col;
+    unsigned short  ws_xpixel;
+    unsigned short  ws_ypixel;
 };
-#endif 
+#endif
 
 typedef enum {
-    RESE_OK,                
+    RESE_OK,
     RESE_SIGCHLD,
-    RESE_NOMORECONN,       
-    RESE_BADUSER,          
-    RESE_ROOTSECURE,       
-    RESE_DENIED,           
-    RESE_REQUEST,          
-    RESE_CALLBACK,         
-    RESE_NOMEM,            
-    RESE_FATAL,            
-    RESE_PTYMASTER,        
-    RESE_PTYSLAVE,         
-    RESE_SOCKETPAIR,       
-    RESE_FORK,             
-    RESE_REUID,            
-    RESE_CWD,              
-    RESE_INVCHILD,         
-    RESE_KILLFAIL,         
-    RESE_VERSION,          
-    RESE_DIRW,             
-    RESE_NOLSF_HOST,       
-    RESE_NOCLIENT,         
-    RESE_RUSAGEFAIL,       
-    RESE_RES_PARENT,       
-    RESE_FILE,             
-    RESE_NOVCL,            
-    RESE_NOSYM,            
-    RESE_VCL_INIT,         
-    RESE_VCL_SPAWN,        
-    RESE_EXEC,             
-    RESE_ERROR_LAST,       
-    RESE_MLS_INVALID,	   
-    RESE_MLS_CLEARANCE,	   
-    RESE_MLS_DOMINATE,	   
-    RESE_MLS_RHOST,	   
+    RESE_NOMORECONN,
+    RESE_BADUSER,
+    RESE_ROOTSECURE,
+    RESE_DENIED,
+    RESE_REQUEST,
+    RESE_CALLBACK,
+    RESE_NOMEM,
+    RESE_FATAL,
+    RESE_PTYMASTER,
+    RESE_PTYSLAVE,
+    RESE_SOCKETPAIR,
+    RESE_FORK,
+    RESE_REUID,
+    RESE_CWD,
+    RESE_INVCHILD,
+    RESE_KILLFAIL,
+    RESE_VERSION,
+    RESE_DIRW,
+    RESE_NOLSF_HOST,
+    RESE_NOCLIENT,
+    RESE_RUSAGEFAIL,
+    RESE_RES_PARENT,
+    RESE_FILE,
+    RESE_NOVCL,
+    RESE_NOSYM,
+    RESE_VCL_INIT,
+    RESE_VCL_SPAWN,
+    RESE_EXEC,
+    RESE_ERROR_LAST,
+    RESE_MLS_INVALID,
+    RESE_MLS_CLEARANCE,
+    RESE_MLS_DOMINATE,
+    RESE_MLS_RHOST,
 } resAck;
 
 typedef enum {
-    RES_CONNECT = 1 + VENDOR_CODE,
-    RES_SERVER  = 2 + VENDOR_CODE,
-    RES_EXEC    = 3 + VENDOR_CODE,
-    RES_SETENV  = 4 + VENDOR_CODE,
-    RES_INITTTY = 5 + VENDOR_CODE,
-    RES_RKILL   = 6 + VENDOR_CODE,
-    RES_CONTROL = 7 + VENDOR_CODE,
-    RES_CHDIR   = 8 + VENDOR_CODE,
-    RES_GETPID  = 9 + VENDOR_CODE,
-    RES_RUSAGE  =10 + VENDOR_CODE,
-    RES_NONRES  =11 + VENDOR_CODE,
-    RES_DEBUGREQ  =12 + VENDOR_CODE,
-    RES_ACCT  =13 + VENDOR_CODE,
-    RES_SETENV_ASYNC = 14 + VENDOR_CODE,
-    RES_INITTTY_ASYNC = 15 + VENDOR_CODE, 
-    RES_RMI  =99 + VENDOR_CODE
+    RES_CONNECT = 1,
+    RES_SERVER  = 2,
+    RES_EXEC    = 3,
+    RES_SETENV  = 4,
+    RES_INITTTY = 5,
+    RES_RKILL   = 6,
+    RES_CONTROL = 7,
+    RES_CHDIR   = 8,
+    RES_GETPID  = 9,
+    RES_RUSAGE  = 10,
+    RES_NONRES  = 11,
+    RES_DEBUGREQ  =12,
+    RES_ACCT  = 13,
+    RES_SETENV_ASYNC = 14,
+    RES_INITTTY_ASYNC = 15,
+    RES_RMI  = 99
 } resCmd;
 
 
@@ -100,8 +100,8 @@ struct resConnect {
 struct resCmdBill {
     u_short retport;
     int rpid;
-    int filemask;    
-    int priority;		
+    int filemask;
+    int priority;
     int options;
     char cwd[MAXPATHLEN];
     char **argv;
@@ -117,7 +117,7 @@ struct resSetenv {
 
 struct resRKill {
     int rid;
-    int whatid;     
+    int whatid;
     int signal;
 };
 
@@ -126,8 +126,8 @@ struct resChdir {
 };
 
 struct resControl {
-    int opCode;              
-    int data;             
+    int opCode;
+    int data;
 };
 
 struct resStty {
@@ -144,49 +144,49 @@ struct resPid {
 #define RES_RPID_KEEPPID 0x01
 
 struct resRusage {
-    int    rid;              
-    int    whatid;           
-    int    options;          
+    int    rid;
+    int    whatid;
+    int    options;
 };
 
 typedef struct relaybuf {
     char       buf[BUFSIZ + sizeof(struct LSFHeader)];
-    char       *bp;               
-    int        bcount;            
+    char       *bp;
+    int        bcount;
 } RelayBuf;
 
-#define LINE_BUFSIZ 4096 
+#define LINE_BUFSIZ 4096
 
 typedef struct relaylinebuf {
     char       buf[LINE_BUFSIZ + sizeof(struct LSFHeader)];
-    char       *bp;               
-    int        bcount;            
+    char       *bp;
+    int        bcount;
 } RelayLineBuf;
 
 typedef struct channel {
-        int        fd;            
-        RelayBuf   *rbuf;         
-        int        rcount;        
-        RelayBuf   *wbuf;         
-        int        wcount;        
+        int        fd;
+        RelayBuf   *rbuf;
+        int        rcount;
+        RelayBuf   *wbuf;
+        int        wcount;
 } Channel;
 
 typedef struct nioschannel {
-        int            fd;        
-        RelayBuf       *rbuf;     
-        int            rcount;    
-        RelayLineBuf   *wbuf;     
-        int            wcount;    
-        int            opCode;    
+        int            fd;
+        RelayBuf       *rbuf;
+        int            rcount;
+        RelayLineBuf   *wbuf;
+        int            wcount;
+        int            opCode;
 } niosChannel;
 
 
 typedef struct outputchannel {
-    int             fd;         
-    int             endFlag;    
-    int             retry;      
-    int             bytes;      
-    RelayLineBuf    buffer;     
+    int             fd;
+    int             endFlag;
+    int             retry;
+    int             bytes;
+    RelayLineBuf    buffer;
 } outputChannel;
 
 
@@ -200,9 +200,9 @@ struct niosConnect {
 
 struct niosStatus {
     resAck ack;
-    
+
     struct sigStatusUsage {
-	int ss; 
+	int ss;
 	struct rusage ru;
     } s;
 };
@@ -223,7 +223,7 @@ struct resSignal {
 				(int)((*(int *)&x)&0xFF00) != 0)
 #define LS_WIFSIGNALED(x)       ((int)((*(int *)&x)&0xFF) > 0 && \
                                     (int)((*(int *)&x)&0xFF00) == 0)
-#else 
+#else
 #define SETTERMSIG(x,y) (x).w_termsig = (y)
 #define SETSTOPSIG(x,y) (x).w_stopsig = (y)
 #define LS_WTERMSIG WTERMSIG
@@ -232,8 +232,8 @@ struct resSignal {
 #define LS_WSTOPSIG WSTOPSIG
 #define LS_WIFSTOPPED WIFSTOPPED
 #define LS_WIFSIGNALED WIFSIGNALED
-#endif 
+#endif
 
 #include "../lib/lib.xdrres.h"
 
-#endif 
+#endif

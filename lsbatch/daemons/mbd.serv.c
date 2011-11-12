@@ -47,22 +47,18 @@ static void freeJobInfoReply (struct jobInfoReply *);
 static void freeShareResourceInfoReply (struct  lsbShareResourceInfoReply *);
 static int xdrsize_QueueInfoReply(struct queueInfoReply * );
 extern void closeSession(int);
-extern int getHdrReserved(struct LSFHeader *);
-extern void setHdrReserved(struct LSFHeader *, unsigned int);
-extern int cpHostent(struct hostent *, const struct hostent *);
-extern void freeHp(struct hostent *);
 
 int
 do_submitReq(XDR *xdrs,
              int chfd,
              struct sockaddr_in *from,
              char *hostName,
-              struct LSFHeader *reqHdr,
+             struct LSFHeader *reqHdr,
              struct sockaddr_in *laddr,
-              struct lsfAuth *auth,
+             struct lsfAuth *auth,
              int *schedule,
              int dispatch,
-              struct jData **jobData)
+             struct jData **jobData)
 {
     static char             fname[] = "do_submitReq";
     static struct submitMbdReply submitReply;
@@ -345,11 +341,9 @@ packJgrpInfo(struct jgTreeNode * jgNode, int remain, char **replyBuf, int schedu
 
     request_buf = (char *) my_malloc(len, "packJgrpInfo");
     xdrmem_create(&xdrs, request_buf, len, XDR_ENCODE);
-
-    setHdrReserved(&hdr, remain);
-
-
+    hdr.reserved = remain;
     hdr.version = version;
+
     if (!xdr_encodeMsg(&xdrs, (char *) &jobInfoReply,
                        &hdr, xdr_jobInfoReply, 0, NULL)) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname,
@@ -700,11 +694,9 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
 
 
     if ( jgNode->nodeType == JGRP_NODE_ARRAY ) {
-        for (i=0; i<NUM_JGRP_COUNTERS; i++)
+        for (i = 0; i < NUM_JGRP_COUNTERS; i++)
             jobInfoReply.counter[i] = ARRAY_DATA(jgNode)->counts[i];
     }
-
-
 
     jobInfoReply.jRusageUpdateTime = jobData->jRusageUpdateTime;
 
@@ -717,10 +709,7 @@ packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
     FREEUP (request_buf);
     request_buf = (char *) my_malloc(len, "packJobInfo");
     xdrmem_create(&xdrs, request_buf, len, XDR_ENCODE);
-
-    setHdrReserved(&hdr, remain);
-
-
+    hdr.reserved = remain;
     hdr.version = version;
 
     if (!xdr_encodeMsg(&xdrs, (char *) &jobInfoReply,
@@ -1726,39 +1715,44 @@ do_mbdShutDown (XDR * xdrs, int s, struct sockaddr_in * from, char *hostName,
 }
 
 int
-do_reconfigReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
-                struct LSFHeader *reqHdr)
+do_reconfigReq(XDR *xdrs,
+               int chfd,
+               struct sockaddr_in *from,
+               char *hostName,
+               struct LSFHeader *reqHdr)
 {
-    static char             fname[] = "do_reconfigReq()";
-    char                    reply_buf[MSGSIZE];
-    XDR                     xdrs2;
-    struct LSFHeader        replyHdr;
+    char reply_buf[MSGSIZE];
+    XDR xdrs2;
+    struct LSFHeader replyHdr;
 
     xdrmem_create(&xdrs2, reply_buf, MSGSIZE, XDR_ENCODE);
     replyHdr.opCode = LSBE_NO_ERROR;
     replyHdr.length = 0;
+
     if (!xdr_LSFHeader(&xdrs2, &replyHdr)) {
         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "xdr_LSFHeader",
                   replyHdr.opCode);
     }
-    if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0)
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "chanWrite_",
-                  XDR_GETPOS(&xdrs2));
+
+    if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {
+        ls_syslog(LOG_ERR, "\
+%s: chanWrite() %dbytes failed %m", __func__, XDR_GETPOS(&xdrs2));
+    }
+
     xdr_destroy(&xdrs2);
 
-    if ( getHdrReserved(reqHdr) == MBD_RESTART ) {
-        ls_syslog(LOG_DEBUG, I18N(7914,
-                                  "do_reconfigReq: restart a new mbatchd")); /* catgets 7914 */
+    if (reqHdr->reserved == MBD_RESTART ) {
+        ls_syslog(LOG_INFO, "%s: restart a new mbatchd", __func__);
         millisleep_(3000);
         mbdDie(MASTER_RECONFIG);
-    } else {
-        ls_syslog(LOG_DEBUG, I18N(7915,
-                                  "do_reconfigReq: reread the configuration files")); /* catgets 7915 */
-        if (mSchedStage != M_STAGE_REPLAY)
-            mbdReConf(RECONFIG_CONF);
     }
-    return 0;
 
+    ls_syslog(LOG_DEBUG, "\
+%s: reread the configuration files", __func__);
+    if (mSchedStage != M_STAGE_REPLAY)
+        mbdReConf(RECONFIG_CONF);
+
+    return 0;
 }
 
 int

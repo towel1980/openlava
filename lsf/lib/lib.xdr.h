@@ -34,7 +34,5 @@ extern bool_t xdr_lsfLimit (XDR *, struct lsfLimit *, struct LSFHeader *);
 extern bool_t xdr_portno (XDR *, u_short *);
 extern bool_t xdr_address (XDR *, u_int *);
 extern int getXdrStrlen (char *);
-extern int getHdrReserved(struct LSFHeader *hdr);
-extern void setHdrReserved(struct LSFHeader *hdr, unsigned int val);
 
-#endif 
+#endif

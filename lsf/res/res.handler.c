@@ -1,4 +1,4 @@
-/* $Id: res.handler.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -153,9 +153,6 @@ static bool_t    resKeepPid = FALSE;
 static struct listSet   *pidSet     = NULL;
 
 static void   cleanUpKeptPids(void);
-
-extern int getHdrReserved(struct LSFHeader *);
-extern void setHdrReserved(struct LSFHeader *, unsigned int);
 
 void
 doacceptconn(void)
@@ -1460,7 +1457,7 @@ static void
 resTaskMsg(struct client *cli_ptr, struct LSFHeader *msgHdr,
            char *hdrBuf, char *dataBuf, XDR *xdrs)
 {
-    int rempid = getHdrReserved(msgHdr);
+    int rempid = msgHdr->reserved;
     int cc;
     bool_t intFlag;
 
@@ -3452,7 +3449,7 @@ notify_client(int s, int rpid, resAck ack, struct sigStatusUsage *sigStatRu)
         reqBufSize = sizeof(struct LSFHeader) + sizeof(st.ack);
     }
 
-    setHdrReserved(&reqHdr, rpid);
+    reqHdr.reserved = rpid;
 
     if ((rc = writeEncodeMsg_(s, reqBuf, reqBufSize, &reqHdr,
                               (char *) &st, NB_SOCK_WRITE_FIX, xdr_niosStatus, 0)) < 0) {
@@ -4158,7 +4155,7 @@ eof_to_nios(struct child *chld)
 
     reqHdr.opCode = RES2NIOS_EOF;
     reqHdr.version = OPENLAVA_VERSION;
-    setHdrReserved(&reqHdr, chld->rpid);
+    reqHdr.reserved = chld->rpid;
 
     rc = writeEncodeHdr_(conn2NIOS.sock.fd, &reqHdr, NB_SOCK_WRITE_FIX);
     if (rc < 0) {
@@ -5494,7 +5491,7 @@ donios_sock(struct child **children, int op)
                 }
                 xdr_destroy(&xdrs);
 
-                rtag = getHdrReserved(&msgHdr);
+                rtag = msgHdr.reserved;
 
                 switch(msgHdr.opCode) {
                     case NIOS2RES_STDIN:
@@ -5726,17 +5723,12 @@ donios_sock(struct child **children, int op)
                 reqHdr.opCode = conn2NIOS.sock.opCode;
                 reqHdr.version = OPENLAVA_VERSION;
                 reqHdr.length = conn2NIOS.sock.wbuf->bcount;
-                setHdrReserved(&reqHdr, conn2NIOS.wtag);
-
-
-
+                reqHdr.reserved = conn2NIOS.wtag;
                 conn2NIOS.sock.wbuf->bp -= LSF_HEADER_LEN;
-
 
                 if (!xdr_packLSFHeader(conn2NIOS.sock.wbuf->bp, &reqHdr)) {
                     ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_packLSFHeader");
-
-                    for (i=0; i<child_cnt; i++)
+                    for (i = 0; i < child_cnt; i++)
                         if (children[i]->rpid == conn2NIOS.wtag) {
                             unlink_child(children[i]);
                             break;
@@ -5905,18 +5897,18 @@ notify_nios(int retsock, int rpid, int opCode)
 
     reqHdr.opCode = opCode;
     reqHdr.version = OPENLAVA_VERSION;
-    setHdrReserved(&reqHdr, rpid);
+    reqHdr.reserved = rpid;
     reqHdr.length = 0;
 
     rc = writeEncodeHdr_(retsock, &reqHdr, NB_SOCK_WRITE_FIX);
     if (rc < 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "writeEncodeHdr_");
         if (rpid == 0) {
-            for (i=0; i<child_cnt; i++)
+            for (i = 0; i < child_cnt; i++)
                 unlink_child(children[i]);
         }
         else if (rpid > 0) {
-            for (i=0; i<child_cnt; i++) {
+            for (i = 0; i < child_cnt; i++) {
                 if (children[i]->rpid == rpid) {
                     unlink_child(children[i]);
                     break;
