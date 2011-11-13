@@ -2422,8 +2422,7 @@ notify_task(int tid, int opCode)
     reqHdr.opCode = opCode;
     reqHdr.version = OPENLAVA_VERSION;
     reqHdr.length = 0;
-    reqHdr.reserved0 = tid;
-    reqHdr.reserved0;
+    reqHdr.reserved = tid;
 
     if (conn[connIndex].rpid > 0 && conn[connIndex].sock.fd != -1) {
         xdrmem_create(&xdrs, (char *) &buf, sizeof(struct LSFHeader),

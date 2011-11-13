@@ -31,10 +31,6 @@ extern int _lsb_recvtimeout;
 
 static int mbdSock = -1;
 
-extern int getHdrReserved(struct LSFHeader *);
-
-
-
 int
 lsb_openjobinfo (LS_LONG_INT jobId, char *jobName, char *userName,
                  char *queueName, char *hostName, int options)
@@ -215,7 +211,6 @@ lsb_readjobinfo(int *more)
     static struct jobInfoEnt jobInfo;
     static struct submitReq submitReq;
     static int first = TRUE;
-
     static int npids = 0;
     static struct pidInfo  *pidInfo = NULL;
     static int npgids = 0;
@@ -394,8 +389,6 @@ lsb_readjobinfo(int *more)
     npgids = jobInfo.runRusage.npgids;
     pgid = jobInfo.runRusage.pgid;
 
-
-
     if (jobInfoReply.runRusage.npids > 0) {
         FREEUP(jobInfoReply.runRusage.pidInfo);
         jobInfoReply.runRusage.npids = 0;
@@ -407,10 +400,9 @@ lsb_readjobinfo(int *more)
     }
 
     if (more)
-	*more = getHdrReserved(&hdr);
+	*more = hdr.reserved;
 
     return &jobInfo;
-
 }
 
 

@@ -1730,8 +1730,9 @@ do_reconfigReq(XDR *xdrs,
     replyHdr.length = 0;
 
     if (!xdr_LSFHeader(&xdrs2, &replyHdr)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "xdr_LSFHeader",
-                  replyHdr.opCode);
+        ls_syslog(LOG_ERR, "\
+%s: decode header for operation %d from %s failed",
+                  __func__, replyHdr.opCode, sockAdd2Str_(from));
     }
 
     if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {

@@ -37,21 +37,11 @@
 
 #define   NL_SETN     13
 
-extern struct hostent *my_gethostbyname(char *name);
-
-
-
 extern int _lsb_conntimeout;
 extern int _lsb_recvtimeout;
 extern int _lsb_fakesetuid;
-
-
 static int mbdTries(void);
-
 int lsb_mbd_version = -1;
-extern int getHdrReserved(struct LSFHeader *);
-
-
 
 #define MAXMSGLEN     (1<<24)
 
@@ -568,13 +558,10 @@ getMasterName(void)
 }
 
 
-
-
 int
 readNextPacket(char **msgBuf, int timeout, struct LSFHeader *hdr,
 	       int serverSock)
 {
-
     struct Buffer replyBuf;
     int cc;
 
@@ -595,7 +582,8 @@ readNextPacket(char **msgBuf, int timeout, struct LSFHeader *hdr,
 	return(-1);
     }
     *msgBuf = replyBuf.data;
-    return (getHdrReserved(hdr));
+
+    return hdr->reserved;
 }
 
 void

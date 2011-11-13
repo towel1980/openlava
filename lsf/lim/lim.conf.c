@@ -2965,8 +2965,8 @@ addHost(struct clusterNode *clPtr,
 
     if ((hp = Gethostbyname_(hEntPtr->hostName)) == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: %s(%d): Invalid hostname %s in section host. Ignoring host",
-                  __func__, fileName, *LineNumPtr, hEntPtr->hostName);
+%s: Invalid hostname %s in section host. Ignoring host",
+                  __func__, hEntPtr->hostName);
         return NULL;
     }
 

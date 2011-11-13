@@ -302,6 +302,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     for (;;) {
         sigset_t oldMask;
         sigset_t newMask;
+        int nReady;
 
         sockmask.rmask = allMask;
         if (pimPid == -1)
@@ -310,8 +311,8 @@ Reading configuration from %s/lsf.conf\n", env_dir);
         ls_syslog(LOG_DEBUG2, "\
 %s: Before select: timer %dsec", __func__, timer.tv_sec);
 
-        cc = chanSelect_(&sockmask, &chanmask, &timer);
-        if (cc < 0) {
+        nReady = chanSelect_(&sockmask, &chanmask, &timer);
+        if (nReady < 0) {
             if (errno != EINTR)
                 ls_syslog(LOG_ERR, "\
 %s: chanSelect() failed %M", __func__);
@@ -348,10 +349,9 @@ Reading configuration from %s/lsf.conf\n", env_dir);
         if (alarmed) {
             periodic(kernelPerm);
             sigprocmask(SIG_SETMASK, &oldMask, NULL);
-            continue;
         }
 
-        if (cc <= 0) {
+        if (nReady <= 0) {
             sigprocmask(SIG_SETMASK, &oldMask, NULL);
             continue;
         }
@@ -380,7 +380,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
             }
 
             xdrmem_create(&xdrs, reqBuf, MSGSIZE, XDR_DECODE);
-            initLSFHeader_(&reqHdr);
+            cc = XDR_GETPOS(&xdrs);
             if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
                 ls_syslog(LOG_ERR, "\
 %s: failed to decode xdr_LSFHeader %M", __func__);
@@ -388,7 +388,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
                 sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 continue;
             }
-
+            cc = XDR_GETPOS(&xdrs);
             limReqCode = reqHdr.opCode;
             limReqCode &= 0xFFFF;
 
@@ -658,7 +658,7 @@ initAndConfig(int checkMode, int *kernelPerm)
     if (chanInit_() < 0)
         lim_Exit("chanInit_");
 
-    for(i = 0; i < 2*MAXCLIENTS; i++)
+    for(i = 0; i < MAXCLIENTS; i++)
         clientMap[i] = NULL;
 
     {

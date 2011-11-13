@@ -22,24 +22,61 @@
 #include "lib.xdr.h"
 #include "lproto.h"
 
+/* encodeHdr()
+ * Pack the header into 16 4 unsigned integers,
+ * if we don't pack xdr would align the shorts
+ * into int and we 24 bytes instead of 16. Big deal?
+ */
+static void
+encodeHdr(unsigned int *word1,
+          unsigned int *word2,
+          unsigned int *word3,
+          unsigned int *word4,
+          struct LSFHeader *header)
+{
+    *word1 = header->refCode;
+    *word1 = *word1 << 16;
+    *word1 = *word1 | (header->opCode & 0x0000FFFF);
+    *word2 = header->length;
+    *word3 = header->version;
+    *word3 = *word3 << 16;
+    *word3 = *word3 | (header->reserved & 0x0000FFFF);
+    *word4 = header->reserved0;
+}
+
 bool_t
 xdr_LSFHeader(XDR *xdrs, struct LSFHeader *header)
 {
-    /* openlava 2.0 header
-     * XDR will pack this into 16 bytes so
-     * we do not waste any space.
+    /* openlava 2.0 header encode and
+     * decode operations.
      */
-    if (! xdr_u_short(xdrs, &header->refCode)
-        || ! xdr_u_short(xdrs, &header->opCode)
-        || ! xdr_u_int(xdrs, &header->length)
-        || ! xdr_u_short(xdrs, &header->version)
-        || ! xdr_u_short(xdrs, &header->reserved)
-        || ! xdr_u_int(xdrs, &header->reserved0)) {
+    unsigned int word1;
+    unsigned int word2;
+    unsigned int word3;
+    unsigned int word4;
+
+    if (xdrs->x_op == XDR_ENCODE) {
+        encodeHdr(&word1, &word2, &word3, &word4, header);
+    }
+
+    if (!(xdr_u_int(xdrs, &word1)
+          || !xdr_u_int(xdrs, &word2)
+          || !xdr_u_int(xdrs, &word3)
+          || !xdr_u_int(xdrs, &word4)))
         return FALSE;
+
+    if (xdrs->x_op == XDR_DECODE) {
+        header->refCode = word1 >> 16;
+        header->opCode = word1 & 0xFFFF;
+        header->length = word2;
+        header->version = word3 >> 16;
+        header->reserved0 = word3 & 0xFFFF;
+        header->reserved = word4;
     }
 
     return TRUE;
 }
+
 
 bool_t
 xdr_packLSFHeader (char *buf, struct LSFHeader *header)

@@ -71,7 +71,7 @@
 #define KEEPTIME   2
 
 #define MAXCANDHOSTS  10
-#define MAXCLIENTS   32
+#define MAXCLIENTS   64
 
 #define WARNING_ERR   EXIT_WARNING_ERROR
 

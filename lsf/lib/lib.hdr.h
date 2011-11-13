@@ -37,6 +37,9 @@ struct LSFHeader {
     unsigned int reserved0;
 };
 
+/* always use this macro to size up memory buffers
+ * for protocol header.
+ */
 #define LSF_HEADER_LEN (sizeof(struct LSFHeader))
 
 struct stringLen {
