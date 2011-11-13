@@ -937,17 +937,18 @@ chanSetMode_(int chfd, int mode)
 {
     if (chfd < 0 || chfd > chanMaxSize) {
         lserrno = LSE_BAD_CHAN;
-        return(-1);
+        return -1;
     }
 
-    if (channels[chfd].state == CH_FREE ||
-        channels[chfd].handle == INVALID_HANDLE) {
+    if (channels[chfd].state == CH_FREE
+        || channels[chfd].handle == INVALID_HANDLE) {
         lserrno = LSE_BAD_CHAN;
-        return(-1);
+        return -1;
     }
 
     if (mode == CHAN_MODE_NONBLOCK) {
-        if(io_nonblock_(channels[chfd].handle) < 0) {
+
+        if (io_nonblock_(channels[chfd].handle) < 0) {
             lserrno = LSE_SOCK_SYS;
             return(-1);
         }
@@ -959,14 +960,16 @@ chanSetMode_(int chfd, int mode)
             lserrno = LSE_MALLOC;
             return(-1);
         }
-    } else {
-        if(io_block_(channels[chfd].handle) < 0) {
-            lserrno = LSE_SOCK_SYS;
-            return(-1);
-        }
-    }
-    return(0);
 
+        return 0;
+    }
+
+    if (io_block_(channels[chfd].handle) < 0) {
+        lserrno = LSE_SOCK_SYS;
+        return(-1);
+    }
+
+    return 0;
 }
 
 static void
@@ -977,7 +980,7 @@ doread(int chfd, struct Masks *chanmask)
 
     if (channels[chfd].recv->forw == channels[chfd].recv) {
         rcvbuf = newBuf();
-        if(!rcvbuf) {
+        if (!rcvbuf) {
             FD_SET(chfd, &(chanmask->emask));
             channels[chfd].chanerr = LSE_MALLOC;
             return;
@@ -997,7 +1000,7 @@ doread(int chfd, struct Masks *chanmask)
         rcvbuf->pos = 0;
     }
 
-    if(rcvbuf->pos == rcvbuf->len) {
+    if (rcvbuf->pos == rcvbuf->len) {
         FD_SET(chfd, &(chanmask->rmask));
         return;
     }
@@ -1006,13 +1009,10 @@ doread(int chfd, struct Masks *chanmask)
 
     cc = read(channels[chfd].handle, rcvbuf->data + rcvbuf->pos,
               rcvbuf->len - rcvbuf->pos);
-
     if (cc == 0 && errno == EINTR) {
-
-        ls_syslog(LOG_ERR,I18N(5004,"\
-doread: Hmm... looks like read(2) has returned EOF when interrupted by a signal, please report"));/*catgets 5004 */
-
-
+        ls_syslog(LOG_ERR, "\
+%s: looks like read() has returned EOF when interrupted by a signal",
+                  __func__);
         return;
     }
 
@@ -1026,13 +1026,16 @@ doread: Hmm... looks like read(2) has returned EOF when interrupted by a signal,
 
     rcvbuf->pos += cc;
 
-    if ((rcvbuf->len == LSF_HEADER_LEN) && (rcvbuf->pos == rcvbuf->len )) {
+    if ((rcvbuf->len == LSF_HEADER_LEN)
+        && (rcvbuf->pos == rcvbuf->len )) {
         XDR xdrs;
         struct LSFHeader hdr;
         char *newdata;
 
-        xdrmem_create(&xdrs, rcvbuf->data, sizeof(struct LSFHeader)
-                      , XDR_DECODE);
+        xdrmem_create(&xdrs,
+                      rcvbuf->data,
+                      sizeof(struct LSFHeader),
+                      XDR_DECODE);
         if (!xdr_LSFHeader(&xdrs, &hdr)) {
             FD_SET(chfd, &(chanmask->emask));
             channels[chfd].chanerr = CHANE_BADHDR;
@@ -1051,7 +1054,6 @@ doread: Hmm... looks like read(2) has returned EOF when interrupted by a signal,
             }
             rcvbuf->data = newdata;
         }
-
         xdr_destroy(&xdrs);
     }
 
@@ -1060,7 +1062,6 @@ doread: Hmm... looks like read(2) has returned EOF when interrupted by a signal,
     }
 
     return;
-
 }
 
 static void
@@ -1074,7 +1075,8 @@ dowrite(int chfd, struct Masks *chanmask)
     else
         sendbuf = channels[chfd].send->forw;
 
-    cc = write(channels[chfd].handle, sendbuf->data + sendbuf->pos,
+    cc = write(channels[chfd].handle,
+               sendbuf->data + sendbuf->pos,
                sendbuf->len - sendbuf->pos);
     if (cc < 0 && BAD_IO_ERR(errno)){
         FD_SET(chfd, &(chanmask->emask));

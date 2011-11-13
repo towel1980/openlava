@@ -59,10 +59,10 @@ xdr_LSFHeader(XDR *xdrs, struct LSFHeader *header)
         encodeHdr(&word1, &word2, &word3, &word4, header);
     }
 
-    if (!(xdr_u_int(xdrs, &word1)
-          || !xdr_u_int(xdrs, &word2)
-          || !xdr_u_int(xdrs, &word3)
-          || !xdr_u_int(xdrs, &word4)))
+    if (! xdr_u_int(xdrs, &word1)
+        || !xdr_u_int(xdrs, &word2)
+        || !xdr_u_int(xdrs, &word3)
+        || !xdr_u_int(xdrs, &word4))
         return FALSE;
 
     if (xdrs->x_op == XDR_DECODE) {
