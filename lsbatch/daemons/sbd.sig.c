@@ -595,15 +595,9 @@ jobsig (struct jobCard *jp, int sig, int forkSig)
     char		Msgbuf[MSGSIZE];
     int			msgStat;
 
-    if (logclass & (LC_TRACE | LC_SCHED | LC_EXEC)) {
-        if (sig == 0)
-            ls_syslog(LOG_DEBUG3, "%s: Send signal %d to job %s", fname,
-                                   sig, lsb_jobid2str(jp->jobSpecs.jobId));
-        else
-            ls_syslog(LOG_DEBUG2, "%s: Send signal %d to job %s", fname,
-                                   sig, lsb_jobid2str(jp->jobSpecs.jobId));
-    }
-
+    ls_syslog(LOG_DEBUG, "\
+%s: Send signal %d to job %s", fname,
+              sig, lsb_jobid2str(jp->jobSpecs.jobId));
 
     if ( (jp->regOpFlag & REG_SIGNAL) && sig ) {
 	pmMsgHdr.usrId = jp->jobSpecs.userId;
@@ -714,15 +708,13 @@ mykillpg(struct jobCard *jp, int sig)
     int status;
     int fileStatus;
     char jobFileName[320];
+    static int cc;
 
-    if (logclass & LC_SIGNAL)
-	ls_syslog(LOG_DEBUG,
-		  "mykillpg: Job <%s> pid %d pgid %d resstartpid %d sig %d",
-		  lsb_jobid2str(jp->jobSpecs.jobId), jp->jobSpecs.jobPid,
-		  jp->jobSpecs.jobPGid, jp->jobSpecs.restartPid, sig);
-
-
-
+    ++cc;
+    ls_syslog(LOG_DEBUG, "\
+mykillpg: %d Job <%s> pid %d pgid %d resstartpid %d sig %d", cc,
+              lsb_jobid2str(jp->jobSpecs.jobId), jp->jobSpecs.jobPid,
+              jp->jobSpecs.jobPGid, jp->jobSpecs.restartPid, sig);
 
     if (jp->jobSpecs.jobPGid == 0) {
 
@@ -1834,7 +1826,7 @@ exeChkpnt(struct jobCard *jp, int chkFlags, char * exitFile)
         if (WIFEXITED(status)) {
 	    if ( WEXITSTATUS(status) != 0 ) {
                 sprintf(msg, _i18n_msg_get(ls_catd , NL_SETN, 922,
-		        "%s: job <%s> exited with the exit code %d with <%s>"), /* catgets 922 */
+                                           "%s: job <%s> exited with the exit code %d with <%s>"), /* catgets 922 */
 		        fname, lsb_jobid2str(jp->jobSpecs.jobId),
                         WEXITSTATUS(status), errMsg);
 	        sprintf(errMsg, msg);

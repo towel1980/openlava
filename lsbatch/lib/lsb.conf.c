@@ -4427,27 +4427,35 @@ do_Queues (struct lsConf *conf, char *fname, int *lineNum, struct lsInfo *info, 
 
 	if (keylist[QKEY_PRE_POST_EXEC_USER].val != NULL
 	    && strcmp(keylist[QKEY_PRE_POST_EXEC_USER].val, "")) {
-	    if (strlen (keylist[QKEY_PRE_POST_EXEC_USER].val) >= MAXLINELEN) {
-		ls_syslog(LOG_ERR, I18N(5352,
-					"%s: User name %s in section Queue ending at line %d: PRE_POST_EXEC_USER of the queue <%s> is too long <%s>; ignoring"),
-                          pname, fname, *lineNum, queue.queue, keylist[QKEY_PRE_POST_EXEC_USER].val); /* catgets 5352 */
-		lsberrno = LSBE_CONF_WARNING;
-	    } else {
-		queue.prepostUsername = putstr_ (keylist[QKEY_PRE_POST_EXEC_USER].val);
+
+            if (strlen(keylist[QKEY_PRE_POST_EXEC_USER].val) >= MAXLINELEN) {
+		ls_syslog(LOG_ERR,  "\
+%s: User name %s in section Queue ending at line %d: PRE_POST_EXEC_USER of the queue <%s> is too long <%s>; ignoring", __func__, fname,
+                          *lineNum, queue.queue,
+                          keylist[QKEY_PRE_POST_EXEC_USER].val);
+                lsberrno = LSBE_CONF_WARNING;
+
+	    } else if (strcasecmp("root",
+                                  keylist[QKEY_PRE_POST_EXEC_USER].val) == 0) {
+                ls_syslog(LOG_ERR, "\
+%s: root cannot execute PRE_POST_EXEC programs, PRE_POST_EXEC_USER ignored.", __func__);
+                lsberrno = LSBE_CONF_WARNING;
+            } else {
+                queue.prepostUsername
+                = putstr_(keylist[QKEY_PRE_POST_EXEC_USER].val);
 		if (queue.prepostUsername == NULL) {
-		    ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, pname,
-			      "malloc",
-			      strlen(keylist[QKEY_PRE_POST_EXEC_USER].val)+1);
+		    ls_syslog(LOG_ERR, "\
+%s: strdup(%s) failed %m", keylist[QKEY_PRE_POST_EXEC_USER].val);
 		    lsberrno = LSBE_NO_MEM;
-		    freekeyval (keylist);
-		    freeQueueInfo ( &queue );
-		    return (FALSE);
+		    freekeyval(keylist);
+		    freeQueueInfo(&queue );
+		    return FALSE;
 		}
-	    }
-	}
+            }
+        }
 
     	if (keylist[QKEY_PRE_EXEC].val != NULL
-	   	&& strcmp(keylist[QKEY_PRE_EXEC].val, "")) {
+            && strcmp(keylist[QKEY_PRE_EXEC].val, "")) {
 	    if (strlen (keylist[QKEY_PRE_EXEC].val) >= MAXLINELEN) {
                 ls_syslog(LOG_ERR, I18N(5344,
 	"%s: File %s in section Queue ending at line %d: PRE_EXEC of the queue <%s> is too long <%s>; ignoring"), pname, fname, *lineNum, queue.queue, keylist[QKEY_PRE_EXEC].val); /* catgets 5344 */
