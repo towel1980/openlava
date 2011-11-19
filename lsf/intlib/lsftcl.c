@@ -16,12 +16,8 @@
  *
  */
 
-#include "intlib.h"
-#include "resreq.h"
-#include <tcl.h>
-#include <netdb.h>
 #include "lsftcl.h"
-#include "../lib/lproto.h"
+
 #define NL_SETN     22
 
 static struct tclHostData   *hPtr;

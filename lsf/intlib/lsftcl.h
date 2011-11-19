@@ -15,6 +15,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
+
+#ifndef _LSF_TCL_H_
+#define _LSF_TCL_H
+
+#include "../lsf.h"
+#include "intlib.h"
+#include "resreq.h"
+#include "../lib/lproto.h"
+
+#if defined(HAVE_TCL_TCL_H)
+#include <tcl/tcl.h>
+#else
+#include <tcl.h>
+#endif
+
 typedef struct {
     char   *name;
     int    clientData;
@@ -78,3 +93,5 @@ struct tclLsInfo {
 extern int initTcl(struct tclLsInfo *);
 extern void freeTclLsInfo(struct tclLsInfo *, int);
 extern int evalResReq(char *, struct tclHostData *, char);
+
+#endif /* _LSF_TCL_H_ */

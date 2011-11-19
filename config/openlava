@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2011 openlava foundation 
+# Copyright (C) 2011 openlava project 
 
 # Start and stop openlava daemons
 # Run by hand or install in /etc/init.d

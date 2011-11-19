@@ -1,5 +1,5 @@
 #
-# Copyright (C) openlava foundation
+# Copyright (C) openlava project
 #
 
 # Install configuration files for openlava base and batch 

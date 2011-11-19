@@ -9,7 +9,7 @@ AC_PREFIX_DEFAULT([/opt/openlava-1.0])
 AM_INIT_AUTOMAKE
 
 # Clean output if possible
-m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+#m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 # Check for programs
 AC_PROG_CC
@@ -28,7 +28,9 @@ if test "x$ac_compiler_gnu" = xyes; then
 fi
 
 # Check for tcl, we try all 8.X versions
-AC_CHECK_HEADER([tcl.h], [], [AC_MSG_ERROR([cannot build openlava without tcl])])
+# Recursive AC_CHECK_HEADERS is needed as ubuntu installs tcl
+# under <tcl/tcl.h>
+AC_CHECK_HEADERS([tcl.h], [], [AC_CHECK_HEADERS([tcl/tcl.h], [], AC_MSG_ERROR([cannot build openlava without tcl])]))
 AC_CHECK_LIB([tcl8.6], [Tcl_CreateInterp], [], [
     AC_CHECK_LIB([tcl8.5], [Tcl_CreateInterp], [], [
         AC_CHECK_LIB([tcl8.4], [Tcl_CreateInterp], [], [
@@ -38,7 +40,6 @@ AC_CHECK_LIB([tcl8.6], [Tcl_CreateInterp], [], [
                         AC_CHECK_LIB([tcl8.0], [Tcl_CreateInterp], [], [
                             AC_MSG_ERROR([cannot build openlava without tcl8.*])
 ])])])])])])])
-
 AC_CONFIG_FILES([
 	Makefile                 \
 	config/Makefile          \
