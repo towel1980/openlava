@@ -4062,39 +4062,47 @@ runQPost (struct jobCard *jp)
 static int
 chPrePostUser(struct jobCard *jp)
 {
-    static char fname[] = "chPrePostUser";
-    int uid, gid;
+    int uid;
+    int gid;
     char *userName;
     uid_t prepostUid;
 
-    {
-	uid = jp->jobSpecs.execUid;
-	gid = jp->execGid;
-        userName = jp->execUsername;
-    }
-
+    uid = jp->jobSpecs.execUid;
+    gid = jp->execGid;
+    userName = jp->execUsername;
 
     if (initgroups(userName, gid) < 0) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_D_FAIL_M, fname,
-                "initgroups", userName, gid);
+        ls_syslog(LOG_ERR, "\
+%s: initgroups() failed user %s gid %d: %m",
+                  __func__, userName, gid);
     }
 
     if (setgid(gid) < 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,
-	    "setgid", gid);
+        ls_syslog(LOG_ERR, "\
+%s: setgid()  failed user %s gid %d: %m",
+                  __func__, userName, gid);
     }
 
     if (getOSUid_(jp->jobSpecs.prepostUsername, &prepostUid) < 0) {
-	prepostUid = jp->jobSpecs.execUid;
+        prepostUid = jp->jobSpecs.execUid;
+    }
+
+    if (prepostUid == 0
+        && jp->jobSpecs.execUid != 0) {
+        ls_syslog(LOG_WARNING, "\
+%s: root is not allowed to run pre/post exec, using user %s %d",
+                  __func__, userName, jp->jobSpecs.execUid);
+        prepostUid = jp->jobSpecs.execUid;
     }
 
     if (lsfSetUid(prepostUid) < 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname,
-                  "setuid", prepostUid);
-	return (-1);
+        ls_syslog(LOG_ERR, "\
+%s: setuid() failed user %s gid %d: %m",
+                  __func__, userName, gid);
+        return -1;
     }
 
-    return (0);
+    return 0;
 }
 
 
