@@ -1,4 +1,5 @@
-/* $Id: limout.h 397 2007-11-26 19:04:00Z mblack $
+/*
+ *
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +21,6 @@
 #define LIMOUT_H
 
 #include "../lib/lib.hdr.h"
-
 
 enum ofWhat {OF_ANY, OF_HOSTS, OF_TYPE};
 
@@ -61,6 +61,7 @@ enum limReqCode {
     LIM_CHK_RESREQ    = 11,
     LIM_DEBUGREQ      = 12,
     LIM_GET_RESOUINFO = 13,
+    LIM_ADD_HOST      = 14,
 
 #define FIRST_LIM_PRIV	LIM_REBOOT
     LIM_REBOOT        = 50,
@@ -68,13 +69,11 @@ enum limReqCode {
     LIM_SERV_AVAIL    = 52,
     LIM_SHUTDOWN      = 53,
 
-
 #define FIRST_LIM_LIM	LIM_LOAD_UPD
     LIM_LOAD_UPD      = 100,
     LIM_JOB_XFER      = 101,
     LIM_MASTER_ANN    = 102,
     LIM_CONF_INFO     = 103,
-
 
 #define FIRST_INTER_CLUS  LIM_CLUST_INFO
     LIM_CLUST_INFO   = 200,
@@ -165,7 +164,6 @@ struct clusterInfoReq {
     int  options;
 };
 
-
 struct shortCInfo {
     char  clName[MAXLSFNAMELEN];
     char  masterName[MAXHOSTNAMELEN];
@@ -230,7 +228,6 @@ struct masterInfo {
     u_short portno;
 };
 
-
 struct clusterList {
     int  nClusters;
     char **clNames;
@@ -251,7 +248,6 @@ struct clusterList {
 #define   WINDOW_OPEN          1
 #define   WINDOW_CLOSE         2
 #define   WINDOW_FAIL          3
-
 
 struct limLock {
     int uid;

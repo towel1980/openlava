@@ -3,9 +3,9 @@
 #
 # Copyright (C) 2011 David Bigagli
 #
-AC_INIT(openlava, 1.0)
+AC_INIT(openlava, 2.0)
 AC_CONFIG_HEADERS(config.h)
-AC_PREFIX_DEFAULT([/opt/openlava-1.0])
+AC_PREFIX_DEFAULT([/opt/openlava-2.0])
 
 # Set some cluster configuration variables .
 AC_SUBST([openlavadmin], [openlava])
@@ -37,7 +37,7 @@ if test "x$ac_compiler_gnu" = xyes; then
 fi
 
 # Check for tcl, we try all 8.X versions
-AC_CHECK_HEADER([tcl.h], [], [AC_MSG_ERROR([cannot build openlava without tcl])])
+AC_CHECK_HEADERS([tcl.h], [], [AC_CHECK_HEADERS([tcl/tcl.h], [], AC_MSG_ERROR([cannot build openlava without tcl])]))
 AC_CHECK_LIB([tcl8.6], [Tcl_CreateInterp], [], [
     AC_CHECK_LIB([tcl8.5], [Tcl_CreateInterp], [], [
         AC_CHECK_LIB([tcl8.4], [Tcl_CreateInterp], [], [

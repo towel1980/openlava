@@ -16,39 +16,33 @@
  *
  */
 
-#include <stdio.h>
-
 #include "lsb.h"
-#include "../../lsf/lib/lib.rmi.h"
-#include <errno.h>
 
-extern int errno;
-
-#define  NL_SETN   13   
+#define  NL_SETN   13
 int lsberrno = 0;
 
 #ifdef  I18N_COMPILE
-static int lsb_errmsg_ID[] = { 
+static int lsb_errmsg_ID[] = {
      100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
      110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
-     120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 
+     120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
      130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
      140, 141, 142, 143, 144, 145, 146, 147, 148, 149,
      150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
      160, 161, 162, 163, 164, 165, 166, 167, 168, 169,
-     170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 
-     180, 181, 182, 183, 184, 185, 186, 187, 188, 189,  
-     190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 
+     170, 171, 172, 173, 174, 175, 176, 177, 178, 179,
+     180, 181, 182, 183, 184, 185, 186, 187, 188, 189,
+     190, 191, 192, 193, 194, 195, 196, 197, 198, 199,
      200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
      210, 211, 212, 213, 214, 215, 216, 217, 218, 219,
      220, 221, 222, 223, 224, 225, 226, 227, 228, 229,
      230, 231
-}; 
+};
 #endif
 
 char   *lsb_errmsg[] = {
-/*00*/   "No error",                                       /* catgets 100 */ 
-/*01*/   "No matching job found", 			   /* catgets 101 */ 
+/*00*/   "No error",                                       /* catgets 100 */
+/*01*/   "No matching job found", 			   /* catgets 101 */
 /*02*/   "Job has not started yet",                        /* catgets 102 */
 /*03*/   "Job has already started",                        /* catgets 103 */
 /*04*/   "Job has already finished",                       /* catgets 104 */
@@ -57,7 +51,7 @@ char   *lsb_errmsg[] = {
 /*07*/   "Queue does not accept EXCLUSIVE jobs",           /* catgets 107 */
 /*08*/   "Root job submission is disabled",                /* catgets 108 */
 /*09*/   "Job is already being migrated",                  /* catgets 109 */
-/*10*/   "Job is not checkpointable",	                   /* catgets 110 */ 
+/*10*/   "Job is not checkpointable",	                   /* catgets 110 */
 /*11*/   "No output so far",                               /* catgets 111 */
 /*12*/   "No job Id can be used now",                      /* catgets 112 */
 /*13*/   "Queue only accepts interactive jobs", /* unused    catgets 113 */
@@ -84,14 +78,14 @@ char   *lsb_errmsg[] = {
 /*33*/   "Queue does not have enough per-processor job slots", /* catgets 133 */
 /*34*/   "Request from non-LSF host rejected",  	   /* catgets 134 */
 
- 
+
 /*35*/   "Bad argument", 			    	   /* catgets 135 */
 /*36*/   "Bad time specification", 			   /* catgets 136 */
 /*37*/   "Start time is later than termination time", 	   /* catgets 137 */
 /*38*/   "Bad CPU limit specification",			   /* catgets 138 */
 /*39*/   "Cannot exceed queue's hard limit(s)", 	   /* catgets 139 */
 /*40*/   "Empty job", 					   /* catgets 140 */
-/*41*/   "Signal not supported", 			   /* catgets 141 */ 
+/*41*/   "Signal not supported", 			   /* catgets 141 */
 /*42*/   "Bad job name", 			           /* catgets 142 */
 /*43*/   "The destination queue has reached its job limit", /* catgets 143 */
 
@@ -135,10 +129,10 @@ char   *lsb_errmsg[] = {
 /*77*/   "Error 77",  /* internal only; no need to print message */ /* catgets 177 */
 /*78*/   "Error 78",  /* internal only; no need to print message */  /* catgets 178 */
 /*79*/   "No resource defined", 			   /* catgets 179 */
-/*80*/   "Bad resource name", 				   /* catgets 180 */  
+/*80*/   "Bad resource name", 				   /* catgets 180 */
 /*81*/   "Interactive job cannot be rerunnable",	   /* catgets 181 */
 /*82 */   "Input file not allowed with pseudo-terminal",   /* catgets 182 */
-/*83*/   "Cannot find restarted or newly submitted job's submission host and host type", /* catgets 183 */  
+/*83*/   "Cannot find restarted or newly submitted job's submission host and host type", /* catgets 183 */
 /*84*/   "Error 109",  /* internal only; no need to print message */ /* catgets 184 */
 /*85*/   "User not in the specified user group",  	   /* catgets 185 */
 /*86*/   "Cannot exceed queue's resource reservation",    /* catgets 186 */
@@ -174,7 +168,7 @@ char   *lsb_errmsg[] = {
 /*115*/   "Unable to find a host for spooling",            /* catgets 215 */
 /*116*/   "Cannot get $JOB_SPOOL_DIR for this host",       /* catgets 216 */
 /*117*/   "Cannot delete spool file for this host",        /* catgets 217 */
- 
+
 /*118*/   "Bad user priority", 			           /* catgets 218 */
 /*119*/   "Job priority control undefined",                /* catgets 219 */
 /*120*/   "Job has already been requeued",                /* catgets 220 */
@@ -187,13 +181,13 @@ char   *lsb_errmsg[] = {
 /*125*/   "Too few processors requested", /* catgets 225 */
 /*126*/   "Only the following parameters can be used to modify a running job: -c, -M, -W, -o, -e, -r", /* catgets 226 */
 /*127*/   "You must set LSB_JOB_CPULIMIT in lsf.conf to modify the CPU limit of a running job", /* catgets 227 */
-/*128*/   "You must set LSB_JOB_MEMLIMIT in lsf.conf to modify the memory limit of a running job", /*catgets 228 */ 
+/*128*/   "You must set LSB_JOB_MEMLIMIT in lsf.conf to modify the memory limit of a running job", /*catgets 228 */
 /*129*/   "No error file specified before job dispatch. Error file does not exist, so error file name cannot be changed", /*catgets 229 */
 /*130*/   "The host is locked by master LIM", /* catgets 230 */
 /*131*/  "Dependent arrays do not have the same size", /* catgets 231 */
 
-/* when you add a new message here, remember two things: first do not 
- * forget to add "," after the error message; second, add its catgets 
+/* when you add a new message here, remember two things: first do not
+ * forget to add "," after the error message; second, add its catgets
  * id in the above array lsb_errmsg_ID[].
  */
 NULL
@@ -210,7 +204,7 @@ lsb_sysmsg (void)
     }
 
     if (lsberrno == LSBE_SYS_CALL) {
-	
+
 	if (strerror(errno) != NULL && errno > 0)
 	    sprintf(buf, "%s: %s", _i18n_msg_get(ls_catd, NL_SETN, lsb_errmsg_ID[lsberrno], lsb_errmsg[lsberrno]), strerror(errno));
 	else {
@@ -228,9 +222,9 @@ lsb_sysmsg (void)
         return(_i18n_msg_get(ls_catd, NL_SETN, lsb_errmsg_ID[lsberrno],lsb_errmsg[lsberrno]));
     }
     return buf;
-} 
+}
 
-void 
+void
 lsb_perror (char *usrMsg)
 {
     if (usrMsg) {
@@ -240,26 +234,26 @@ lsb_perror (char *usrMsg)
     fputs(lsb_sysmsg(), stderr);
     putc('\n', stderr);
 
-} 
+}
 
 char *
 lsb_sperror(char *usrMsg)
 {
     char errmsg[256];
     char *rtstr;
- 
+
     errmsg[0] = '\0';
- 
+
     if (usrMsg)
         sprintf(errmsg, "%s: ", usrMsg);
- 
+
     strcat(errmsg, lsb_sysmsg());
- 
+
     if ((rtstr=(char *)malloc(sizeof(char)*(strlen(errmsg)+1))) == NULL){
         lserrno = LSE_MALLOC;
         return NULL;
     }
- 
+
     strcpy(rtstr, errmsg);
     return rtstr;
 }
@@ -275,6 +269,6 @@ sub_perror (char *usrMsg)
     }
     fputs(lsb_sysmsg(), stderr);
 
-} 
+}
 
 

@@ -16,37 +16,6 @@
  *
  */
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/time.h>
-#include <sys/time.h>
-
-
-#include <signal.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <rpc/types.h>
-#ifndef __XDR_HEADER__
-#include <rpc/xdr.h>
-#endif
-
-
-#include <sys/ioctl.h>
-
-#ifndef strcmp
-#include <string.h>
-#endif
-
-#include <errno.h>
-#if defined(vax)
-extern int errno;
-#endif
-
-#include <memory.h>
-
 #include "../lsf.h"
 #include "../lim/limout.h"
 #include "../res/resout.h"
@@ -66,15 +35,12 @@ extern unsigned int requestSN;
 enum lsTMsgType {
     LSTMSG_DATA,
     LSTMSG_IOERR,
-
     LSTMSG_EOF
 };
 
 struct lsTMsgHdr {
     enum lsTMsgType type;
-
     char *msgPtr;
-
     int len;
 };
 
@@ -84,11 +50,7 @@ struct tid {
     char *host;
     struct lsQueue *tMsgQ;
     bool_t isEOF;
-
-
     int refCount;
-
-
     int pid;
     u_short taskPort;
     struct tid *link;
@@ -137,7 +99,8 @@ typedef enum {
     LSF_MASTER_LIST,
     LSF_MLS_LOG,
     LSF_INTERACTIVE_STDERR,
-    HOSTS_FILE
+    HOSTS_FILE,
+    LSB_SHAREDIR /* we share this with batch system */
 } genparams_t;
 
 #define AM_LAST  (!(genParams_[LSF_AM_OPTIONS].paramValue && \
@@ -231,25 +194,12 @@ struct lsRequest {
     int seqno;
     int connfd;
     int rc;
-
     int completed;
-
-
-
-
     void *extra;
-
-
-
     void *replyBuf;
     int replyBufLen;
-
-
     requestCompletionHandler replyHandler;
-
-
     appCompletionHandler appHandler;
-
     void *appExtra;
 };
 

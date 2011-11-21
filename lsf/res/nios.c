@@ -28,26 +28,16 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/wait.h>
-
 #include "../lsf.h"
 #include "../../lsbatch/lsbatch.h"
 #include <setjmp.h>
-
 #include "../lib/mls.h"
-
-
-
 #include "res.h"
 #include "nios.h"
 #include "resout.h"
 #include "../lib/lproto.h"
 
 #define NL_SETN         29
-
-#include <memory.h>
-#include <malloc.h>
-
-
 
 extern LS_LONG_INT atoi64_(char* ptr);
 extern int  requeued;

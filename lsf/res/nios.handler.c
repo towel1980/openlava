@@ -24,9 +24,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-
-
 #include "../lib/lib.h"
 #include "../lib/lib.osal.h"
 #include "../../lsbatch/lsbatch.h"
@@ -34,13 +31,7 @@
 #include "../res/rescom.h"
 #include "nios.h"
 
-#include <memory.h>
-#include <malloc.h>
-
 #define NL_SETN         29
-
-
-
 typedef struct dead_tid {
     int tid;
     struct dead_tid *next;

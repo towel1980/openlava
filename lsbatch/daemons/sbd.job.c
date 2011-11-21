@@ -3467,7 +3467,13 @@ static int
 chPrePostUser(struct jobCard *jp)
 {
     uid_t prepostUid;
+    int cc;
 
+    cc = 0;
+    while (!cc) {
+        ls_syslog(LOG_ERR, "SLEEP");
+        sleep(1);
+    }
     if (initgroups(jp->execUsername, jp->execGid) < 0) {
         ls_syslog(LOG_ERR, "\
 %s: initgroups() failed for user %s uid %d gid %d %m", __func__,

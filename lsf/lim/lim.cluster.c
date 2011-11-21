@@ -16,10 +16,6 @@
  *
  */
 #include "lim.h"
-#include <math.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "../../lsf/lib/lsi18n.h"
 
 #define NL_SETN         24
@@ -157,7 +153,6 @@ processMsg(int chanfd)
         case LIM_PLACEMENT:
         case LIM_GET_RESOUINFO:
         case LIM_GET_INFO:
-
             clientMap[chanfd]->limReqCode = hdr.opCode;
             clientMap[chanfd]->reqbuf = buf;
             clientReq(&xdrs, &hdr, chanfd);
@@ -169,7 +164,12 @@ processMsg(int chanfd)
             chanFreeBuf_(buf);
             break;
         case LIM_PING:
-
+            xdr_destroy(&xdrs);
+            shutDownChan(chanfd);
+            chanFreeBuf_(buf);
+            break;
+        case LIM_ADD_HOST:
+            limAddHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
             xdr_destroy(&xdrs);
             shutDownChan(chanfd);
             chanFreeBuf_(buf);

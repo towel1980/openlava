@@ -23,7 +23,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
-
 #include <sys/signal.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -34,17 +33,12 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-
-# include <grp.h>
-
+#include <grp.h>
 #include <stdlib.h>
 #include "res.h"
 #include "resout.h"
 #include "../lib/lproto.h"
 #include "../lib/mls.h"
-
-#include <memory.h>
-#include <malloc.h>
 
 #define NL_SETN         29
 #define CHILD_DELETED     2

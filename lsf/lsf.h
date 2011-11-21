@@ -20,25 +20,41 @@
 #ifndef _LSF_H_
 #define _LSF_H_
 
-#include <config.h>
+#include "../config.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <errno.h>
 #include <unistd.h>
 #include <math.h>
 #include <assert.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <values.h>
+#include <grp.h>
+#include <ctype.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <sys/resource.h>
+#include <sys/param.h>
 #include <sys/wait.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
 
 typedef long long int LS_LONG_INT;
 typedef unsigned long long LS_UNS_LONG_INT;
 
 #define LS_LONG_FORMAT ("%lld")
-#define _OPENLAVA_PROJECT_ "openlava project 1.1"
+#define _OPENLAVA_PROJECT_ "openlava project 2.0"
 
 #ifdef REL_DATE
 #define _LS_VERSION_ (_OPENLAVA_PROJECT_", " REL_DATE "\nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
@@ -46,8 +62,7 @@ typedef unsigned long long LS_UNS_LONG_INT;
 #define _LS_VERSION_ (_OPENLAVA_PROJECT_", " __DATE__" \nPlatform Lava 1.0 \nCopyright 2007 Platform Computing Corporation\n")
 #endif
 
-#define OPENLAVA_VERSION   2
-#define OPENLAVA_CURRENT_VERSION   "2.0"
+#define OPENLAVA_VERSION   20
 
 #define LSF_DEFAULT_SOCKS       15
 #define MAXLINELEN              512
@@ -144,18 +159,18 @@ typedef enum {
 #define STATUS_REX_MLS_RHOST  107
 #define STATUS_REX_MLS_DOMIN  106
 
-#define REX_FATAL_ERROR(s)     (((s) == STATUS_REX_NOVCL) \
-                                 || ((s) == STATUS_REX_NOSYM) \
-                                 || ((s) == STATUS_REX_NOMEM) \
-                                 || ((s) == STATUS_REX_FATAL) \
-                                 || ((s) == STATUS_REX_CWD) \
-                                 || ((s) == STATUS_REX_PTY) \
-                                 || ((s) == STATUS_REX_VCL_INIT) \
-                                 || ((s) == STATUS_REX_VCL_SPAWN) \
-                                 || ((s) == STATUS_REX_MLS_INVAL) \
-                                 || ((s) == STATUS_REX_MLS_CLEAR) \
-                                 || ((s) == STATUS_REX_MLS_RHOST) \
-                                 || ((s) == STATUS_REX_MLS_DOMIN))
+#define REX_FATAL_ERROR(s)     (((s) == STATUS_REX_NOVCL)               \
+                                || ((s) == STATUS_REX_NOSYM)            \
+                                || ((s) == STATUS_REX_NOMEM)            \
+                                || ((s) == STATUS_REX_FATAL)            \
+                                || ((s) == STATUS_REX_CWD)              \
+                                || ((s) == STATUS_REX_PTY)              \
+                                || ((s) == STATUS_REX_VCL_INIT)         \
+                                || ((s) == STATUS_REX_VCL_SPAWN)        \
+                                || ((s) == STATUS_REX_MLS_INVAL)        \
+                                || ((s) == STATUS_REX_MLS_CLEAR)        \
+                                || ((s) == STATUS_REX_MLS_RHOST)        \
+                                || ((s) == STATUS_REX_MLS_DOMIN))
 
 #define   REXF_USEPTY   0x00000001
 #define   REXF_CLNTDIR  0x00000002
@@ -212,8 +227,8 @@ struct connectEnt {
 
 #define LS_ISUNAVAIL(status)     (((status[0]) & LIM_UNAVAIL) != 0)
 
-#define LS_ISBUSYON(status, index)  \
-      (((status[1 + (index)/INTEGER_BITS]) & (1 << (index)%INTEGER_BITS)) != 0)
+#define LS_ISBUSYON(status, index)                                      \
+    (((status[1 + (index)/INTEGER_BITS]) & (1 << (index)%INTEGER_BITS)) != 0)
 
 #define LS_ISBUSY(status) (((status[0]) & LIM_BUSY) != 0)
 
@@ -235,14 +250,14 @@ struct connectEnt {
 #define LS_ISOKNRES(status) (((status[0]) & ~(LIM_RESDOWN | LIM_SBDDOWN)) == 0)
 
 struct placeInfo {
-   char  hostName[MAXHOSTNAMELEN];
-   int   numtask;
+    char  hostName[MAXHOSTNAMELEN];
+    int   numtask;
 };
 
 struct hostLoad {
-   char  hostName[MAXHOSTNAMELEN];
-   int   *status;
-   float *li;
+    char  hostName[MAXHOSTNAMELEN];
+    int   *status;
+    float *li;
 };
 
 enum valueType {LS_BOOLEAN, LS_NUMERIC, LS_STRING, LS_EXTERNAL};
@@ -324,34 +339,52 @@ struct hostInfo {
     int   rexPriority;
 };
 
+/* This data structure is built when
+ * reading the lsf.cluster file and building
+ * the host list, it is also used to add
+ * add host at runtime.
+ */
+struct hostEntry {
+    char    hostName[MAXHOSTNAMELEN];
+    char    hostModel[MAXLSFNAMELEN];
+    char    hostType[MAXLSFNAMELEN];
+    int     rcv;
+    int     nDisks;
+    float   cpuFactor;
+    int     numIndx;
+    float   *busyThreshold;
+    int     nRes;
+    char    **resList;
+    int     rexPriority;
+    char    *window;
+};
+
 struct config_param {
     char *paramName;
     char *paramValue;
 };
 
-
 struct  lsfRusage {
-        double ru_utime;
-        double ru_stime;
-        double  ru_maxrss;
-        double  ru_ixrss;
-        double  ru_ismrss;
-        double  ru_idrss;
-        double  ru_isrss;
-        double  ru_minflt;
-        double  ru_majflt;
-        double  ru_nswap;
-        double  ru_inblock;
-        double  ru_oublock;
-        double  ru_ioch;
-        double  ru_msgsnd;
-        double  ru_msgrcv;
-        double  ru_nsignals;
-        double  ru_nvcsw;
-        double  ru_nivcsw;
-        double  ru_exutime;
+    double ru_utime;
+    double ru_stime;
+    double  ru_maxrss;
+    double  ru_ixrss;
+    double  ru_ismrss;
+    double  ru_idrss;
+    double  ru_isrss;
+    double  ru_minflt;
+    double  ru_majflt;
+    double  ru_nswap;
+    double  ru_inblock;
+    double  ru_oublock;
+    double  ru_ioch;
+    double  ru_msgsnd;
+    double  ru_msgrcv;
+    double  ru_nsignals;
+    double  ru_nvcsw;
+    double  ru_nivcsw;
+    double  ru_exutime;
 };
-
 
 struct lsfAcctRec {
     int pid;
@@ -365,7 +398,6 @@ struct lsfAcctRec {
     char *cmdln;
     struct lsfRusage lsfRu;
 };
-
 
 
 #define NIO_STDIN_ON                        0x01
@@ -457,8 +489,6 @@ struct clusterConf {
     LS_SHARED_RESOURCE_INFO_T *shareRes;
 };
 
-
-
 struct pidInfo {
     int pid;
     int ppid;
@@ -473,9 +503,46 @@ struct jRusage {
     int stime;
     int npids;
     struct pidInfo *pidInfo;
-
     int npgids;
     int *pgid;
+};
+
+typedef enum {
+    EV_LIM_START,
+    EV_LIM_SHUTDOWN,
+    EV_ADD_HOST,
+    EV_REMOVE_HOST,
+    EV_EVENT_LAST
+} event_t;
+
+/* openlava LIM events
+ */
+struct lsEventRec {
+    event_t event;
+    char version[12];
+    time_t etime;
+    void *record;
+};
+
+/* This is the log of the hostEntry structure. It is
+ * another structure because it is used in the context
+ * of event logging and it can evolve in different
+ * directions then the base configuration structure
+ * which is hostEntry.
+ */
+struct hostEntryLog {
+    char    hostName[MAXHOSTNAMELEN];
+    char    hostModel[MAXLSFNAMELEN];
+    char    hostType[MAXLSFNAMELEN];
+    int     rcv;
+    int     nDisks;
+    float   cpuFactor;
+    int     numIndx;
+    float   *busyThreshold;
+    int     nRes;
+    char    **resList;
+    int     rexPriority;
+    char    *window;
 };
 
 /* openlava error numbers
@@ -581,53 +648,53 @@ struct jRusage {
 #define LSE_MLS_DOMINATE        98
 #define LSE_NERR                98
 
-#define LSE_ISBAD_RESREQ(s)     (((s) == LSE_BAD_EXP) \
-                                 || ((s) == LSE_UNKWN_RESNAME) \
+#define LSE_ISBAD_RESREQ(s)     (((s) == LSE_BAD_EXP)                   \
+                                 || ((s) == LSE_UNKWN_RESNAME)          \
                                  || ((s) == LSE_UNKWN_RESVALUE))
 
-#define LSE_SYSCALL(s)          (((s) == LSE_SELECT_SYS) \
-                                 || ((s) == LSE_CONN_SYS) \
-                                 || ((s) == LSE_FILE_SYS) \
-                                 || ((s) == LSE_MSG_SYS) \
-                                 || ((s) == LSE_SOCK_SYS) \
-                                 || ((s) == LSE_ACCEPT_SYS) \
-                                 || ((s) == LSE_SIG_SYS) \
-                                 || ((s) == LSE_WAIT_SYS) \
-                                 || ((s) == LSE_EXECV_SYS) \
-                                 || ((s) == LSE_LIMIT_SYS) \
-                                 || ((s) == LSE_PIPE) \
-                                 || ((s) == LSE_ESUB) \
+#define LSE_SYSCALL(s)          (((s) == LSE_SELECT_SYS)        \
+                                 || ((s) == LSE_CONN_SYS)       \
+                                 || ((s) == LSE_FILE_SYS)       \
+                                 || ((s) == LSE_MSG_SYS)        \
+                                 || ((s) == LSE_SOCK_SYS)       \
+                                 || ((s) == LSE_ACCEPT_SYS)     \
+                                 || ((s) == LSE_SIG_SYS)        \
+                                 || ((s) == LSE_WAIT_SYS)       \
+                                 || ((s) == LSE_EXECV_SYS)      \
+                                 || ((s) == LSE_LIMIT_SYS)      \
+                                 || ((s) == LSE_PIPE)           \
+                                 || ((s) == LSE_ESUB)           \
                                  || ((s) == LSE_MISC_SYS))
 
-#define TIMEIT(level,func,name) \
-                    { if (timinglevel > level) { \
-                          struct timeval before, after; \
-                          struct timezone tz; \
-                          gettimeofday(&before, &tz); \
-                          func; \
-                          gettimeofday(&after, &tz); \
-                          ls_syslog(LOG_INFO,"L%d %s %d ms",level,name, \
-                              (int)((after.tv_sec - before.tv_sec)*1000 + \
-                               (after.tv_usec-before.tv_usec)/1000)); \
-                       } else \
-                              func; \
-                    }
+#define TIMEIT(level,func,name)                                         \
+    { if (timinglevel > level) {                                        \
+            struct timeval before, after;                               \
+            struct timezone tz;                                         \
+            gettimeofday(&before, &tz);                                 \
+            func;                                                       \
+            gettimeofday(&after, &tz);                                  \
+            ls_syslog(LOG_INFO,"L%d %s %d ms",level,name,               \
+                      (int)((after.tv_sec - before.tv_sec)*1000 +       \
+                            (after.tv_usec-before.tv_usec)/1000));      \
+        } else                                                          \
+            func;                                                       \
+    }
 
 
-#define TIMEVAL(level,func,val) \
-                    { if (timinglevel > level) { \
-                          struct timeval before, after; \
-                          struct timezone tz; \
-                          gettimeofday(&before, &tz); \
-                          func; \
-                          gettimeofday(&after, &tz); \
-                          val = (int)((after.tv_sec - before.tv_sec)*1000 + \
-                               (after.tv_usec-before.tv_usec)/1000); \
-                       } else { \
-                              func; \
-                              val = 0; \
-                         } \
-                    }
+#define TIMEVAL(level,func,val)                                 \
+    { if (timinglevel > level) {                                \
+            struct timeval before, after;                       \
+            struct timezone tz;                                 \
+            gettimeofday(&before, &tz);                         \
+            func;                                               \
+            gettimeofday(&after, &tz);                          \
+            val = (int)((after.tv_sec - before.tv_sec)*1000 +   \
+                        (after.tv_usec-before.tv_usec)/1000);   \
+        } else {                                                \
+            func;                                               \
+            val = 0;                                            \
+        }                                                       \
+    }
 
 #define LC_SCHED    0x00000001
 #define LC_EXEC     0x00000002
@@ -722,24 +789,24 @@ extern int     ls_startserver(char *, char **, int);
 extern int     ls_conntaskport(int tid);
 
 extern char    **ls_placereq(char *resreq, int *numhosts, int options,
-                                char *fromhost);
+                             char *fromhost);
 extern char    **ls_placeofhosts(char *resreq, int *numhosts,
-                                int options, char *fromhost, char **hostlist,
-                                int listsize);
+                                 int options, char *fromhost, char **hostlist,
+                                 int listsize);
 extern char    **ls_placeoftype(char *resreq, int *numhosts,
                                 int options, char *fromhost, char *hosttype);
 extern struct  hostLoad *ls_load(char *resreq, int *numhosts, int options,
-                                char *fromhost);
+                                 char *fromhost);
 extern struct  hostLoad *ls_loadofhosts(char *resreq, int *numhosts,
-                                int options, char *fromhost, char **hostlist,
-                                int listsize);
+                                        int options, char *fromhost, char **hostlist,
+                                        int listsize);
 extern struct  hostLoad *ls_loadoftype(char *resreq, int *numhosts,
-                                int options, char *fromhost, char *hosttype);
+                                       int options, char *fromhost, char *hosttype);
 extern struct  hostLoad *ls_loadinfo(char *resreq, int *numhosts,
-                                int options, char *fromhost, char **hostlist,
-                                int listsize, char ***indxnamelist);
+                                     int options, char *fromhost, char **hostlist,
+                                     int listsize, char ***indxnamelist);
 extern int     ls_loadadj(char *resreq, struct placeInfo *hostlist,
-                             int listsize);
+                          int listsize);
 extern int     ls_eligible(char *task, char *resreqstr, char mode);
 extern char *  ls_resreq(char *task);
 extern int     ls_insertrtask(char *task);
@@ -842,8 +909,13 @@ extern struct lsfAcctRec *ls_getacctrec(FILE *, int *);
 extern int ls_putacctrec(FILE *, struct lsfAcctRec *);
 extern int getBEtime(char *, char, time_t *);
 
-#ifndef NON_ANSI
-typedef int(*exceptProto)(void);
+/* openlava add host
+ */
+extern int ls_addhost(struct hostEntry *);
+/* openlava LIM log functions
+ */
+extern struct lsEventRec  *ls_readeventrec(FILE *);
+extern int ls_writeeventrec(FILE *, struct lsEventRec *);
 
 struct extResInfo {
     char *name;
@@ -852,11 +924,5 @@ struct extResInfo {
     char *increasing;
     char *des;
 };
-
-extern void  *ls_handle(void);
-extern int   ls_catch(void *handle, char *key, exceptProto func);
-extern int   ls_throw(void *handle, char *key);
-extern char  *ls_sperror(char *usrMsg);
-#endif
 
 #endif /* _lsf_h_ */

@@ -541,7 +541,7 @@ rcvConfInfo(XDR *xdrs,
         return;
     }
 
-    if (hPtr->infoValid==TRUE)
+    if (hPtr->infoValid == TRUE)
         return;
 
     if (sinfo.maxCpus <= 0 || sinfo.maxMem < 0) {
@@ -557,18 +557,15 @@ rcvConfInfo(XDR *xdrs,
     hPtr->statInfo.maxTmp  = sinfo.maxTmp;
     hPtr->statInfo.nDisks = sinfo.nDisks;
     hPtr->statInfo.portno = sinfo.portno;
-
     hPtr->infoValid      = TRUE;
     hPtr->infoMask       = 0;
     hPtr->protoVersion = hdr->version;
 
-    if (lim_debug >= 2)
-	ls_syslog(LOG_DEBUG, "\
+    ls_syslog(LOG_DEBUG, "\
 %s: Host %s: maxCpus=%d maxMem=%d ndisks=%d",
-                  __func__, hPtr->hostName,
-                  hPtr->statInfo.maxCpus, hPtr->statInfo.maxMem,
-                  hPtr->statInfo.nDisks);
-
+              __func__, hPtr->hostName,
+              hPtr->statInfo.maxCpus, hPtr->statInfo.maxMem,
+              hPtr->statInfo.nDisks);
 }
 
 void

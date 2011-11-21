@@ -21,12 +21,6 @@
 
 #include "lib.h"
 #include "lproto.h"
-#include <errno.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <unistd.h>
-
-extern int errno;
 
 int    lserrno = LSE_NO_ERR;
 int    masterLimDown = FALSE;
@@ -216,9 +210,9 @@ verrlog_(int level, FILE *fp, const char *fmt, va_list ap)
     }
 
     if (level >= 0)
-        snprintf(verBuf, sizeof(verBuf), "%d %s %s", level, OPENLAVA_CURRENT_VERSION, buf);
+        snprintf(verBuf, sizeof(verBuf), "%d %d %s", level, OPENLAVA_VERSION, buf);
     else
-        snprintf(verBuf, sizeof(verBuf), "%s %s", OPENLAVA_CURRENT_VERSION, buf);
+        snprintf(verBuf, sizeof(verBuf), "%d %s", OPENLAVA_VERSION, buf);
 
     fputs(verBuf, fp);
     putc('\n', fp);

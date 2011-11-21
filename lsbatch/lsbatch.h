@@ -831,7 +831,6 @@ struct parameterInfo {
     int     jobRunTimes;
     int     jobDepLastSub;
     char   *pjobSpoolDir;
-
     int     maxUserPriority;
     int     jobPriorityValue;
     int     jobPriorityTime;
@@ -859,14 +858,14 @@ struct loadInfoEnt {
 #define GRP_SHARES        0x40
 
 struct groupInfoEnt {
-    char*                group;
-    char*                memberList;
+    char *group;
+    char *memberList;
 };
 
 struct runJobRequest {
     LS_LONG_INT jobId;
-    int     numHosts;
-    char**  hostname;
+    int numHosts;
+    char **hostname;
 #define RUNJOB_OPT_NORMAL     0x01
 #define RUNJOB_OPT_NOSTOP     0x02
 #define RUNJOB_OPT_PENDONLY   0x04

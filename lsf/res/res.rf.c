@@ -37,9 +37,6 @@
 
 #define NL_SETN         29
 
-#include <memory.h>
-#include <malloc.h>
-
 #define LSRCP_MSGSIZE 65536
 
 static int clearSock(int sock, int len);

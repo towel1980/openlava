@@ -47,6 +47,7 @@ struct config_param genParams_[] =
     {"LSF_MLS_LOG", NULL},
     {"LSF_INTERACTIVE_STDERR", NULL},
     {"HOSTS_FILE", NULL},
+    {"LSB_SHAREDIR", NULL},
     {NULL, NULL}
 };
 

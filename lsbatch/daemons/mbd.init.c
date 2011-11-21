@@ -28,7 +28,6 @@
 #include <malloc.h>
 #include <sys/types.h>
 
-extern int isMasterCrossPlatform(void);
 extern void resetStaticSchedVariables(void);
 extern void cleanSbdNode(struct jData *);
 extern void uDataPtrTbInitialize();

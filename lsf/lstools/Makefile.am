@@ -4,7 +4,7 @@
 INCLUDES = -I..
 
 bin_PROGRAMS = lsacct lseligible lshosts lsid lsinfo lsloadadj \
- 		lsload lsmon lsplace lsrcp lsrun
+ 		lsload lsmon lsplace lsrcp lsrun lsaddhost
 
 lsacct_SOURCES = lsacct.c  
 lsacct_LDADD = ../lib/liblsf.a ../intlib/liblsfint.a
@@ -38,3 +38,6 @@ lsrcp_LDADD = ../lib/liblsf.a ../intlib/liblsfint.a -lnsl
 
 lsrun_SOURCES = lsrun.c
 lsrun_LDADD = ../lib/liblsf.a 
+
+lsaddhost_SOURCES = lsaddhost.c
+lsaddhost_LDADD = ../lib/liblsf.a 

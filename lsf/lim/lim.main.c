@@ -79,6 +79,7 @@ struct config_param limParams[] =
     {"LSF_LIM_JACKUP_BUSY", NULL},
     {"LIM_RSYNC_CONFIG", NULL},
     {"LIM_SLAVE_ONLY", NULL},
+    {"LSB_SHAREDIR", NULL},
     {NULL, NULL},
 };
 
@@ -97,8 +98,6 @@ static int getClusterConfig(void);
 extern struct extResInfo *getExtResourcesDef(char *);
 extern char *getExtResourcesLoc(char *);
 extern char *getExtResourcesVal(char *);
-extern int
-simulateHost(struct clusterNode *, const char *, const char *, const char *, const char *);
 
 /* UDP message buffer.
  */
@@ -285,6 +284,10 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     ls_syslog(LOG_DEBUG, "\
 %s: sampleIntvl %f exchIntvl %f hostInactivityLimit %d masterInactivityLimit %d retryLimit %d", __func__, sampleIntvl, exchIntvl,
               hostInactivityLimit, masterInactivityLimit, retryLimit);
+
+    /* log EV_LIM_START
+     */
+    log_limstart();
 
     if (lim_debug < 2)
         chdir("/tmp");
@@ -695,11 +698,9 @@ initAndConfig(int checkMode, int *kernelPerm)
 
     getLastActiveTime();
 
-    simulateHost(myClusterPtr,
-                 "bobrock",
-                 "IntelI5",
-                 "linux",
-                 "cs");
+    /* Initialize LIM events file...
+     */
+    log_init();
 
     return 0;
 }

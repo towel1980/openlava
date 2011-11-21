@@ -1,4 +1,5 @@
-/* $Id: lsftcl.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 David Bigagli
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,13 +17,16 @@
  *
  */
 
+#include "../lsf.h"
 #include "intlib.h"
 #include "resreq.h"
+#if defined(HAVE_TCL_TCL_H)
+#include <tcl/tcl.h>
+#else
 #include <tcl.h>
-#include <netdb.h>
+#endif
 #include "lsftcl.h"
 #include "../lib/lproto.h"
-#define NL_SETN     22
 
 static struct tclHostData   *hPtr;
 static struct Tcl_Interp    *globinterp;

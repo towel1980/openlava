@@ -22,43 +22,16 @@
 #ifndef _LIM_H_
 #define _LIM_H_
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-#ifdef _XOPEN_SOURCE
-#include <time.h>
-#else
-#include <sys/time.h>
-#endif
-#include <sys/signal.h>
-#include <sys/file.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-
 #include "../lsf.h"
-
 #include "../intlib/intlibout.h"
 #include "../lib/lproto.h"
 #include "limout.h"
 #include "../lib/lib.table.h"
 #include "../lib/lib.hdr.h"
-
-
 #include "../lib/lib.xdr.h"
-
 
 #define EXCHINTVL 	    15
 #define SAMPLINTVL           5
-
-
-
 #define HOSTINACTIVITYLIMIT   5
 #define MASTERINACTIVITYLIMIT 2
 #define RESINACTIVITYLIMIT    9
@@ -342,7 +315,8 @@ typedef enum {
     LSF_REJECT_NONLSFHOST,
     LSF_LIM_JACKUP_BUSY,
     LIM_RSYNC_CONFIG,
-    LIM_SLAVE_ONLY
+    LIM_SLAVE_ONLY,
+    LSB_SHAREDIR
 } limParams_t;
 
 #define LOOP_ADDR       0x7F000001
@@ -521,5 +495,15 @@ extern int xdr_loadmatrix(XDR *, int, struct loadVectorStruct *,
 extern int xdr_masterReg(XDR *, struct masterReg *, struct LSFHeader *);
 extern int xdr_statInfo(XDR *, struct statInfo *, struct LSFHeader *);
 extern void clientIO(struct Masks *);
+
+/* openlava add runtime host
+ */
+extern void limAddHost(XDR *,
+                       struct sockaddr_in *,
+                       struct LSFHeader *,
+                       int);
+extern int log_init(void);
+extern int log_limstart(void);
+extern int log_addhost(struct hostEntry *);
 
 #endif

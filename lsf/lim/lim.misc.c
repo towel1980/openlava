@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include "../lib/lib.table.h"
 
-static struct hostNode *findHNbyAddr(u_int);
+static struct hostNode *findHNbyAddr(in_addr_t);
 
 void
 lim_Exit(const char *fname)
@@ -91,7 +91,7 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
 {
     struct hostNode *hPtr;
     struct hostent *hp;
-    u_int *tPtr;
+    in_addr_t *tPtr;
 
     if (from->sin_addr.s_addr == ntohl(LOOP_ADDR))
         return myHostPtr;
@@ -104,7 +104,7 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
                         sizeof(in_addr_t),
                         AF_INET);
     if (hp == NULL) {
-	ls_syslog(LOG_ERR, "\
+        ls_syslog(LOG_ERR, "\
 %s: Host %s is unknown by %s", fname, sockAdd2Str_(from),
                   myHostPtr->hostName);
         return NULL;
@@ -112,7 +112,7 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
 
     hPtr = findHNbyAddr(*(in_addr_t *)hp->h_addr_list[0]);
     if (hPtr) {
-	ls_syslog(LOG_ERR, "\
+        ls_syslog(LOG_ERR, "\
 %s: Host %s (hp=%s/%s) is unknown by configuration; all hosts used by openlava must have unique official names", fname, sockAdd2Str_(from),
                   hp->h_name,
                   inet_ntoa(*((struct in_addr *)hp->h_addr_list[0])));
@@ -120,7 +120,7 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
     }
 
     tPtr = realloc((char *)hPtr->addr,
-                   (hPtr->naddr + 1) * sizeof(u_int));
+                   (hPtr->naddr + 1) * sizeof(in_addr_t));
     if (tPtr == NULL)
         return hPtr;
 
@@ -146,7 +146,7 @@ findHNbyAddr(in_addr_t from)
 
     for (hPtr = clPtr->clientList; hPtr; hPtr = hPtr->nextPtr) {
         if (equivHostAddr(hPtr, from))
-             return hPtr;
+            return hPtr;
     }
 
     return NULL;
@@ -159,10 +159,11 @@ findHostInCluster(char *hostname)
     if (strcmp(myClusterPtr->clName, hostname) == 0)
         return TRUE;
 
-    if (findHostbyList(myClusterPtr->hostList, hostname) != NULL ||
-        findHostbyList(myClusterPtr->clientList, hostname) !=NULL)
-        return(TRUE);
-    return(FALSE);
+    if (findHostbyList(myClusterPtr->hostList, hostname) != NULL
+        || findHostbyList(myClusterPtr->clientList, hostname) !=NULL)
+        return TRUE;
+
+    return FALSE;
 }
 
 
@@ -171,6 +172,7 @@ definedSharedResource(struct hostNode *host, struct lsInfo *allInfo)
 {
     int i, j;
     char *resName;
+
     for (i = 0; i < host->numInstances; i++) {
         resName = host->instances[i]->resName;
         for (j = 0; j < allInfo->nRes; j++) {
@@ -192,11 +194,11 @@ shortLsInfoDup(struct shortLsInfo *src)
     struct shortLsInfo     *shortLInfo;
 
     if (src->nRes == 0 && src->nTypes == 0 && src->nModels == 0)
-	return (NULL);
+        return (NULL);
 
-    shortLInfo = (struct shortLsInfo *)calloc(1, sizeof(struct shortLsInfo));
+    shortLInfo = calloc(1, sizeof(struct shortLsInfo));
     if (shortLInfo == NULL)
-	return (NULL);
+        return (NULL);
 
     shortLInfo->nRes = src->nRes;
     shortLInfo->nTypes = src->nTypes;
@@ -204,40 +206,39 @@ shortLsInfoDup(struct shortLsInfo *src)
 
 
     memp = malloc((src->nRes + src->nTypes + src->nModels) * MAXLSFNAMELEN +
-		   src->nRes * sizeof (char *));
+                  src->nRes * sizeof (char *));
 
     if (!memp) {
-	FREEUP(shortLInfo);
-	return(NULL);
+        FREEUP(shortLInfo);
+        return(NULL);
     }
 
     currp = memp;
     shortLInfo->resName = (char **)currp;
     currp += shortLInfo->nRes * sizeof (char *);
     for (i = 0; i < src->nRes; i++, currp += MAXLSFNAMELEN)
-	shortLInfo->resName[i] = currp;
+        shortLInfo->resName[i] = currp;
     for (i = 0; i < src->nTypes; i++, currp += MAXLSFNAMELEN)
-	shortLInfo->hostTypes[i] = currp;
+        shortLInfo->hostTypes[i] = currp;
     for (i = 0; i < src->nModels; i++, currp += MAXLSFNAMELEN)
-	shortLInfo->hostModels[i] = currp;
+        shortLInfo->hostModels[i] = currp;
 
     for(i = 0; i < src->nRes; i++) {
         strcpy(shortLInfo->resName[i], src->resName[i]);
     }
 
     for(i = 0; i < src->nTypes; i++) {
-	strcpy(shortLInfo->hostTypes[i], src->hostTypes[i]);
+        strcpy(shortLInfo->hostTypes[i], src->hostTypes[i]);
     }
 
     for(i = 0; i < src->nModels; i++) {
-	strcpy(shortLInfo->hostModels[i], src->hostModels[i]);
+        strcpy(shortLInfo->hostModels[i], src->hostModels[i]);
     }
 
-    for(i=0; i < src->nModels; i++)
-	shortLInfo->cpuFactors[i] = src->cpuFactors[i];
+    for(i = 0; i < src->nModels; i++)
+        shortLInfo->cpuFactors[i] = src->cpuFactors[i];
 
-    return (shortLInfo);
-
+    return shortLInfo;
 }
 
 
@@ -250,5 +251,62 @@ shortLsInfoDestroy(struct shortLsInfo *shortLInfo)
 
     FREEUP(allocBase);
     FREEUP(shortLInfo);
+}
 
+/* LIM events
+ */
+static FILE *logFp;
+
+int
+log_init(void)
+{
+    static char eFile[PATH_MAX];
+
+    sprintf(eFile, "\
+%s/lim.events", limParams[LSB_SHAREDIR].paramValue);
+
+    logFp = fopen(eFile, "a+");
+    if (logFp == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: failed opening %s: %m", __func__, eFile);
+        return -1;
+    }
+
+    return 0;
+}
+
+int
+log_limstart(void)
+{
+    struct lsEventRec ev;
+
+    ev.event = EV_LIM_START;
+    ev.etime = time(NULL);
+    strcpy(ev.version, OPENLAVA_CURRENT_VERSION);
+    ev.record = NULL;
+
+    ls_writeeventrec(logFp, &ev);
+
+    return 0;
+}
+
+int
+log_addhost(struct hostEntry *hPtr)
+{
+    struct lsEventRec ev;
+    struct hostEntryLog hLog;
+
+    /* copy the pointers as well...
+     * just don't free.
+     */
+    memcpy(&hLog, hPtr, sizeof(struct hostEntry));
+
+    ev.event = EV_ADD_HOST;
+    ev.etime = time(NULL);
+    strcpy(ev.version, OPENLAVA_CURRENT_VERSION);
+    ev.record = &hLog;
+
+    ls_writeeventrec(logFp, &ev);
+
+    return 0;
 }

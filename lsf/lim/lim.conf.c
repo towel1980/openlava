@@ -27,19 +27,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-struct hostEntry {
-    char    hostName[MAXHOSTNAMELEN];
-    char    hostModel[MAXLSFNAMELEN];
-    char    hostType[MAXLSFNAMELEN];
-    int     rcv;
-    int     nDisks;
-    float   cpuFactor;
-    float   *busyThreshold;
-    int     nRes;
-    char    **resList;
-    int     rexPriority;
-};
-
 struct sharedResourceInstance *sharedResourceHead = NULL ;
 struct lsInfo allInfo;
 struct shortLsInfo shortInfo;
@@ -57,7 +44,11 @@ extern int ELIMdebug, ELIMrestarts, ELIMblocktime;
 
 #define ILLEGAL_CHARS     ".!-=+*/[]@:&|{}'`\""
 
-static struct hostNode *addHost(struct clusterNode *, struct hostEntry *, char *, char *, int *);
+static struct hostNode *addHost(struct clusterNode *,
+                                struct hostEntry *,
+                                char *,
+                                char *,
+                                int *);
 static char addHostType(char *);
 static char dotypelist(FILE *fp, int *LineNum, char *lsfile);
 static char addHostModel(char *, char *, float);
@@ -115,21 +106,16 @@ float mykey(void);
 static void setExtResourcesDefDefault(char *);
 static int setExtResourcesDef(char *);
 static int setExtResourcesLoc(char *, int);
-void *ExtResDLHandle;
 extern struct extResInfo *getExtResourcesDef(char *);
 extern char *getExtResourcesLoc(char *);
 static char *getExtResourcesValDefault(char *);
 extern char *getExtResourcesVal(char *);
-
-#define VCL_VERSION     2
-
 
 /* getHostType()
  */
 char *
 getHostType(void)
 {
-
     return HOST_TYPE_STRING;
 }
 
@@ -1126,7 +1112,7 @@ chkUIdxAndSetDfltRunElim(void)
 
         for (i = NBUILTINDEX; i < allInfo.numIndx; i++) {
             if (allInfo.resTable[i].flags & (RESF_DYNAMIC | RESF_GLOBAL)) {
-                if( allInfo.resTable[i].flags & RESF_DEFINED_IN_RESOURCEMAP ) {
+                if (allInfo.resTable[i].flags & RESF_DEFINED_IN_RESOURCEMAP ) {
                     defaultRunElim = TRUE;
                     break;
                 }
@@ -4778,62 +4764,78 @@ saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
     return 0;
 }
 
-int
-simulateHost(struct clusterNode *clPtr,
-             const char *name,
-             const char *model,
-             const char *type,
-             const char *resources)
+/* limAddHost()
+ */
+void
+limAddHost(XDR *xdrs,
+           struct sockaddr_in *from,
+           struct LSFHeader *reqHdr,
+           int chan)
 {
-    struct hostEntry *hPtr;
-    char *p;
-    char *word;
-    int i;
-    int n;
+    static char buf[MSGSIZE];
+    struct LSFHeader hdr;
+    struct hostEntry hPtr;
+    uint16_t opCode;
+    XDR xdrs2;
+    int cc;
 
-    hPtr = calloc(1, sizeof(struct hostEntry));
-    hPtr->busyThreshold =  calloc(allInfo.numIndx,sizeof(float));
-
-    hPtr->resList = calloc(allInfo.nRes , sizeof(char *));
-    hPtr->nRes = 0;
-
-    strcpy(hPtr->hostType, type);
-    strcpy(hPtr->hostModel, model);
-    strcpy(hPtr->hostName, name);
-    hPtr->nDisks = 1;
-
-    for (i = R15S; i < 13; i++)
-        hPtr->busyThreshold[i] = INFINIT_LOAD;
-
-    for (i = NBUILTINDEX; i < allInfo.numIndx; i++) {
-        ;
+    if (!masterMe) {
+        wrongMaster(from, buf, reqHdr, -1);
+        return;
     }
 
-    for (i = NBUILTINDEX+allInfo.numUsrIndx; i < allInfo.numIndx; i++)
-        hPtr->busyThreshold[i] = INFINIT_LOAD;
-
-    n = 0;
-    p = strdup(resources);
-    while ((word = getNextWord_(&p)) != NULL) {
-        hPtr->resList[n] = strdup(word);
-        n++;
+    memset(&hPtr, 0, sizeof(struct hostEntry));
+    /* decode the hostInfo request
+     */
+    if (! xdr_hostEntry(xdrs, &hPtr, reqHdr)) {
+        opCode = LIME_BAD_DATA;
+        goto hosed;
     }
-    hPtr->resList[n] = NULL;
-    hPtr->nRes = n;
 
-    hPtr->rexPriority = DEF_REXPRIORITY;
-    hPtr->rcv = 1;
-
-    if (!addHost(clPtr, hPtr, "", "", NULL)) {
+    /* add the host
+     */
+    cc = 0;
+    if (!addHost(myClusterPtr,
+                 &hPtr,
+                 hPtr.window,
+                 (char *)__func__,
+                 &cc)) {
         ls_syslog(LOG_ERR, "\
-%s: failed adding on the fly host %s", __func__, name);
+%s: failed adding on the fly host %s", __func__, hPtr.hostName);
         /* free the shit...
          */
-        return -1;
+        opCode = LIME_BAD_DATA;
+        goto hosed;
     }
 
-    /* free the shit...
+    /* log the lim event HOST_ADD
      */
+    log_addhost(&hPtr);
 
-    return 0;
+    /* reply to the library
+     */
+    opCode = LIME_NO_ERR;
+hosed:
+    initLSFHeader_(&hdr);
+    hdr.opCode  = opCode;
+    hdr.refCode = reqHdr->refCode;
+
+    xdrmem_create(&xdrs2, buf, MSGSIZE, XDR_ENCODE);
+
+    if (!xdr_LSFHeader(&xdrs2, &hdr)) {
+        ls_syslog(LOG_ERR, "\
+%s: failed decoding header from %s", __func__, sockAdd2Str_(from));
+        xdr_destroy(&xdrs2);
+        return;
+    }
+
+    if (chanWrite_(chan, buf, XDR_GETPOS(&xdrs2)) < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: Failed replying to %s dbytes %m", __func__,
+                  sockAdd2Str_(from), XDR_GETPOS(&xdrs2));
+        xdr_destroy(&xdrs2);
+        return;
+    }
+
+    xdr_destroy(&xdrs2);
 }

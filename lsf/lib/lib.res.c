@@ -23,10 +23,6 @@
 #include <pwd.h>
 #include "lib.h"
 #include "lib.queue.h"
-#include "lib.rmi.h"
-#include <memory.h>
-
-#include <malloc.h>
 #include "lproto.h"
 
 #define SIGEMT SIGBUS

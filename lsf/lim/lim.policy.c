@@ -221,7 +221,7 @@ placeReq(XDR *xdrs,
     }
 
     placeReply.placeInfo = calloc(placeReply.numHosts,
-                                   sizeof(struct placeInfo));
+                                  sizeof(struct placeInfo));
     if (placeReply.placeInfo == NULL) {
         limReplyCode = LIME_NO_MEM;
         ls_syslog(LOG_ERR, "%s: %m", __func__);
@@ -1753,3 +1753,4 @@ loadIndexValue(int hostIdx, int loadIdx, int rqlOptions)
     }
     return (loadIndex);
 }
+
