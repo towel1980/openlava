@@ -340,26 +340,29 @@ getname_(enum limReqCode limReqCode, char *name, int namesize)
                      xdr_stringLen, NULL, _LOCAL_, NULL) < 0)
             return -1;
         return 0;
-    } else {
-        if (callLim_(limReqCode, NULL, NULL,
-                     &masterInfo_, xdr_masterInfo, NULL, _LOCAL_, NULL) < 0)
-            return(-1);
-
-        if (memcmp((char *) &sockIds_[MASTER].sin_addr,
-                   (char *) &masterInfo_.addr, sizeof(u_int))) {
-            CLOSECD(limchans_[MASTER]);
-            CLOSECD(limchans_[TCP]);
-        }
-        memcpy((char *) &sockIds_[MASTER].sin_addr,
-               (char *) &masterInfo_.addr, sizeof(u_int));
-        memcpy((char *) &sockIds_[TCP].sin_addr,
-               (char *) &masterInfo_.addr, sizeof(u_int));
-        sockIds_[TCP].sin_port = masterInfo_.portno;
-        masterknown_ = TRUE;
-        strncpy(name, masterInfo_.hostName, namesize);
-        name[namesize-1] = '\0';
-        return(0);
     }
+
+    if (callLim_(limReqCode, NULL, NULL,
+                 &masterInfo_, xdr_masterInfo, NULL, _LOCAL_, NULL) < 0)
+        return(-1);
+
+    if (memcmp(&sockIds_[MASTER].sin_addr,
+               &masterInfo_.addr,
+               sizeof(in_addr_t))) {
+        CLOSECD(limchans_[MASTER]);
+        CLOSECD(limchans_[TCP]);
+    }
+
+    memcpy(&sockIds_[MASTER].sin_addr,
+           &masterInfo_.addr, sizeof(in_addr_t));
+    memcpy(&sockIds_[TCP].sin_addr,
+           &masterInfo_.addr, sizeof(in_addr_t));
+    sockIds_[TCP].sin_port = masterInfo_.portno;
+    masterknown_ = TRUE;
+    strncpy(name, masterInfo_.hostName, namesize);
+    name[namesize-1] = '\0';
+
+    return 0;
 
 }
 

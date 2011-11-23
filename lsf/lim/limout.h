@@ -62,6 +62,7 @@ enum limReqCode {
     LIM_DEBUGREQ      = 12,
     LIM_GET_RESOUINFO = 13,
     LIM_ADD_HOST      = 14,
+    LIM_RM_HOST,
 
 #define FIRST_LIM_PRIV	LIM_REBOOT
     LIM_REBOOT        = 50,
@@ -223,8 +224,8 @@ struct clusterInfoReply {
 };
 
 struct masterInfo {
-    char    hostName[MAXHOSTNAMELEN];
-    u_int   addr;
+    char hostName[MAXHOSTNAMELEN];
+    in_addr_t addr;
     u_short portno;
 };
 

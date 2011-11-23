@@ -82,10 +82,6 @@ processMsg(int chanfd)
         return;
     }
 
-    ls_syslog(LOG_DEBUG,"\
-%s: Received message with len %d on chan %d",
-              __func__, buf->len, chanfd);
-
     xdrmem_create(&xdrs,
                   buf->data,
                   XDR_DECODE_SIZE_(buf->len),
@@ -93,7 +89,8 @@ processMsg(int chanfd)
 
     if (!xdr_LSFHeader(&xdrs, &hdr)) {
         ls_syslog(LOG_ERR, "\
-%s: Bad header received chanfd %d", __func__, chanfd);
+%s: Bad header received chanfd %d from %s",
+                  __func__, chanfd, sockAdd2Str_(&from));
         xdr_destroy(&xdrs);
         shutDownChan(chanfd);
         chanFreeBuf_(buf);
@@ -103,7 +100,8 @@ processMsg(int chanfd)
     if ((clientMap[chanfd] && hdr.opCode >= FIRST_LIM_PRIV)
         || (!clientMap[chanfd] && hdr.opCode < FIRST_INTER_CLUS)) {
         ls_syslog(LOG_ERR, "\
-%s: Invalid opCode %d from client", __func__, hdr.opCode);
+%s: Invalid opCode %d from client %s",
+                  __func__, hdr.opCode, sockAdd2Str_(&from));
         xdr_destroy(&xdrs);
         shutDownChan(chanfd);
         chanFreeBuf_(buf);
@@ -112,7 +110,8 @@ processMsg(int chanfd)
 
     if (hdr.opCode >= FIRST_INTER_CLUS && !masterMe) {
         ls_syslog(LOG_ERR, "\
-%s: Intercluster request received, but I'm not master", __func__);
+%s: Intercluster request received from %s, but I'm not master",
+                  __func__, sockAdd2Str_(&from));
         xdr_destroy(&xdrs);
         shutDownChan(chanfd);
         chanFreeBuf_(buf);
@@ -143,8 +142,9 @@ processMsg(int chanfd)
     }
 
     ls_syslog(LOG_DEBUG, "\
-%s: Received request %d from %s",
-              __func__, hdr.opCode, sockAdd2Str_(&from));
+%s: Received request %d from %s chan %d len %d",
+              __func__, hdr.opCode, sockAdd2Str_(&from),
+              chanfd, buf->len);
 
     switch(hdr.opCode) {
 
@@ -169,7 +169,7 @@ processMsg(int chanfd)
             chanFreeBuf_(buf);
             break;
         case LIM_ADD_HOST:
-            limAddHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
+            addFloatHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
             xdr_destroy(&xdrs);
             shutDownChan(chanfd);
             chanFreeBuf_(buf);
@@ -188,7 +188,6 @@ processMsg(int chanfd)
 static void
 clientReq(XDR *xdrs, struct LSFHeader *hdr, int chfd)
 {
-    static char fname[]="clientReq";
     struct decisionReq decisionRequest;
     int oldpos, i;
 
@@ -202,79 +201,77 @@ clientReq(XDR *xdrs, struct LSFHeader *hdr, int chfd)
     }
 
     clientMap[chfd]->clientMasks = 0;
-    for (i=1; i < decisionRequest.numPrefs; i++) {
+    for (i = 1; i < decisionRequest.numPrefs; i++) {
         if (!findHostInCluster(decisionRequest.preferredHosts[i])) {
             clientMap[chfd]->clientMasks = 0;
             break;
         }
     }
 
-    for(i=0; i < decisionRequest.numPrefs; i++)
+    for(i = 0; i < decisionRequest.numPrefs; i++)
         free(decisionRequest.preferredHosts[i]);
     free(decisionRequest.preferredHosts);
 
 Reply1:
 
     {
-        int pid = 0;
+        pid_t pid = 0;
 
-#if defined(NO_FORK)
+        if (! limParams[LIM_NO_FORK].paramValue) {
+            pid = fork();
+            if (pid < 0)  {
+                ls_syslog(LOG_ERR, "\
+%s: ohmygosh fork() failed %m", __func__);
+                return;
+            }
+        }
 
-        pid =0;
-        io_block_(chanSock_(chfd));
-#else
-        pid = fork();
-#endif
         if (pid == 0) {
-            int sock;
 
-
-#if !defined(NO_FORK)
-            chanClose_( limSock );
-            limSock = chanClientSocket_( AF_INET, SOCK_DGRAM, 0 );
-#endif
-
+            if (! limParams[LIM_NO_FORK].paramValue)
+                chanClose_(limSock);
 
             XDR_SETPOS(xdrs, oldpos);
-            sock = chanSock_(chfd);
-            if (io_block_(sock) < 0)
-                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "io_block_");
+            io_block_(chanSock_(chfd));
 
             switch(hdr->opCode) {
-            case LIM_GET_HOSTINFO:
-                hostInfoReq(xdrs, clientMap[chfd]->fromHost, &clientMap[chfd]->from, hdr, chfd);
-                break;
-            case LIM_GET_RESOUINFO:
-                resourceInfoReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
-                break;
-
-
-            case LIM_LOAD_REQ:
-                loadReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
-                break;
-            case LIM_PLACEMENT:
-                placeReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
-                break;
-            case LIM_GET_INFO:
-                infoReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
-
-            default:
-                break;
+                case LIM_GET_HOSTINFO:
+                    hostInfoReq(xdrs,
+                                clientMap[chfd]->fromHost,
+                                &clientMap[chfd]->from,
+                                hdr,
+                                chfd);
+                    break;
+                case LIM_GET_RESOUINFO:
+                    resourceInfoReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
+                    break;
+                case LIM_LOAD_REQ:
+                    loadReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
+                    break;
+                case LIM_PLACEMENT:
+                    placeReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
+                    break;
+                case LIM_GET_INFO:
+                    infoReq(xdrs, &clientMap[chfd]->from, hdr, chfd);
+                default:
+                    break;
             }
-#if !defined(NO_FORK)
-            exit(0);
-#else
-            xdr_destroy(xdrs);
-            shutDownChan(chfd);
-            return;
-#endif
-        } else {
-            if (pid < 0)
-                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "fork");
-            xdr_destroy(xdrs);
-            shutDownChan(chfd);
-            return;
+
+            if (! limParams[LIM_NO_FORK].paramValue)
+                exit(0);
         }
+        /* parent pid > 0 or LIM_NO_FORK
+         *
+         * Remember that in LSF the parent
+         * shuts down the connection with
+         * the client while the child is
+         * serving the request. This is not
+         * strictly necessary as we could let
+         * the child do its work and then wait
+         * for the client to exit.
+         */
+        xdr_destroy(xdrs);
+        shutDownChan(chfd);
     }
 }
 

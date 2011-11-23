@@ -70,7 +70,7 @@ main(int argc, char **argv)
 
     TIMEIT(0, (name = ls_getmastername()), "ls_getmastername");
     if (name == NULL) {
-        ls_perror("ls_getmstername()");
+        ls_perror("ls_getmastername()");
         return -1;
     }
     printf("My master name is %s\n", name);

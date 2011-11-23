@@ -15,13 +15,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
+
 #include "lim.h"
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "../lib/lib.table.h"
-
 static struct hostNode *findHNbyAddr(in_addr_t);
+static int loadEvents(void);
 
 void
 lim_Exit(const char *fname)
@@ -87,7 +85,8 @@ findHostbyNo(struct hostNode *hList, int hostNo)
 }
 
 struct hostNode *
-findHostbyAddr(struct sockaddr_in *from, char *fname)
+findHostbyAddr(struct sockaddr_in *from,
+               char *fname)
 {
     struct hostNode *hPtr;
     struct hostent *hp;
@@ -105,22 +104,29 @@ findHostbyAddr(struct sockaddr_in *from, char *fname)
                         AF_INET);
     if (hp == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: Host %s is unknown by %s", fname, sockAdd2Str_(from),
+%s: gethostaddr() failed %s cannot by resolved by %s",
+                  __func__, sockAdd2Str_(from),
                   myHostPtr->hostName);
         return NULL;
     }
 
     hPtr = findHNbyAddr(*(in_addr_t *)hp->h_addr_list[0]);
-    if (hPtr) {
-        ls_syslog(LOG_ERR, "\
+    if (hPtr == NULL) {
+        /* Complain only if the runtime host
+         * operations are not allowed. Otherwise
+         * this can be a runtime host asking
+         * for some TCP operation, so just return
+         * NULL and the caller will know what to do.
+         */
+        if (!limParams[LIM_ADD_FLOATING_HOST].paramValue)
+            ls_syslog(LOG_ERR, "\
 %s: Host %s (hp=%s/%s) is unknown by configuration; all hosts used by openlava must have unique official names", fname, sockAdd2Str_(from),
-                  hp->h_name,
-                  inet_ntoa(*((struct in_addr *)hp->h_addr_list[0])));
+                      hp->h_name,
+                      inet_ntoa(*((struct in_addr *)hp->h_addr_list[0])));
         return NULL;
     }
 
-    tPtr = realloc((char *)hPtr->addr,
-                   (hPtr->naddr + 1) * sizeof(in_addr_t));
+    tPtr = realloc(hPtr->addr, (hPtr->naddr + 1) * sizeof(in_addr_t));
     if (tPtr == NULL)
         return hPtr;
 
@@ -241,7 +247,6 @@ shortLsInfoDup(struct shortLsInfo *src)
     return shortLInfo;
 }
 
-
 void
 shortLsInfoDestroy(struct shortLsInfo *shortLInfo)
 {
@@ -254,11 +259,14 @@ shortLsInfoDestroy(struct shortLsInfo *shortLInfo)
 }
 
 /* LIM events
+ * Keep a global FILE pointer to the
+ * events file. The events file is always open
+ * to speed up the operations.
  */
 static FILE *logFp;
 
 int
-log_init(void)
+logInit(void)
 {
     static char eFile[PATH_MAX];
 
@@ -272,17 +280,21 @@ log_init(void)
         return -1;
     }
 
+    loadEvents();
+
+    logLimStart();
+
     return 0;
 }
 
 int
-log_limstart(void)
+logLimStart(void)
 {
     struct lsEventRec ev;
 
     ev.event = EV_LIM_START;
     ev.etime = time(NULL);
-    strcpy(ev.version, OPENLAVA_CURRENT_VERSION);
+    ev.version = OPENLAVA_VERSION;
     ev.record = NULL;
 
     ls_writeeventrec(logFp, &ev);
@@ -291,7 +303,7 @@ log_limstart(void)
 }
 
 int
-log_addhost(struct hostEntry *hPtr)
+logAddHost(struct hostEntry *hPtr)
 {
     struct lsEventRec ev;
     struct hostEntryLog hLog;
@@ -303,10 +315,67 @@ log_addhost(struct hostEntry *hPtr)
 
     ev.event = EV_ADD_HOST;
     ev.etime = time(NULL);
-    strcpy(ev.version, OPENLAVA_CURRENT_VERSION);
+    ev.version = OPENLAVA_VERSION;
     ev.record = &hLog;
 
     ls_writeeventrec(logFp, &ev);
+
+    return 0;
+}
+
+static int
+loadEvents(void)
+{
+    struct lsEventRec *eRec;
+    hTab tab;
+    hEnt *e;
+    int new;
+
+    h_initTab_(&tab, 111);
+
+    /* Load the events and build the
+     * hash table of runtime hosts.
+     */
+    while ((eRec = ls_readeventrec(logFp))) {
+        struct hostEntryLog *hPtr;
+
+        switch (eRec->event) {
+            case EV_ADD_HOST:
+                hPtr = eRec->record;
+                e = h_addEnt_(&tab, hPtr->hostName, &new);
+                assert(new == TRUE);
+                e->hData = hPtr;
+                break;
+            case EV_REMOVE_HOST:
+                hPtr = eRec->record;
+                e = h_getEnt_(&tab, hPtr->hostName);
+                h_rmEnt_(&tab, e);
+                freeHostEntryLog(&hPtr);
+                break;
+            case EV_LIM_START:
+                break;
+            case EV_LIM_SHUTDOWN:
+                break;
+            case EV_EVENT_LAST:
+                break;
+        }
+    }
+
+    /* heresy...
+     */
+    if (tab.numEnts == 0)
+        goto out;
+
+    addHostByTab(&tab);
+
+    /* the table now contains hosts
+     * added but not yet removed
+     * create a new lim.events file
+     * purged of the old events.
+     */
+
+out:
+    h_freeRefTab_(&tab);
 
     return 0;
 }

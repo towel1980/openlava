@@ -485,7 +485,7 @@ initNewMaster(void)
         if (hPtr != myHostPtr)  {
             hPtr->status[0] |= LIM_UNAVAIL;
             for (j = 0; j < GET_INTNUM(allInfo.numIndx); j++)
-                hPtr->status[j+1] = 0;
+                hPtr->status[j + 1] = 0;
             hPtr->hostInactivityCount = 0;
             hPtr->infoValid = FALSE;
             hPtr->lastSeqNo = 0;

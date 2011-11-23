@@ -80,6 +80,8 @@ struct config_param limParams[] =
     {"LIM_RSYNC_CONFIG", NULL},
     {"LIM_SLAVE_ONLY", NULL},
     {"LSB_SHAREDIR", NULL},
+    {"LIM_ADD_FLOATING_HOST", NULL},
+    {"LIM_NO_FORK", NULL},
     {NULL, NULL},
 };
 
@@ -88,6 +90,7 @@ extern int chanIndex;
 static int initAndConfig(int, int *);
 static void term_handler(int);
 static void child_handler(int);
+static int  processUDPMsg(void);
 static void doAcceptConn(void);
 static void initSignals(void);
 static void periodic(int);
@@ -118,17 +121,11 @@ main(int argc, char **argv)
     fd_set allMask;
     struct Masks sockmask;
     struct Masks chanmask;
-    enum   limReqCode limReqCode;
-    struct sockaddr_in from;
     struct timeval timer;
     struct timeval t0;
     struct timeval t1;
-    int    fromSize;
-    XDR    xdrs;
     int    maxfd;
     char   *sp;
-    int    i;
-    struct LSFHeader reqHdr;
     int    showTypeModel;
     int    cc;
 
@@ -217,8 +214,8 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     maxfd = sysconf(_SC_OPEN_MAX);
     if (lim_debug != 2) {
 
-        for (i = maxfd; i >= 0; i--)
-            close(i);
+        for (cc = maxfd; cc >= 0; cc--)
+            close(cc);
 
         daemonize_();
         nice(NICE_LEAST);
@@ -279,15 +276,15 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     initSignals();
 
     ls_syslog(LOG_INFO, "\
-%s: Daemon running (%d,%d,%d)", __func__, myClusterPtr->checkSum,
+%s: Daemon running (%d %d %d)", __func__, myClusterPtr->checkSum,
               ntohs(myHostPtr->statInfo.portno), OPENLAVA_VERSION);
     ls_syslog(LOG_DEBUG, "\
 %s: sampleIntvl %f exchIntvl %f hostInactivityLimit %d masterInactivityLimit %d retryLimit %d", __func__, sampleIntvl, exchIntvl,
               hostInactivityLimit, masterInactivityLimit, retryLimit);
 
-    /* log EV_LIM_START
+    /* Initialize and load events.
      */
-    log_limstart();
+    logInit();
 
     if (lim_debug < 2)
         chdir("/tmp");
@@ -360,141 +357,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
         }
 
         if (FD_ISSET(limSock, &chanmask.rmask)) {
-            struct hostNode *fromHost;
-
-            fromSize = sizeof(from);
-            memset(&from, 0, sizeof(from));
-
-            cc = chanRcvDgram_(limSock, reqBuf, MSGSIZE, &from, -1);
-            if (cc < 0) {
-
-                if (errno == EAGAIN ) {
-                    ls_syslog(LOG_ERR, "\
-%s: interrupted chanRcvDgram() limSock %d %m",
-                              __func__, limSock);
-                    sigprocmask(SIG_SETMASK, &oldMask, NULL);
-                    continue;
-                }
-
-                ls_syslog(LOG_ERR, "\
-%s: chanRcvDgram() failed limSock %d: %m",
-                          __func__, limSock);
-                continue;
-            }
-
-            xdrmem_create(&xdrs, reqBuf, MSGSIZE, XDR_DECODE);
-            cc = XDR_GETPOS(&xdrs);
-            if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
-                ls_syslog(LOG_ERR, "\
-%s: failed to decode xdr_LSFHeader %M", __func__);
-                xdr_destroy(&xdrs);
-                sigprocmask(SIG_SETMASK, &oldMask, NULL);
-                continue;
-            }
-            cc = XDR_GETPOS(&xdrs);
-            limReqCode = reqHdr.opCode;
-            limReqCode &= 0xFFFF;
-
-            fromHost = findHostbyAddr(&from, "main");
-            if (fromHost == NULL) {
-                /* Reject hosts that we don't know
-                 * about.
-                 */
-                ls_syslog(LOG_WARNING,"\
-%s: Received request <%d> from non-LSF host %s",
-                          __func__, limReqCode, sockAdd2Str_(&from));
-                /* tell the remote that we don't know him.
-                 */
-                errorBack(&from, &reqHdr, LIME_NAUTH_HOST, -1);
-                sigprocmask(SIG_SETMASK, &oldMask, NULL);
-                xdr_destroy(&xdrs);
-                continue;
-            }
-
-            ls_syslog(LOG_DEBUG, "\
-%s: Received request %d from host %s %s",
-                      __func__, limReqCode,
-                      (fromHost ? fromHost->hostName : "unknown"),
-                      sockAdd2Str_(&from));
-
-            switch (limReqCode) {
-
-                case LIM_PLACEMENT:
-                    placeReq(&xdrs, &from, &reqHdr, -1);
-                    break;
-                case LIM_LOAD_REQ:
-                    loadReq(&xdrs, &from, &reqHdr, -1);
-                    break;
-                case LIM_GET_CLUSNAME:
-                    clusNameReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_GET_MASTINFO:
-                    masterInfoReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_GET_CLUSINFO:
-                    clusInfoReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_PING:
-                    pingReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_GET_HOSTINFO:
-                    hostInfoReq(&xdrs, fromHost, &from, &reqHdr, -1);
-                    break;
-                case LIM_GET_INFO:
-                    infoReq(&xdrs, &from, &reqHdr, -1);
-                    break;
-                case LIM_GET_CPUF:
-                    cpufReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_CHK_RESREQ:
-                    chkResReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_GET_RESOUINFO:
-                    resourceInfoReq(&xdrs, &from, &reqHdr, -1);
-                    break;
-                case LIM_REBOOT:
-                    reconfigReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_SHUTDOWN:
-                    shutdownReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_LOCK_HOST:
-                    lockReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_DEBUGREQ:
-                    limDebugReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_SERV_AVAIL:
-                    servAvailReq(&xdrs, fromHost, &from, &reqHdr);
-                    break;
-                case LIM_LOAD_UPD:
-                    rcvLoad(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_JOB_XFER:
-                    jobxferReq(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_MASTER_ANN:
-                    masterRegister(&xdrs, &from, &reqHdr);
-                    break;
-                case LIM_CONF_INFO:
-                    rcvConfInfo(&xdrs, &from, &reqHdr);
-                    break;
-                default:
-                    if (reqHdr.version <= OPENLAVA_VERSION) {
-                        static int lastcode;
-
-                        errorBack(&from, &reqHdr, LIME_BAD_REQ_CODE, -1);
-                        if (limReqCode != lastcode)
-                            ls_syslog(LOG_ERR, "\
-%s: Unknown request code %d vers %d from %s", __func__,
-                                      limReqCode, reqHdr.version,
-                                      sockAdd2Str_(&from));
-                        lastcode = limReqCode;
-                        break;
-                    }
-            }
-
-            xdr_destroy(&xdrs);
+            processUDPMsg();
         }
 
         if (FD_ISSET(limTcpSock, &chanmask.rmask)) {
@@ -508,6 +371,165 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     } /* for (;;) */
 
 } /* main() */
+
+/* processUDPMsg()
+ */
+static int
+processUDPMsg(void)
+{
+    struct hostNode *fromHost;
+    struct hostent *hp;
+    struct LSFHeader reqHdr;
+    struct sockaddr_in from;
+    enum limReqCode limReqCode;
+    int cc;
+    XDR xdrs;
+
+    memset(&from, 0, sizeof(from));
+
+    cc = chanRcvDgram_(limSock, reqBuf, MSGSIZE, &from, -1);
+    if (cc < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: chanRcvDgram() failed limSock %d: %m",
+                  __func__, limSock);
+        return -1;
+    }
+
+    xdrmem_create(&xdrs, reqBuf, MSGSIZE, XDR_DECODE);
+    cc = XDR_GETPOS(&xdrs);
+
+    if (!xdr_LSFHeader(&xdrs, &reqHdr)) {
+        ls_syslog(LOG_ERR, "\
+%s: failed to decode xdr_LSFHeader %M", __func__);
+        xdr_destroy(&xdrs);
+        return -1;
+    }
+
+    cc = XDR_GETPOS(&xdrs);
+    limReqCode = reqHdr.opCode;
+    limReqCode &= 0xFFFF;
+
+    fromHost = findHostbyAddr(&from, "main");
+    if (fromHost == NULL) {
+        /* Reject hosts that we don't know
+         * about if we don't accept hosts
+         * at runtime.
+         */
+        if (! limParams[LIM_ADD_FLOATING_HOST].paramValue) {
+
+            ls_syslog(LOG_WARNING,"\
+%s: Received request %d from non-LSF host %s",
+                      __func__, limReqCode, sockAdd2Str_(&from));
+            /* tell the remote that we don't know him.
+             */
+            errorBack(&from, &reqHdr, LIME_NAUTH_HOST, -1);
+            xdr_destroy(&xdrs);
+            return -1;
+        }
+
+        /* If we can accept a host at runtime
+         * we must however be able to resolve
+         * its address.
+         */
+        hp = Gethostbyaddr_(&from.sin_addr.s_addr,
+                            sizeof(in_addr_t),
+                            AF_INET);
+        if (hp == NULL) {
+            ls_syslog(LOG_WARNING, "\
+%s: Received request %d from unresolvable address %s", __func__,
+                      limReqCode, sockAdd2Str_(&from));
+            errorBack(&from, &reqHdr, LIME_NAUTH_HOST, -1);
+            xdr_destroy(&xdrs);
+            return -1;
+        }
+    }
+
+    ls_syslog(LOG_DEBUG, "\
+%s: Received request %d from host %s %s",
+              __func__, limReqCode,
+              (fromHost ? fromHost->hostName : hp->h_name),
+              sockAdd2Str_(&from));
+
+    switch (limReqCode) {
+
+        case LIM_PLACEMENT:
+            placeReq(&xdrs, &from, &reqHdr, -1);
+            break;
+        case LIM_LOAD_REQ:
+            loadReq(&xdrs, &from, &reqHdr, -1);
+            break;
+        case LIM_GET_CLUSNAME:
+            clusNameReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_GET_MASTINFO:
+            masterInfoReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_GET_CLUSINFO:
+            clusInfoReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_PING:
+            pingReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_GET_HOSTINFO:
+            hostInfoReq(&xdrs, fromHost, &from, &reqHdr, -1);
+            break;
+        case LIM_GET_INFO:
+            infoReq(&xdrs, &from, &reqHdr, -1);
+            break;
+        case LIM_GET_CPUF:
+            cpufReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_CHK_RESREQ:
+            chkResReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_GET_RESOUINFO:
+            resourceInfoReq(&xdrs, &from, &reqHdr, -1);
+            break;
+        case LIM_REBOOT:
+            reconfigReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_SHUTDOWN:
+            shutdownReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_LOCK_HOST:
+            lockReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_DEBUGREQ:
+            limDebugReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_SERV_AVAIL:
+            servAvailReq(&xdrs, fromHost, &from, &reqHdr);
+            break;
+        case LIM_LOAD_UPD:
+            rcvLoad(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_JOB_XFER:
+            jobxferReq(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_MASTER_ANN:
+            masterRegister(&xdrs, &from, &reqHdr);
+            break;
+        case LIM_CONF_INFO:
+            rcvConfInfo(&xdrs, &from, &reqHdr);
+            break;
+        default:
+            if (reqHdr.version <= OPENLAVA_VERSION) {
+                static int lastcode;
+
+                errorBack(&from, &reqHdr, LIME_BAD_REQ_CODE, -1);
+                if (limReqCode != lastcode)
+                    ls_syslog(LOG_ERR, "\
+%s: Unknown request code %d vers %d from %s", __func__,
+                              limReqCode, reqHdr.version,
+                              sockAdd2Str_(&from));
+                lastcode = limReqCode;
+                break;
+            }
+    }
+
+    xdr_destroy(&xdrs);
+    return 0;
+}
 
 static void
 doAcceptConn(void)
@@ -529,8 +551,11 @@ doAcceptConn(void)
     }
 
     fromHost = findHostbyAddr(&from, "doAcceptConn()");
-    if (fromHost == NULL) {
-
+    if (fromHost == NULL
+        && !limParams[LIM_ADD_FLOATING_HOST].paramValue) {
+        /* A runtime host is asking the master for
+         * a tcp operation it should be its registation.
+         */
         ls_syslog(LOG_WARNING,"\
 %s: Received request from non-LSF host %s",
                           __func__, sockAdd2Str_(&from));
@@ -698,10 +723,6 @@ initAndConfig(int checkMode, int *kernelPerm)
 
     getLastActiveTime();
 
-    /* Initialize LIM events file...
-     */
-    log_init();
-
     return 0;
 }
 
@@ -771,8 +792,8 @@ child_handler(int sig)
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         if (pid == elim_pid) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5008,
-                                             "%s: elim (pid=%d) died (exit_code=%d,exit_sig=%d)"), /* catgets 5008 */
+            ls_syslog(LOG_ERR, "\
+%s: elim (pid=%d) died (exit_code=%d,exit_sig=%d)",
                       __func__,
                       (int)elim_pid,
                       WEXITSTATUS (status),

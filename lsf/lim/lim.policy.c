@@ -1350,7 +1350,10 @@ loadReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr, int s)
         }
     }
 
-    if (!validHosts(ldReq.preferredHosts, ldReq.numPrefs, &clName, ldReq.options)) {
+    if (!validHosts(ldReq.preferredHosts,
+                    ldReq.numPrefs,
+                    &clName,
+                    ldReq.options)) {
         limReplyCode = LIME_UNKWN_HOST;
         ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5823, "%s: validHosts() failed for bad cluster/host name requested from <%s>")), fname, sockAdd2Str_(from));         /* catgets 5823 */
         goto Reply;

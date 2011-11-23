@@ -248,13 +248,13 @@ contact:
 
             xdr_destroy(&xdrs);
 
-            if (masterInfo_.addr == 0 ||
-                !memcmp((char *) &masterInfo_.addr,
-                        (char *) &sockIds_[MASTER].sin_addr,
-                        sizeof(u_int))) {
-                if (!memcpy((char *) &masterInfo_.addr,
-                            (char *) &sockIds_[MASTER].sin_addr,
-                            sizeof(u_int)))
+            if (masterInfo_.addr == 0
+                || !memcmp(&masterInfo_.addr,
+                           &sockIds_[MASTER].sin_addr,
+                           sizeof(in_addr_t))) {
+                if (!memcpy(&masterInfo_.addr,
+                            &sockIds_[MASTER].sin_addr,
+                            sizeof(in_addr_t)))
                     lserrno = LSE_TIME_OUT;
                 else
                     lserrno = LSE_MASTR_UNKNW;
@@ -262,12 +262,15 @@ contact:
                 CLOSECD(limchans_[TCP]);
                 return -1;
             }
+
             masterknown_ = TRUE;
-            memcpy((char *) &sockIds_[MASTER].sin_addr,
-                   (char *) &masterInfo_.addr, sizeof(u_int));
-            memcpy((char *) &sockIds_[TCP].sin_addr,
-                   (char *) &masterInfo_.addr, sizeof(u_int));
-            sockIds_[TCP].sin_port        = masterInfo_.portno;
+            memcpy(&sockIds_[MASTER].sin_addr,
+                   &masterInfo_.addr,
+                   sizeof(in_addr_t));
+            memcpy(&sockIds_[TCP].sin_addr,
+                   &masterInfo_.addr,
+                   sizeof(in_addr_t));
+            sockIds_[TCP].sin_port = masterInfo_.portno;
             FREEUP(*rep_buf);
 
             CLOSECD(limchans_[TCP]);
@@ -309,7 +312,7 @@ callLimUdp_(char *reqbuf, char *repbuf, int len, struct LSFHeader *reqHdr,
     char *sp = genParams_[LSF_SERVER_HOSTS].paramValue;
     int cc;
     static char connected;
-    int id=-1;
+    int id = -1;
     char multicasting = FALSE;
 
     if (options & _LOCAL_ && !sp) {
@@ -378,7 +381,7 @@ contact:
             break;
         case UNBOUND:
             if (limchans_[id] < 0) {
-                if ((limchans_[id] = createLimSock_((struct sockaddr_in*)NULL)) < 0)
+                if ((limchans_[id] = createLimSock_(NULL)) < 0)
                     return(-1);
             }
             connected = FALSE;
@@ -467,10 +470,12 @@ check:
             }
             previousMasterLimAddr = masterLimAddr;
 
-            memcpy((char *) &sockIds_[MASTER].sin_addr, (char *)&masterLimAddr,
-                   sizeof(u_int));
-            memcpy((char *) &sockIds_[TCP].sin_addr, (char *)&masterLimAddr,
-                   sizeof(u_int));
+            memcpy(&sockIds_[MASTER].sin_addr,
+                   &masterLimAddr,
+                   sizeof(in_addr_t));
+            memcpy(&sockIds_[TCP].sin_addr,
+                   &masterLimAddr,
+                   sizeof(in_addr_t));
             sockIds_[TCP].sin_port = masterInfo_.portno;
 
             id = MASTER;
@@ -508,7 +513,7 @@ createLimSock_(struct sockaddr_in *connaddr)
 }
 
 int
-initLimSock_()
+initLimSock_(void)
 {
     struct servent *sv;
     ushort service_port;

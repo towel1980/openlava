@@ -16,16 +16,10 @@
  *
  */
 
-#include <pwd.h>
-#include <math.h>
-#include <grp.h>
 #include "lim.h"
 #include "lim.conf.h"
 
 #define NL_SETN 24
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 struct sharedResourceInstance *sharedResourceHead = NULL ;
 struct lsInfo allInfo;
@@ -3018,7 +3012,6 @@ addHost(struct clusterNode *clPtr,
         return NULL;
     }
 
-
     if (!hEntPtr->hostType[0]) {
         hPtr->hTypeNo = DETECTMODELTYPE;
     } else if ((hPtr->hTypeNo = typeNameToNo(hEntPtr->hostType)) < 0) {
@@ -4767,10 +4760,10 @@ saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
 /* limAddHost()
  */
 void
-limAddHost(XDR *xdrs,
-           struct sockaddr_in *from,
-           struct LSFHeader *reqHdr,
-           int chan)
+addFloatHost(XDR *xdrs,
+             struct sockaddr_in *from,
+             struct LSFHeader *reqHdr,
+             int chan)
 {
     static char buf[MSGSIZE];
     struct LSFHeader hdr;
@@ -4810,7 +4803,7 @@ limAddHost(XDR *xdrs,
 
     /* log the lim event HOST_ADD
      */
-    log_addhost(&hPtr);
+    logAddHost(&hPtr);
 
     /* reply to the library
      */
@@ -4838,4 +4831,45 @@ hosed:
     }
 
     xdr_destroy(&xdrs2);
+}
+
+/* addHostByTab()
+ */
+int
+addHostByTab(hTab *tab)
+{
+    struct hostEntry hPtr;
+    struct hostEntryLog *hLog;
+    sTab stab;
+    hEnt *e;
+
+    for (e = h_firstEnt_(tab, &stab);
+         e != NULL ;
+         e = h_nextEnt_(&stab)) {
+        int cc = 0;
+
+        hLog = e->hData;
+        memcpy(&hPtr, hLog, sizeof(struct hostEntry));
+
+        if (!addHost(myClusterPtr,
+                     &hPtr,
+                     hPtr.window,
+                     (char *)__func__,
+                     &cc)) {
+            ls_syslog(LOG_ERR, "\
+%s: failed adding runtime host %s", __func__, hPtr.hostName);
+            continue;
+        }
+
+        ls_syslog(LOG_DEBUG, "\
+%s: runtime host %s model %s type %s added all right",
+                  __func__, hPtr.hostName,
+                  hPtr.hostModel, hPtr.hostType);
+
+        /* let the caller, the owner of the table
+         * to deal with the entries...
+         */
+    }
+
+    return 0;
 }

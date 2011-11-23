@@ -593,14 +593,10 @@ static char *emap[] = {
     "REMOVE_HOST"
 };
 
-static int writeEventHeader(FILE *,
-                            struct lsEventRec *);
-static int writeHostEntry(FILE *,
-                          struct lsEventRec *);
-static int readEventHeader(char *,
-                           struct lsEventRec *);
-static int readHostEntry(char *,
-                         struct lsEventRec *);
+static int writeEventHeader(FILE *, struct lsEventRec *);
+static int writeHostEntry(FILE *, struct lsEventRec *);
+static int readEventHeader(char *, struct lsEventRec *);
+static int readHostEntry(char *, struct lsEventRec *);
 static char *getstr_(char *);
 
 /* ls_readeventrec()
@@ -610,6 +606,8 @@ ls_readeventrec(FILE *fp)
 {
     static struct lsEventRec ev;
     static char ebuf[BUFSIZ];
+    int cc;
+    char *p;
 
     if (fp == NULL) {
         lserrno = LSE_BAD_ARGS;
@@ -621,7 +619,16 @@ ls_readeventrec(FILE *fp)
         return NULL;
     }
 
-    readEventHeader(ebuf, &ev);
+    p = ebuf;
+    cc = readEventHeader(ebuf, &ev);
+    if (cc < 0) {
+        lserrno = LSE_FILE_CLOSE;
+        return NULL;
+    }
+    /* move ahead since we consumed
+     * the header.
+     */
+    p = p + cc;
 
     switch (ev.event) {
         case EV_LIM_START:
@@ -631,7 +638,7 @@ ls_readeventrec(FILE *fp)
             ev.record = NULL;
             break;
         case EV_ADD_HOST:
-            readHostEntry(ebuf, &ev);
+            readHostEntry(p, &ev);
             break;
         case EV_REMOVE_HOST:
             ev.record = NULL;
@@ -691,7 +698,7 @@ writeEventHeader(FILE *fp,
     /* Quote strings just like lsbatch.
      */
     fprintf(fp, "\
-%s %s %lu ", emap[ev->event], ev->version, ev->etime);
+%s %hu %lu ", emap[ev->event], ev->version, ev->etime);
 
     fflush(fp);
 
@@ -740,18 +747,29 @@ writeHostEntry(FILE *fp,
 /* readEventHeader()
  */
 static int
-readEventHeader(char *buf,
-                struct lsEventRec *ev)
+readEventHeader(char *buf, struct lsEventRec *ev)
 {
+    char event[32];
+    int n;
     int cc;
 
     cc = sscanf(buf, "\
-%d%s%lu", (int *)&ev->event, ev->version, &ev->etime);
-
+%s %hd %lu %n", event, &ev->version, &ev->etime, &n);
     if (cc != 3)
         return -1;
 
-    return 0;
+    if (strcmp("LIM_START", event) == 0)
+        ev->event = EV_LIM_START;
+    else if (strcmp("LIM_SHUTDOWN", event) == 0)
+        ev->event = EV_LIM_SHUTDOWN;
+    else if (strcmp("ADD_HOST", event) == 0)
+        ev->event = EV_ADD_HOST;
+    else if (strcmp("REMOVE_HOST", event) == 0)
+        ev->event = EV_REMOVE_HOST;
+    else
+        abort();
+
+    return n;
 }
 
 /* readHostEntry()
@@ -761,43 +779,82 @@ readHostEntry(char *buf,
               struct lsEventRec *ev)
 {
     int cc;
-    static struct hostEntryLog hPtr;
+    int n;
+    int i;
+    struct hostEntryLog *hPtr;
     static char name[MAXLSFNAMELEN + 1];
     static char model[MAXLSFNAMELEN + 1];
     static char type[MAXLSFNAMELEN + 1];
+    char *p;
+    char *window;
 
-    FREEUP(hPtr.busyThreshold);
-    cc = 0;
-    while (hPtr.resList[cc]) {
-        FREEUP(hPtr.resList[cc]);
-        ++cc;
+    hPtr = calloc(1, sizeof(struct hostEntryLog));
+
+    p = buf;
+    /* name, model, type, number of disks
+     * and cpu factor.
+     */
+    cc = sscanf(p, "\
+%s%s%s%d%d%f%d%n", name, model, type,
+                &hPtr->rcv, &hPtr->nDisks, &hPtr->cpuFactor,
+                &hPtr->numIndx, &n);
+    if (cc != 7) {
+        free(hPtr);
+        return -1;
     }
-    FREEUP(hPtr.window);
+    p = p + n;
 
-    cc = sscanf(buf, "\
-%s%s%s%d%d%f%d", name, model, type,
-                &hPtr.rcv, &hPtr.nDisks, &hPtr.cpuFactor,
-                &hPtr.numIndx);
+    strcpy(hPtr->hostName, getstr_(name));
+    strcpy(hPtr->hostModel, getstr_(model));
+    strcpy(hPtr->hostType, getstr_(type));
 
-    strcpy(hPtr.hostName, getstr_(name));
-    strcpy(hPtr.hostModel, getstr_(name));
-    strcpy(hPtr.hostType, getstr_(name));
-
-    hPtr.busyThreshold = calloc(hPtr.numIndx, sizeof(float));
-    for (cc = 0; cc < hPtr.numIndx; cc++)
-        sscanf(buf, "%f", &hPtr.busyThreshold[cc]);
-
-    sscanf(buf, "%d", &hPtr.nRes);
-
-    for (cc = 0; cc < hPtr.nRes; cc++) {
-        sscanf(buf, "%s", name);
-        hPtr.resList[cc] = strdup(getstr_(name));
+    /* load indexes
+     */
+    hPtr->busyThreshold = calloc(hPtr->numIndx, sizeof(float));
+    for (i = 0; i < hPtr->numIndx; i++) {
+        cc = sscanf(p, "%f%n", &hPtr->busyThreshold[i], &n);
+        if (cc != 1)
+            goto out;
+        p = p + n;
     }
 
-    sscanf(buf, "%d%s", &hPtr.rexPriority, name);
-    hPtr.window = strdup(getstr_(name));
+    /* resources
+     */
+    cc = sscanf(p, "%d%n", &hPtr->nRes, &n);
+    if (cc != 1)
+        goto out;
+    if (hPtr->nRes > 0)
+        hPtr->resList = calloc(hPtr->nRes, sizeof(char *));
+    p = p + n;
+
+    for (i = 0; i < hPtr->nRes; i++) {
+        cc = sscanf(p, "%s%n", name, &n);
+        if (cc != 1)
+            goto out;
+        hPtr->resList[cc] = strdup(getstr_(name));
+        p = p + n;
+    }
+
+    cc = sscanf(p, "%d%s%n", &hPtr->rexPriority, name, &n);
+    if (cc != 2)
+        goto out;
+    p = p + n;
+
+    window = getstr_(name);
+    if (window)
+        hPtr->window = strdup(window);
+
+    /* at last my baby is comin' home
+     */
+    ev->record = hPtr;
 
     return 0;
+
+out:
+    FREEUP(hPtr->busyThreshold);
+    FREEUP(hPtr);
+
+    return -1;
 }
 
 /* getstr_()
@@ -820,4 +877,25 @@ getstr_(char *s)
 
     *p = 0;
     return buf;
+}
+
+/* freeHostEntryLog()
+ */
+int
+freeHostEntryLog(struct hostEntryLog **hPtr)
+{
+    int cc;
+
+    if (hPtr == NULL
+        || *hPtr == NULL)
+        return -1;
+
+    FREEUP((*hPtr)->busyThreshold);
+    for (cc = 0; cc < (*hPtr)->nRes; cc++)
+        FREEUP((*hPtr)->resList[cc]);
+    FREEUP((*hPtr)->resList);
+    FREEUP((*hPtr)->window);
+    FREEUP(*hPtr);
+
+    return 0;
 }

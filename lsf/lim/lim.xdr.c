@@ -34,10 +34,9 @@ xdr_loadvector(XDR *xdrs,
                struct loadVectorStruct *lvp,
                struct LSFHeader *hdr)
 {
-    static char fname[] = "xdr_loadvector";
     int i;
-    static struct resPair *resPairs = NULL;
-    static int numResPairs = 0;
+    static struct resPair *resPairs;
+    static int numResPairs;
 
     if (!(xdr_int(xdrs, &lvp->hostNo) &&
           xdr_u_int(xdrs, &lvp->seqNo) &&
@@ -45,43 +44,36 @@ xdr_loadvector(XDR *xdrs,
           xdr_int(xdrs, &lvp->checkSum) &&
           xdr_int(xdrs, &lvp->flags) &&
           xdr_int(xdrs, &lvp->numIndx) &&
-          xdr_int(xdrs, &lvp->numUsrIndx)) )
-    {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname,
-                  "xdr_int/xdr_u_int");
-        return(FALSE);
+          xdr_int(xdrs, &lvp->numUsrIndx))) {
+        return FALSE;
     }
 
-    if ( (xdrs->x_op == XDR_DECODE)
-         &&
-         (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) ) {
+    if (xdrs->x_op == XDR_DECODE
+        && !limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue) {
 
         if (myClusterPtr->checkSum != lvp->checkSum) {
             if (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) {
-                ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 6001,
-                                                     "%s: Sender has a different configuration"), fname); /* catgets 6001 */
+                ls_syslog(LOG_DEBUG, "\
+%s: Sender has a different configuration", __func__);
             }
         }
-
 
         if (allInfo.numIndx != lvp->numIndx
             || allInfo.numUsrIndx != lvp->numUsrIndx) {
 
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6002,
-                                             "%s: Sender has a different number of load index vectors. It will be rejected from the cluster by the master host."), fname); /* catgets 6002 */
+            ls_syslog(LOG_ERR, "\
+%s: Sender has a different number of load index vectors. It will be rejected from the cluster by the master host.", __func__);
             return FALSE;
         }
     }
 
-    for (i = 0; i < 1+GET_INTNUM(lvp->numIndx); i++) {
+    for (i = 0; i < 1 + GET_INTNUM(lvp->numIndx); i++) {
         if (!xdr_int(xdrs, (int *) &lvp->status[i])) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_int");
-            return (FALSE);
+            return FALSE;
         }
     }
     if (!xdr_lvector(xdrs, lvp->li, lvp->numIndx)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_lvector");
-        return(FALSE);
+        return FALSE;
     }
 
     if (xdrs->x_op == XDR_DECODE) {
@@ -89,36 +81,30 @@ xdr_loadvector(XDR *xdrs,
         resPairs = NULL;
         numResPairs = 0;
         if (lvp->numResPairs > 0) {
-            resPairs = (struct resPair *)
-                malloc (lvp->numResPairs * sizeof (struct resPair));
-            if (resPairs == NULL) {
-                lvp->numResPairs = 0;
-                ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",
-                          lvp->numResPairs * sizeof (struct resPair));
-                return (FALSE);
-            }
+            resPairs = calloc(lvp->numResPairs,  sizeof(struct resPair));
             lvp->resPairs = resPairs;
         } else
             lvp->resPairs = NULL;
     }
     for (i = 0; i < lvp->numResPairs; i++) {
-        if (!xdr_arrayElement(xdrs, (char *) &lvp->resPairs[i], hdr, xdr_resPair)) {
+        if (!xdr_arrayElement(xdrs,
+                              (char *)&lvp->resPairs[i],
+                              hdr,
+                              xdr_resPair)) {
             if (xdrs->x_op == XDR_DECODE) {
                 freeResPairs (lvp->resPairs, i);
                 resPairs = NULL;
                 numResPairs = 0;
             }
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "xdr_arrayElement");
-            return (FALSE);
+            return FALSE;
         }
     }
     if (xdrs->x_op == XDR_DECODE)
         numResPairs = lvp->numResPairs;
-    return(TRUE);
 
+    return TRUE;
 }
 
-
 static void
 freeResPairs (struct resPair *resPairs, int num)
 {

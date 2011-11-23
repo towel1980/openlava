@@ -22,7 +22,8 @@
 #include "resreq.h"
 #if defined(HAVE_TCL_TCL_H)
 #include <tcl/tcl.h>
-#else
+#endif
+#if defined(HAVE_TCL_H)
 #include <tcl.h>
 #endif
 #include "lsftcl.h"

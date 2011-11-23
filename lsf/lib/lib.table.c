@@ -272,7 +272,7 @@ h_nextEnt_(sTab *sPtr)
 
     sPtr->hEntPtr = (hEnt *) ((struct hLinks *) hEntPtr)->bwPtr;
 
-    return(hEntPtr);
+    return hEntPtr;
 
 }
 
@@ -300,10 +300,10 @@ h_findEnt(const char *key, struct hLinks *hList)
          hEntPtr != (hEnt *) hList;
          hEntPtr = (hEnt *) ((struct hLinks *) hEntPtr)->bwPtr) {
         if (strcmp(hEntPtr->keyname, key) == 0)
-            return(hEntPtr);
+            return hEntPtr;
     }
 
-    return (NULL);
+    return NULL;
 
 }
 
@@ -334,7 +334,7 @@ resetTab(hTab *tabPtr)
         }
     }
 
-    free((char *) lastSlotPtr);
+    free(lastSlotPtr);
 
 }
 
@@ -344,7 +344,7 @@ h_delRef_(hTab *tabPtr, hEnt *hEntPtr)
     if (hEntPtr != (hEnt *) NULL) {
         remList_((struct hLinks *) hEntPtr);
         free(hEntPtr->keyname);
-        free((char *) hEntPtr);
+        free(hEntPtr);
         tabPtr->numEnts--;
     }
 
@@ -366,14 +366,13 @@ h_freeRefTab_(hTab *tabPtr)
             hEntPtr = (hEnt *) slotPtr->bwPtr;
             remList_((struct hLinks *) hEntPtr);
             FREEUP(hEntPtr->keyname);
-            free((char *) hEntPtr);
+            free(hEntPtr);
         }
     }
 
     free(tabPtr->slotPtr);
     tabPtr->slotPtr = NULL;
     tabPtr->numEnts = 0;
-
 }
 
 /* getClosestPrime()

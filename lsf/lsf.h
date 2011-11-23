@@ -20,7 +20,7 @@
 #ifndef _LSF_H_
 #define _LSF_H_
 
-#include "../config.h"
+#include <config.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
@@ -519,7 +519,7 @@ typedef enum {
  */
 struct lsEventRec {
     event_t event;
-    char version[12];
+    uint16_t version;
     time_t etime;
     void *record;
 };
@@ -912,10 +912,13 @@ extern int getBEtime(char *, char, time_t *);
 /* openlava add host
  */
 extern int ls_addhost(struct hostEntry *);
+extern int ls_rmhost(const char *);
+
 /* openlava LIM log functions
  */
 extern struct lsEventRec  *ls_readeventrec(FILE *);
 extern int ls_writeeventrec(FILE *, struct lsEventRec *);
+extern int freeHostEntryLog(struct hostEntryLog **);
 
 struct extResInfo {
     char *name;

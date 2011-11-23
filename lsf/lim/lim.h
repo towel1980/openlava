@@ -316,7 +316,9 @@ typedef enum {
     LSF_LIM_JACKUP_BUSY,
     LIM_RSYNC_CONFIG,
     LIM_SLAVE_ONLY,
-    LSB_SHAREDIR
+    LSB_SHAREDIR,
+    LIM_ADD_FLOATING_HOST,
+    LIM_NO_FORK
 } limParams_t;
 
 #define LOOP_ADDR       0x7F000001
@@ -463,7 +465,8 @@ extern void putLastActiveTime(void);
 extern void lim_Exit(const char *fname);
 extern int equivHostAddr(struct hostNode *, u_int);
 extern struct hostNode *findHost(char *);
-extern struct hostNode *findHostbyAddr(struct sockaddr_in *, char *);
+extern struct hostNode *findHostbyAddr(struct sockaddr_in *,
+                                       char *);
 extern struct hostNode *findHostbyList(struct hostNode *, char *);
 extern struct hostNode *findHostbyNo(struct hostNode *, int);
 extern bool_t findHostInCluster(char *);
@@ -496,14 +499,14 @@ extern int xdr_masterReg(XDR *, struct masterReg *, struct LSFHeader *);
 extern int xdr_statInfo(XDR *, struct statInfo *, struct LSFHeader *);
 extern void clientIO(struct Masks *);
 
-/* openlava add runtime host
+/* openlava add floating host
  */
-extern void limAddHost(XDR *,
-                       struct sockaddr_in *,
-                       struct LSFHeader *,
-                       int);
-extern int log_init(void);
-extern int log_limstart(void);
-extern int log_addhost(struct hostEntry *);
-
+extern void addFloatHost(XDR *,
+                         struct sockaddr_in *,
+                         struct LSFHeader *,
+                         int);
+extern int logInit(void);
+extern int logLimStart(void);
+extern int logAddHost(struct hostEntry *);
+extern int addHostByTab(hTab *);
 #endif

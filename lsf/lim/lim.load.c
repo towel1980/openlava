@@ -20,7 +20,6 @@
  */
 
 #include "lim.h"
-#include <math.h>
 
 #define NL_SETN 24
 
@@ -32,7 +31,7 @@ short  hostInactivityLimit = HOSTINACTIVITYLIMIT;
 short  masterInactivityLimit = MASTERINACTIVITYLIMIT;
 short  resInactivityLimit    = RESINACTIVITYLIMIT;
 short  retryLimit = RETRYLIMIT;
-short  keepTime=KEEPTIME;
+short  keepTime = KEEPTIME;
 
 time_t lastSbdActiveTime = 0;
 
@@ -356,123 +355,104 @@ rcvLoad(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
     }
 }
 
-
+
 static void
 rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
 {
-    static char fname[] = "rcvLoadVector";
     static int checkSumMismatch;
-    static struct loadVectorStruct *loadVector = NULL;
+    static struct loadVectorStruct *loadVector;
     struct hostNode *hPtr;
     int i;
+    int masterLock = FALSE;
 
     if (loadVector == NULL) {
-        if ((loadVector = (struct loadVectorStruct *)
-              malloc (sizeof (struct loadVectorStruct))) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            return;
-        }
-        if ((loadVector->li = (float *)
-                      malloc(allInfo.numIndx*sizeof(float))) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            return;
-        }
-
-        if ((loadVector->status = (int *)
-                   malloc((1 + GET_INTNUM(allInfo.numIndx)) * sizeof(int)))
-                                                                  == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            return;
-        }
+        loadVector = calloc(1, sizeof(struct loadVectorStruct));
+        loadVector->li = calloc(allInfo.numIndx, sizeof(float));
+        loadVector->status = calloc((1 + GET_INTNUM(allInfo.numIndx)),
+                                    sizeof(int));
     }
 
     if (!xdr_loadvector(xdrs, loadVector, hdr)) {
-
-        ls_syslog(LOG_DEBUG, "%s: Error on xdr_loadvector from %s", fname,
-                  sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, "\
+%s: Error in xdr_loadvector from %s", __func__, sockAdd2Str_(from));
         return;
     }
 
-    if (masterMe) {
-
-        if ( (myClusterPtr->checkSum != loadVector->checkSum)
-             &&
-             (checkSumMismatch < 5)
-             &&
-             (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL) ) {
-            ls_syslog(LOG_WARNING, _i18n_msg_get(ls_catd , NL_SETN, 5602,
-                "%s: Sender (%s) may have different config?."), /* catgets 5602 */
-                fname, sockAdd2Str_(from));
-            checkSumMismatch++;
-        }
-
-
-
-        hPtr = findHostbyAddr(from, fname);
-        if (hPtr == NULL) {
-            return;
-        }
-
-
-        if (findHostbyList(myClusterPtr->hostList, hPtr->hostName) == NULL) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5604,
-                "%s: Got load from client-only host %s.  Kill LIM on %s"), /* catgets 5604 */
-                fname, sockAdd2Str_(from), sockAdd2Str_(from));
-            return;
-        }
-
-
-
-        if (hPtr->infoValid != TRUE) {
-            return;
-        }
-
-        if (logclass & LC_COMM)
-            ls_syslog(LOG_DEBUG,"rcvLoadVector: Received load update from host <%s>",hPtr->hostName);
-
-
-
-        hPtr->hostInactivityCount = 0;
-        int masterLock = FALSE;
-
-        if (hPtr->status[0] & LIM_LOCKEDM) {
-            masterLock = TRUE;
-        }
-        hPtr->status[0] = loadVector->status[0];
-        if ( masterLock) {
-            hPtr->status[0] |= LIM_LOCKEDM;
-        } else {
-            hPtr->status[0] &= ~LIM_LOCKEDM;
-        }
-        for (i = 0; i < GET_INTNUM(allInfo.numIndx); i++)
-            hPtr->status[i + 1] = loadVector->status[i + 1];
-
-        hPtr->loadMask  = 0;
-
-
-        if ((loadVector->seqNo - hPtr->lastSeqNo > 2) &&
-            (loadVector->seqNo > hPtr->lastSeqNo) && (hPtr->lastSeqNo != 0) )
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5605,
-                "%s: host %s lastSeqNo=%d seqNo=%d. Packets being dropped?"), /* catgets 5605 */
-                fname, hPtr->hostName, hPtr->lastSeqNo, loadVector->seqNo);
-        hPtr->lastSeqNo = loadVector->seqNo;
-
-
-        copyResValues (*loadVector, hPtr);
-
-        copyIndices(loadVector->li, loadVector->numIndx, loadVector->numUsrIndx, hPtr);
-
-
-        if (loadVector->flags & SEND_MASTER_ANN)  {
-            ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5620, "%s: Sending master announce to %s")),   /* catgets 5620 */
-                       fname, hPtr->hostName);
-            announceMasterToHost(hPtr, SEND_NO_INFO);
-        }
-    } else {
-
-        ls_syslog(LOG_DEBUG, "%s: %s thinks I am the master, but I'm not",
-                  fname, sockAdd2Str_(from));
+    if (!masterMe) {
+        ls_syslog(LOG_DEBUG, "\
+%s: %s thinks I am the master, but I'm not",
+                  __func__, sockAdd2Str_(from));
         return;
+    }
+
+    if (myClusterPtr->checkSum != loadVector->checkSum
+        && checkSumMismatch < 5
+        && (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL)) {
+        ls_syslog(LOG_DEBUG, "\
+%s: Sender (%s) may have different config?.",
+                  __func__, sockAdd2Str_(from));
+        checkSumMismatch++;
+    }
+
+    hPtr = findHostbyAddr(from, (char *)__func__);
+    if (hPtr == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: Received load update from unkown host %s",
+                  __func__, sockAdd2Str_(from));
+        return ;
+    }
+
+    if (findHostbyList(myClusterPtr->hostList, hPtr->hostName) == NULL) {
+        ls_syslog(LOG_ERR, "\
+%s: Got load from client-only host %s.  Kill LIM on %s",
+                  __func__, sockAdd2Str_(from), sockAdd2Str_(from));
+        return;
+    }
+
+    if (hPtr->infoValid != TRUE) {
+        return;
+    }
+
+    ls_syslog(LOG_DEBUG,"\
+%s: Received load update from host %s", __func__, hPtr->hostName);
+
+    hPtr->hostInactivityCount = 0;
+
+    if (hPtr->status[0] & LIM_LOCKEDM) {
+        masterLock = TRUE;
+    }
+    hPtr->status[0] = loadVector->status[0];
+    if (masterLock) {
+        hPtr->status[0] |= LIM_LOCKEDM;
+    } else {
+        hPtr->status[0] &= ~LIM_LOCKEDM;
+    }
+
+    for (i = 0; i < GET_INTNUM(allInfo.numIndx); i++)
+        hPtr->status[i + 1] = loadVector->status[i + 1];
+
+    hPtr->loadMask  = 0;
+
+    if (loadVector->seqNo - hPtr->lastSeqNo > 2
+        && loadVector->seqNo > hPtr->lastSeqNo
+        && hPtr->lastSeqNo != 0)
+
+        ls_syslog(LOG_ERR, "\
+%s: host %s lastSeqNo=%d seqNo=%d. Packets being dropped?",
+                  __func__, hPtr->hostName,
+                  hPtr->lastSeqNo, loadVector->seqNo);
+    hPtr->lastSeqNo = loadVector->seqNo;
+
+    copyResValues (*loadVector, hPtr);
+    copyIndices(loadVector->li,
+                loadVector->numIndx,
+                loadVector->numUsrIndx,
+                hPtr);
+
+    if (loadVector->flags & SEND_MASTER_ANN)  {
+        ls_syslog(LOG_INFO, "\
+%s: Sending master announce to %s", __func__, hPtr->hostName);
+        announceMasterToHost(hPtr, SEND_NO_INFO);
     }
 }
 

@@ -245,3 +245,26 @@ ls_addhost(struct hostEntry *hPtr)
 
     return 0;
 }
+
+/* ls_rmhost()
+ */
+int
+ls_rmhost(const char *host)
+{
+    if (host == NULL) {
+        lserrno = LSE_BAD_ARGS;
+        return -1;
+    }
+
+    if (callLim_(LIM_RM_HOST,
+                 host,
+                 xdr_hostName,
+                 NULL,
+                 NULL,
+                 NULL,
+                 _USE_TCP_,
+                 NULL) < 0)
+        return -1;
+
+    return 0;
+}

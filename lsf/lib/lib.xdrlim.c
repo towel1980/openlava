@@ -1248,3 +1248,14 @@ xdr_hostEntry(XDR *xdrs,
 
     return TRUE;
 }
+
+bool_t
+xdr_hostName(XDR *xdrs,
+             char *hostname,
+             struct LSFHeader *hdr)
+{
+    if (! xdr_string(xdrs, &hostname, MAXHOSTNAMELEN))
+        return FALSE;
+
+    return TRUE;
+}

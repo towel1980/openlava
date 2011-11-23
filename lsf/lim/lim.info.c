@@ -19,7 +19,6 @@
 #include "lim.h"
 #include "../lib/lib.xdr.h"
 #include "../lib/lproto.h"
-#include <math.h>
 
 #define NL_SETN 24
 
@@ -635,41 +634,24 @@ Reply:
     return;
 
 }
+
 int
 validHosts(char **hostList, int num, char *clName, int options)
 {
-    static char fname[] = "validHosts";
-    int i, cc;
     struct clusterNode *clPtr;
+    int cc;
 
+    myClusterPtr->status |= CLUST_ELIGIBLE;
     *clName = FALSE;
     clPtr = myClusterPtr;
-    clPtr->status &= ~CLUST_ELIGIBLE;
-    clPtr->status &= ~CLUST_ALL_ELIGIBLE;
 
-    if (num == 1)
-        myClusterPtr->status |= CLUST_ELIGIBLE;
+    for (cc = 0; cc < num; cc++) {
 
-    for (i=0; i < num; i++) {
-        if (!(clPtr->status & CLUST_ACTIVE))
-            continue;
-        if ( ((cc=strcmp(hostList[i], clPtr->clName)) == 0) ||
-            findHostbyList(clPtr->hostList, hostList[i]) != NULL ||
-            findHostbyList(clPtr->clientList, hostList[i]) != NULL) {
-
-            if (i > 0) {
-
-                if ( !cc ) {
-                        clPtr->status |= CLUST_ALL_ELIGIBLE;
-                        *clName = TRUE;
-                }
-                clPtr->status |= CLUST_ELIGIBLE;
-            }
-        } else {
-	    if (logclass & (LC_TRACE | LC_SCHED))
-	        ls_syslog(LOG_DEBUG2, "%s: Cannot find host <%s>", fname, hostList[i]);
-	    return FALSE;
-	}
+        if (findHostbyList(clPtr->hostList, hostList[cc]) == NULL) {
+            ls_syslog(LOG_WARNING, "\
+%s: Unkown host %s in request", __func__, hostList[cc]);
+            return FALSE;
+        }
     }
 
     return TRUE;
@@ -683,7 +665,6 @@ getCShortInfo(struct LSFHeader *reqHdr)
     if (reqHdr->version >= 6) {
 	return (&shortInfo);
     }
-
 
     oldShortInfo.nRes = shortInfo.nRes;
     oldShortInfo.resName = shortInfo.resName;
@@ -715,7 +696,6 @@ getCShortInfo(struct LSFHeader *reqHdr)
     }
 
     return (&oldShortInfo);
-
 }
 
 void

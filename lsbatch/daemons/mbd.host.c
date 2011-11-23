@@ -1035,9 +1035,18 @@ getLsbHostLoad (void)
         mbdDie(MASTER_FATAL);
     }
 
-    hosts = ls_loadofhosts ("-:server", &num, EFFECTIVE | LOCAL_ONLY,
-			    NULL, hostNames, numhosts);
+    if (0) {
+        hosts = ls_loadofhosts ("-:server", &num, EFFECTIVE | LOCAL_ONLY,
+                                NULL, hostNames, numhosts);
+    }
 
+    num = 0;
+    hosts = ls_loadofhosts ("-:server",
+                            &num,
+                            EFFECTIVE | LOCAL_ONLY,
+                            NULL,
+                            NULL,
+                            0);
     if (hosts == NULL) {
 
         if (lserrno == LSE_LIM_DOWN) {
