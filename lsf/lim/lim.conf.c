@@ -17,7 +17,7 @@
  */
 
 #include "lim.h"
-#include "lim.conf.h"
+#include "../../lsf/lib/lib.conf.h"
 
 #define NL_SETN 24
 
@@ -26,7 +26,7 @@ struct lsInfo allInfo;
 struct shortLsInfo shortInfo;
 
 hTab hostModelTbl;
-int sizeOfResTable =0;
+int sizeOfResTable = 0;
 static int numofhosts = 0;
 char mcServersSet = FALSE;
 
@@ -378,8 +378,7 @@ setIndex(struct keymap *keyList, char *lsfile, int linenum)
 
     if (allInfo.numUsrIndx+NBUILTINDEX >=li_len-1) {
         li_len <<= 1;
-        if (!(li=(struct liStruct *)
-              realloc(li, li_len*sizeof(struct liStruct)))) {
+        if (!(li = realloc(li, li_len * sizeof(struct liStruct)))) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
             return TRUE;
         }
@@ -1062,8 +1061,7 @@ doresources(FILE *fp, int *LineNum, char *lsfile)
 
                 if (allInfo.numUsrIndx+NBUILTINDEX >=li_len-1) {
                     li_len *= 2;
-                    if (!(li=(struct liStruct *)
-                          realloc(li, li_len*sizeof(struct liStruct)))) {
+                    if (!(li = realloc(li, li_len * sizeof(struct liStruct)))) {
                         ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "malloc",
                                   li_len*sizeof(struct liStruct));
                         return FALSE;
@@ -3244,33 +3242,31 @@ initHostNode(void)
 }
 
 void
-freeHostNodes (struct hostNode *hPtr, int allList)
+freeHostNodes(struct hostNode *hPtr, int allList)
 {
-
     int i;
     struct hostNode *next;
 
     while (hPtr) {
-        FREEUP (hPtr->hostName);
-        FREEUP (hPtr->addr);
-        FREEUP (hPtr->windows);
+
+        FREEUP(hPtr->hostName);
+        FREEUP(hPtr->addr);
+        FREEUP(hPtr->windows);
 
         if (allList == FALSE) {
             for (i = 0; i < 8; i++)
                 FREEUP (hPtr->week[i]);
         }
-        FREEUP (hPtr->busyThreshold);
-        FREEUP (hPtr->loadIndex);
-        FREEUP (hPtr->uloadIndex);
-        FREEUP (hPtr->resBitMaps);
-        FREEUP (hPtr->DResBitMaps);
-        FREEUP (hPtr->status);
-        FREEUP (hPtr->instances);
+        FREEUP(hPtr->busyThreshold);
+        FREEUP(hPtr->loadIndex);
+        FREEUP(hPtr->uloadIndex);
+        FREEUP(hPtr->resBitMaps);
+        FREEUP(hPtr->DResBitMaps);
+        FREEUP(hPtr->status);
+        FREEUP(hPtr->instances);
 
         next = hPtr->nextPtr;
-
-
-        FREEUP (hPtr);
+        FREEUP(hPtr);
 
         if (allList == TRUE)
             hPtr = next;
@@ -4549,8 +4545,7 @@ setExtResourcesDef(char *resName)
         if (allInfo.numUsrIndx+NBUILTINDEX >=li_len-1)
         {
             li_len *= 2;
-            if (!(li=(struct liStruct *)
-                  realloc(li, li_len*sizeof(struct liStruct))))
+            if (!(li =  realloc(li, li_len*sizeof(struct liStruct))))
             {
                 ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
                 return(-1);
@@ -4768,6 +4763,7 @@ addFloatHost(XDR *xdrs,
     static char buf[MSGSIZE];
     struct LSFHeader hdr;
     struct hostEntry hPtr;
+    struct hostNode *node;
     uint16_t opCode;
     XDR xdrs2;
     int cc;
@@ -4785,14 +4781,24 @@ addFloatHost(XDR *xdrs,
         goto hosed;
     }
 
+    node = findHostbyList(myClusterPtr->hostList,
+                          hPtr.hostName);
+    if (node) {
+        ls_syslog(LOG_WARNING, "\
+%s: trying to add already configured host %s from %s", __func__,
+                  hPtr.hostName, sockAdd2Str_(from));
+        opCode = LIME_HOST_EXIST;
+        goto hosed;
+    }
+
     /* add the host
      */
     cc = 0;
-    if (!addHost(myClusterPtr,
-                 &hPtr,
-                 hPtr.window,
-                 (char *)__func__,
-                 &cc)) {
+    if ((node = addHost(myClusterPtr,
+                        &hPtr,
+                        hPtr.window,
+                        (char *)__func__,
+                        &cc)) == NULL) {
         ls_syslog(LOG_ERR, "\
 %s: failed adding on the fly host %s", __func__, hPtr.hostName);
         /* free the shit...
@@ -4831,6 +4837,12 @@ hosed:
     }
 
     xdr_destroy(&xdrs2);
+
+    /* At last announce my mastership to
+     * the new host.
+     */
+    if (opCode == LIME_NO_ERR)
+        announceMasterToHost(node, SEND_CONF_INFO);
 }
 
 /* addHostByTab()
@@ -4872,4 +4884,76 @@ addHostByTab(hTab *tab)
     }
 
     return 0;
+}
+
+/* rmFloatHost()
+ */
+void
+rmFloatHost(XDR *xdrs,
+            struct sockaddr_in *from,
+            struct LSFHeader *reqHdr,
+            int chan)
+{
+    static char buf[MSGSIZE];
+    struct LSFHeader hdr;
+    char hostName[MAXHOSTNAMELEN];
+    struct hostNode *hPtr;
+    struct hostEntry hEnt;
+    char *p;
+    XDR xdrs2;
+    uint16_t opCode;
+
+    if (!masterMe) {
+        wrongMaster(from, buf, reqHdr, -1);
+        return;
+    }
+
+    p = hostName;
+    if (! xdr_hostName(xdrs, p, reqHdr)) {
+        opCode = LIME_BAD_DATA;
+        goto hosed;
+    }
+
+    hPtr = findHostbyList(myClusterPtr->hostList,
+                          hostName);
+    if (hPtr == NULL) {
+        ls_syslog(LOG_WARNING, "\
+%s: trying to remove unknown host %s from %s", __func__,
+                  hostName, sockAdd2Str_(from));
+        opCode = LIME_NO_HOST;
+        goto hosed;
+    }
+
+    rmHost(hPtr);
+
+    memset(&hEnt, 0, sizeof(struct hostEntry));
+    strcpy(hEnt.hostName, hPtr->hostName);
+
+    logRmHost(&hEnt);
+    freeHostNodes(hPtr, FALSE);
+
+    opCode = LIME_NO_ERR;
+hosed:
+    initLSFHeader_(&hdr);
+    hdr.opCode  = opCode;
+    hdr.refCode = reqHdr->refCode;
+
+    xdrmem_create(&xdrs2, buf, MSGSIZE, XDR_ENCODE);
+
+    if (!xdr_LSFHeader(&xdrs2, &hdr)) {
+        ls_syslog(LOG_ERR, "\
+%s: Failed decoding header from %s.", __func__, sockAdd2Str_(from));
+        xdr_destroy(&xdrs2);
+        return;
+    }
+
+    if (chanWrite_(chan, buf, XDR_GETPOS(&xdrs2)) < 0) {
+        ls_syslog(LOG_ERR, "\
+%s: Failed replying to %s dbytes %m.", __func__,
+                  sockAdd2Str_(from), XDR_GETPOS(&xdrs2));
+        xdr_destroy(&xdrs2);
+        return;
+    }
+
+    xdr_destroy(&xdrs2);
 }

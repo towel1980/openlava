@@ -475,8 +475,9 @@ probe_slave (struct hData *hData, char sendJobs)
     struct lsfAuth      *auth = NULL;
 
     memset(&xdrs, 0, sizeof(XDR));
+
     ls_syslog(LOG_DEBUG, "\
-%s: Probing %s sendJobs %d", fname, toHost, sendJobs);
+%s: Probing %s sendJobs %d", __func__, toHost, sendJobs);
 
     hdr.refCode = 0;
     hdr.reserved = 0;
@@ -489,11 +490,19 @@ probe_slave (struct hData *hData, char sendJobs)
 	    sbdPackage.numJobs = 0;
 	    sbdPackage.jobs = NULL;
 	}
+
 	buflen = sbatchdJobs (&sbdPackage, hData);
 	hdr.opCode = MBD_PROBE;
 	request_buf = my_malloc (buflen, fname);
+
 	xdrmem_create(&xdrs, request_buf, buflen, XDR_ENCODE);
-	if (! xdr_encodeMsg(&xdrs, (char *)&sbdPackage, &hdr, xdr_sbdPackage, 0, auth)) {
+
+	if (! xdr_encodeMsg(&xdrs,
+                            &sbdPackage,
+                            &hdr,
+                            xdr_sbdPackage,
+                            0,
+                            auth)) {
 	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
 	    xdr_destroy(&xdrs);
 	    free (request_buf);
@@ -562,8 +571,8 @@ probe_slave (struct hData *hData, char sendJobs)
         case ERR_NO_LIM:
             break;
         default:
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5412,
-                                             "%s: Illegal reply code <%d> from sbatchd on host <%s>"), fname, reply, toHost); /* catgets 5412 */
+            ls_syslog(LOG_ERR, "\
+%s: Unknown reply code %d from sbatchd on host %s", __func__, reply, toHost);
             break;
     }
 

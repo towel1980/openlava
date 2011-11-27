@@ -397,7 +397,7 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
     hPtr = findHostbyAddr(from, (char *)__func__);
     if (hPtr == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: Received load update from unkown host %s",
+%s: Received load update from unknown host %s",
                   __func__, sockAdd2Str_(from));
         return ;
     }

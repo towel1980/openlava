@@ -120,6 +120,9 @@ typedef enum {
 #define _KEEP_CONNECT_      0x08
 #define _USE_PRIMARY_       0x10
 #define _USE_PPORT_         0x20
+/* openlava call LSF_SERVER_HOSTS regardless of local lim.
+ */
+#define _SERVER_HOSTS_ONLY_       0x40
 
 #define PRIMARY    0
 #define MASTER     1

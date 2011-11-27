@@ -111,8 +111,7 @@ main(int argc, char **argv)
         return -1;
     }
 
-    if (v)
-        printf("Host %s added all right\n", hPtr->hostName);
+    printf("Host %s added all right.\n", hPtr->hostName);
     freeInfo(&hPtr);
 
     return 0;

@@ -21,7 +21,6 @@
 #include "lib.h"
 #include "lproto.h"
 #include "lib.conf.h"
-#include "../lim/lim.conf.h"
 
 static char do_Cluster(FILE *, int *, char *);
 static char do_HostTypes(FILE *, int *, char *);

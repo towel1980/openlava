@@ -594,9 +594,11 @@ static char *emap[] = {
 };
 
 static int writeEventHeader(FILE *, struct lsEventRec *);
-static int writeHostEntry(FILE *, struct lsEventRec *);
+static int writeAddHost(FILE *, struct lsEventRec *);
+static int writeRmHost(FILE *, struct lsEventRec *);
 static int readEventHeader(char *, struct lsEventRec *);
-static int readHostEntry(char *, struct lsEventRec *);
+static int readAddHost(char *, struct lsEventRec *);
+static int readRmHost(char *, struct lsEventRec *);
 static char *getstr_(char *);
 
 /* ls_readeventrec()
@@ -638,10 +640,10 @@ ls_readeventrec(FILE *fp)
             ev.record = NULL;
             break;
         case EV_ADD_HOST:
-            readHostEntry(p, &ev);
+            readAddHost(p, &ev);
             break;
         case EV_REMOVE_HOST:
-            ev.record = NULL;
+            readRmHost(p, &ev);
             break;
         case EV_EVENT_LAST:
             break;
@@ -671,9 +673,10 @@ ls_writeeventrec(FILE *fp,
         case EV_LIM_SHUTDOWN:
             break;
         case EV_ADD_HOST:
-            writeHostEntry(fp, ev);
+            writeAddHost(fp, ev);
             break;
         case EV_REMOVE_HOST:
+            writeRmHost(fp, ev);
             break;
         case EV_EVENT_LAST:
             break;
@@ -705,11 +708,11 @@ writeEventHeader(FILE *fp,
     return 0;
 }
 
-/* writeHostEntry()
+/* writeAddHost()
  */
 static int
-writeHostEntry(FILE *fp,
-               struct lsEventRec *ev)
+writeAddHost(FILE *fp,
+             struct lsEventRec *ev)
 {
     struct hostEntryLog *hPtr;
     int cc;
@@ -744,6 +747,21 @@ writeHostEntry(FILE *fp,
     return 0;
 }
 
+/* writermHost
+ */
+static int
+writeRmHost(FILE *fp, struct lsEventRec *ev)
+{
+    struct hostEntryLog *hLog;
+
+    hLog = ev->record;
+
+    fprintf(fp, "\"%s\" \n", hLog->hostName);
+    fflush(fp);
+
+    return 0;
+}
+
 /* readEventHeader()
  */
 static int
@@ -772,11 +790,11 @@ readEventHeader(char *buf, struct lsEventRec *ev)
     return n;
 }
 
-/* readHostEntry()
+/* readAddHost()
  */
 static int
-readHostEntry(char *buf,
-              struct lsEventRec *ev)
+readAddHost(char *buf,
+            struct lsEventRec *ev)
 {
     int cc;
     int n;
@@ -856,6 +874,26 @@ out:
 
     return -1;
 }
+
+/* readRmHost()
+ */
+static int
+readRmHost(char *buf,
+           struct lsEventRec *ev)
+{
+    struct hostEntryLog *hPtr;
+    static char name[MAXLSFNAMELEN + 1];
+
+    hPtr = calloc(1, sizeof(struct hostEntryLog));
+
+    sscanf(buf, "%s", name);
+    strcpy(hPtr->hostName, getstr_(name));
+
+    ev->record = hPtr;
+
+    return 0;
+}
+
 
 /* getstr_()
  * Strip the quotes around the string

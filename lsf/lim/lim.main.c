@@ -268,9 +268,6 @@ Reading configuration from %s/lsf.conf\n", env_dir);
         return 0;
     }
 
-    if (masterMe)
-        initNewMaster();
-
     initMiscLiStruct();
     readLoad(kernelPerm);
     initSignals();
@@ -285,6 +282,9 @@ Reading configuration from %s/lsf.conf\n", env_dir);
     /* Initialize and load events.
      */
     logInit();
+
+    if (masterMe)
+        initNewMaster();
 
     if (lim_debug < 2)
         chdir("/tmp");
@@ -462,6 +462,7 @@ processUDPMsg(void)
             clusNameReq(&xdrs, &from, &reqHdr);
             break;
         case LIM_GET_MASTINFO:
+        case LIM_GET_MASTINFO2:
             masterInfoReq(&xdrs, &from, &reqHdr);
             break;
         case LIM_GET_CLUSINFO:
@@ -975,54 +976,119 @@ void
 initLiStruct(void)
 {
     if (!li) {
-        li_len=16;
-
-        li=(struct liStruct *)malloc(sizeof(struct liStruct)*li_len);
+        li_len = 16;
+        li = calloc(li_len, sizeof(struct liStruct));
     }
 
-    li[0].name="R15S"; li[0].increasing=1; li[0].delta[0]=0.30;
-    li[0].delta[1]=0.10; li[0].extraload[0]=0.20; li[0].extraload[1]=0.40;
-    li[0].valuesent=0.0; li[0].exchthreshold=0.25; li[0].sigdiff=0.10;
+    li[0].name = "R15S";
+    li[0].increasing = 1;
+    li[0].delta[0] = 0.30;
+    li[0].delta[1] = 0.10;
+    li[0].extraload[0] = 0.20;
+    li[0].extraload[1] = 0.40;
+    li[0].valuesent = 0.0;
+    li[0].exchthreshold = 0.25;
+    li[0].sigdiff = 0.10;
 
-    li[1].name="R1M"; li[1].increasing=1; li[1].delta[0]=0.15;
-    li[1].delta[1]=0.10; li[1].extraload[0]=0.20; li[1].extraload[1]=0.40;
-    li[1].valuesent=0.0; li[1].exchthreshold=0.25;  li[1].sigdiff=0.10;
+    li[1].name="R1M";
+    li[1].increasing=1;
+    li[1].delta[0]=0.15;
+    li[1].delta[1]=0.10;
+    li[1].extraload[0]=0.20;
+    li[1].extraload[1]=0.40;
+    li[1].valuesent=0.0;
+    li[1].exchthreshold=0.25;
+    li[1].sigdiff=0.10;
 
-    li[2].name="R15M"; li[2].increasing=1; li[2].delta[0]=0.15;
-    li[2].delta[1]=0.10; li[2].extraload[0]=0.20; li[2].extraload[1]=0.40;
-    li[2].valuesent=0.0; li[2].exchthreshold=0.25; li[2].sigdiff=0.10;
+    li[2].name="R15M";
+    li[2].increasing=1;
+    li[2].delta[0]=0.15;
+    li[2].delta[1]=0.10;
+    li[2].extraload[0]=0.20;
+    li[2].extraload[1]=0.40;
+    li[2].valuesent=0.0;
+    li[2].exchthreshold=0.25;
+    li[2].sigdiff=0.10;
 
-    li[3].name="UT"; li[3].increasing=1; li[3].delta[0]=1.00;
-    li[3].delta[1]=1.00; li[3].extraload[0]=0.10; li[3].extraload[1]=0.20;
-    li[3].valuesent=0.0; li[3].exchthreshold=0.15; li[3].sigdiff=0.10;
+    li[3].name="UT";
+    li[3].increasing=1;
+    li[3].delta[0]=1.00;
+    li[3].delta[1]=1.00;
+    li[3].extraload[0]=0.10;
+    li[3].extraload[1]=0.20;
+    li[3].valuesent=0.0;
+    li[3].exchthreshold=0.15;
+    li[3].sigdiff=0.10;
 
-    li[4].name="PG"; li[4].increasing=1; li[4].delta[0]=2.5;
-    li[4].delta[1]=1.5; li[4].extraload[0]=0.8; li[4].extraload[1]=1.5;
-    li[4].valuesent=0.0; li[4].exchthreshold=1.0; li[4].sigdiff=5.0;
+    li[4].name="PG";
+    li[4].increasing=1;
+    li[4].delta[0]=2.5;
+    li[4].delta[1]=1.5;
+    li[4].extraload[0]=0.8;
+    li[4].extraload[1]=1.5;
+    li[4].valuesent=0.0;
+    li[4].exchthreshold=1.0;
+    li[4].sigdiff=5.0;
 
-    li[5].name="IO"; li[5].increasing=1; li[5].delta[0]=80;
-    li[5].delta[1]=40; li[5].extraload[0]=15; li[5].extraload[1]=25.0;
-    li[5].valuesent=0.0; li[5].exchthreshold=25.0; li[5].sigdiff=5.0;
+    li[5].name="IO";
+    li[5].increasing=1;
+    li[5].delta[0]=80;
+    li[5].delta[1]=40;
+    li[5].extraload[0]=15;
+    li[5].extraload[1]=25.0;
+    li[5].valuesent=0.0;
+    li[5].exchthreshold=25.0;
+    li[5].sigdiff=5.0;
 
-    li[6].name="LS"; li[6].increasing=1; li[6].delta[0]=3;
-    li[6].delta[1]=3; li[6].extraload[0]=0; li[6].extraload[1]=0;
-    li[6].valuesent=0.0; li[6].exchthreshold=0.0; li[6].sigdiff=1.0;
+    li[6].name="LS";
+    li[6].increasing=1;
+    li[6].delta[0]=3;
+    li[6].delta[1]=3;
+    li[6].extraload[0]=0;
+    li[6].extraload[1]=0;
+    li[6].valuesent=0.0;
+    li[6].exchthreshold=0.0;
+    li[6].sigdiff=1.0;
 
-    li[7].name="IT"; li[7].increasing=0; li[7].delta[0]=6000;
-    li[7].delta[1]=6000; li[7].extraload[0]=0; li[7].extraload[1]=0;
-    li[7].valuesent=0.0; li[7].exchthreshold=1.0; li[7].sigdiff=5.0;
+    li[7].name="IT";
+    li[7].increasing=0;
+    li[7].delta[0]=6000;
+    li[7].delta[1]=6000;
+    li[7].extraload[0]=0;
+    li[7].extraload[1]=0;
+    li[7].valuesent=0.0;
+    li[7].exchthreshold=1.0;
+    li[7].sigdiff=5.0;
 
-    li[8].name="TMP"; li[8].increasing=0; li[8].delta[0]=2;
-    li[8].delta[1]=2; li[8].extraload[0]=-0.2; li[8].extraload[1]=-0.5;
-    li[8].valuesent=0.0; li[8].exchthreshold=1.0; li[8].sigdiff=2.0;
+    li[8].name="TMP";
+    li[8].increasing=0;
+    li[8].delta[0]=2;
+    li[8].delta[1]=2;
+    li[8].extraload[0]=-0.2;
+    li[8].extraload[1]=-0.5;
+    li[8].valuesent=0.0;
+    li[8].exchthreshold=1.0;
+    li[8].sigdiff=2.0;
 
-    li[9].name="SMP"; li[9].increasing=0; li[9].delta[0]=10;
-    li[9].delta[1]=10; li[9].extraload[0]=-0.5; li[9].extraload[1]=-1.5;
-    li[9].valuesent=0.0; li[9].exchthreshold=1.0; li[9].sigdiff=2.0;
+    li[9].name="SMP";
+    li[9].increasing=0;
+    li[9].delta[0]=10;
+    li[9].delta[1]=10;
+    li[9].extraload[0]=-0.5;
+    li[9].extraload[1]=-1.5;
+    li[9].valuesent=0.0;
+    li[9].exchthreshold=1.0;
+    li[9].sigdiff=2.0;
 
-    li[10].name="MEM"; li[10].increasing=0; li[10].delta[0]=9000;
-    li[10].delta[1]=9000; li[10].extraload[0]=-0.5; li[10].extraload[1]=-1.0;
-    li[10].valuesent=0.0; li[10].exchthreshold=1.0; li[10].sigdiff=3.0;
+    li[10].name="MEM";
+    li[10].increasing=0;
+    li[10].delta[0]=9000;
+    li[10].delta[1]=9000;
+    li[10].extraload[0]=-0.5;
+    li[10].extraload[1]=-1.0;
+    li[10].valuesent=0.0;
+    li[10].exchthreshold=1.0;
+    li[10].sigdiff=3.0;
 }
 
 static void

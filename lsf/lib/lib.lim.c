@@ -38,7 +38,7 @@ static u_int localAddr = 0;
 static int callLimTcp_(char *, char **, int, struct LSFHeader *, int);
 static int callLimUdp_(char *, char *, int, struct LSFHeader *, char *, int);
 static int createLimSock_(struct sockaddr_in *);
-static int rcvreply_(int, char *, char);
+static int rcvreply_(int, char *);
 
 int lsf_lim_version = -1;
 
@@ -194,10 +194,6 @@ contact:
             if (errno == ECONNREFUSED || errno == ENETUNREACH) {
                 if (errno == ECONNREFUSED) {
                     lserrno = LSE_LIM_DOWN;
-
-                    if (!getIsMasterCandidate_()) {
-                        masterLimDown = TRUE;
-                    }
                 }
                 if (! retried) {
                     if (ls_getmastername() != NULL) {
@@ -280,10 +276,6 @@ contact:
                 goto contact;
             } else {
                 lserrno = LSE_LIM_DOWN;
-
-                if (!getIsMasterCandidate_()) {
-                    masterLimDown = TRUE;
-                }
                 return(-1);
             }
 
@@ -298,9 +290,15 @@ contact:
     return (0);
 }
 
+/* This really need rework...
+ */
 static int
-callLimUdp_(char *reqbuf, char *repbuf, int len, struct LSFHeader *reqHdr,
-            char *host, int options)
+callLimUdp_(char *reqbuf,
+            char *repbuf,
+            int len,
+            struct LSFHeader *reqHdr,
+            char *host,
+            int options)
 {
     struct hostent *hp;
     int retried = 0;
@@ -311,7 +309,6 @@ callLimUdp_(char *reqbuf, char *repbuf, int len, struct LSFHeader *reqHdr,
     struct LSFHeader replyHdr;
     char *sp = genParams_[LSF_SERVER_HOSTS].paramValue;
     int cc;
-    static char connected;
     int id = -1;
     char multicasting = FALSE;
 
@@ -322,36 +319,36 @@ callLimUdp_(char *reqbuf, char *repbuf, int len, struct LSFHeader *reqHdr,
         if ((hp = Gethostbyname_(host)) == NULL)
             return -1;
 
-        if (options & _USE_PRIMARY_) {
-            id = PRIMARY;
-            if (memcmp((char *)&sockIds_[PRIMARY].sin_addr,
-                       hp->h_addr, hp->h_length))
-                CLOSECD(limchans_[PRIMARY]);
-
-        } else {
-            id = UNBOUND;
-        }
-        memcpy((char *)&sockIds_[id].sin_addr, hp->h_addr, hp->h_length);
+        id = UNBOUND;
+        memcpy(&sockIds_[id].sin_addr, hp->h_addr, hp->h_length);
         sockIds_[id].sin_family = AF_INET;
         sockIds_[id].sin_port   = sockIds_[PRIMARY].sin_port;
+
     } else {
         if (limchans_[MASTER] >= 0 || sp == NULL) {
             id = MASTER;
         } else {
             struct timeval timeout;
 
-            timeout.tv_sec = 0;
-            timeout.tv_usec= 20000;
-
-            if (callLimUdp_(reqbuf, repbuf, len, reqHdr, ls_getmyhostname(),
-                            options|_NON_BLOCK_) < 0)
-                return(-1);
-
+            if (! (options & _SERVER_HOSTS_ONLY_)) {
+                /* If the caller does not want to call local LIM,
+                 * this is the case of lsaddhost where we want
+                 * to add the current host to the cluster and the
+                 * local LIM does not know the master of course.
+                 */
+                if (callLimUdp_(reqbuf,
+                                repbuf,
+                                len,
+                                reqHdr,
+                                ls_getmyhostname(),
+                                options|_NON_BLOCK_) < 0)
+                return -1;
+            }
             multicasting = TRUE;
         checkMultiCast:
             do {
                 timeout.tv_sec = 0;
-                timeout.tv_usec= 20000;
+                timeout.tv_usec = 20000;
                 if (rd_select_(chanSock_(limchans_[UNBOUND]), &timeout) > 0)
                     break;
                 host  = getNextWord_(&sp);
@@ -374,52 +371,45 @@ contact:
         case MASTER:
             if (limchans_[id] < 0) {
                 if ((limchans_[id] = createLimSock_(NULL)) < 0)
-                    return(-1);
+                    return -1;
 
             }
-            connected = FALSE;
             break;
         case UNBOUND:
             if (limchans_[id] < 0) {
                 if ((limchans_[id] = createLimSock_(NULL)) < 0)
-                    return(-1);
+                    return -1;
             }
-            connected = FALSE;
             break;
         default:
             break;
     }
 
-
     cc = chanSendDgram_(limchans_[id], reqbuf, len, &sockIds_[id]);
     if (cc < 0) {
-        if (connected)
-            CLOSECD(limchans_[id]);
-        if (connected && errno == ECONNREFUSED) {
-            connected = FALSE;
-            goto contact;
-        }
-        return(-1);
+        return -1;
     }
-    if (options & _NON_BLOCK_) {
+
+    /* Return righ away after sending the
+     * request, the caller will check for
+     * the reply.
+     */
+    if (options & _NON_BLOCK_)
         return (0);
-    }
 
 check:
-    if (rcvreply_(limchans_[id], repbuf, connected) < 0) {
-        if (connected)
-            CLOSECD(limchans_[id]);
+    if (rcvreply_(limchans_[id], repbuf) < 0) {
 
         if (lserrno != LSE_TIME_OUT)
-            return(-1);
+            return -1;
 
         if (host != NULL)
-            return(-1);
+            return -1;
 
         if (id == PRIMARY) {
             if (retried) {
                 lserrno = LSE_LIM_DOWN;
-                return(-1);
+                return -1;
             } else {
                 retried = 1;
             }
@@ -430,7 +420,7 @@ check:
     }
 
     xdrmem_create(&xdrs, repbuf, MSGSIZE, XDR_DECODE);
-    if(!xdr_LSFHeader(&xdrs, &replyHdr)) {
+    if (!xdr_LSFHeader(&xdrs, &replyHdr)) {
         lserrno = LSE_BAD_XDR;
         xdr_destroy(&xdrs);
         return -1;
@@ -445,11 +435,11 @@ check:
 
     limReplyCode = replyHdr.opCode;
     switch (limReplyCode) {
+
         case LIME_MASTER_UNKNW:
             lserrno = LSE_MASTR_UNKNW;
             xdr_destroy(&xdrs);
             return -1;
-
         case LIME_WRONG_MASTER:
             if (!xdr_masterInfo(&xdrs, &masterInfo_, &replyHdr)) {
                 lserrno = LSE_BAD_XDR;
@@ -458,9 +448,9 @@ check:
             }
             masterLimAddr = masterInfo_.addr;
 
-            if (masterLimAddr == 0 ||
-                ((previousMasterLimAddr == masterLimAddr) && limchans_[MASTER] >= 0)
-                ) {
+            if (masterLimAddr == 0
+                || ((previousMasterLimAddr == masterLimAddr)
+                    && limchans_[MASTER] >= 0)) {
                 if (previousMasterLimAddr == masterLimAddr)
                     lserrno = LSE_TIME_OUT;
                 else
@@ -491,8 +481,7 @@ check:
             break;
     }
 
-    return (0);
-
+    return 0;
 }
 
 static int
@@ -519,7 +508,7 @@ initLimSock_(void)
     ushort service_port;
 
     if (initenv_(NULL, NULL) <0)
-        return (-1);
+        return -1;
 
     if (genParams_[LSF_LIM_PORT].paramValue) {
         if ((service_port = atoi(genParams_[LSF_LIM_PORT].paramValue)) != 0)
@@ -532,18 +521,11 @@ initLimSock_(void)
     } else if (genParams_[LSF_LIM_DEBUG].paramValue) {
         service_port = htons(LIM_PORT);
     } else {
-# if defined(_COMPANY_X_)
-        if ((service_port = get_port_number(LIM_SERVICE, (char *)NULL)) < 0) {
-            lserrno = LSE_LIM_NREG;
-            return (-1);
-        }
-# else
         if ((sv = getservbyname("lim", "udp")) == NULL) {
             lserrno = LSE_LIM_NREG;
             return (-1);
         }
         service_port = sv->s_port;
-# endif
     }
 
     sockIds_[TCP].sin_family = AF_INET;
@@ -567,16 +549,15 @@ initLimSock_(void)
     sockIds_[UNBOUND].sin_port = (u_short) service_port;
     limchans_[UNBOUND] = -1;
 
-
-    return(0);
+    return 0;
 }
 
 static int
-rcvreply_(int sock, char *rep, char connected)
+rcvreply_(int sock, char *rep)
 {
     struct sockaddr_in from;
 
-    return(chanRcvDgram_(sock, rep, MSGSIZE, &from, conntimeout_ *1000));
+    return(chanRcvDgram_(sock, rep, MSGSIZE, &from, conntimeout_ * 1000));
 }
 
 void

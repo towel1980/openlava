@@ -214,8 +214,11 @@ call_server (char * host,
 	    return (-2);
 	}
     } else {
-	cc = chanRpc_(serverSock, &reqbuf, replyBufPtr, replyHdr,
-		      recv_timeout*1000);
+	cc = chanRpc_(serverSock,
+                      &reqbuf,
+                      replyBufPtr,
+                      replyHdr,
+		      recv_timeout * 1000);
 	if ( cc < 0 ) {
 	    lsberrno = LSBE_LSLIB;
 	    CLOSECD(serverSock);

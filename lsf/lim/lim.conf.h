@@ -16,11 +16,3 @@
  *
  */
 
-   
-struct liStruct *li;  
-int li_len;
-
-#define DEF_REXPRIORITY 0           
-
-#include "../../lsf/lib/lib.conf.h"
-

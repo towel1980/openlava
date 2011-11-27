@@ -228,10 +228,19 @@ error:
 int
 ls_addhost(struct hostEntry *hPtr)
 {
+    char *master;
+
     if (hPtr == NULL) {
         lserrno = LSE_BAD_ARGS;
         return -1;
     }
+
+    /* Make sure the library calls the server
+     * hosts as they have for sure the most
+     * upto date master LIM information.
+     */
+    if ((master = ls_getmastername2()) == NULL)
+        return -1;
 
     if (callLim_(LIM_ADD_HOST,
                  hPtr,
@@ -251,13 +260,22 @@ ls_addhost(struct hostEntry *hPtr)
 int
 ls_rmhost(const char *host)
 {
+    char *master;
+
     if (host == NULL) {
         lserrno = LSE_BAD_ARGS;
         return -1;
     }
 
+    /* Dirty trick to force the library
+     * to call all hosts in LSF_SERVER_HOSTS
+     * and not the local LIM first...
+     */
+    if ((master = ls_getmastername2()) == NULL)
+        return -1;
+
     if (callLim_(LIM_RM_HOST,
-                 host,
+                 (char *)host,
                  xdr_hostName,
                  NULL,
                  NULL,

@@ -221,31 +221,38 @@ Reply1:
 void
 clusNameReq(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *reqHdr)
 {
-    static char fname[] = "clusNameReq()";
     XDR    xdrs2;
-    char buf[MSGSIZE];
+    static char buf[MSGSIZE];
     enum limReplyCode limReplyCode;
     char *sp;
     struct LSFHeader replyHdr;
 
-    memset((char*)&buf, 0, sizeof(buf));
+    memset(&buf, 0, sizeof(buf));
+
     initLSFHeader_(&replyHdr);
+
     limReplyCode = LIME_NO_ERR;
     replyHdr.opCode  = (short) limReplyCode;
     replyHdr.refCode = reqHdr->refCode;
+
+    /* send back my cluster name
+     */
     sp = myClusterPtr->clName;
 
     xdrmem_create(&xdrs2, buf, MSGSIZE, XDR_ENCODE);
-    if (!xdr_LSFHeader(&xdrs2, &replyHdr) ||
-             !xdr_string(&xdrs2, &sp, MAXLSFNAMELEN)) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_string");
+
+    if (!xdr_LSFHeader(&xdrs2, &replyHdr)
+        || !xdr_string(&xdrs2, &sp, MAXLSFNAMELEN)) {
+        ls_syslog(LOG_ERR, "\
+%s: failed decoding message from %s", __func__, sockAdd2Str_(from));
         xdr_destroy(&xdrs2);
         return;
     }
 
     if (chanSendDgram_(limSock, buf, XDR_GETPOS(&xdrs2), from) < 0) {
-	ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "clusNameReq",
-	    sockAdd2Str_(from));
+        ls_syslog(LOG_ERR, "\
+%s: failed sending message %d bytes to", __func__, strlen(buf),
+                  sockAdd2Str_(from));
         xdr_destroy(&xdrs2);
         return;
     }
@@ -649,7 +656,7 @@ validHosts(char **hostList, int num, char *clName, int options)
 
         if (findHostbyList(clPtr->hostList, hostList[cc]) == NULL) {
             ls_syslog(LOG_WARNING, "\
-%s: Unkown host %s in request", __func__, hostList[cc]);
+%s: Unknown host %s in request", __func__, hostList[cc]);
             return FALSE;
         }
     }

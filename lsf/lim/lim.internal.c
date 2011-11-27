@@ -640,7 +640,8 @@ checkHostWd (void)
 
 }
 
-void announceMasterToHost(struct hostNode *hPtr, int infoType )
+void
+announceMasterToHost(struct hostNode *hPtr, int infoType )
 {
     struct sockaddr_in toAddr;
     XDR    xdrs;
@@ -668,24 +669,25 @@ void announceMasterToHost(struct hostNode *hPtr, int infoType )
     if (! xdr_LSFHeader(&xdrs,  &reqHdr)
         || ! xdr_masterReg(&xdrs, &masterReg, &reqHdr)) {
         ls_syslog(LOG_ERR, "\
-%s: Error xdr_LSFHeader/xdr_masterReg", __func__);
+%s: Error xdr_LSFHeader/xdr_masterReg to %s",
+                  __func__, sockAdd2Str_(&toAddr));
         xdr_destroy(&xdrs);
         return;
     }
 
-    memcpy(&toAddr.sin_addr, &hPtr->addr[0], sizeof(u_int));
+    memcpy(&toAddr.sin_addr, &hPtr->addr[0], sizeof(in_addr_t));
 
-    if (logclass & LC_COMM)
-        ls_syslog(LOG_DEBUG, "\
-%s: Sending request to LIM on %s", __func__, sockAdd2Str_(&toAddr));
+    ls_syslog(LOG_DEBUG, "\
+%s: Sending request %d to LIM on %s",
+              __func__, infoType, sockAdd2Str_(&toAddr));
 
     if (chanSendDgram_(limSock,
                        buf,
                        XDR_GETPOS(&xdrs),
                        (struct sockaddr_in *)&toAddr) < 0)
         ls_syslog(LOG_ERR, "\
-%s: Failed to send request to LIM on %s: %m", __func__,
-                  sockAdd2Str_(&toAddr));
+%s: Failed to send request %d to LIM on %s: %m", __func__,
+                  infoType, sockAdd2Str_(&toAddr));
 
     xdr_destroy(&xdrs);
 }

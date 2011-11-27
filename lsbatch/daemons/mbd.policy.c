@@ -991,7 +991,7 @@ getCandHosts (struct jData *jpbw)
 }
 
 static int
-getLsbUsable (void)
+getLsbUsable(void)
 {
     static char fname[] = "getLsbUsable";
     int i, nLsbUsable = 0, numReasons = 0, ldReason;
@@ -1002,14 +1002,10 @@ getLsbUsable (void)
 
 
     for (i = 1; i <= numofhosts; i++) {
+
         hReason = 0;
         hData = hDataPtrTb[i];
-        if (hData == NULL) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7202,
-                                             "%s: Got a NULL hData in hDataPtrTb[%d]"),  /* catgets 7202 */
-                      fname, i);
-            continue;
-        }
+
         if (hData->hStatus & HOST_STAT_REMOTE)
             continue;
         if (strcmp (hData->host, LOST_AND_FOUND) == 0)
@@ -1017,11 +1013,7 @@ getLsbUsable (void)
         if (hData->numJobs == 0)
             hData->acceptTime = 0;
 
-
-
         hData->numDispJobs = 0;
-
-
 
         if (OUT_SCHED_RS(hReasonTb[1][i]) &&
             HOST_UNUSABLE_DUE_TO_H_REASON(hReasonTb[1][i])) {

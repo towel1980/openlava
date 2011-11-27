@@ -389,7 +389,7 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
                           &peersize);
         if (SOCK_CALL_FAIL(cc)) {
             lserrno = LSE_MSG_SYS;
-            return(-1);
+            return -1;
         }
         return 0;
     }
@@ -406,24 +406,31 @@ chanRcvDgram_: Receive on chan %d timeout=%d",chfd, timeout);
         if (nReady < 0) {
             lserrno = LSE_SELECT_SYS;
             return -1;
-        } else if (nReady == 0) {
-
+        }
+        if (nReady == 0) {
             lserrno = LSE_TIME_OUT;
             return -1;
-        } else {
-            if (channels[chfd].state == CH_CONN)
-                cc = recv(sock, buf, len, 0);
-            else
-                cc = recvfrom(sock, buf, len, 0, (struct sockaddr *)peer, &peersize);
-            if (SOCK_CALL_FAIL(cc)) {
-                if (channels[chfd].state == CH_CONN && (errno == ECONNREFUSED))
-                    lserrno = LSE_LIM_DOWN;
-                else
-                    lserrno = LSE_MSG_SYS;
-                return -1;
-            }
-            return 0;
         }
+        if (channels[chfd].state == CH_CONN)
+            cc = recv(sock, buf, len, 0);
+        else
+            cc = recvfrom(sock,
+                          buf,
+                          len,
+                          0,
+                          (struct sockaddr *)peer,
+                          &peersize);
+        if (SOCK_CALL_FAIL(cc)) {
+            if (channels[chfd].state == CH_CONN
+                && (errno == ECONNREFUSED))
+                lserrno = LSE_LIM_DOWN;
+            else
+                lserrno = LSE_MSG_SYS;
+            return -1;
+        }
+
+        return 0;
+
     }
 
     return 0;

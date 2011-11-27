@@ -27,7 +27,7 @@
 #include "../lib/lsi18n.h"
 #include "../lib/mls.h"
 
-#   define RSHCMD "rsh"
+#define RSHCMD "rsh"
 
 #define NL_SETN 25
 
@@ -121,26 +121,18 @@ getLSFenv(void)
 		  myParamList[LSF_SERVERDIR].paramValue);
     }
 
-    initMasterList_();
-
     memset(lsfSharedFile,0,sizeof(lsfSharedFile));
     ls_strcat(lsfSharedFile,sizeof(lsfSharedFile),myParamList[LSF_CONFDIR].paramValue);
     ls_strcat(lsfSharedFile,sizeof(lsfSharedFile),"/lsf.shared");
 
 
     if ( access(lsfSharedFile, R_OK)) {
-        if (!getIsMasterCandidate_()) {
-            return 0;
-        } else {
             ls_perror("Can't access lsf.shared.");
             return(-1);
-        }
     }
 
     mySharedConf = ls_readshared(lsfSharedFile);
     if (mySharedConf == NULL) {
-        if (!getIsMasterCandidate_())
-            return 0;
         ls_perror("ls_readshared");
         return (-1);
     }
@@ -539,18 +531,7 @@ startup(int argc, char **argv, int opCode)
         }
     }
 
-    if (!getIsMasterCandidate_()
-        && opCode == LSADM_LIMSTARTUP
-        && !(optind == argc || (optind == argc-1 && !strcmp(argv[optind], ls_getmyhostname()))))
-    {
-
-	fprintf(stderr, "%s\n",
-		I18N(415, "Should not start remote lim from slave only or clienthost")); /* catgets 415 */
-	return (-1);
-    }
-
     if (optind == argc) {
-
         startupLocalHost(opCode);
     } else if (optind == argc - 1 && strcmp(argv[optind], "all") == 0) {
 

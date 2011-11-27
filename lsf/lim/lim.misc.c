@@ -158,6 +158,31 @@ findHNbyAddr(in_addr_t from)
     return NULL;
 }
 
+struct hostNode *
+rmHost(struct hostNode *r)
+{
+    struct hostNode *hPtr0;
+    struct hostNode *hPtr;
+
+    hPtr0 = NULL;
+    hPtr = myClusterPtr->hostList;
+    if (hPtr == r) {
+        myClusterPtr->hostList = hPtr->nextPtr;
+        return r;
+    }
+
+    while (hPtr) {
+        if (hPtr == r) {
+            hPtr0->nextPtr = hPtr->nextPtr;
+            return r;
+        }
+        hPtr0 = hPtr;
+        hPtr = hPtr->nextPtr;
+    }
+
+    return NULL;
+}
+
 bool_t
 findHostInCluster(char *hostname)
 {
@@ -314,6 +339,27 @@ logAddHost(struct hostEntry *hPtr)
     memcpy(&hLog, hPtr, sizeof(struct hostEntry));
 
     ev.event = EV_ADD_HOST;
+    ev.etime = time(NULL);
+    ev.version = OPENLAVA_VERSION;
+    ev.record = &hLog;
+
+    ls_writeeventrec(logFp, &ev);
+
+    return 0;
+}
+
+int
+logRmHost(struct hostEntry *hPtr)
+{
+    struct lsEventRec ev;
+    struct hostEntryLog hLog;
+
+    memset(&hLog, 0, sizeof(struct hostEntryLog));
+    /* here we only need the name
+     */
+    strcpy(hLog.hostName, hPtr->hostName);
+
+    ev.event = EV_REMOVE_HOST;
     ev.etime = time(NULL);
     ev.version = OPENLAVA_VERSION;
     ev.record = &hLog;

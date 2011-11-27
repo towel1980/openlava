@@ -94,7 +94,6 @@ static void readQueueConf(int);
 
 static int isHostAlias (char *grpName);
 static int searchAll (char *);
-static void addHost(struct hostInfo *, struct hData *, char *, int);
 static void initThresholds (float *, float *);
 static void parseGroups(int, struct gData **, char *, char *);
 static void addMember(struct gData *, char *, int, char *,
@@ -144,7 +143,7 @@ static int parseFirstHostErr(int , char *, char *, struct qData *, struct askedH
 
 static int  reconfig=FALSE;
 
-static struct hData **removedHDataArray = NULL;
+static struct hData **removedHDataArray;
 
 static void cleanup(int mbdInitFlags);
 static void rebuildCounters();
@@ -158,7 +157,7 @@ static void       rebuildUsersSets(void);
 
 
 int
-minit (int mbdInitFlags)
+minit(int mbdInitFlags)
 {
     static char fname[] = "minit";
     struct hData *hPtr;
@@ -517,7 +516,6 @@ initHData(struct hData *hData)
     hData->host = NULL;
     hData->hostEnt.h_name = NULL;
     hData->hostEnt.h_aliases = NULL;
-
     hData->pollTime = 0;
     hData->acceptTime = 0;
     hData->numDispJobs = 0;
@@ -803,7 +801,7 @@ createDefQueue (void)
  * configuration information, create a new host entry
  * in the host hash table.
  */
-static void
+void
 addHost(struct hostInfo *lsf,
         struct hData *thPtr,
         char *filename,
@@ -1738,7 +1736,6 @@ queueHostsPF(struct qData *qp, int *allPoll)
 {
     int j;
     struct hData *hData;
-
 
     qp->numProcessors = 0;
 
@@ -3016,36 +3013,36 @@ needPollQHost (struct qData *newQp, struct qData *oldQp)
 
 
 static void
-updHostList (void)
+updHostList(void)
 {
-    struct hData *hPtr, *lost_and_found = NULL;
-    sTab hashSearchPtr;
-    hEnt *hashEntryPtr, *curEntry;
-    int i, index=0;
-
+    struct hData *hPtr;
+    struct hData *lost_and_found = NULL;
+    sTab stab;
+    hEnt *e;
+    int i;
+    int index;
 
     FREEUP(removedHDataArray);
-    removedHDataArray = (struct hData **) my_calloc(numLsfHosts + 2,
-                                                    sizeof(struct hData *), "updHostList");
-
-
+    removedHDataArray = my_calloc(numLsfHosts + 2,
+                                  sizeof(struct hData *),
+                                  __func__);
     FREEUP (hDataPtrTb);
-    hDataPtrTb = (struct hData **) my_calloc(numLsfHosts + 2,
-                                             sizeof(struct hData *), "updHostList");
+    hDataPtrTb = my_calloc(numLsfHosts + 2,
+                           sizeof(struct hData *),
+                           __func__);
+
     for (i = 0; i < numLsfHosts + 1; i++)
         hDataPtrTb[i] = 0;
 
-
     if ((lost_and_found = getHostData(LOST_AND_FOUND)) == NULL)
         lost_and_found = lostFoundHost();
-    numofhosts = 0;
-    numofprocs = 0;
-    hashEntryPtr = h_firstEnt_(&hostTab, &hashSearchPtr);
 
-    while (hashEntryPtr) {
-        hPtr = (struct hData *)hashEntryPtr->hData;
-        curEntry = hashEntryPtr;
-        hashEntryPtr = h_nextEnt_(&hashSearchPtr);
+    index = numofhosts = numofprocs = 0;
+    for (e = h_firstEnt_(&hostTab, &stab);
+         e != NULL;
+         e = h_nextEnt_(&stab)) {
+
+        hPtr = (struct hData *)e->hData;
 
         if (hPtr == lost_and_found)
             continue;
@@ -3053,13 +3050,12 @@ updHostList (void)
         if (hPtr->hStatus & HOST_STAT_REMOTE)
             continue;
 
-        if(hPtr->flags & HOST_UPDATE){
+        if (hPtr->flags & HOST_UPDATE) {
             hPtr->flags &=~HOST_UPDATE;
-        }else if (reconfig) {
-
+        } else if (reconfig) {
             removedHDataArray[index] = hPtr;
             index++;
-            h_rmEnt_(&hostTab, curEntry);
+            h_rmEnt_(&hostTab, e);
             continue;
         } else {
             freeHData(hPtr,TRUE);
@@ -3070,31 +3066,25 @@ updHostList (void)
         hPtr->hostId = numofhosts;
         hDataPtrTb[numofhosts] = hPtr;
 
+        if (hPtr->maxJobs > 0 && hPtr->maxJobs < INFINIT_INT)
+            hPtr->numCPUs = hPtr->maxJobs;
 
-
-        if (daemonParams[LSB_VIRTUAL_SLOT].paramValue) {
-            if (!strcasecmp("y", daemonParams[LSB_VIRTUAL_SLOT].paramValue)) {
-                if (hPtr->maxJobs > 0 && hPtr->maxJobs < INFINIT_INT)
-                    hPtr->numCPUs = hPtr->maxJobs;
-            }
-        }
         if (hPtr->numCPUs > 0)
             numofprocs += hPtr->numCPUs;
         else
             numofprocs++;
 
-
         if (hPtr->numJobs >= hPtr->maxJobs) {
             hPtr->hStatus |= HOST_STAT_FULL;
             hReasonTb[1][hPtr->hostId] = PEND_HOST_JOB_LIMIT;
-        }
-        else {
+        } else {
             struct qData *qp;
 
             hPtr->hStatus &= ~HOST_STAT_FULL;
             CLEAR_REASON(hReasonTb[1][hPtr->hostId], PEND_HOST_JOB_LIMIT);
             for (qp = qDataList->forw; qp != qDataList; qp = qp->forw)
-                CLEAR_REASON(qp->reasonTb[1][hPtr->hostId], PEND_HOST_JOB_LIMIT);
+                CLEAR_REASON(qp->reasonTb[1][hPtr->hostId],
+                             PEND_HOST_JOB_LIMIT);
         }
     }
 
@@ -3102,12 +3092,6 @@ updHostList (void)
     lost_and_found->hostId = numofhosts;
     hDataPtrTb[numofhosts] = lost_and_found;
     checkHWindow();
-
-    if (logclass & LC_TRACE) {
-        for (i =1; i <= numofhosts; i++)
-            ls_syslog(LOG_DEBUG, "updHostList: Host <%s> now is still used by the batch system and put into hDataPtrTb[%d]", hDataPtrTb[i]->host, hDataPtrTb[i]->hostId);
-        ls_syslog(LOG_DEBUG, "updHostList: Current batch system has numofhosts<%d>, numofprocs <%d>", numofhosts, numofprocs);
-    }
 }
 
 static void
@@ -3118,7 +3102,6 @@ updQueueList (void)
     struct jData *jpbw;
     struct qData *entry;
     struct qData *newqDataList = NULL;
-
 
     if (reconfig) {
         for (qp = qDataList->forw; qp != qDataList; qp = next) {
@@ -3494,7 +3477,7 @@ validHostSpec (char *hostSpec)
 }
 
 static void
-getMaxCpufactor()
+getMaxCpufactor(void)
 {
     int i;
 

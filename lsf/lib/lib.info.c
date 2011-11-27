@@ -108,10 +108,13 @@ copyAdmins_(struct clusterInfo *clusPtr, struct  shortCInfo *clusShort)
 
     if (clusShort->nAdmins <= 0)
         return 0;
-    clusPtr->adminIds = (int *)malloc (clusShort->nAdmins * sizeof (int));
-    clusPtr->admins = (char **) malloc (clusShort->nAdmins * sizeof (char *));
+
+    clusPtr->adminIds = calloc(clusShort->nAdmins, sizeof (int));
+    clusPtr->admins = calloc(clusShort->nAdmins, sizeof (char *));
+
     if (!clusPtr->admins || !clusPtr->adminIds)
         goto errReturn;
+
     for (i = 0; i < clusShort->nAdmins; i++) {
         clusPtr->admins[i] = NULL;
         clusPtr->adminIds[i] = clusShort->adminIds[i];
@@ -155,8 +158,8 @@ expandSCinfo(struct clusterInfoReply *clusterInfoReply)
         FREEUP(clusterInfoPtr);
     }
 
-    clusterInfoPtr = (struct clusterInfo *) malloc((int) clusterInfoReply->nClus *
-                                                   sizeof (struct clusterInfo));
+    clusterInfoPtr = calloc(clusterInfoReply->nClus,
+                            sizeof (struct clusterInfo));
     if (!clusterInfoPtr) {
         nClus = 0;
         lserrno = LSE_MALLOC;
@@ -308,42 +311,72 @@ ls_clusterinfo(char *resReq, int *numclusters, char **clusterList,
 char *
 ls_getmastername(void)
 {
-    static char fname[] = "ls_getmastername";
     static char master[MAXHOSTNAMELEN];
 
-    if (logclass & (LC_TRACE))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
-
     if (getname_(LIM_GET_MASTINFO, master, MAXHOSTNAMELEN) < 0)
-        return (NULL);
+        return NULL;
 
-    return(master);
+    return master;
+}
 
+/* ls_getmastername2()
+ * Get the master name by calling the LSF_SERVER_HOSTS
+ * only.
+ */
+char *
+ls_getmastername2(void)
+{
+    static char master[MAXHOSTNAMELEN];
+
+    if (getname_(LIM_GET_MASTINFO2,
+                 master,
+                 MAXHOSTNAMELEN) < 0)
+        return NULL;
+
+    return master;
 }
 
 static int
 getname_(enum limReqCode limReqCode, char *name, int namesize)
 {
-    static char fname[] = "getname_";
+    int options;
 
     if (initenv_(NULL, NULL) < 0)
         return (-1);
-
-    if (logclass & (LC_TRACE))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
 
     if (limReqCode == LIM_GET_CLUSNAME) {
         struct stringLen str;
         str.name = name;
         str.len  = namesize;
-        if (callLim_(limReqCode, NULL, NULL, &str,
-                     xdr_stringLen, NULL, _LOCAL_, NULL) < 0)
+        if (callLim_(limReqCode,
+                     NULL,
+                     NULL,
+                     &str,
+                     xdr_stringLen,
+                     NULL,
+                     _LOCAL_,
+                     NULL) < 0)
             return -1;
         return 0;
     }
 
-    if (callLim_(limReqCode, NULL, NULL,
-                 &masterInfo_, xdr_masterInfo, NULL, _LOCAL_, NULL) < 0)
+    /* Force the library not to call _LOCAL_ LIM since
+     * it may not know the master yet, this is the
+     * case of LIM_ADD_HOST.
+     */
+    if (limReqCode == LIM_GET_MASTINFO2)
+        options = _SERVER_HOSTS_ONLY_;
+    else
+        options = _LOCAL_;
+
+    if (callLim_(limReqCode,
+                 NULL,   /* no data to send */
+                 NULL,
+                 &masterInfo_,
+                 xdr_masterInfo,
+                 NULL,  /* host LSF_SERVER_HOSTS */
+                 options,
+                 NULL) < 0)
         return(-1);
 
     if (memcmp(&sockIds_[MASTER].sin_addr,
@@ -360,10 +393,9 @@ getname_(enum limReqCode limReqCode, char *name, int namesize)
     sockIds_[TCP].sin_port = masterInfo_.portno;
     masterknown_ = TRUE;
     strncpy(name, masterInfo_.hostName, namesize);
-    name[namesize-1] = '\0';
+    name[namesize - 1] = '\0';
 
     return 0;
-
 }
 
 char *

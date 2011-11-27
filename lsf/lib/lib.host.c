@@ -179,9 +179,8 @@ sockAdd2Str_(struct sockaddr_in *from)
     static char adbuf[24];
 
     sprintf(adbuf, "\
-%s:%d", inet_ntoa(from->sin_addr), (int)ntohs(from->sin_port));
+%s:%hu", inet_ntoa(from->sin_addr), ntohs(from->sin_port));
     return adbuf;
-
 }
 
 /* stripDomain()

@@ -15,8 +15,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
-#ifndef LIB_CONF_H 
-#define LIB_CONF_H 
+#ifndef LIB_CONF_H
+#define LIB_CONF_H
+
 #define ILLEGAL_CHARS     ".!-=+*/[]@:&|{}'`\""
 #define M_THEN_A  1
 #define A_THEN_M  2
@@ -24,6 +25,7 @@
 #define TYPE1  RESF_BUILTIN | RESF_DYNAMIC | RESF_GLOBAL
 #define TYPE2  RESF_BUILTIN | RESF_GLOBAL
 #define TYPE3  RESF_BUILTIN | RESF_GLOBAL | RESF_LIC
+#define DEF_REXPRIORITY 0
 
 struct builtIn {
     char *name;
@@ -44,4 +46,4 @@ void freeSA_(char**, int);
 extern int builtInRes_ID[];
 extern struct builtIn builtInRes[];
 
-#endif	
+#endif

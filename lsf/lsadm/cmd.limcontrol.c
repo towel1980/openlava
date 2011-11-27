@@ -28,8 +28,8 @@
 
 #include "../lsf.h"
 #include "../intlib/intlibout.h"
-#include "../lib/lsi18n.h" 
-#define NL_SETN 25      
+#include "../lib/lsi18n.h"
+#define NL_SETN 25
 
 extern int  optind;
 extern char *optarg;
@@ -51,70 +51,56 @@ static int fFlag;
 int
 limCtrl(int argc, char **argv, int opCode)
 {
-    char *optName, *localHost;
-    int vFlag = 0;      
+    char *optName;
+    char *localHost;
+    int vFlag = 0;
     int config = 0, checkReply;
 
-    fFlag = 0;          
+    fFlag = 0;
     if (strcmp(argv[optind-1], "reconfig") == 0) {
 	config = 1;
     }
+
     while ((optName = myGetOpt(argc, argv, "f|v|")) != NULL) {
         switch (optName[0]) {
-        case 'v':
-	    if (opCode == LIM_CMD_SHUTDOWN)
-		return(-2);
-            vFlag = 1;
-            break;
-        case 'f':
-            fFlag = 1;
-            break;
-        default:
-            return(-2);
+            case 'v':
+                if (opCode == LIM_CMD_SHUTDOWN)
+                    return(-2);
+                vFlag = 1;
+                break;
+            case 'f':
+                fFlag = 1;
+                break;
+            default:
+                return(-2);
         }
     }
     exitrc = 0;
-    if (config && optind != argc)  
-        return -2;                     
+    if (config && optind != argc)
+        return -2;
 
-    initMasterList_();
-    if (config || opCode == LIM_CMD_REBOOT) {
-	if ( getIsMasterCandidate_()) { 
-	    checkReply = checkConf(vFlag, 1);
-	    if ((checkReply == EXIT_FATAL_ERROR || checkReply == EXIT_WARNING_ERROR) && !vFlag && !fFlag) 
-	        if (getConfirm(I18N(201, "Do you want to see the detailed messages? [y/n] ")))
-		    checkReply = checkConf(1, 1);
-
-	} else { 
-	    if ( !vFlag && !fFlag) {
-                if (!getConfirm(I18N(202, "This host is not a master candidate. We can not do a LIM configuration check. \n Do you still want to continue ? [y/n] "))) {
-		    return 0;
-	        }
-	    }
-	}
-	switch (checkReply)  {
-	case EXIT_FATAL_ERROR:                      
+    switch (checkReply)  {
+	case EXIT_FATAL_ERROR:
             return -1;
-	case EXIT_WARNING_ERROR:                      
+	case EXIT_WARNING_ERROR:
             if (fFlag)
-                break;                 
+                break;
             if (!getConfirm(I18N(250, "Do you want to reconfigure? [y/n] "))) /* catgets 250 */ {
                 fprintf(stderr, I18N(251, "Reconfiguration aborted.\n")); /* catgets 251 */
                 return(-1);
             }
             break;
-        default:                      
-	    break;
-        }
-    }
-    if (config) {
-        doAllHosts(opCode);
-        
-        return(exitrc); 
+        default:
+            break;
     }
 
-    if (optind == argc) {              
-	if ((localHost = ls_getmyhostname()) == NULL) { 
+    if (config) {
+        doAllHosts(opCode);
+        return(exitrc);
+    }
+
+    if (optind == argc) {
+	if ((localHost = ls_getmyhostname()) == NULL) {
             ls_perror("ls_getmyhostname");
             return -1;
 	}
@@ -122,34 +108,25 @@ limCtrl(int argc, char **argv, int opCode)
     }
     else
     {
-	if (!getIsMasterCandidate_())
-	{ 
-	    if (!(optind == argc-1 && !strcmp(argv[optind], ls_getmyhostname()))) { 
-		fprintf(stderr, "%s\n",
-                I18N(265, "Should not operate remote lim from slave only or client host")); /* catgets 265 */
-		return (-1);
-	    }
-	}
-
 	doHosts(argc, argv, opCode);
     }
 
-    return(exitrc);         
+    return(exitrc);
 
-} 
+}
 
 static
 void doHosts (int argc, char **argv, int opCode)
 {
     if (optind == argc-1 && strcmp(argv[optind], "all") == 0) {
-        
+
 	doAllHosts(opCode);
 	return;
     }
-    for (; optind < argc; optind++) 
+    for (; optind < argc; optind++)
 	operateHost(argv[optind], opCode, 0);
-    
-} 
+
+}
 
 static
 void doAllHosts (int opCode)
@@ -157,8 +134,8 @@ void doAllHosts (int opCode)
     int numhosts = 0, i;
     struct hostInfo *hostinfo;
     int ask = FALSE, try = FALSE;
-    char msg[100]; 
-    
+    char msg[100];
+
     hostinfo = ls_gethostinfo("-:server", &numhosts, NULL, 0, LOCAL_ONLY);
     if (hostinfo == NULL) {
 	ls_perror("ls_gethostinfo");
@@ -170,25 +147,25 @@ void doAllHosts (int opCode)
     if (!fFlag) {
 	if (opCode == LIM_CMD_REBOOT)
             sprintf(msg, I18N(253, "Do you really want to restart LIMs on all hosts? [y/n] ")); /* catgets 253 */
-        else 
+        else
 	    sprintf(msg, I18N(254, "Do you really want to shut down LIMs on all hosts? [y/n] ")); /* catgets 254 */
 	ask = (!getConfirm(msg));
     }
-    for (i=0; i<numhosts; i++) 
+    for (i=0; i<numhosts; i++)
         if (hostinfo[i].maxCpus > 0)
 	    operateHost (hostinfo[i].hostName, opCode, ask);
-        else 
+        else
 	    try = 1;
     if (try) {
         fprintf(stderr, "\n%s :\n\n", I18N(255, "Trying unavailable hosts")); /* catgets 255 */
-        for (i=0; i<numhosts; i++) 
+        for (i=0; i<numhosts; i++)
             if (hostinfo[i].maxCpus <= 0)
 	        operateHost (hostinfo[i].hostName, opCode, ask);
     }
 
-} 
+}
 
-static void 
+static void
 operateHost (char *host, int opCode, int confirm)
 {
     char msg1[MAXLINELEN];
@@ -217,12 +194,12 @@ operateHost (char *host, int opCode, int confirm)
 	else
 	    delay_time = atoi(delay) * 1000;
 
-	millisleep_(delay_time); 
+	millisleep_(delay_time);
 	fprintf (stderr, "%s\n", I18N_done);
     }
     fflush(stderr);
 
-} 
+}
 
 int
 limLock(int argc, char **argv)
@@ -245,8 +222,8 @@ limLock(int argc, char **argv)
                 return -2;
         }
     }
-   
-    if (argc > optind) 
+
+    if (argc > optind)
         return -2;
 
     if (ls_lockhost(duration) < 0) {
@@ -262,7 +239,7 @@ limLock(int argc, char **argv)
 
     fflush(stdout);
     return(0);
-} 
+}
 
 int
 limUnlock(int argc, char **argv)
@@ -283,4 +260,4 @@ limUnlock(int argc, char **argv)
     fflush(stdout);
 
     return(0);
-} 
+}

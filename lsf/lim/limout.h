@@ -62,7 +62,8 @@ enum limReqCode {
     LIM_DEBUGREQ      = 12,
     LIM_GET_RESOUINFO = 13,
     LIM_ADD_HOST      = 14,
-    LIM_RM_HOST,
+    LIM_RM_HOST       = 15,
+    LIM_GET_MASTINFO2 = 16,
 
 #define FIRST_LIM_PRIV	LIM_REBOOT
     LIM_REBOOT        = 50,
@@ -107,7 +108,9 @@ enum limReplyCode {
     LIME_NO_MEM           = 21,
     LIME_BAD_FILTER       = 22,
     LIME_BAD_RESOURCE     = 23,
-    LIME_NO_RESOURCE      = 24
+    LIME_NO_RESOURCE      = 24,
+    LIME_HOST_EXIST       = 25,
+    LIME_NO_HOST          = 26
 };
 
 struct loadReply {

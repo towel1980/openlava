@@ -640,12 +640,12 @@ struct hostEntryLog {
 #define LSE_I18N_NOMEM          90
 #define LSE_NO_MEM              91
 #define LSE_FILE_CLOSE          92
-#define LSE_LIMCONF_NOTREADY    93
-#define LSE_MASTER_LIM_DOWN     94
-#define LSE_MLS_INVALID         95
-#define LSE_MLS_CLEARANCE       96
-#define LSE_MLS_RHOST           97
-#define LSE_MLS_DOMINATE        98
+#define LSE_MASTER_LIM_DOWN     93
+#define LSE_MLS_INVALID         94
+#define LSE_MLS_CLEARANCE       95
+#define LSE_MLS_RHOST           96
+#define LSE_MLS_DOMINATE        97
+#define LSE_HOST_EXIST          98
 #define LSE_NERR                98
 
 #define LSE_ISBAD_RESREQ(s)     (((s) == LSE_BAD_EXP)                   \
@@ -822,6 +822,7 @@ extern char    *ls_getclustername(void);
 extern struct clusterInfo *ls_clusterinfo(char *, int *, char **, int, int);
 extern struct lsSharedResourceInfo *ls_sharedresourceinfo(char **, int *, char *, int);
 extern char    *ls_getmastername(void);
+extern char    *ls_getmastername2(void);
 extern char    *ls_getmyhostname(void);
 extern struct  hostInfo *ls_gethostinfo(char *, int *, char **, int, int);
 extern char    *ls_getISVmode(void);

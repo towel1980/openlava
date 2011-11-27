@@ -203,7 +203,8 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     jobInfoHead.numJobs = listSize;
 
     if (jobInfoHead.numJobs > 0)
-        jobInfoHead.jobIds = (LS_LONG_INT *)my_calloc (listSize, sizeof(LS_LONG_INT), fname);
+        jobInfoHead.jobIds = my_calloc(listSize,
+                                       sizeof(LS_LONG_INT), fname);
     for (i = 0; i < listSize; i++){
         if (!jgrplist[i].isJData)
             jobInfoHead.jobIds[i] = 0;
@@ -213,8 +214,8 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 
     jobInfoHead.numHosts = 0;
     if (jobInfoReq.options & HOST_NAME) {
-        jobInfoHead.hostNames = (char **) my_calloc (numofhosts,
-                                                     sizeof(char *), fname);
+        jobInfoHead.hostNames = my_calloc(numofhosts,
+                                          sizeof(char *), fname);
         for (i = 1; i <= numofhosts; i++)
             jobInfoHead.hostNames[i-1] = hDataPtrTb[i]->host;
 
@@ -412,33 +413,36 @@ jobInfoReplyXdrBufLen(struct jobInfoReply *jobInfoReplyPtr)
 }
 
 static int
-packJobInfo(struct jData * jobData, int remain, char **replyBuf, int schedule,
+packJobInfo(struct jData * jobData,
+            int remain,
+            char **replyBuf,
+            int schedule,
             int options, int version)
 {
-    static char              fname[] = "packJobInfo";
-    struct jobInfoReply      jobInfoReply;
-    struct submitReq         jobBill;
-    struct LSFHeader         hdr;
-    char                     *request_buf = NULL;
-    int                      *reasonTb = NULL;
-    int                      *jReasonTb;
-    XDR                      xdrs;
-    int                      i,
-        k,
-        len;
-    int                      svReason,
-        *pkHReasonTb,
-        *pkQReasonTb,
-        *pkUReasonTb;
-    float                    *loadSched = NULL,
-        *loadStop = NULL;
-    float                    *cpuFactor,
-        one = 1.0;
-    float                    cpuF;
-    char                     fullName[MAXPATHLEN];
-    struct jgTreeNode        *jgNode;
-    int                      job_numReasons;
-    int                     *job_reasonTb;
+    static char fname[] = "packJobInfo";
+    struct jobInfoReply jobInfoReply;
+    struct submitReq jobBill;
+    struct LSFHeader hdr;
+    char *request_buf = NULL;
+    int *reasonTb = NULL;
+    int *jReasonTb;
+    XDR xdrs;
+    int i;
+    int k;
+    int len;
+    int svReason;
+    int *pkHReasonTb;
+    int *pkQReasonTb;
+    int *pkUReasonTb;
+    float *loadSched = NULL;
+    float *loadStop = NULL;
+    float *cpuFactor;
+    float one = 1.0;
+    float cpuF;
+    char  fullName[MAXPATHLEN];
+    struct jgTreeNode *jgNode;
+    int job_numReasons;
+    int *job_reasonTb;
 
     job_numReasons = jobData->numReasons;
     job_reasonTb = jobData->reasonTb;

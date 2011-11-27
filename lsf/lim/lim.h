@@ -139,8 +139,8 @@ struct hostNode {
 struct clusterNode {
     short clusterNo;
     char *clName;
-    int  status;
-    in_addr_t   candAddrList[MAXCANDHOSTS];
+    int status;
+    in_addr_t candAddrList[MAXCANDHOSTS];
     int     currentAddr;
     char   *masterName;
     u_int   masterAddr;
@@ -200,6 +200,8 @@ struct liStruct {
     float satvalue;
     float value;
 };
+int li_len;
+struct liStruct *li;
 
 #define  SEND_NO_INFO       0x00
 #define  SEND_CONF_INFO     0x01
@@ -467,6 +469,8 @@ extern int equivHostAddr(struct hostNode *, u_int);
 extern struct hostNode *findHost(char *);
 extern struct hostNode *findHostbyAddr(struct sockaddr_in *,
                                        char *);
+extern struct hostNode *findHostByAddr(in_addr_t);
+extern struct hostNode *rmHost(struct hostNode *);
 extern struct hostNode *findHostbyList(struct hostNode *, char *);
 extern struct hostNode *findHostbyNo(struct hostNode *, int);
 extern bool_t findHostInCluster(char *);
@@ -499,14 +503,20 @@ extern int xdr_masterReg(XDR *, struct masterReg *, struct LSFHeader *);
 extern int xdr_statInfo(XDR *, struct statInfo *, struct LSFHeader *);
 extern void clientIO(struct Masks *);
 
-/* openlava add floating host
+/* openlava floating host management
  */
 extern void addFloatHost(XDR *,
                          struct sockaddr_in *,
                          struct LSFHeader *,
                          int);
+extern void rmFloatHost(XDR *,
+                        struct sockaddr_in *,
+                        struct LSFHeader *,
+                        int);
 extern int logInit(void);
 extern int logLimStart(void);
 extern int logAddHost(struct hostEntry *);
+extern int logRmHost(struct hostEntry *);
 extern int addHostByTab(hTab *);
+
 #endif
