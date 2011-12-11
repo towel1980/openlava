@@ -3054,14 +3054,17 @@ addHost(struct clusterNode *clPtr,
                           __func__, fileName, *LineNumPtr, word);
                 lim_CheckError = WARNING_ERR;
                 free(hPtr->windows);
-                hPtr->windows = "-";
+                hPtr->windows = strdup("-");
                 hPtr->wind_edge = 0;
                 break;
             }
             hPtr->wind_edge = time(0);
         }
     } else {
-        hPtr->windows = "-";
+        /* dup() all strings so later
+         * on we can free without fear.
+         */
+        hPtr->windows = strdup("-");
         hPtr->wind_edge = 0;
     }
 
@@ -4752,13 +4755,13 @@ saveHostIPAddr(struct hostNode *hPtr, struct hostent *hp)
     return 0;
 }
 
-/* limAddHost()
+/* addMigrantHost()
  */
 void
-addFloatHost(XDR *xdrs,
-             struct sockaddr_in *from,
-             struct LSFHeader *reqHdr,
-             int chan)
+addMigrantHost(XDR *xdrs,
+               struct sockaddr_in *from,
+               struct LSFHeader *reqHdr,
+               int chan)
 {
     static char buf[MSGSIZE];
     struct LSFHeader hdr;
@@ -4787,7 +4790,7 @@ addFloatHost(XDR *xdrs,
         ls_syslog(LOG_WARNING, "\
 %s: trying to add already configured host %s from %s", __func__,
                   hPtr.hostName, sockAdd2Str_(from));
-        opCode = LIME_HOST_EXIST;
+        opCode = LIME_UNKWN_HOST;
         goto hosed;
     }
 
@@ -4800,7 +4803,7 @@ addFloatHost(XDR *xdrs,
                         (char *)__func__,
                         &cc)) == NULL) {
         ls_syslog(LOG_ERR, "\
-%s: failed adding on the fly host %s", __func__, hPtr.hostName);
+%s: failed adding migrant host %s", __func__, hPtr.hostName);
         /* free the shit...
          */
         opCode = LIME_BAD_DATA;
@@ -4810,6 +4813,9 @@ addFloatHost(XDR *xdrs,
     /* log the lim event HOST_ADD
      */
     logAddHost(&hPtr);
+    /* mark the node as migrant
+     */
+    node->migrant = 1;
 
     /* reply to the library
      */
@@ -4852,6 +4858,7 @@ addHostByTab(hTab *tab)
 {
     struct hostEntry hPtr;
     struct hostEntryLog *hLog;
+    struct hostNode *node;
     sTab stab;
     hEnt *e;
 
@@ -4863,15 +4870,18 @@ addHostByTab(hTab *tab)
         hLog = e->hData;
         memcpy(&hPtr, hLog, sizeof(struct hostEntry));
 
-        if (!addHost(myClusterPtr,
-                     &hPtr,
-                     hPtr.window,
-                     (char *)__func__,
-                     &cc)) {
+        if ((node = addHost(myClusterPtr,
+                            &hPtr,
+                            hPtr.window,
+                            (char *)__func__,
+                            &cc)) == NULL) {
             ls_syslog(LOG_ERR, "\
 %s: failed adding runtime host %s", __func__, hPtr.hostName);
             continue;
         }
+        /* mark the node as migrant.
+         */
+        node->migrant = 1;
 
         ls_syslog(LOG_DEBUG, "\
 %s: runtime host %s model %s type %s added all right",
@@ -4886,13 +4896,13 @@ addHostByTab(hTab *tab)
     return 0;
 }
 
-/* rmFloatHost()
+/* rmMigrantHost()
  */
 void
-rmFloatHost(XDR *xdrs,
-            struct sockaddr_in *from,
-            struct LSFHeader *reqHdr,
-            int chan)
+rmMigrantHost(XDR *xdrs,
+              struct sockaddr_in *from,
+              struct LSFHeader *reqHdr,
+              int chan)
 {
     static char buf[MSGSIZE];
     struct LSFHeader hdr;
@@ -4920,7 +4930,14 @@ rmFloatHost(XDR *xdrs,
         ls_syslog(LOG_WARNING, "\
 %s: trying to remove unknown host %s from %s", __func__,
                   hostName, sockAdd2Str_(from));
-        opCode = LIME_NO_HOST;
+        opCode = LIME_UNKWN_HOST;
+        goto hosed;
+    }
+
+    if (! hPtr->migrant) {
+        /* Ho ho no migrant no remove...
+         */
+        opCode = LIME_BAD_DATA;
         goto hosed;
     }
 

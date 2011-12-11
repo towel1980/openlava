@@ -18,7 +18,6 @@
  */
 
 #include "../lsf.h"
-#include "intlib.h"
 #include "resreq.h"
 #if defined(HAVE_TCL_TCL_H)
 #include <tcl/tcl.h>

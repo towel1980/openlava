@@ -30,14 +30,14 @@ static int    allocLoadIdx(float **sched, float **stop, int *outSize, int size);
 static bool_t xdr_lsbSharedResourceInfo (XDR *, struct lsbSharedResourceInfo *,
                                          struct LSFHeader *);
 
-static bool_t xdr_lsbShareResourceInstance (XDR *xdrs, 
-					    struct lsbSharedResourceInstance *, 
+static bool_t xdr_lsbShareResourceInstance (XDR *xdrs,
+					    struct lsbSharedResourceInstance *,
 					    struct LSFHeader *);
 
 int  lsbSharedResConfigured_ = FALSE;
 
 extern bool_t xdr_array_string(XDR *, char **, int, int);
-bool_t 
+bool_t
 xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
 {
 
@@ -53,12 +53,12 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
 	submitReq->errFile[0] = '\0';
 	submitReq->inFileSpool[0] = '\0';
 	submitReq->commandSpool[0] = '\0';
-	submitReq->chkpntDir[0] = '\0';		
-	submitReq->hostSpec[0] = '\0';		
+	submitReq->chkpntDir[0] = '\0';
+	submitReq->hostSpec[0] = '\0';
         submitReq->cwd[0] = '\0';
         submitReq->subHomeDir[0] = '\0';
 
-	
+
 	FREEUP (submitReq->queue);
         FREEUP (submitReq->command);
         FREEUP (submitReq->jobName);
@@ -69,7 +69,7 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
 	FREEUP (submitReq->projectName);
 	FREEUP (submitReq->loginShell);
 	FREEUP (submitReq->schedHostType);
-	
+
 	if (numAskedHosts > 0) {
 	    for (i = 0; i < numAskedHosts; i++)
 		FREEUP (askedHosts[i]);
@@ -77,8 +77,8 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
         }
         numAskedHosts = 0;
     }
-    
-    
+
+
     if (!(xdr_u_int(xdrs, (unsigned int*)&submitReq->options) &&
 	  xdr_var_string(xdrs, &submitReq->queue) &&
 	  xdr_var_string(xdrs, &submitReq->resReq) &&
@@ -90,9 +90,9 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
          xdr_var_string(xdrs, &submitReq->dependCond) &&
          xdr_var_string(xdrs, &submitReq->jobName) &&
          xdr_var_string(xdrs, &submitReq->command) &&
-         xdr_string(xdrs, &submitReq->jobFile, MAXFILENAMELEN) &&	  
+         xdr_string(xdrs, &submitReq->jobFile, MAXFILENAMELEN) &&
          xdr_string(xdrs, &submitReq->inFile, MAXFILENAMELEN) &&
-         xdr_string(xdrs, &submitReq->outFile, MAXFILENAMELEN) &&	  
+         xdr_string(xdrs, &submitReq->outFile, MAXFILENAMELEN) &&
          xdr_string(xdrs, &submitReq->errFile, MAXFILENAMELEN) &&
 	 xdr_var_string(xdrs, &submitReq->preExecCmd) &&
          xdr_string(xdrs, &submitReq->hostSpec, MAXHOSTNAMELEN))) {
@@ -103,36 +103,36 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
         return (FALSE);
 
     if (xdrs->x_op == XDR_DECODE && submitReq->numAskedHosts > 0) {
-	submitReq->askedHosts = (char **) 
+	submitReq->askedHosts = (char **)
 		calloc(submitReq->numAskedHosts, sizeof (char *));
 	if (submitReq->askedHosts == NULL)
 	    return (FALSE);
     }
-    
-    
+
+
     for ( i=0;i<submitReq->numAskedHosts;i++ ) {
         if (!xdr_var_string(xdrs, &submitReq->askedHosts[i])) {
 	    submitReq->numAskedHosts = i;
 	    goto Error0;
         }
     }
-    
+
     nLimits = LSF_RLIM_NLIMITS;
     if (!xdr_int(xdrs, &nLimits))
 	goto Error0;
-    
+
     for (i = 0; i < nLimits; i++) {
 	if (i < LSF_RLIM_NLIMITS) {
-	    if (!xdr_int(xdrs, &submitReq->rLimits[i])) 
+	    if (!xdr_int(xdrs, &submitReq->rLimits[i]))
 		goto Error0;
 	} else {
 	    int j;
-	    
+
 	    if (!xdr_int(xdrs, &j))
 		goto Error0;
 	}
     }
-    
+
     if (!(xdr_time_t(xdrs, &submitReq->submitTime) &&
          xdr_time_t(xdrs, &submitReq->beginTime) &&
          xdr_time_t(xdrs, &submitReq->termTime) &&
@@ -141,11 +141,11 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
 	 xdr_int(xdrs,&submitReq->restartPid) &&
 	 xdr_time_t(xdrs,&submitReq->chkpntPeriod) &&
          xdr_string(xdrs, &submitReq->chkpntDir, MAXFILENAMELEN) &&
-         xdr_string(xdrs, &submitReq->subHomeDir, MAXFILENAMELEN) &&	  
+         xdr_string(xdrs, &submitReq->subHomeDir, MAXFILENAMELEN) &&
          xdr_string(xdrs, &submitReq->cwd, MAXFILENAMELEN))) {
 	goto Error0;
     }
-    
+
     if (!xdr_int(xdrs, &submitReq->nxf))
 	goto Error0;
 
@@ -161,8 +161,8 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
 	    goto Error1;
     }
 
-	
-    
+
+
     if (!xdr_var_string(xdrs, &submitReq->mailUser))
 	goto Error1;
 
@@ -170,7 +170,7 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
 	goto Error1;
 
 
-    
+
     if (!xdr_int(xdrs, &submitReq->niosPort))
 	goto Error1;
     if (!xdr_int(xdrs, &submitReq->maxNumProcessors))
@@ -180,14 +180,14 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
     if (!xdr_var_string(xdrs, &submitReq->schedHostType))
 	goto Error1;
 
-    
+
     if (xdrs->x_op == XDR_DECODE) {
         numAskedHosts = submitReq->numAskedHosts;
         askedHosts = submitReq->askedHosts;
     }
 
 
-    if (!xdr_int(xdrs, &submitReq->options2)) 
+    if (!xdr_int(xdrs, &submitReq->options2))
         goto Error1;
 
 
@@ -217,15 +217,15 @@ xdr_submitReq (XDR *xdrs, struct submitReq *submitReq, struct LSFHeader *hdr)
     }
 
     return(FALSE);
-} 
+}
 
-bool_t 
+bool_t
 xdr_modifyReq (XDR *xdrs, struct  modifyReq *modifyReq, struct LSFHeader *hdr)
 {
     int jobArrId, jobArrElemId;
 
     if (xdrs->x_op == XDR_DECODE) {
-        
+
         FREEUP (modifyReq->jobIdStr);
     }
     if (xdrs->x_op == XDR_ENCODE) {
@@ -235,11 +235,11 @@ xdr_modifyReq (XDR *xdrs, struct  modifyReq *modifyReq, struct LSFHeader *hdr)
           xdr_int(xdrs, &(modifyReq->delOptions))))
         return(FALSE);
 
-    if (!xdr_arrayElement(xdrs, (char *) &modifyReq->submitReq, 
+    if (!xdr_arrayElement(xdrs, (char *) &modifyReq->submitReq,
                                                    hdr, xdr_submitReq))
         return(FALSE);
 
-    
+
     if (!xdr_var_string(xdrs, &(modifyReq->jobIdStr)))
         return(FALSE);
 
@@ -252,20 +252,20 @@ xdr_modifyReq (XDR *xdrs, struct  modifyReq *modifyReq, struct LSFHeader *hdr)
     }
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&modifyReq->jobId,jobArrId,jobArrElemId);
-    }  
+    }
 
     return (TRUE);
 
-} 
- 
-bool_t 
+}
+
+bool_t
 xdr_jobInfoReq (XDR *xdrs, struct jobInfoReq *jobInfoReq, struct LSFHeader *hdr)
 {
     int jobArrId, jobArrElemId;
 
     if (!xdr_var_string(xdrs, &jobInfoReq->userName))
 	return (FALSE);
-    
+
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(jobInfoReq->jobId, &jobArrId, &jobArrElemId);
     }
@@ -283,23 +283,23 @@ xdr_jobInfoReq (XDR *xdrs, struct jobInfoReq *jobInfoReq, struct LSFHeader *hdr)
     }
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobInfoReq->jobId,jobArrId,jobArrElemId);
-    }      
+    }
 
     return(TRUE);
-} 
+}
 
-bool_t 
+bool_t
 xdr_signalReq (XDR *xdrs, struct signalReq *signalReq, struct LSFHeader *hdr)
 {
     int jobArrId, jobArrElemId;
 
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(signalReq->jobId, &jobArrId, &jobArrElemId);
-    }    
+    }
     if (!(xdr_int(xdrs, &(signalReq->sigValue)) &&
           xdr_int(xdrs, &jobArrId)))
         return(FALSE);
-    
+
 
     if (signalReq->sigValue == SIG_CHKPNT
        || signalReq->sigValue == SIG_DELETE_JOB
@@ -316,10 +316,10 @@ xdr_signalReq (XDR *xdrs, struct signalReq *signalReq, struct LSFHeader *hdr)
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&signalReq->jobId,jobArrId,jobArrElemId);
-    } 
+    }
 
     return(TRUE);
-} 
+}
 
 
 bool_t
@@ -345,13 +345,13 @@ xdr_lsbMsg(XDR *xdrs, struct lsbMsg *m, struct LSFHeader *hdr)
 
     xdrrc = xdr_int(xdrs, &m->header->usrId);
     if (! xdrrc) goto Failure;
-    
+
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(m->header->jobId, &jobArrId, &jobArrElemId);
     }
     xdrrc = xdr_int(xdrs, &jobArrId);
     if (! xdrrc) goto Failure;
-   
+
     xdrrc = xdr_int(xdrs, &m->header->type);
     if (! xdrrc) goto Failure;
 
@@ -360,25 +360,25 @@ xdr_lsbMsg(XDR *xdrs, struct lsbMsg *m, struct LSFHeader *hdr)
 
     xdrrc = xdr_string(xdrs, &m->header->dest, LSB_MAX_SD_LENGTH);
     if (! xdrrc) goto Failure;
-    
+
     xdrrc = xdr_var_string(xdrs, &m->msg);
     if (! xdrrc) goto Failure;
 
-    xdrrc = xdr_int(xdrs, &jobArrElemId); 
+    xdrrc = xdr_int(xdrs, &jobArrElemId);
     if (! xdrrc) goto Failure;
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&m->header->jobId,jobArrId,jobArrElemId);
-    }   
+    }
 
     return(TRUE);
 
   Failure:
     return(FALSE);
 
-} 
+}
 
-bool_t 
+bool_t
 xdr_submitMbdReply (XDR *xdrs, struct submitMbdReply *reply, struct LSFHeader *hdr)
 {
     static char queueName[MAX_LSB_NAME_LEN];
@@ -390,7 +390,7 @@ xdr_submitMbdReply (XDR *xdrs, struct submitMbdReply *reply, struct LSFHeader *h
 	jobName[0] = '\0';
         reply->queue = queueName;
         reply->badJobName = jobName;
-    } 
+    }
 
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(reply->jobId, &jobArrId, &jobArrElemId);
@@ -407,21 +407,21 @@ xdr_submitMbdReply (XDR *xdrs, struct submitMbdReply *reply, struct LSFHeader *h
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&reply->jobId,jobArrId,jobArrElemId);
-    }      
+    }
     return(TRUE);
-} 
+}
 
-bool_t 
-xdr_parameterInfo (XDR *xdrs, struct parameterInfo *paramInfo, 
+bool_t
+xdr_parameterInfo (XDR *xdrs, struct parameterInfo *paramInfo,
                    struct LSFHeader *hdr)
 {
-    
+
     if (xdrs->x_op == XDR_DECODE) {
         FREEUP (paramInfo->defaultQueues);
         FREEUP (paramInfo->defaultHostSpec);
 	FREEUP (paramInfo->defaultProject);
 	FREEUP (paramInfo->pjobSpoolDir);
-    } 
+    }
 
     if (!(xdr_var_string(xdrs, &paramInfo->defaultQueues) &&
 	  xdr_var_string(xdrs, &paramInfo->defaultHostSpec)))
@@ -434,13 +434,13 @@ xdr_parameterInfo (XDR *xdrs, struct parameterInfo *paramInfo,
 	  xdr_int(xdrs,&(paramInfo->maxSbdRetries)) &&
 	  xdr_int(xdrs,&(paramInfo->cleanPeriod)) &&
 	  xdr_int(xdrs,&(paramInfo->maxNumJobs)) &&
-	  xdr_int(xdrs,&(paramInfo->pgSuspendIt)))) 
+	  xdr_int(xdrs,&(paramInfo->pgSuspendIt))))
         return (FALSE);
 
     if (!(xdr_var_string(xdrs, &paramInfo->defaultProject)))
 	return(FALSE);
 
-    if (!(xdr_int(xdrs,&(paramInfo->maxJobArraySize)))) { 
+    if (!(xdr_int(xdrs,&(paramInfo->maxJobArraySize)))) {
         return (FALSE);
     }
 
@@ -459,13 +459,13 @@ xdr_parameterInfo (XDR *xdrs, struct parameterInfo *paramInfo,
 	return(FALSE);
     }
 
-    if (!(xdr_int(xdrs, &paramInfo->maxUserPriority) && 
+    if (!(xdr_int(xdrs, &paramInfo->maxUserPriority) &&
 	      xdr_int(xdrs, &paramInfo->jobPriorityValue) &&
 	      xdr_int(xdrs, &paramInfo->jobPriorityTime))) {
             return(FALSE);
     }
- 
-    
+
+
     if (!xdr_int(xdrs, &(paramInfo->maxJobId)))
     {
         return (FALSE);
@@ -477,16 +477,16 @@ xdr_parameterInfo (XDR *xdrs, struct parameterInfo *paramInfo,
 	return (FALSE);
     }
 
-    
+
 
 
     if (!(xdr_int(xdrs,&(paramInfo->jobDepLastSub)) &&
         xdr_int(xdrs,&(paramInfo->sharedResourceUpdFactor)))) {
            return (FALSE);
     }
-    
+
     return(TRUE);
-} 
+}
 
 bool_t
 xdr_jobInfoHead (XDR *xdrs, struct jobInfoHead *jobInfoHead,
@@ -520,7 +520,7 @@ xdr_jobInfoHead (XDR *xdrs, struct jobInfoHead *jobInfoHead,
         if (jobInfoHead->numJobs > numJobs ) {
             FREEUP (jobIds);
             numJobs = 0;
-            if ((jobIds = (LS_LONG_INT *) calloc (jobInfoHead->numJobs, 
+            if ((jobIds = (LS_LONG_INT *) calloc (jobInfoHead->numJobs,
                                           sizeof(LS_LONG_INT))) == NULL) {
                 lsberrno = LSBE_NO_MEM;
                 return (FALSE);
@@ -533,7 +533,7 @@ xdr_jobInfoHead (XDR *xdrs, struct jobInfoHead *jobInfoHead,
                 FREEUP (hostNames[i]);
             numHosts = 0;
             FREEUP (hostNames);
-            if ((hostNames = (char **) calloc(jobInfoHead->numHosts, 
+            if ((hostNames = (char **) calloc(jobInfoHead->numHosts,
                                           sizeof(char *))) == NULL) {
                 lsberrno = LSBE_NO_MEM;
                 return (FALSE);
@@ -554,8 +554,8 @@ xdr_jobInfoHead (XDR *xdrs, struct jobInfoHead *jobInfoHead,
 
     for (i = 0; i < jobInfoHead->numJobs; i++) {
 	if (xdrs->x_op == XDR_ENCODE) {
-	    jobId64To32(jobInfoHead->jobIds[i], 
-			&jobArrIds[i], 
+	    jobId64To32(jobInfoHead->jobIds[i],
+			&jobArrIds[i],
 			&jobArrElemIds[i]);
 	}
         if (!xdr_int(xdrs,&(jobArrIds[i])))
@@ -582,10 +582,10 @@ xdr_jobInfoHead (XDR *xdrs, struct jobInfoHead *jobInfoHead,
     FREEUP(jobArrIds);
     FREEUP(jobArrElemIds);
     return TRUE;
-} 
+}
 
-bool_t 
-xdr_jgrpInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply, 
+bool_t
+xdr_jgrpInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 		  struct LSFHeader *hdr)
 {
     char *sp;
@@ -594,14 +594,14 @@ xdr_jgrpInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
     sp = jobInfoReply->userName;
     if (xdrs->x_op == XDR_DECODE) {
 	sp[0] = '\0';
-        
+
         FREEUP( jobInfoReply->jobBill->dependCond );
         FREEUP( jobInfoReply->jobBill->jobName );
     }
 
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(jobInfoReply->jobId, &jobArrId, &jobArrElemId);
-    }    
+    }
     if (!(xdr_int(xdrs, &jobArrId) &&
 	  xdr_int(xdrs, (int *)&(jobInfoReply->status)) &&
 	  xdr_int(xdrs, &(jobInfoReply->reasons)) &&
@@ -613,7 +613,7 @@ xdr_jgrpInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 	  xdr_int(xdrs, &(jobInfoReply->numToHosts)) &&
 	  xdr_int(xdrs, &jobInfoReply->userId) &&
 	  xdr_string(xdrs, &sp, MAXLSFNAMELEN))) {
-        return (FALSE); 
+        return (FALSE);
     }
 
 
@@ -631,23 +631,23 @@ xdr_jgrpInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobInfoReply->jobId,jobArrId,jobArrElemId);
-    }     
+    }
     return(TRUE);
 
-} 
-bool_t 
-xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply, 
+}
+bool_t
+xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 		  struct LSFHeader *hdr)
 {
     char *sp;
     int i, j;
     static float *loadSched = NULL, *loadStop = NULL;
-    static int nIdx = 0;          
+    static int nIdx = 0;
     static int *reasonTb = NULL;
-    static int nReasons = 0;      
+    static int nReasons = 0;
     int jobArrId, jobArrElemId;
 
-    
+
     if (!(xdr_int(xdrs, (int *) &jobInfoReply->jType) &&
 	  xdr_var_string(xdrs, &jobInfoReply->parentGroup) &&
 	  xdr_var_string(xdrs, &jobInfoReply->jName))) {
@@ -673,7 +673,7 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(jobInfoReply->jobId, &jobArrId, &jobArrElemId);
-    }    
+    }
     if (!(xdr_int(xdrs, &jobArrId) &&
 	  xdr_int(xdrs, (int *)&(jobInfoReply->status)) &&
 	  xdr_int(xdrs, &(jobInfoReply->reasons)) &&
@@ -686,7 +686,7 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 	  xdr_int(xdrs, &jobInfoReply->numReasons) &&
 	  xdr_int(xdrs, &jobInfoReply->userId) &&
 	  xdr_string(xdrs, &sp, MAXLSFNAMELEN))) {
-        return (FALSE); 
+        return (FALSE);
     }
 
     if (xdrs->x_op == XDR_DECODE) {
@@ -697,7 +697,7 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 	}
 	jobInfoReply->loadSched = loadSched;
 	jobInfoReply->loadStop = loadStop;
-        
+
         if (jobInfoReply->numReasons > nReasons) {
             FREEUP (reasonTb);
             nReasons = 0;
@@ -708,7 +708,7 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
             nReasons = jobInfoReply->numReasons;
         }
     }
-	     
+
     for (i = 0; i < jobInfoReply->nIdx; i++) {
         if (!xdr_float(xdrs, &jobInfoReply->loadSched[i]) ||
 	    !xdr_float(xdrs, &jobInfoReply->loadStop[i]))
@@ -720,9 +720,9 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
             return (FALSE);
 
     if (xdrs->x_op == XDR_DECODE && jobInfoReply->numToHosts > 0 ) {
-        if ((jobInfoReply->toHosts = (char **) 
+        if ((jobInfoReply->toHosts = (char **)
 	         calloc(jobInfoReply->numToHosts, sizeof (char *))) == NULL) {
-            jobInfoReply->numToHosts = 0; 
+            jobInfoReply->numToHosts = 0;
 	    return (FALSE);
         }
     }
@@ -762,7 +762,7 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 	}
         return(FALSE);
     }
-    
+
     if (!(xdr_int(xdrs, (int *) &jobInfoReply->exitStatus) &&
 	  xdr_int(xdrs, (int *) &jobInfoReply->execUid) &&
 	  xdr_var_string(xdrs, &jobInfoReply->execHome) &&
@@ -778,18 +778,18 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
         || !xdr_int(xdrs, &jobInfoReply->jobPid))
 	return(FALSE);
 
-    
+
     if (!(xdr_time_t(xdrs, &(jobInfoReply->jRusageUpdateTime))))
         return(FALSE);
     if (!(xdr_jRusage(xdrs, &(jobInfoReply->runRusage), hdr)))
         return (FALSE);
 
-    
+
     if (!xdr_time_t(xdrs, &(jobInfoReply->predictedStartTime))) {
         return FALSE;
     }
 
-    
+
     if (!xdr_u_short(xdrs, &jobInfoReply->port)) {
 	return FALSE;
     }
@@ -804,19 +804,19 @@ xdr_jobInfoReply (XDR *xdrs, struct jobInfoReply *jobInfoReply,
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobInfoReply->jobId,jobArrId,jobArrElemId);
-    }      
+    }
 
     return(TRUE);
 
-} 
+}
 
-bool_t 
-xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply, 
+bool_t
+xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply,
 		    struct LSFHeader *hdr)
 {
     int i;
     static int memSize = 0;
-    static struct queueInfoEnt *qInfo = NULL;             
+    static struct queueInfoEnt *qInfo = NULL;
     static int nIdx = 0;
     static float *loadStop = NULL, *loadSched = NULL;
 
@@ -826,17 +826,17 @@ xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply,
         return (FALSE);
 
     if (xdrs->x_op == XDR_DECODE) {
-        
+
 	if (qInfoReply->numQueues > memSize) {
 	    for (i = 0; i < memSize; i++) {
 		FREEUP (qInfo[i].queue);
 		FREEUP (qInfo[i].hostSpec);
 	    }
-	    FREEUP (qInfo); 
+	    FREEUP (qInfo);
 
-            
+
 	    memSize = 0;
-	    if (!(qInfo = (struct queueInfoEnt *) 
+	    if (!(qInfo = (struct queueInfoEnt *)
 		  calloc(qInfoReply->numQueues, sizeof (struct queueInfoEnt))))
 		return (FALSE);
 
@@ -850,26 +850,26 @@ xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply,
 	    }
 	}
 
-        
+
 	for (i = 0; i < qInfoReply->numQueues; i++) {
-	    FREEUP (qInfo[i].description); 
-	    FREEUP (qInfo[i].userList); 
-	    FREEUP (qInfo[i].hostList); 
-	    FREEUP (qInfo[i].windows); 
-            FREEUP (qInfo[i].windowsD); 
-            FREEUP (qInfo[i].defaultHostSpec); 
-            FREEUP (qInfo[i].admins); 
+	    FREEUP (qInfo[i].description);
+	    FREEUP (qInfo[i].userList);
+	    FREEUP (qInfo[i].hostList);
+	    FREEUP (qInfo[i].windows);
+            FREEUP (qInfo[i].windowsD);
+            FREEUP (qInfo[i].defaultHostSpec);
+            FREEUP (qInfo[i].admins);
             FREEUP (qInfo[i].preCmd);
 	    FREEUP (qInfo[i].postCmd);
 	    FREEUP (qInfo[i].prepostUsername);
 	    FREEUP (qInfo[i].requeueEValues);
-	    FREEUP (qInfo[i].resReq); 
-	    FREEUP (qInfo[i].resumeCond); 
+	    FREEUP (qInfo[i].resReq);
+	    FREEUP (qInfo[i].resumeCond);
 	    FREEUP (qInfo[i].stopCond);
-	    FREEUP (qInfo[i].jobStarter); 		
-	    FREEUP (qInfo[i].chkpntDir); 
+	    FREEUP (qInfo[i].jobStarter);
+	    FREEUP (qInfo[i].chkpntDir);
 
-            
+
             FREEUP (qInfo[i].suspendActCmd);
             FREEUP (qInfo[i].resumeActCmd);
             FREEUP (qInfo[i].terminateActCmd);
@@ -877,8 +877,8 @@ xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply,
 
 	qInfoReply->queues = qInfo;
 
-	
-	if (qInfoReply->numQueues * qInfoReply->nIdx > nIdx 
+
+	if (qInfoReply->numQueues * qInfoReply->nIdx > nIdx
 	    && qInfoReply->numQueues > 0) {
 	    if (allocLoadIdx(&loadSched, &loadStop, &nIdx,
 			     qInfoReply->numQueues * qInfoReply->nIdx) == -1)
@@ -892,26 +892,26 @@ xdr_queueInfoReply (XDR *xdrs, struct queueInfoReply *qInfoReply,
 		(i * qInfoReply->nIdx);
 	    qInfoReply->queues[i].loadStop = loadStop + (i * qInfoReply->nIdx);
 	}
-	    
+
         if (!xdr_arrayElement(xdrs, (char *) &(qInfoReply->queues[i]),
                               hdr, xdr_queueInfoEnt, &qInfoReply->nIdx))
             return(FALSE);
     }
-    
+
     return (TRUE);
 
-} 
+}
 
-bool_t 
-xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo, 
+bool_t
+xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo,
                   struct LSFHeader *hdr, int *nIdx)
 {
     char* sp;
-    int   i; 
+    int   i;
     int   j;
 
     if (xdrs->x_op == XDR_FREE) {
-	if (qInfo->chkpntDir != 0) { 
+	if (qInfo->chkpntDir != 0) {
 	    FREEUP(qInfo->chkpntDir);
 	}
 	return(TRUE);
@@ -938,9 +938,9 @@ xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo,
 	return (FALSE);
 
     sp = qInfo->hostSpec;
-    if (xdrs->x_op == XDR_DECODE) 
+    if (xdrs->x_op == XDR_DECODE)
         sp[0] = '\0';
-    if (!(xdr_string(xdrs, &sp, MAX_LSB_NAME_LEN))) 
+    if (!(xdr_string(xdrs, &sp, MAX_LSB_NAME_LEN)))
         return (FALSE);
 
     for(i=0; i<LSF_RLIM_NLIMITS; i++) {
@@ -985,7 +985,7 @@ xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo,
 	  xdr_var_string(xdrs, &qInfo->requeueEValues) &&
           xdr_int(xdrs, &qInfo->hostJobLimit)))
         return (FALSE);
-    
+
     if (!(xdr_var_string(xdrs, &qInfo->resReq) &&
           xdr_int(xdrs, &qInfo->numRESERVE) &&
           xdr_int(xdrs, &qInfo->slotHoldTime) &&
@@ -997,15 +997,15 @@ xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo,
           xdr_var_string(xdrs, &qInfo->terminateActCmd)))
         return (FALSE);
 
-    for (j=0; j < LSB_SIG_NUM ; j++) { 
+    for (j=0; j < LSB_SIG_NUM ; j++) {
         if (!xdr_int(xdrs, &qInfo->sigMap[j]))
             return (FALSE);
-    } 
+    }
 
     if ( !( xdr_var_string(xdrs, &qInfo->chkpntDir) &&
  	    xdr_int (xdrs, &qInfo->chkpntPeriod) ))
 	return FALSE;
-	
+
     for(i=0; i<LSF_RLIM_NLIMITS; i++) {
         if( !(xdr_int(xdrs, &qInfo->defLimits[i])))
             return (FALSE);
@@ -1017,34 +1017,34 @@ xdr_queueInfoEnt (XDR *xdrs, struct queueInfoEnt *qInfo,
     }
 
     return(TRUE);
-} 
+}
 
-bool_t 
-xdr_infoReq (XDR *xdrs, struct infoReq *infoReq, 
+bool_t
+xdr_infoReq (XDR *xdrs, struct infoReq *infoReq,
                  struct LSFHeader *hdr)
 {
     int i;
     static int memSize = 0;
-    static char **names = NULL, *resReq = NULL;   
+    static char **names = NULL, *resReq = NULL;
 
-    
+
     if (!(xdr_int(xdrs, &(infoReq->options))))
         return (FALSE);
-    
-    
+
+
     if (!(xdr_int(xdrs, &(infoReq->numNames))))
         return (FALSE);
 
     if (xdrs->x_op == XDR_DECODE) {
-        
-        if (names) {                             
+
+        if (names) {
             for (i = 0; i < memSize; i++)
-                FREEUP (names[i]);        
+                FREEUP (names[i]);
         }
         if (infoReq->numNames + 2 > memSize) {
-           
+
             FREEUP (names);
-            
+
             memSize = infoReq->numNames + 2;
             if ((names = (char **)calloc (memSize, sizeof(char *))) == NULL) {
                 memSize = 0;
@@ -1054,12 +1054,12 @@ xdr_infoReq (XDR *xdrs, struct infoReq *infoReq,
 	infoReq->names = names;
     }
 
-    
-    for (i = 0; i < infoReq->numNames; i++) 
+
+    for (i = 0; i < infoReq->numNames; i++)
 	if (!(xdr_var_string(xdrs, &infoReq->names[i])))
 	    return (FALSE);
 
-    
+
     if (infoReq->options & CHECK_HOST) {
         if (!(xdr_var_string(xdrs, &infoReq->names[i])))
             return (FALSE);
@@ -1070,11 +1070,11 @@ xdr_infoReq (XDR *xdrs, struct infoReq *infoReq,
             return (FALSE);
     }
 
-    
+
     if (xdrs->x_op == XDR_DECODE) {
         FREEUP (resReq);
     }
-	
+
     if (!xdr_var_string(xdrs, &infoReq->resReq))
         return (FALSE);
 
@@ -1084,16 +1084,16 @@ xdr_infoReq (XDR *xdrs, struct infoReq *infoReq,
 
     return(TRUE);
 
-} 
+}
 
-bool_t 
-xdr_hostDataReply (XDR *xdrs, struct hostDataReply *hostDataReply,
-	         struct LSFHeader *hdr)
+bool_t
+xdr_hostDataReply(XDR *xdrs,
+                  struct hostDataReply *hostDataReply,
+                  struct LSFHeader *hdr)
 {
     int i, hostCount;
     struct hostInfoEnt *hInfoTmp ;
     char *sp;
-
     static struct hostInfoEnt *hInfo = NULL;
     static int curNumHInfo = 0;
     static char *mem = NULL;
@@ -1101,75 +1101,74 @@ xdr_hostDataReply (XDR *xdrs, struct hostDataReply *hostDataReply,
     static float *realLoad = NULL;
     static int nIdx = 0, *busySched = NULL, *busyStop = NULL;
 
-    if (!(xdr_int(xdrs,&(hostDataReply->numHosts)) &&
-	  xdr_int(xdrs,&(hostDataReply->badHost)) &&
-	  xdr_int(xdrs, &(hostDataReply->nIdx))))
-        return (FALSE);
+    if (! xdr_int(xdrs, &hostDataReply->numHosts)
+        || !xdr_int(xdrs, &hostDataReply->badHost)
+        || !xdr_int(xdrs, &hostDataReply->nIdx))
+        return FALSE;
 
-    
     if (xdrs->x_op == XDR_DECODE) {
         hostCount = hostDataReply->numHosts;
-     
+
         if (curNumHInfo < hostCount) {
-            hInfoTmp = (struct hostInfoEnt *)
-                       calloc(hostCount, sizeof(struct hostInfoEnt));
+            hInfoTmp = calloc(hostCount, sizeof(struct hostInfoEnt));
             if (hInfoTmp == NULL) {
                 lsberrno = LSBE_NO_MEM;
                 return(FALSE);
             }
-            if (!(sp = malloc(hostCount 
+            if (!(sp = malloc(hostCount
                               * (MAXHOSTNAMELEN + MAXLINELEN)))) {
                 FREEUP(hInfoTmp);
                 lsberrno = LSBE_NO_MEM;
                 return(FALSE);
             }
-            if (hInfo != NULL){ 
+            if (hInfo != NULL){
                 FREEUP(mem);
                 FREEUP(hInfo);
             }
             hInfo = hInfoTmp;
             curNumHInfo = hostCount;
 	    mem = sp;
-            for ( i=0; i<hostCount; i++ ){
-    	        hInfo[i].host = sp; 
+            for (i = 0; i < hostCount; i++ ){
+    	        hInfo[i].host = sp;
     	        sp += MAXHOSTNAMELEN;
-    	        hInfo[i].windows = sp; 
+    	        hInfo[i].windows = sp;
     	        sp += MAXLINELEN;
             }
         }
         hostDataReply->hosts = hInfo;
 
 	if (hostDataReply->nIdx * hostDataReply->numHosts > nIdx) {
-	    if (allocLoadIdx(&loadSched, &loadStop, &nIdx,
-			     hostDataReply->nIdx * hostDataReply->numHosts)
-		== -1)
-		return (FALSE);
+	    if (allocLoadIdx(&loadSched,
+                             &loadStop,
+                             &nIdx,
+			     hostDataReply->nIdx * hostDataReply->numHosts) == -1)
+		return FALSE;
 	}
-        FREEUP (load);
-	FREEUP (realLoad);
-	FREEUP (busySched);
-	FREEUP (busyStop);
+        FREEUP(load);
+	FREEUP(realLoad);
+	FREEUP(busySched);
+	FREEUP(busyStop);
 
         if (hostDataReply->numHosts > 0
-	    && (realLoad = (float *)malloc(hostDataReply->nIdx 
-			* hostDataReply->numHosts * sizeof(float))) == NULL) 
+	    && (realLoad = malloc(hostDataReply->nIdx
+                                  * hostDataReply->numHosts * sizeof(float))) == NULL)
 	    return (FALSE);
 
         if (hostDataReply->numHosts > 0
-	    && (load = (float *)malloc(hostDataReply->nIdx 
+	    && (load = malloc(hostDataReply->nIdx
 			* hostDataReply->numHosts * sizeof(float))) == NULL)
             return (FALSE);
         if (hostDataReply->numHosts > 0
-	    && (busySched = (int *) malloc(GET_INTNUM (hostDataReply->nIdx) 
-			* hostDataReply->numHosts * sizeof(int))) == NULL)
+	    && (busySched = malloc(GET_INTNUM (hostDataReply->nIdx)
+                                   * hostDataReply->numHosts * sizeof(int))) == NULL)
             return (FALSE);
         if (hostDataReply->numHosts > 0
-	    && (busyStop = (int *) malloc(GET_INTNUM (hostDataReply->nIdx) 
+	    && (busyStop = (int *) malloc(GET_INTNUM (hostDataReply->nIdx)
 			* hostDataReply->numHosts * sizeof(int))) == NULL)
             return (FALSE);
     }
 
-    for (i=0; i<hostDataReply->numHosts; i++) {
+    for (i = 0; i < hostDataReply->numHosts; i++) {
 	if (xdrs->x_op == XDR_DECODE) {
 	    hostDataReply->hosts[i].loadSched =
 		loadSched + (i * hostDataReply->nIdx);
@@ -1184,26 +1183,28 @@ xdr_hostDataReply (XDR *xdrs, struct hostDataReply *hostDataReply,
             hostDataReply->hosts[i].busyStop =
 		busyStop + (i * GET_INTNUM (hostDataReply->nIdx));
 	}
-	    
-	if (!xdr_arrayElement(xdrs, (char *)&(hostDataReply->hosts[i]), hdr,
-                               xdr_hostInfoEnt, (char *) &hostDataReply->nIdx))
-            return(FALSE);
+
+	if (!xdr_arrayElement(xdrs,
+                              (char *)&(hostDataReply->hosts[i]),
+                              hdr,
+                              xdr_hostInfoEnt,
+                              (char *) &hostDataReply->nIdx))
+            return FALSE;
     }
 
-    
     if (!xdr_int(xdrs, &(hostDataReply->flag))) {
-        return (FALSE);
+        return FALSE;
     }
 
     if (xdrs->x_op == XDR_DECODE) {
-        if (hostDataReply->flag & LOAD_REPLY_SHARED_RESOURCE) 
+        if (hostDataReply->flag & LOAD_REPLY_SHARED_RESOURCE)
             lsbSharedResConfigured_ = TRUE;
     }
 
-    return (TRUE);
-} 
+    return TRUE;
+}
 
-bool_t 
+bool_t
 xdr_hostInfoEnt (XDR *xdrs, struct hostInfoEnt *hostInfoEnt,
 		 struct LSFHeader *hdr, int *nIdx)
 {
@@ -1226,14 +1227,14 @@ xdr_hostInfoEnt (XDR *xdrs, struct hostInfoEnt *hostInfoEnt,
         xdr_int(xdrs, &hostInfoEnt->numSSUSP) &&
         xdr_int(xdrs, &hostInfoEnt->numUSUSP) &&
 	xdr_int(xdrs, &hostInfoEnt->hStatus) &&
-	xdr_int(xdrs, &hostInfoEnt->attr) &&	  
+	xdr_int(xdrs, &hostInfoEnt->attr) &&
         xdr_int(xdrs, &hostInfoEnt->mig)))
         return (FALSE);
 
     hostInfoEnt->nIdx = *nIdx;
 
     for (i = 0; i < GET_INTNUM (*nIdx); i++) {
-	if (!xdr_int(xdrs, &hostInfoEnt->busySched[i]) 
+	if (!xdr_int(xdrs, &hostInfoEnt->busySched[i])
 	    || !xdr_int(xdrs, &hostInfoEnt->busyStop[i]))
 	    return (FALSE);
     }
@@ -1244,19 +1245,19 @@ xdr_hostInfoEnt (XDR *xdrs, struct hostInfoEnt *hostInfoEnt,
     }
 
     for (i = 0; i < *nIdx; i++) {
-        if (!xdr_float(xdrs,&hostInfoEnt->realLoad[i])) 
-	    return (FALSE);                        
-	if (!xdr_float(xdrs,&hostInfoEnt->load[i])) 
+        if (!xdr_float(xdrs,&hostInfoEnt->realLoad[i]))
+	    return (FALSE);
+	if (!xdr_float(xdrs,&hostInfoEnt->load[i]))
 	    return (FALSE);
     }
     if (!xdr_int(xdrs, &hostInfoEnt->numRESERVE))
         return (FALSE);
 
     return(TRUE);
-} 
+}
 
 bool_t
-xdr_userInfoReply (XDR *xdrs, struct userInfoReply *userInfoReply, 
+xdr_userInfoReply (XDR *xdrs, struct userInfoReply *userInfoReply,
                  struct LSFHeader *hdr)
 {
     int i;
@@ -1271,7 +1272,7 @@ xdr_userInfoReply (XDR *xdrs, struct userInfoReply *userInfoReply,
         && xdr_int(xdrs,&(userInfoReply->badUser))))
         return (FALSE);
 
-    
+
     if (xdrs->x_op == XDR_DECODE) {
         if (curNumUInfo < userInfoReply->numUsers) {
             uInfoTmp = (struct userInfoEnt *)
@@ -1281,12 +1282,12 @@ xdr_userInfoReply (XDR *xdrs, struct userInfoReply *userInfoReply,
                 lsberrno = LSBE_NO_MEM;
                 return(FALSE);
             }
-            if (!(sp = malloc(userInfoReply->numUsers * MAX_LSB_NAME_LEN))) {  
+            if (!(sp = malloc(userInfoReply->numUsers * MAX_LSB_NAME_LEN))) {
                 free(uInfoTmp);
                 lsberrno = LSBE_NO_MEM;
                 return(FALSE);
             }
-            if (uInfo != NULL){ 
+            if (uInfo != NULL){
                 free(mem);
                 free(uInfo);
             }
@@ -1309,26 +1310,26 @@ xdr_userInfoReply (XDR *xdrs, struct userInfoReply *userInfoReply,
 
     return (TRUE);
 
-} 
+}
 
-bool_t 
-xdr_userInfoEnt (XDR *xdrs, struct userInfoEnt *userInfoEnt, 
+bool_t
+xdr_userInfoEnt (XDR *xdrs, struct userInfoEnt *userInfoEnt,
                  struct LSFHeader *hdr)
 {
     char *sp;
 
     sp = userInfoEnt->user;
-    if (xdrs->x_op == XDR_DECODE) 
+    if (xdrs->x_op == XDR_DECODE)
 	sp[0] = '\0';
 
     if (!(xdr_string(xdrs, &sp, MAX_LSB_NAME_LEN) &&
         xdr_float(xdrs, &userInfoEnt->procJobLimit) &&
         xdr_int(xdrs, &userInfoEnt->maxJobs) &&
         xdr_int(xdrs, &userInfoEnt->numStartJobs)))
-                      
+
         return (FALSE);
 
-    
+
     if (!(xdr_int(xdrs, &userInfoEnt->numJobs) &&
             xdr_int(xdrs, &userInfoEnt->numPEND) &&
             xdr_int(xdrs, &userInfoEnt->numRUN) &&
@@ -1338,12 +1339,12 @@ xdr_userInfoEnt (XDR *xdrs, struct userInfoEnt *userInfoEnt,
 
     if (!xdr_int(xdrs, &userInfoEnt->numRESERVE))
         return (FALSE);
- 
+
     return(TRUE);
-} 
+}
 
 
-bool_t 
+bool_t
 xdr_jobPeekReq (XDR *xdrs, struct jobPeekReq *jobPeekReq, struct LSFHeader *hdr)
 {
 
@@ -1351,7 +1352,7 @@ xdr_jobPeekReq (XDR *xdrs, struct jobPeekReq *jobPeekReq, struct LSFHeader *hdr)
 
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(jobPeekReq->jobId, &jobArrId, &jobArrElemId);
-    }   
+    }
     if (!xdr_int(xdrs, &jobArrId))
         return (FALSE);
 
@@ -1361,13 +1362,13 @@ xdr_jobPeekReq (XDR *xdrs, struct jobPeekReq *jobPeekReq, struct LSFHeader *hdr)
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobPeekReq->jobId,jobArrId,jobArrElemId);
-    }      
+    }
 
     return(TRUE);
-} 
+}
 
-bool_t 
-xdr_jobPeekReply (XDR *xdrs, struct jobPeekReply *jobPeekReply, 
+bool_t
+xdr_jobPeekReply (XDR *xdrs, struct jobPeekReply *jobPeekReply,
 		 struct LSFHeader *hdr)
 {
     static char outFile[MAXFILENAMELEN];
@@ -1376,21 +1377,21 @@ xdr_jobPeekReply (XDR *xdrs, struct jobPeekReply *jobPeekReply,
         outFile [0] = '\0';
         jobPeekReply->outFile = outFile;
     }
-    
+
     if (!xdr_string(xdrs, &(jobPeekReply->outFile), MAXFILENAMELEN))
         return (FALSE);
 
-    
+
     if (!(xdr_var_string(xdrs, &jobPeekReply->pSpoolDir))) {
         return(FALSE);
     }
 
     return(TRUE);
-} 
+}
 
 
-bool_t 
-xdr_groupInfoReply (XDR *xdrs, struct groupInfoReply *groupInfoReply, 
+bool_t
+xdr_groupInfoReply (XDR *xdrs, struct groupInfoReply *groupInfoReply,
 		    struct LSFHeader *hdr)
 {
     int i;
@@ -1405,31 +1406,31 @@ xdr_groupInfoReply (XDR *xdrs, struct groupInfoReply *groupInfoReply,
 	return(TRUE);
     }
 
-    
+
     if (xdrs->x_op == XDR_DECODE) {
 	groupInfoReply->numGroups = 0;
 	groupInfoReply->groups = NULL;
     }
-    
-    
+
+
     if (!xdr_int(xdrs, &(groupInfoReply->numGroups)))
 	return (FALSE);
-    
-    
+
+
     if (xdrs->x_op == XDR_DECODE &&  groupInfoReply->numGroups != 0) {
 
-	groupInfoReply->groups = 
+	groupInfoReply->groups =
 	    (struct groupInfoEnt *)calloc(groupInfoReply->numGroups,
 					 sizeof(struct groupInfoEnt));
 	if (groupInfoReply->groups == NULL)
 	    return (FALSE);
 
     }
-    
-    
+
+
     for (i = 0; i < groupInfoReply->numGroups; i++) {
 
-	if (!xdr_arrayElement(xdrs, 
+	if (!xdr_arrayElement(xdrs,
 			      (char *)&(groupInfoReply->groups[i]),
 			      hdr,
 			      xdr_groupInfoEnt))
@@ -1441,42 +1442,42 @@ xdr_groupInfoReply (XDR *xdrs, struct groupInfoReply *groupInfoReply,
 
     return (TRUE);
 
-} 
+}
 
 
 bool_t
-xdr_groupInfoEnt (XDR *xdrs, struct groupInfoEnt *gInfo, 
+xdr_groupInfoEnt (XDR *xdrs, struct groupInfoEnt *gInfo,
 		  struct LSFHeader *hdr)
 {
-    
+
     if (xdrs->x_op == XDR_DECODE) {
 	gInfo->group = NULL;
 	gInfo->memberList = NULL;
     }
 
-    
+
     if (!xdr_var_string(xdrs, &(gInfo->group)) ||
 	!xdr_var_string(xdrs, &(gInfo->memberList)))
 	return(FALSE);
-   
+
     if (xdrs->x_op == XDR_FREE) {
 	FREEUP(gInfo->group);
 	FREEUP(gInfo->memberList);
     }
-    
+
     return (TRUE);
 
-} 
+}
 
-bool_t 
+bool_t
 xdr_controlReq (XDR *xdrs, struct controlReq *controlReq,
                   struct LSFHeader *hdr)
 {
     static char *sp = NULL;
     static int first = TRUE;
 
-    
-    
+
+
     if (xdrs->x_op == XDR_DECODE) {
         if (first == TRUE) {
              sp = (char *) malloc (MAXHOSTNAMELEN);
@@ -1494,17 +1495,17 @@ xdr_controlReq (XDR *xdrs, struct controlReq *controlReq,
 	return FALSE;
 
     return TRUE;
-} 
+}
 
-bool_t 
-xdr_jobSwitchReq (XDR *xdrs, struct jobSwitchReq *jobSwitchReq, 
+bool_t
+xdr_jobSwitchReq (XDR *xdrs, struct jobSwitchReq *jobSwitchReq,
 		struct LSFHeader *hdr)
 {
     char *sp;
     int jobArrId, jobArrElemId;
 
     sp = jobSwitchReq->queue;
-    if (xdrs->x_op == XDR_DECODE) 
+    if (xdrs->x_op == XDR_DECODE)
 	sp[0] = '\0';
 
     if (xdrs->x_op == XDR_ENCODE) {
@@ -1519,18 +1520,18 @@ xdr_jobSwitchReq (XDR *xdrs, struct jobSwitchReq *jobSwitchReq,
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobSwitchReq->jobId,jobArrId,jobArrElemId);
-    }      
+    }
     return(TRUE);
-} 
+}
 
-bool_t 
+bool_t
 xdr_jobMoveReq (XDR *xdrs, struct jobMoveReq *jobMoveReq, struct LSFHeader *hdr)
 {
     int jobArrId, jobArrElemId;
-    
+
     if (xdrs->x_op == XDR_ENCODE) {
 	jobId64To32(jobMoveReq->jobId, &jobArrId, &jobArrElemId);
-    }    
+    }
     if ( !(xdr_int(xdrs,&(jobMoveReq->opCode)) &&
   	  xdr_int(xdrs, &jobArrId) &&
 	  xdr_int(xdrs, &(jobMoveReq->position))) )
@@ -1541,11 +1542,11 @@ xdr_jobMoveReq (XDR *xdrs, struct jobMoveReq *jobMoveReq, struct LSFHeader *hdr)
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobMoveReq->jobId,jobArrId,jobArrElemId);
-    }      
+    }
     return(TRUE);
-} 
+}
 
-bool_t 
+bool_t
 xdr_migReq (XDR *xdrs, struct migReq *req, struct LSFHeader *hdr)
 {
     char *sp;
@@ -1577,12 +1578,12 @@ xdr_migReq (XDR *xdrs, struct migReq *req, struct LSFHeader *hdr)
 	    }
 	}
     }
-	  
+
 
     for (i = 0; i < req->numAskedHosts; i++) {
         sp = req->askedHosts[i];
-        if (xdrs->x_op == XDR_DECODE) 
-            sp[0] = '\0'; 
+        if (xdrs->x_op == XDR_DECODE)
+            sp[0] = '\0';
         if (!xdr_string(xdrs, &sp, MAXHOSTNAMELEN)) {
 	    for (i = 0; i < req->numAskedHosts; i++)
 		free(req->askedHosts[i]);
@@ -1596,36 +1597,36 @@ xdr_migReq (XDR *xdrs, struct migReq *req, struct LSFHeader *hdr)
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&req->jobId,jobArrId,jobArrElemId);
-    }   
+    }
 
     return(TRUE);
-} 
+}
 
 
 
-bool_t 
+bool_t
 xdr_xFile(XDR *xdrs, struct xFile *xf, struct LSFHeader *hdr)
 {
     char *sp;
-    
+
     if (xdrs->x_op == XDR_DECODE) {
 	xf->subFn[0] = '\0';
 	xf->execFn[0] = '\0';
     }
     sp = xf->subFn;
-    
+
     if (!xdr_string(xdrs, &sp, MAXFILENAMELEN))
 	return (FALSE);
-    
+
     sp = xf->execFn;
     if (!xdr_string(xdrs, &sp, MAXFILENAMELEN))
 	return (FALSE);
-    
+
     if (!xdr_int(xdrs, &xf->options))
 	return (FALSE);
 
     return (TRUE);
-} 
+}
 
 
 static int
@@ -1635,22 +1636,22 @@ allocLoadIdx(float **loadSched, float **loadStop, int *outSize, int size)
 	free(*loadSched);
     if (*loadStop)
 	free(*loadStop);
-    
+
     *outSize = 0;
-    
+
     if ((*loadSched = (float *) calloc(size, sizeof(float))) == NULL)
 	return (-1);
-    
+
     if ((*loadStop = (float *) calloc(size, sizeof(float))) == NULL)
 	return (-1);
 
     *outSize = size;
     return (0);
-} 
+}
 
 
 bool_t
-xdr_lsbShareResourceInfoReply(XDR *xdrs, 
+xdr_lsbShareResourceInfoReply(XDR *xdrs,
                 struct  lsbShareResourceInfoReply *lsbShareResourceInfoReply,
 	        struct LSFHeader *hdr)
 {
@@ -1660,13 +1661,13 @@ xdr_lsbShareResourceInfoReply(XDR *xdrs,
 	lsbShareResourceInfoReply->numResources = 0;
 	lsbShareResourceInfoReply->resources = NULL;
     }
-    if (!(xdr_int(xdrs, &lsbShareResourceInfoReply->numResources) 
-         && xdr_int(xdrs, &lsbShareResourceInfoReply->badResource))) 
+    if (!(xdr_int(xdrs, &lsbShareResourceInfoReply->numResources)
+         && xdr_int(xdrs, &lsbShareResourceInfoReply->badResource)))
 	return FALSE;
 
     if (xdrs->x_op == XDR_DECODE &&  lsbShareResourceInfoReply->numResources > 0) {
         if ((lsbShareResourceInfoReply->resources = (struct lsbSharedResourceInfo *)
-             malloc (lsbShareResourceInfoReply->numResources  
+             malloc (lsbShareResourceInfoReply->numResources
 			* sizeof (struct lsbSharedResourceInfo))) == NULL) {
             lserrno = LSE_MALLOC;
             return FALSE;
@@ -1678,21 +1679,21 @@ xdr_lsbShareResourceInfoReply(XDR *xdrs,
 		    hdr,
 		    xdr_lsbSharedResourceInfo);
 	if (! status) {
-	    lsbShareResourceInfoReply->numResources = i; 
-            
+	    lsbShareResourceInfoReply->numResources = i;
+
             return FALSE;
-        } 
+        }
     }
     if (xdrs->x_op == XDR_FREE && lsbShareResourceInfoReply->numResources > 0) {
 	FREEUP(lsbShareResourceInfoReply->resources);
 	lsbShareResourceInfoReply->numResources = 0;
     }
     return TRUE;
-} 
+}
 
 
 static bool_t
-xdr_lsbSharedResourceInfo (XDR *xdrs, struct  
+xdr_lsbSharedResourceInfo (XDR *xdrs, struct
                            lsbSharedResourceInfo *lsbSharedResourceInfo,
 			   struct LSFHeader *hdr)
 {
@@ -1706,9 +1707,9 @@ xdr_lsbSharedResourceInfo (XDR *xdrs, struct
     if (!(xdr_var_string (xdrs, &lsbSharedResourceInfo->resourceName) &&
           xdr_int(xdrs, &lsbSharedResourceInfo->nInstances)))
         return (FALSE);
-    
+
     if (xdrs->x_op == XDR_DECODE &&  lsbSharedResourceInfo->nInstances > 0) {
-        if ((lsbSharedResourceInfo->instances = 
+        if ((lsbSharedResourceInfo->instances =
              (struct lsbSharedResourceInstance *) malloc (lsbSharedResourceInfo->nInstances * sizeof (struct lsbSharedResourceInstance))) == NULL) {
             lserrno = LSE_MALLOC;
             return FALSE;
@@ -1720,19 +1721,19 @@ xdr_lsbSharedResourceInfo (XDR *xdrs, struct
 		    hdr,
 		    xdr_lsbShareResourceInstance);
 	if (! status) {
-	    lsbSharedResourceInfo->nInstances = i;  
+	    lsbSharedResourceInfo->nInstances = i;
             return FALSE;
-        } 
+        }
     }
     if (xdrs->x_op == XDR_FREE && lsbSharedResourceInfo->nInstances > 0) {
 	FREEUP (lsbSharedResourceInfo->instances);
 	lsbSharedResourceInfo->nInstances = 0;
     }
     return TRUE;
-} 
+}
 
 static bool_t
-xdr_lsbShareResourceInstance (XDR *xdrs, 
+xdr_lsbShareResourceInstance (XDR *xdrs,
                            struct  lsbSharedResourceInstance *instance,
 			   struct LSFHeader *hdr)
 {
@@ -1743,14 +1744,14 @@ xdr_lsbShareResourceInstance (XDR *xdrs,
 	instance->hostList = NULL;
 	instance->nHosts = 0;
     }
-    if (!(xdr_var_string (xdrs, &instance->totalValue) 
+    if (!(xdr_var_string (xdrs, &instance->totalValue)
         && xdr_var_string (xdrs, &instance->rsvValue)
         && xdr_int(xdrs, &instance->nHosts)))
         return (FALSE);
-    
+
     if (xdrs->x_op == XDR_DECODE &&  instance->nHosts > 0) {
-        if ((instance->hostList = (char **) 
-		   malloc (instance->nHosts * sizeof (char *))) == NULL) { 
+        if ((instance->hostList = (char **)
+		   malloc (instance->nHosts * sizeof (char *))) == NULL) {
             lserrno = LSE_MALLOC;
             return FALSE;
         }
@@ -1768,9 +1769,9 @@ xdr_lsbShareResourceInstance (XDR *xdrs,
 	instance->nHosts = 0;
     }
     return TRUE;
-} 
+}
 
-bool_t 
+bool_t
 xdr_runJobReq(XDR*                   xdrs,
 	      struct runJobRequest*  runJobRequest,
 	      struct LSFHeader*      lsfHeader)
@@ -1807,14 +1808,14 @@ xdr_runJobReq(XDR*                   xdrs,
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&runJobRequest->jobId,jobArrId,jobArrElemId);
-    }      
+    }
     if (xdrs->x_op == XDR_FREE) {
 	runJobRequest->numHosts = 0;
 	FREEUP(runJobRequest->hostname);
     }
 
     return(TRUE);
-} 
+}
 
 bool_t
 xdr_jobAttrReq(XDR *xdrs, struct jobAttrInfoEnt *jobAttr, struct LSFHeader *hdr)
@@ -1829,7 +1830,7 @@ xdr_jobAttrReq(XDR *xdrs, struct jobAttrInfoEnt *jobAttr, struct LSFHeader *hdr)
     if (!xdr_int(xdrs, &jobArrId)) {
         return(FALSE);
     }
-    if (!(xdr_u_short(xdrs, &(jobAttr->port)) 
+    if (!(xdr_u_short(xdrs, &(jobAttr->port))
 	&& xdr_string(xdrs, &sp, MAXHOSTNAMELEN))) {
 	return(FALSE);
     }
@@ -1840,9 +1841,9 @@ xdr_jobAttrReq(XDR *xdrs, struct jobAttrInfoEnt *jobAttr, struct LSFHeader *hdr)
 
     if (xdrs->x_op == XDR_DECODE) {
 	jobId32To64(&jobAttr->jobId,jobArrId,jobArrElemId);
-    }    
+    }
 
     return(TRUE);
 
-} 
+}
 

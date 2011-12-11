@@ -1,4 +1,4 @@
-/* $Id: resreq.h 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,18 +16,10 @@
  *
  */
 
-#ifndef MIN
-#define MIN(x, y)  (((x) <= (y)) ? (x):(y))
-#endif
-#ifndef MAX
-#define MAX(x, y)  (((x) >= (y)) ? (x):(y))
-#endif
-
-
 #define IS_DIGIT(s)  ( (s) >= '0' && (s) <= '9')
 #define IS_LETTER(s) ( ((s) >= 'a' && (s) <= 'z') || \
 		       ((s) >= 'A' && (s) <= 'Z'))
-#define IS_VALID_OTHER(s) ((s) == '_'|| (s) == '~') 
+#define IS_VALID_OTHER(s) ((s) == '_'|| (s) == '~')
 
 #define WILDCARD_STR  "any"
 #define LOCAL_STR     "local"
@@ -53,22 +45,22 @@
 #define IDLETIME 5
 
 struct resVal {
-    char *selectStr;        
+    char *selectStr;
     int  nphase;
     int  order[NBUILTINDEX];
     int  genClass;
-    float *val; 
+    float *val;
     int  nindex;
     int *indicies;
     int  *rusgBitMaps;
-    int  duration;           
-    float decay;               
-    int  numHosts;           
-    int  maxNumHosts;        
-    int  pTile;              
-    int  options;            
-    int  selectStrSize;       
-    char **xorExprs;         
+    int  duration;
+    float decay;
+    int  numHosts;
+    int  maxNumHosts;
+    int  pTile;
+    int  options;
+    int  selectStrSize;
+    char **xorExprs;
 };
 
 extern int getValPair(char **resReq, int *val1, int *val2);

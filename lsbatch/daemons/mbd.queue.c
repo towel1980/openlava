@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include "../../lsf/lib/lsi18n.h"
-#define NL_SETN		10
+#define NL_SETN         10
 
 void
 fillHostnames();
@@ -85,18 +85,18 @@ checkQWindow (void)
 
             windOpen = TRUE;
         } else {
-	    windOpen = FALSE;
-	}
+            windOpen = FALSE;
+        }
         for (wp = qp->weekR[dayhour.day]; wp != NULL; wp = wp->nextwind) {
             checkWindow(&dayhour, &windOpen, &qp->windEdge, wp, now);
             if (windOpen)
                 break;
         }
         if (!windOpen)  {
-	    qp->qStatus |= QUEUE_STAT_RUNWIN_CLOSE;
+            qp->qStatus |= QUEUE_STAT_RUNWIN_CLOSE;
             continue;
         } else
-	    qp->qStatus &= ~QUEUE_STAT_RUNWIN_CLOSE;
+            qp->qStatus &= ~QUEUE_STAT_RUNWIN_CLOSE;
 
         if (qp->week[dayhour.day] == NULL) {
             qp->qStatus |= QUEUE_STAT_RUN;
@@ -116,25 +116,25 @@ checkQWindow (void)
 
 
     for (qp = qDataList->forw; (qp != qDataList); qp = qp->forw) {
-	if (HAS_RUN_WINDOW(qp) && !IGNORE_DEADLINE(qp)) {
-	    if (qp->qStatus & QUEUE_STAT_RUN) {
-		qp->runWinCloseTime = runWindowCloseTime(qp);
-		if (qp->runWinCloseTime == 0) {
+        if (HAS_RUN_WINDOW(qp) && !IGNORE_DEADLINE(qp)) {
+            if (qp->qStatus & QUEUE_STAT_RUN) {
+                qp->runWinCloseTime = runWindowCloseTime(qp);
+                if (qp->runWinCloseTime == 0) {
 
-		    qp->qStatus |= QUEUE_STAT_RUNWIN_CLOSE;
-		    qp->qStatus &= ~QUEUE_STAT_RUN;
-		}
-		if (logclass & LC_SCHED) {
-		    if (qp->runWinCloseTime != 0) {
-			ls_syslog(LOG_DEBUG2, "%s: run window of queue <%s> will close at %s", fname, qp->queue, ctime(&qp->runWinCloseTime));
-		    } else {
-			ls_syslog(LOG_DEBUG2, "%s: run window of queue <%s> is open but runWinCloseTime is 0, reset queue's run window to close", fname, qp->queue);
-		    }
-		}
-	    } else {
-		qp->runWinCloseTime = 0;
-	    }
-	}
+                    qp->qStatus |= QUEUE_STAT_RUNWIN_CLOSE;
+                    qp->qStatus &= ~QUEUE_STAT_RUN;
+                }
+                if (logclass & LC_SCHED) {
+                    if (qp->runWinCloseTime != 0) {
+                        ls_syslog(LOG_DEBUG2, "%s: run window of queue <%s> will close at %s", fname, qp->queue, ctime(&qp->runWinCloseTime));
+                    } else {
+                        ls_syslog(LOG_DEBUG2, "%s: run window of queue <%s> is open but runWinCloseTime is 0, reset queue's run window to close", fname, qp->queue);
+                    }
+                }
+            } else {
+                qp->runWinCloseTime = 0;
+            }
+        }
     }
 
 
@@ -155,8 +155,8 @@ getQueueData(char *queueName)
 }
 
 int
-checkQueues (struct infoReq*        queueInfoReqPtr,
-	     struct queueInfoReply* queueInfoReplyPtr)
+checkQueues(struct infoReq*        queueInfoReqPtr,
+            struct queueInfoReply* queueInfoReplyPtr)
 {
     static char fname[] = "checkQueues()";
     struct qData*           qp;
@@ -197,7 +197,7 @@ checkQueues (struct infoReq*        queueInfoReqPtr,
             }
             if (!allQ && !defaultQ
                 && strcmp (qp->queue, queueInfoReqPtr->names[j]) != 0)
-		continue;
+                continue;
 
             if (!allQ && defaultQ && !isDefQueue (qp->queue))
                 continue;
@@ -209,92 +209,92 @@ checkQueues (struct infoReq*        queueInfoReqPtr,
                 continue;
 
             for (i = 0; i < queueInfoReplyPtr->numQueues; i++) {
-	        if (strcmp (qp->queue, queueInfoReplyPtr->queues[i].queue) == 0) {
-		    if (strcmp(qp->queue, LOST_AND_FOUND) !=0) {
+                if (strcmp (qp->queue, queueInfoReplyPtr->queues[i].queue) == 0) {
+                    if (strcmp(qp->queue, LOST_AND_FOUND) !=0) {
 
-			break;
-		    } else {
+                        break;
+                    } else {
 
-			queueInfoReplyPtr->queues[i].numJobs += qp->numJobs;
-			queueInfoReplyPtr->queues[i].numPEND += qp->numPEND;
-			queueInfoReplyPtr->queues[i].numRUN  += qp->numRUN;
-			queueInfoReplyPtr->queues[i].numSSUSP+= qp->numSSUSP;
-			queueInfoReplyPtr->queues[i].numUSUSP+= qp->numUSUSP;
-			break;
-		    }
-		}
+                        queueInfoReplyPtr->queues[i].numJobs += qp->numJobs;
+                        queueInfoReplyPtr->queues[i].numPEND += qp->numPEND;
+                        queueInfoReplyPtr->queues[i].numRUN  += qp->numRUN;
+                        queueInfoReplyPtr->queues[i].numSSUSP+= qp->numSSUSP;
+                        queueInfoReplyPtr->queues[i].numUSUSP+= qp->numUSUSP;
+                        break;
+                    }
+                }
             }
-	    if (i < queueInfoReplyPtr->numQueues)
-		continue;
+            if (i < queueInfoReplyPtr->numQueues)
+                continue;
 
             qRep = &(queueInfoReplyPtr->queues[queueInfoReplyPtr->numQueues]);
 
             qRep->queue       = qp->queue;
             qRep->description = qp->description;
-	    qRep->schedDelay  = qp->schedDelay;
-    	    qRep->mig         =
-		(qp->mig != INFINIT_INT) ? qp->mig/60 : INFINIT_INT;
+            qRep->schedDelay  = qp->schedDelay;
+            qRep->mig         =
+                (qp->mig != INFINIT_INT) ? qp->mig/60 : INFINIT_INT;
 
             if (qp->acceptIntvl == DEF_ACCEPT_INTVL
                 || qp->acceptIntvl == INFINIT_INT)
-		qRep->acceptIntvl = INFINIT_INT;
+                qRep->acceptIntvl = INFINIT_INT;
             else
-		qRep->acceptIntvl = qp->acceptIntvl * msleeptime;
+                qRep->acceptIntvl = qp->acceptIntvl * msleeptime;
 
 
             if (qp->windows)
-		qRep->windows= safeSave (qp->windows);
-	    else
-	       qRep->windows= safeSave (" ");
+                qRep->windows= safeSave (qp->windows);
+            else
+               qRep->windows= safeSave (" ");
             if (qp->windowsD)
-	        qRep->windowsD = safeSave (qp->windowsD);
-	    else
-	       qRep->windowsD = safeSave (" ");
+                qRep->windowsD = safeSave (qp->windowsD);
+            else
+               qRep->windowsD = safeSave (" ");
 
             if (qp->uGPtr) {
-    	        qRep->userList = getGroupMembers (qp->uGPtr, FALSE);
-    	    } else {
+                qRep->userList = getGroupMembers (qp->uGPtr, FALSE);
+            } else {
                 qRep->userList = safeSave(" ");
-    	    }
-	    if (qp->hostList) {
+            }
+            if (qp->hostList) {
 
 
 
-		char *word = NULL, *hostList = NULL;
-		int len=0;
-		struct gData *gp = NULL;
+                char *word = NULL, *hostList = NULL;
+                int len=0;
+                struct gData *gp = NULL;
 
-		hostList = qp->hostList;
-		while ((hostList = strstr(hostList, " ")) != NULL) {
-		    hostList++;
-		    len++;
-		}
+                hostList = qp->hostList;
+                while ((hostList = strstr(hostList, " ")) != NULL) {
+                    hostList++;
+                    len++;
+                }
 
-		qRep->hostList = (char *)calloc((strlen(qp->hostList)+len*2+2),
-				                sizeof(char));
-		if(qRep->hostList == NULL) {
+                qRep->hostList = (char *)calloc((strlen(qp->hostList)+len*2+2),
+                                                sizeof(char));
+                if(qRep->hostList == NULL) {
                     ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "calloc",
                               (strlen(qp->hostList)+len*2+2)*sizeof(char));
-		    return(LSBE_NO_MEM);
-		}
-		hostList = qp->hostList;
-		while ((word = getNextWord_(&hostList)) != NULL) {
-		    strcat(qRep->hostList,word);
-		    if ((gp = getHGrpData(word)) != NULL) {
-			strcat(qRep->hostList, "/");
-		    }
-		    strcat(qRep->hostList, " ");
-		}
+                    return(LSBE_NO_MEM);
+                }
+                hostList = qp->hostList;
+                while ((word = getNextWord_(&hostList)) != NULL) {
+                    strcat(qRep->hostList,word);
+                    if ((gp = getHGrpData(word)) != NULL) {
+                        strcat(qRep->hostList, "/");
+                    }
+                    strcat(qRep->hostList, " ");
+                }
             } else {
                 qRep->hostList = safeSave(" ");
-    	    }
+            }
             qRep->priority = qp->priority;
             qRep->nice = qp->nice;
-    	    qRep->userJobLimit = qp->uJobLimit;
+            qRep->userJobLimit = qp->uJobLimit;
             if (qp->pJobLimit >= INFINIT_FLOAT)
                 qRep->procJobLimit = INFINIT_FLOAT;
             else
-    	        qRep->procJobLimit = qp->pJobLimit;
+                qRep->procJobLimit = qp->pJobLimit;
             qRep->hostJobLimit = qp->hJobLimit;
             qRep->maxJobs = qp->maxJobs;
             qRep->numJobs = qp->numJobs;
@@ -306,97 +306,97 @@ checkQueues (struct infoReq*        queueInfoReqPtr,
 
             qRep->qAttrib = qp->qAttrib;
             qRep->qStatus = qp->qStatus;
-    	    for(i = 0; i < LSF_RLIM_NLIMITS; i++) {
-	        qRep->rLimits[i] = qp->rLimits[i];
-		qRep->defLimits[i] = qp->defLimits[i];
-	    }
+            for(i = 0; i < LSF_RLIM_NLIMITS; i++) {
+                qRep->rLimits[i] = qp->rLimits[i];
+                qRep->defLimits[i] = qp->defLimits[i];
+            }
             if (qp->hostSpec == NULL)
                 qRep->hostSpec = safeSave(" ");
             else {
                 qRep->hostSpec = safeSave (qp->hostSpec);
-		if ((cpuFactor = getModelFactor (qp->hostSpec)) == NULL) {
-		    if ((cpuFactor = getHostFactor (qp->hostSpec)) == NULL) {
-			float one = 1.0;
+                if ((cpuFactor = getModelFactor (qp->hostSpec)) == NULL) {
+                    if ((cpuFactor = getHostFactor (qp->hostSpec)) == NULL) {
+                        float one = 1.0;
 
-			ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7500,
-			    "%s: Cannot find cpu factor for hostSpec <%s> in queue <%s>; cpuFactor is set to 1.0"), /* catgets 7500 */
-			    fname,
-			    qp->hostSpec, qp->queue);
-			cpuFactor = &one;
+                        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7500,
+                            "%s: Cannot find cpu factor for hostSpec <%s> in queue <%s>; cpuFactor is set to 1.0"), /* catgets 7500 */
+                            fname,
+                            qp->hostSpec, qp->queue);
+                        cpuFactor = &one;
                     }
                 }
-		if (cpuFactor != NULL) {
-		    if (qRep->rLimits[LSF_RLIMIT_CPU] > 0)
-			qRep->rLimits[LSF_RLIMIT_CPU] /= *cpuFactor;
-		    if (qRep->rLimits[LSF_RLIMIT_RUN] > 0)
-		        qRep->rLimits[LSF_RLIMIT_RUN] /= *cpuFactor;
+                if (cpuFactor != NULL) {
+                    if (qRep->rLimits[LSF_RLIMIT_CPU] > 0)
+                        qRep->rLimits[LSF_RLIMIT_CPU] /= *cpuFactor;
+                    if (qRep->rLimits[LSF_RLIMIT_RUN] > 0)
+                        qRep->rLimits[LSF_RLIMIT_RUN] /= *cpuFactor;
                     if (qRep->defLimits[LSF_RLIMIT_CPU] > 0)
                         qRep->defLimits[LSF_RLIMIT_CPU] /= *cpuFactor;
-	            if (qRep->defLimits[LSF_RLIMIT_RUN] > 0)
-			qRep->defLimits[LSF_RLIMIT_RUN] /= *cpuFactor;
-		}
+                    if (qRep->defLimits[LSF_RLIMIT_RUN] > 0)
+                        qRep->defLimits[LSF_RLIMIT_RUN] /= *cpuFactor;
+                }
             }
             if (qp->defaultHostSpec)
-		qRep->defaultHostSpec = safeSave (qp->defaultHostSpec);
-	    else
-		 qRep->defaultHostSpec = safeSave (" ");
-	    qRep->loadSched  = qp->loadSched;
-	    qRep->loadStop = qp->loadStop;
+                qRep->defaultHostSpec = safeSave (qp->defaultHostSpec);
+            else
+                 qRep->defaultHostSpec = safeSave (" ");
+            qRep->loadSched  = qp->loadSched;
+            qRep->loadStop = qp->loadStop;
 
             qRep->procLimit = qp->procLimit;
-	    qRep->minProcLimit = qp->minProcLimit;
-	    qRep->defProcLimit = qp->defProcLimit;
+            qRep->minProcLimit = qp->minProcLimit;
+            qRep->defProcLimit = qp->defProcLimit;
             if (qp->nAdmins > 0)
                 qRep->admins = safeSave (qp->admins);
             else
                 qRep->admins = safeSave(" ");
 
-	    if (qp->preCmd)
-		qRep->preCmd = safeSave (qp->preCmd);
+            if (qp->preCmd)
+                qRep->preCmd = safeSave (qp->preCmd);
             else
-		qRep->preCmd = safeSave(" ");
+                qRep->preCmd = safeSave(" ");
 
-	    if (qp->prepostUsername) {
-		qRep->prepostUsername = safeSave (qp->prepostUsername);
-	    } else {
-		qRep->prepostUsername = safeSave(" ");
-	    }
+            if (qp->prepostUsername) {
+                qRep->prepostUsername = safeSave (qp->prepostUsername);
+            } else {
+                qRep->prepostUsername = safeSave(" ");
+            }
 
-	    qRep->chkpntPeriod = qp->chkpntPeriod;
-	    if ( qp->chkpntDir)
-		qRep->chkpntDir = safeSave(qp->chkpntDir);
-	    else
-		qRep->chkpntDir = safeSave(" ");
-
-	    if (qp->postCmd)
-		qRep->postCmd = safeSave (qp->postCmd);
+            qRep->chkpntPeriod = qp->chkpntPeriod;
+            if ( qp->chkpntDir)
+                qRep->chkpntDir = safeSave(qp->chkpntDir);
             else
-		qRep->postCmd = safeSave(" ");
-	    if (qp->requeueEValues)
-		qRep->requeueEValues = safeSave (qp->requeueEValues);
-            else
-		qRep->requeueEValues = safeSave(" ");
+                qRep->chkpntDir = safeSave(" ");
 
-	    if (qp->resReq)
-		qRep->resReq = safeSave (qp->resReq);
+            if (qp->postCmd)
+                qRep->postCmd = safeSave (qp->postCmd);
             else
-		qRep->resReq = safeSave(" ");
-	    qRep->slotHoldTime = qp->slotHoldTime;
+                qRep->postCmd = safeSave(" ");
+            if (qp->requeueEValues)
+                qRep->requeueEValues = safeSave (qp->requeueEValues);
+            else
+                qRep->requeueEValues = safeSave(" ");
 
-	    if (qp->resumeCond)
-		qRep->resumeCond = safeSave (qp->resumeCond);
+            if (qp->resReq)
+                qRep->resReq = safeSave (qp->resReq);
             else
-		qRep->resumeCond = safeSave(" ");
+                qRep->resReq = safeSave(" ");
+            qRep->slotHoldTime = qp->slotHoldTime;
 
-	    if (qp->stopCond)
-		qRep->stopCond = safeSave (qp->stopCond);
+            if (qp->resumeCond)
+                qRep->resumeCond = safeSave (qp->resumeCond);
             else
-		qRep->stopCond = safeSave(" ");
+                qRep->resumeCond = safeSave(" ");
 
-	    if (qp->jobStarter)
-		qRep->jobStarter = safeSave (qp->jobStarter);
+            if (qp->stopCond)
+                qRep->stopCond = safeSave (qp->stopCond);
             else
-		qRep->jobStarter = safeSave(" ");
+                qRep->stopCond = safeSave(" ");
+
+            if (qp->jobStarter)
+                qRep->jobStarter = safeSave (qp->jobStarter);
+            else
+                qRep->jobStarter = safeSave(" ");
 
             if (qp->suspendActCmd) {
                 if (strcmp(qp->suspendActCmd, "SIG_CHKPNT") == 0)
@@ -427,12 +427,12 @@ checkQueues (struct infoReq*        queueInfoReqPtr,
         }
 
         if (!allQ && !defaultQ && !found) {
-	    if (queueInfoReplyPtr->numQueues > 0)
-		freeQueueInfoReply (queueInfoReplyPtr, "freeAll");
+            if (queueInfoReplyPtr->numQueues > 0)
+                freeQueueInfoReply (queueInfoReplyPtr, "freeAll");
             queueInfoReplyPtr->badQueue = j;
             queueInfoReplyPtr->numQueues = 0;
-	    FREEUP (checkUsers);
-	    FREEUP (checkHosts);
+            FREEUP (checkUsers);
+            FREEUP (checkHosts);
             return (LSBE_BAD_QUEUE);
         }
 
@@ -457,7 +457,7 @@ isDefQueue (char *qname)
     char *cp, *queue;
 
     if (defaultQueues == NULL)
-	return FALSE;
+        return FALSE;
     cp = defaultQueues;
     while ((queue = getNextWord_(&cp)))
         if (strcmp (qname, queue) == 0)
@@ -475,12 +475,12 @@ ctrlQueue (struct controlReq *qcReq, struct lsfAuth *auth)
 
     if (!isAuthManager(auth) && auth->uid != 0 && !isAuthQueAd (qp, auth)) {
         ls_syslog(LOG_CRIT, I18N(7511,
-	"ctrlQueue: uid <%d> not allowed to perform control operation"), auth->uid);/* catgets 7511 */
+        "ctrlQueue: uid <%d> not allowed to perform control operation"), auth->uid);/* catgets 7511 */
         return (LSBE_PERMISSION);
     }
 
     if ( (qcReq->opCode < QUEUE_OPEN) || (qcReq->opCode > QUEUE_INACTIVATE) )
-	return(LSBE_LSBLIB);
+        return(LSBE_LSBLIB);
 
     if (qcReq->opCode == QUEUE_ACTIVATE &&
         !(qp->qStatus & QUEUE_STAT_RUN)) {
@@ -500,20 +500,20 @@ ctrlQueue (struct controlReq *qcReq, struct lsfAuth *auth)
         return(LSBE_NO_ERROR);
 
     if (qcReq->opCode == QUEUE_OPEN) {
-	qp->qStatus |= QUEUE_STAT_OPEN;
-	log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
+        qp->qStatus |= QUEUE_STAT_OPEN;
+        log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
     }
     if (qcReq->opCode == QUEUE_CLOSED) {
-	qp->qStatus &= ~QUEUE_STAT_OPEN;
-	log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
+        qp->qStatus &= ~QUEUE_STAT_OPEN;
+        log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
     }
     if (qcReq->opCode == QUEUE_ACTIVATE ) {
-	qp->qStatus |= QUEUE_STAT_ACTIVE;
-	log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
+        qp->qStatus |= QUEUE_STAT_ACTIVE;
+        log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
     }
     if (qcReq->opCode == QUEUE_INACTIVATE ) {
-	qp->qStatus &= ~QUEUE_STAT_ACTIVE;
-	log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
+        qp->qStatus &= ~QUEUE_STAT_ACTIVE;
+        log_queuestatus(qp, qcReq->opCode, auth->uid, auth->lsfUserName);
     }
     return(LSBE_NO_ERROR);
 
@@ -525,7 +525,7 @@ hostQMember (char *host, struct qData *qp)
     int i;
 
     if (qp->hostList == NULL)
-	return TRUE;
+        return TRUE;
     if (qp->askedOthPrio >= 0)
         return TRUE;
 
@@ -554,7 +554,7 @@ checkHU (char *hostList, char *userList, struct qData *qp)
 
     if (hostList != NULL && qp->hostList != NULL)
         while ((sp = getNextWord_(&hostList)))
-	    if (!hostQMember (sp, qp))
+            if (!hostQMember (sp, qp))
                 return (LSBE_QUEUE_HOST);
 
     if (userList != NULL && qp->uGPtr != NULL)
@@ -584,12 +584,12 @@ getCheckList (struct infoReq *qInfoReq, char **hostList, char **userList)
 
     if (qInfoReq->options & CHECK_USER) {
         sp = qInfoReq->names[numNames];
-	++numNames;
+        ++numNames;
 
         if (strcmp(sp, "all") == 0)
             *userList = safeSave(sp);
         else if ((pp = getpwlsfuser_(sp)) != NULL) {
-	    if (!isManager(sp) && pp->pw_uid != 0) {
+            if (!isManager(sp) && pp->pw_uid != 0) {
 
                 *userList = safeSave(sp);
             }
@@ -613,31 +613,31 @@ getCheckList (struct infoReq *qInfoReq, char **hostList, char **userList)
             return (LSBE_BAD_HOST);
 
 
-	if (hostList == NULL) {
-	  return (LSBE_BAD_HOST);
-	}
-	if (strcmp(*hostList,"all") == 0) {
-	    FREEUP(*hostList);
-	    if ((numAllHosts = getLsbHostNames(&allHosts)) <= 0) {
-	        ls_syslog(LOG_ERR,I18N(7512,
-		   "getCheckList: Unable to obtain host list")); /* catgets 7512 */
-		return (LSBE_BAD_HOST);
-	    }
+        if (hostList == NULL) {
+          return (LSBE_BAD_HOST);
+        }
+        if (strcmp(*hostList,"all") == 0) {
+            FREEUP(*hostList);
+            if ((numAllHosts = getLsbHostNames(&allHosts)) <= 0) {
+                ls_syslog(LOG_ERR,I18N(7512,
+                   "getCheckList: Unable to obtain host list")); /* catgets 7512 */
+                return (LSBE_BAD_HOST);
+            }
             (*hostList) =
-	      (char*)my_malloc(numAllHosts*MAX_LSB_NAME_LEN,"getCheckList");
-	    if (*hostList == NULL) {
-	        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, "getCheckList", "my_malloc");
-		return (LSBE_BAD_HOST);
-	    }
+              (char*)my_malloc(numAllHosts*MAX_LSB_NAME_LEN,"getCheckList");
+            if (*hostList == NULL) {
+                ls_syslog(LOG_ERR, I18N_FUNC_FAIL, "getCheckList", "my_malloc");
+                return (LSBE_BAD_HOST);
+            }
             (*hostList)[0] = '\0';
             for (i=0; i<numAllHosts; i++) {
 
                 strcat(*hostList, allHosts[i]);
-		if (i < numAllHosts-1) {
-		    strcat(*hostList, " ");
-		}
+                if (i < numAllHosts-1) {
+                    strcat(*hostList, " ");
+                }
             }
-	}
+        }
     }
 
     return (LSBE_NO_ERROR);
@@ -655,10 +655,10 @@ isQueAd (struct qData *qp, char *lsfUserName)
     admins = qp->admins;
 
     for (user = getNextWord_(&admins); user; user = getNextWord_(&admins)) {
-	 if ((strcmp(user, lsfUserName) == 0)
-		|| (strcmp(user, "all users") == 0)) {
-	     return (TRUE);
-	 }
+         if ((strcmp(user, lsfUserName) == 0)
+                || (strcmp(user, "all users") == 0)) {
+             return (TRUE);
+         }
     }
 
     return (FALSE);
@@ -676,10 +676,10 @@ isInQueues (char *queue, char **queues, int num)
     int i;
 
     if (num <= 0 || queues == NULL || queue == NULL)
-	return (FALSE);
+        return (FALSE);
     for (i = 0; i < num; i++) {
         if (!strcmp (queue, queues[i]))
-	    return (TRUE);
+            return (TRUE);
     }
     return (FALSE);
 
@@ -688,7 +688,7 @@ bool_t
 isQInQSet(struct qData *queue, LS_BITSET_T *queueSet)
 {
     if (queue == NULL || queueSet == NULL)
-	return(FALSE);
+        return(FALSE);
 
     return(setIsMember(queueSet, queue));
 }
@@ -700,30 +700,30 @@ freeQueueInfoReply (struct queueInfoReply *reply, char *freeAll)
     if (reply == NULL || reply->queues == NULL)
         return;
     if (freeAll == (char *)0) {
-	FREEUP (reply->queues);
-	return;
+        FREEUP (reply->queues);
+        return;
     }
     for (i = 0; i < reply->numQueues; i++) {
         FREEUP (reply->queues[i].windows);
         FREEUP (reply->queues[i].windowsD);
         FREEUP (reply->queues[i].defaultHostSpec);
 
-	FREEUP (reply->queues[i].userList);
-	FREEUP (reply->queues[i].hostList);
-	FREEUP (reply->queues[i].hostSpec);
-	FREEUP (reply->queues[i].admins);
-	FREEUP (reply->queues[i].preCmd);
-	FREEUP (reply->queues[i].postCmd);
-	FREEUP (reply->queues[i].prepostUsername);
-	FREEUP (reply->queues[i].requeueEValues);
-	FREEUP (reply->queues[i].resReq);
-	FREEUP (reply->queues[i].resumeCond);
-	FREEUP (reply->queues[i].stopCond);
-	FREEUP (reply->queues[i].jobStarter);
-	FREEUP (reply->queues[i].suspendActCmd);
-	FREEUP (reply->queues[i].resumeActCmd);
-	FREEUP (reply->queues[i].terminateActCmd);
-	FREEUP (reply->queues[i].chkpntDir);
+        FREEUP (reply->queues[i].userList);
+        FREEUP (reply->queues[i].hostList);
+        FREEUP (reply->queues[i].hostSpec);
+        FREEUP (reply->queues[i].admins);
+        FREEUP (reply->queues[i].preCmd);
+        FREEUP (reply->queues[i].postCmd);
+        FREEUP (reply->queues[i].prepostUsername);
+        FREEUP (reply->queues[i].requeueEValues);
+        FREEUP (reply->queues[i].resReq);
+        FREEUP (reply->queues[i].resumeCond);
+        FREEUP (reply->queues[i].stopCond);
+        FREEUP (reply->queues[i].jobStarter);
+        FREEUP (reply->queues[i].suspendActCmd);
+        FREEUP (reply->queues[i].resumeActCmd);
+        FREEUP (reply->queues[i].terminateActCmd);
+        FREEUP (reply->queues[i].chkpntDir);
     }
     FREEUP (reply->queues);
 }
@@ -731,57 +731,32 @@ freeQueueInfoReply (struct queueInfoReply *reply, char *freeAll)
 int
 createQueueHostSet(struct qData *qp)
 {
-  char fname[] = "createQueueHostSet";
-  int allHosts = qp->numAskedPtr;
-  int i;
+    int allHosts;
+    int i;
+    struct hData *hPtr;
 
-  if (allHosts == 0)
-      allHosts = numofhosts;
+    allHosts = qp->numAskedPtr;
+    if (allHosts == 0)
+        allHosts = numofhosts;
 
-  if (qp->hostInQueue)
-      setDestroy(qp->hostInQueue);
-  qp->hostInQueue = setCreate(allHosts, gethIndexByhData,
-				 gethDataByhIndex, fname);
-  if (!qp->hostInQueue) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_EMSG_S,
-	    fname,
-	    "setCreate",
-	    setPerror(bitseterrno));
-      mbdDie(MASTER_FATAL);
-  }
+    qp->hostInQueue = setCreate(allHosts,
+                                gethIndexByhData,
+                                gethDataByhIndex,
+                                (char *)__func__);
 
-  if (allHosts == numofhosts) {
-      for (i = 1; i < numofhosts; i++) {
-	  if (setAddElement(qp->hostInQueue, hDataPtrTb[i]) < 0) {
-	      if (bitseterrno == LS_BITSET_ERR_BADARG) {
-		  ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7502,
-		      "%s: Invalid memory detected"), fname); /* catgets 7502 */
-		  mbdDie(MASTER_FATAL);
-              } else {
-		  ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7503,
-		      "%s: Hosts %s not in mask"), /* catgets 7503 */
-		      fname, hDataPtrTb[i]->host);
-	      }
-	  }
-      }
-  } else {
+    if (allHosts == numofhosts) {
+        for (hPtr = (struct hData *)hostList->back;
+             hPtr != (void *)hostList;
+             hPtr = hPtr->back)
+            setAddElement(qp->hostInQueue, hPtr);
+    } else {
+        for (i = 0; i < allHosts; i++)
+            setAddElement(qp->hostInQueue, qp->askedPtr[i].hData);
+    }
 
-      for (i = 0; i < allHosts; i++)
-	  if (setAddElement(qp->hostInQueue, qp->askedPtr[i].hData) < 0){
-	      if (bitseterrno == LS_BITSET_ERR_BADARG) {
-	          ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7502,
-		      "%s: Invalid memory detected"), fname);
-	          mbdDie(MASTER_FATAL);
-              } else {
-	          ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7503,
-		      "%s Hosts %s not in mask"),
-		      fname, qp->askedPtr[i].hData->host);
-	      }
-	  }
-  }
-  return(0);
-
+    return 0;
 }
+
 int
 gethIndexByhData(void *userData)
 {
@@ -789,36 +764,38 @@ gethIndexByhData(void *userData)
 
     host = (struct hData *)userData;
 
-    return(host->hostId);
+    return host->hostId;
 }
 void *
 gethDataByhIndex(int index)
 {
-    return(&hDataPtrTb[index]);
+    struct hData *hPtr;
+
+    for (hPtr = (struct hData *)hostList->back;
+         hPtr != (void *)hostList;
+         hPtr = hPtr->back) {
+        if (hPtr->hostId == index)
+            return hPtr;
+    }
+
+    return NULL;
 }
+
 bool_t
 isHostQMember(struct hData *host, struct qData *qp)
 {
-    static char fname[] = "isHostQmember()";
     bool_t trueOrfalse;
 
     if (qp->hostList == NULL)
-	return TRUE;
+        return TRUE;
     if (qp->askedOthPrio >= 0)
         return TRUE;
 
     bitseterrno = 0;
 
     trueOrfalse = setIsMember(qp->hostInQueue, host);
-    if (trueOrfalse == FALSE
-	&& bitseterrno == LS_BITSET_ERR_BADARG) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7506,
-	    "%s: Master batchd deamon memory error detected"), /* catgets 7506 */
-	    fname);
-	mbdDie(MASTER_FATAL);
-    }
 
-    return(trueOrfalse);
+    return trueOrfalse;
 }
 
 int
@@ -827,10 +804,10 @@ getIndexByQueue(void *queue)
     struct qData *qp;
 
     for (qp = qDataList->forw; qp != qDataList; qp = qp->forw) {
-	if (qp == (struct qData *)queue)
-	    return(qp->queueId);
+        if (qp == (struct qData *)queue)
+            return qp->queueId;
     }
-    return(-1);
+    return -1;
 }
 
 void *
@@ -839,10 +816,10 @@ getQueueByIndex(int queueIndex)
     struct qData *qp;
 
     for (qp = qDataList->forw; qp != qDataList; qp = qp->forw) {
-	if (queueIndex == qp->queueId)
-	    return(qp);
+        if (queueIndex == qp->queueId)
+            return qp;
     }
-    return (NULL);
+    return NULL;
 }
 
 static time_t
@@ -858,10 +835,10 @@ runWindowCloseTime(struct qData *qp)
     getDayHour(&dayhour, nowTime);
     if (qp->weekR[dayhour.day] == NULL) {
 
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7510,
-	    "%s: run window for queue <%s> on day <%d> is NULL"), /* catgets 7510 */
-	    fname, qp->queue, dayhour.day);
-	return 0;
+        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7510,
+            "%s: run window for queue <%s> on day <%d> is NULL"), /* catgets 7510 */
+            fname, qp->queue, dayhour.day);
+        return 0;
     }
 
     tmPtr = localtime(&nowTime);
@@ -870,33 +847,33 @@ runWindowCloseTime(struct qData *qp)
     tmPtr->tm_hour = 23;
     deadline = midnight = thismidnight = mktime(tmPtr);
     for (;;) {
-	windOpen = FALSE;
-	lastdeadline = deadline;
-	for (wp = qp->weekR[dayhour.day]; wp != NULL; wp = wp->nextwind) {
-	    checkWindow(&dayhour, &windOpen, &deadline, wp, nowTime);
-	    if (windOpen) {
-		break;
-	    }
-	}
-	if (windOpen) {
-	    if (deadline == midnight) {
+        windOpen = FALSE;
+        lastdeadline = deadline;
+        for (wp = qp->weekR[dayhour.day]; wp != NULL; wp = wp->nextwind) {
+            checkWindow(&dayhour, &windOpen, &deadline, wp, nowTime);
+            if (windOpen) {
+                break;
+            }
+        }
+        if (windOpen) {
+            if (deadline == midnight) {
 
-		nowTime = midnight + 1;
-		midnight += 3600*24;
-		deadline = midnight;
-		getDayHour(&dayhour, nowTime);
-	     } else {
-		return deadline;
-	     }
-	} else {
-	    if (midnight == thismidnight) {
+                nowTime = midnight + 1;
+                midnight += 3600*24;
+                deadline = midnight;
+                getDayHour(&dayhour, nowTime);
+             } else {
+                return deadline;
+             }
+        } else {
+            if (midnight == thismidnight) {
 
-		return 0;
-	    } else {
+                return 0;
+            } else {
 
-		return lastdeadline;
-	    }
-	}
+                return lastdeadline;
+            }
+        }
     }
 }
 

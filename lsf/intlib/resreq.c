@@ -1,4 +1,4 @@
-/* $Id: resreq.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,11 +15,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
-#include <ctype.h>
-#include "intlib.h"
-#include "resreq.h"
-#include "../lib/lproto.h"
-#include "../lib/lib.table.h"
+
+#include "intlibout.h"
 
 struct sections {
     char   *select;

@@ -1,4 +1,4 @@
-/* $Id: sbd.sig.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1988,7 +1988,7 @@ writeChkLog(char *fn, char *chkpntDir, struct jobCard *jp, struct hostent *fromH
 
     jobNewLog = &logPtr.eventLog.jobNewLog;
     logPtr.type =  EVENT_JOB_NEW;
-    strcpy(logPtr.version, THIS_VERSION);
+    sprintf(logPtr.version, "%d", OPENLAVA_VERSION);
     jobNewLog->jobId = LSB_ARRAY_JOBID(jp->jobSpecs.jobId);
     jobNewLog->idx = 0;
     jobNewLog->options = jp->jobSpecs.options;
@@ -2084,7 +2084,7 @@ writeChkLog(char *fn, char *chkpntDir, struct jobCard *jp, struct hostent *fromH
     jobStartLog = &logPtr.eventLog.jobStartLog;
 
     logPtr.type = EVENT_JOB_START;
-    strcpy(logPtr.version, THIS_VERSION);
+    sprintf(logPtr.version, "%d", OPENLAVA_VERSION);
     jobStartLog->jobId = jp->jobSpecs.jobId;
     jobStartLog->jStatus = 0;
     jobStartLog->numExHosts = jp->jobSpecs.numToHosts;
@@ -2137,7 +2137,7 @@ sbdlog_newstatus (struct jobCard *jp)
         return (-1);
 
     jobStatusLog = &logPtr.eventLog.sbdJobStatusLog;
-    strcpy(logPtr.version, THIS_VERSION);
+    sprintf(logPtr.version, "%d", OPENLAVA_VERSION);
     logPtr.type = EVENT_SBD_JOB_STATUS;
     logPtr.eventTime = now;
     jobStatusLog->jobId = LSB_ARRAY_JOBID(job->jobId);

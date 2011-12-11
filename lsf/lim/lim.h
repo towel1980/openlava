@@ -125,6 +125,7 @@ struct hostNode {
     int     *resBitArray;
     struct  hostNode *nextPtr;
     time_t  expireTime;
+    uint8_t migrant;
 };
 
 #define CLUST_ACTIVE		0x00010000
@@ -319,7 +320,7 @@ typedef enum {
     LIM_RSYNC_CONFIG,
     LIM_SLAVE_ONLY,
     LSB_SHAREDIR,
-    LIM_ADD_FLOATING_HOST,
+    LIM_ALLOW_MIGRANT_HOSTS,
     LIM_NO_FORK
 } limParams_t;
 
@@ -505,14 +506,14 @@ extern void clientIO(struct Masks *);
 
 /* openlava floating host management
  */
-extern void addFloatHost(XDR *,
-                         struct sockaddr_in *,
-                         struct LSFHeader *,
-                         int);
-extern void rmFloatHost(XDR *,
-                        struct sockaddr_in *,
-                        struct LSFHeader *,
-                        int);
+extern void addMigrantHost(XDR *,
+                           struct sockaddr_in *,
+                           struct LSFHeader *,
+                           int);
+extern void rmMigrantHost(XDR *,
+                          struct sockaddr_in *,
+                          struct LSFHeader *,
+                          int);
 extern int logInit(void);
 extern int logLimStart(void);
 extern int logAddHost(struct hostEntry *);

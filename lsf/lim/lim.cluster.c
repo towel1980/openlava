@@ -170,13 +170,13 @@ processMsg(int chanfd)
             chanFreeBuf_(buf);
             break;
         case LIM_ADD_HOST:
-            addFloatHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
+            addMigrantHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
             xdr_destroy(&xdrs);
             shutDownChan(chanfd);
             chanFreeBuf_(buf);
             break;
         case LIM_RM_HOST:
-            rmFloatHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
+            rmMigrantHost(&xdrs, &clientMap[chanfd]->from, &hdr, chanfd);
             xdr_destroy(&xdrs);
             shutDownChan(chanfd);
             chanFreeBuf_(buf);

@@ -114,11 +114,11 @@ findHostbyAddr(struct sockaddr_in *from,
     if (hPtr == NULL) {
         /* Complain only if the runtime host
          * operations are not allowed. Otherwise
-         * this can be a runtime host asking
+         * this can be a migrant host asking
          * for some TCP operation, so just return
          * NULL and the caller will know what to do.
          */
-        if (!limParams[LIM_ADD_FLOATING_HOST].paramValue)
+        if (!limParams[LIM_ALLOW_MIGRANT_HOSTS].paramValue)
             ls_syslog(LOG_ERR, "\
 %s: Host %s (hp=%s/%s) is unknown by configuration; all hosts used by openlava must have unique official names", fname, sockAdd2Str_(from),
                       hp->h_name,

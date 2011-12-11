@@ -858,9 +858,14 @@ readAddHost(char *buf,
         goto out;
     p = p + n;
 
+    /* windows are coded bit funny, addHost()
+     * will handle the NULL pointer all right.
+     */
     window = getstr_(name);
-    if (window)
+    if (window[0] != 0)
         hPtr->window = strdup(window);
+    else
+        hPtr->window = NULL;
 
     /* at last my baby is comin' home
      */
@@ -907,13 +912,14 @@ getstr_(char *s)
     p = buf;
     if (s[0] == '"'
         && s[1] == '"')
-        return NULL;
+        return "";
 
     ++s;
     while (*s != '"')
         *p++ = *s++;
 
     *p = 0;
+
     return buf;
 }
 

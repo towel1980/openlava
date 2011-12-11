@@ -16,13 +16,7 @@
  *
  */
 
-#include <stdlib.h>
 #include "mbd.h"
-
-#include <dirent.h>
-#include <malloc.h>
-
-#define NL_SETN         10
 
 static unsigned int     msgcnt = 0;
 extern int numLsbUsable;
@@ -144,8 +138,11 @@ checkUseSelectJgrps(struct LSFHeader *reqHdr, struct jobInfoReq *req)
 
 
 int
-do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
-               struct LSFHeader *reqHdr, int schedule)
+do_jobInfoReq(XDR *xdrs,
+              int chfd,
+              struct sockaddr_in *from,
+               struct LSFHeader *reqHdr,
+              int schedule)
 {
     static char             fname[] = "do_jobInfoReq";
     char                    *reply_buf = NULL;
@@ -159,6 +156,7 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
     struct nodeList        *jgrplist = NULL;
     struct jData          **joblist = NULL;
     int                     selectJgrpsFlag = FALSE;
+    struct hData *hPtr;
 
     if (logclass & (LC_TRACE | LC_COMM))
         ls_syslog(LOG_DEBUG, "%s: Entering this routine...; channel=%d", fname,chfd);
@@ -194,10 +192,6 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
         }
     }
 
-
-
-
-
     xdr_lsffree(xdr_jobInfoReq, (char *) &jobInfoReq, reqHdr);
 
     jobInfoHead.numJobs = listSize;
@@ -214,12 +208,15 @@ do_jobInfoReq (XDR *xdrs, int chfd, struct sockaddr_in *from,
 
     jobInfoHead.numHosts = 0;
     if (jobInfoReq.options & HOST_NAME) {
-        jobInfoHead.hostNames = my_calloc(numofhosts,
+        jobInfoHead.hostNames = my_calloc(numofhosts(),
                                           sizeof(char *), fname);
-        for (i = 1; i <= numofhosts; i++)
-            jobInfoHead.hostNames[i-1] = hDataPtrTb[i]->host;
+        for (hPtr = (struct hData *)hostList->back;
+             hPtr != (void *)hostList;
+             hPtr = (struct hData *)hPtr->back) {
+            jobInfoHead.hostNames[i-1] = hPtr->host;
+        }
 
-        jobInfoHead.numHosts = numofhosts;
+        jobInfoHead.numHosts = numofhosts();
     }
 
     len = sizeof(struct jobInfoHead)
@@ -423,6 +420,7 @@ packJobInfo(struct jData * jobData,
     struct jobInfoReply jobInfoReply;
     struct submitReq jobBill;
     struct LSFHeader hdr;
+    struct hData *hPtr;
     char *request_buf = NULL;
     int *reasonTb = NULL;
     int *jReasonTb;
@@ -448,8 +446,8 @@ packJobInfo(struct jData * jobData,
     job_reasonTb = jobData->reasonTb;
 
     if (reasonTb == NULL) {
-        reasonTb = (int *) my_calloc (numofhosts + 1, sizeof(int), fname);
-        jReasonTb = (int *) my_calloc (numofhosts + 1, sizeof(int), fname);
+        reasonTb = my_calloc (numofhosts() + 1, sizeof(int), fname);
+        jReasonTb = my_calloc (numofhosts() + 1, sizeof(int), fname);
     }
 
     jobInfoReply.jobId = jobData->jobId;
@@ -496,7 +494,7 @@ packJobInfo(struct jData * jobData,
             pkHReasonTb = hReasonTb[0];
             pkQReasonTb = jobData->qPtr->reasonTb[0];
             pkUReasonTb = jobData->uPtr->reasonTb[0];
-            for (i = 0; i <= numofhosts; i ++) {
+            for (i = 0; i <= numofhosts(); i ++) {
                 if (i > 0 && jobData->numAskedPtr > 0
                     && jobData->askedOthPrio < 0)
                     jReasonTb[i] = PEND_HOST_USR_SPEC;
@@ -511,7 +509,7 @@ packJobInfo(struct jData * jobData,
             for (i = 0; i < job_numReasons; i++) {
                 if (job_reasonTb[i]) {
                     GET_HIGH(k, job_reasonTb[i]);
-                    if (k > numofhosts
+                    if (k > numofhosts()
                         || jReasonTb[k] == PEND_HOST_USR_SPEC)
                         continue;
                     jReasonTb[k] = job_reasonTb[i];
@@ -521,16 +519,27 @@ packJobInfo(struct jData * jobData,
                 if (logclass & LC_PEND)
                     ls_syslog(LOG_DEBUG2, "%s: Get h/u/q reasons", fname);
                 k = 0;
-                for (i = 1; i <= numofhosts; i ++) {
 
-                    if (jReasonTb[i] == PEND_HOST_USR_SPEC) {
+                /* traverse the list of hosts
+                 */
+                i = 0;
+                for (hPtr = (struct hData *)hostList->back;
+                     hPtr != (void *)hostList;
+                     hPtr = (struct hData *)hPtr->back) {
+
+                    /* for historical reasons this counter
+                     * MUST start from 1.
+                     */
+                    ++i;
+                    if (jReasonTb[i] == PEND_HOST_USR_SPEC)
                         continue;
-                    }
+
                     if (pkQReasonTb[i] == PEND_HOST_QUE_MEMB)
                         continue;
-                    if (!isHostQMember(hDataPtrTb[i], jobData->qPtr)){
+
+                    if (!isHostQMember(hPtr, jobData->qPtr))
                         continue;
-                    }
+
                     if (pkHReasonTb[i]) {
                         jobInfoReply.reasonTb[k] = pkHReasonTb[i];
                         PUT_HIGH(jobInfoReply.reasonTb[k], i);
@@ -568,7 +577,8 @@ packJobInfo(struct jData * jobData,
                         }
                         continue;
                     }
-                }
+
+                } /* for (hPtr = hostList->back; ...; ...) */
 
                 if (jReasonTb[0] != 0) {
 
@@ -586,16 +596,19 @@ packJobInfo(struct jData * jobData,
 
 
     if (jobData->numHostPtr > 0) {
-        jobInfoReply.toHosts = (char **) my_calloc(jobData->numHostPtr,
-                                                   sizeof(char *), fname);
+        jobInfoReply.toHosts = my_calloc(jobData->numHostPtr,
+                                         sizeof(char *), fname);
         for (i = 0; i < jobData->numHostPtr; i++) {
             jobInfoReply.toHosts[i] = safeSave(jobData->hPtr[i]->host);
         }
     }
+
     jobInfoReply.nIdx = allLsInfo->numIndx;
     if (!loadSched) {
-        loadSched=(float *)malloc(allLsInfo->numIndx*sizeof(float *));
-        loadStop=(float *)malloc(allLsInfo->numIndx*sizeof(float *));
+
+        loadSched = calloc(allLsInfo->numIndx, sizeof(float *));
+        loadStop = calloc(allLsInfo->numIndx, sizeof(float *));
+
         if ((!loadSched) || (!loadStop)) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
             mbdDie(MASTER_FATAL);
@@ -690,12 +703,10 @@ packJobInfo(struct jData * jobData,
             jobInfoReply.jobBill->rLimits[LSF_RLIMIT_RUN] /= *cpuFactor;
     }
 
-
     jgNode = jobData->jgrpNode;
     jobInfoReply.jType    = jobData->nodeType;
     jobInfoReply.parentGroup = jgrpNodeParentPath(jgNode);
     jobInfoReply.jName        = jgNode->name;
-
 
     if ( jgNode->nodeType == JGRP_NODE_ARRAY ) {
         for (i = 0; i < NUM_JGRP_COUNTERS; i++)
@@ -1236,65 +1247,76 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
 }
 
 int
-do_hostInfoReq(XDR * xdrs, int chfd, struct sockaddr_in * from, struct LSFHeader * reqHdr)
+do_hostInfoReq(XDR *xdrs,
+               int chfd,
+               struct sockaddr_in *from,
+               struct LSFHeader *reqHdr)
 {
-    static char             fname[] = "do_hostInfoReq()";
-    char                   *reply_buf;
-    XDR                     xdrs2;
-    struct LSFHeader        replyHdr;
-    char                   *replyStruct;
-    int                     count;
-    int                     reply;
-    struct infoReq          hostsReq;
-    struct hostDataReply    hostsReply;
+    char *reply_buf;
+    XDR xdrs2;
+    struct LSFHeader replyHdr;
+    char *replyStruct;
+    int count;
+    int reply;
+    struct infoReq hostsReq;
+    struct hostDataReply hostsReply;
 
+    replyStruct = NULL;
+    memset(&hostsReply, 0, sizeof(struct hostDataReply));
 
-
-    hostsReply.numHosts = 0;
-    hostsReply.hosts = NULL;
     if (!xdr_infoReq(xdrs, &hostsReq, reqHdr)) {
         reply = LSBE_XDR;
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_infoReq");
-    } else {
-        reply = checkHosts(&hostsReq, &hostsReply);
+        ls_syslog(LOG_ERR, "\
+%s: failed decode request from %s", __func__, sockAdd2Str_(from));
+        goto out;
     }
 
-    if (logclass & (LC_EXEC)) {
-        int i;
-        for (i=0; i < hostsReply.numHosts; i++)
-            ls_syslog(LOG_DEBUG, "%s, host[%d]'s name is %s", fname, i,
-                      hostsReply.hosts[i].host);
-    }
+    reply = checkHosts(&hostsReq, &hostsReply);
+
     count = hostsReply.numHosts * (sizeof(struct hostInfoEnt)
                                    + MAXLINELEN + MAXHOSTNAMELEN
-                                   + hostsReply.nIdx*4*sizeof(float)) + 100;
-    reply_buf = (char *) my_malloc(count, "do_hostInfoReq");
+                                   + hostsReply.nIdx * 4 * sizeof(float)) + 100;
+
+    reply_buf = my_calloc(count, sizeof(char), __func__);
     xdrmem_create(&xdrs2, reply_buf, count, XDR_ENCODE);
+
+out:
+
     replyHdr.opCode = reply;
     if (reply == LSBE_NO_ERROR || reply == LSBE_BAD_HOST)
         replyStruct = (char *) &hostsReply;
-    else
-        replyStruct = (char *) 0;
-    if (!xdr_encodeMsg (&xdrs2, replyStruct, &replyHdr, xdr_hostDataReply, 0,
-                        NULL)) {
-        ls_syslog(LOG_ERR,  I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
-        FREEUP ( hostsReply.hosts);
-        FREEUP (reply_buf);
+
+    if (!xdr_encodeMsg(&xdrs2,
+                       replyStruct,
+                       &replyHdr,
+                       xdr_hostDataReply,
+                       0,
+                       NULL)) {
+        ls_syslog(LOG_ERR, "\
+%s: failed encode %dbytes reply to %s", __func__,
+                  XDR_GETPOS(&xdrs2), sockAdd2Str_(from));
+        FREEUP(hostsReply.hosts);
+        FREEUP(reply_buf);
         xdr_destroy(&xdrs2);
-        return(-1);
+        return -1;
     }
+
     if (chanWrite_(chfd, reply_buf, XDR_GETPOS(&xdrs2)) <= 0) {
-        ls_syslog(LOG_ERR, I18N_FUNC_D_FAIL_M, fname, "b_write_fix",
-                  XDR_GETPOS(&xdrs2));
+        ls_syslog(LOG_ERR, "\
+%s: failed encode %dbytes reply to %s", __func__,
+                  XDR_GETPOS(&xdrs2), sockAdd2Str_(from));
+
         xdr_destroy(&xdrs2);
-        FREEUP ( hostsReply.hosts);
-        FREEUP (reply_buf);
-        return(-1);
+        FREEUP(hostsReply.hosts);
+        FREEUP(reply_buf);
+        return -1;
     }
-    FREEUP ( hostsReply.hosts);
+
+    FREEUP(hostsReply.hosts);
     xdr_destroy(&xdrs2);
-    FREEUP (reply_buf);
-    return(0);
+    FREEUP(reply_buf);
+
+    return 0;
 }
 
 int
@@ -1745,6 +1767,9 @@ do_reconfigReq(XDR *xdrs,
     }
 
     xdr_destroy(&xdrs2);
+    /* openlava 20 force restart
+     */
+    reqHdr->reserved = MBD_RESTART;
 
     if (reqHdr->reserved == MBD_RESTART ) {
         ls_syslog(LOG_INFO, "%s: restart a new mbatchd", __func__);

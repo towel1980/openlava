@@ -19,7 +19,6 @@
 #ifndef LPROTO_
 #define LPROTO_
 
-#include <termios.h>
 #include "../lsf.h"
 #include "lib.table.h"
 #include "lib.hdr.h"
@@ -28,11 +27,7 @@
 #include "lib.pim.h"
 #include "lsi18n.h"
 
-#include <sys/socket.h>
-#include <signal.h>
-
 #define BIND_RETRY_TIMES 100
-
 
 struct keymap {
     char *key;
@@ -57,8 +52,9 @@ struct debugReq {
 };
 
 extern void putMaskLevel(int, char **);
-extern bool_t xdr_debugReq (XDR *xdrs, struct debugReq  *debugReq,
-	       struct LSFHeader *hdr);
+extern bool_t xdr_debugReq (XDR *,
+                            struct debugReq  *,
+                            struct LSFHeader *);
 #define    MBD_DEBUG         1
 #define    MBD_TIMING        2
 #define    SBD_DEBUG         3

@@ -156,7 +156,6 @@ call_server (char * host,
 	    ls_syslog (LOG_DEBUG1, "%s: handShake_() succeeded", fname);
     }
 
-
     CHAN_INIT_BUF(&reqbuf);
     reqbuf.len = req_size;
     reqbuf.data = req_buf;
@@ -377,14 +376,14 @@ get_sbd_port(void)
 }
 
 int
-callmbd (char *clusterName,
-	 char *request_buf,
-	 int requestlen,
-	 char **reply_buf,
-         struct LSFHeader *replyHdr,
-	 int *serverSock,
-	 int (*postSndFunc)(),
-	 int *postSndFuncArg)
+callmbd(char *clusterName,
+        char *request_buf,
+        int requestlen,
+        char **reply_buf,
+        struct LSFHeader *replyHdr,
+        int *serverSock,
+        int (*postSndFunc)(),
+        int *postSndFuncArg)
 {
     static char          fname[] = "callmbd";
     char *               masterHost;
@@ -452,7 +451,7 @@ callmbd (char *clusterName,
 		     serverSock,
 		     postSndFunc,
 		     postSndFuncArg,
-		     0);
+		     CALL_SERVER_NO_HANDSHAKE);
 
     if (logclass & LC_TRACE)
         ls_syslog(LOG_DEBUG3,"\

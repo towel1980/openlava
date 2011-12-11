@@ -16,14 +16,7 @@
  *
  */
 
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include "intlib.h"
 #include "intlibout.h"
-#include "../lib/lproto.h"
 
 void
 daemonize_(void)
@@ -37,7 +30,8 @@ daemonize_(void)
         case 0:
             break;
         case -1:
-            sprintf(errMsg, I18N_FUNC_FAIL_M, "daemonize_", "fork");
+            sprintf(errMsg, "\
+%s: fork() failed :%s", __func__, strerror(errno));
             perror(errMsg);
             exit(-1);
         default:
@@ -62,8 +56,7 @@ daemonize_(void)
 	close(i);
 
     i = open(LSDEVNULL, O_RDWR);
-    if (i != 0)
-    {
+    if (i != 0) {
 	dup2(i, 0);
 	close(i);
     }
@@ -98,9 +91,9 @@ getDaemonPath_(char *name, char *serverdir)
     strcpy(daemonpath, daemon_dir);
     strcat(daemonpath, name);
     if (access(daemonpath, X_OK) < 0) {
-       ls_syslog(LOG_ERR, "\
+        ls_syslog(LOG_ERR, "\
 %s: Can't access %s: %s. Trying LSF_SERVERDIR.",
-           "getDaemonPath_", daemonpath, strerror(errno));
+                  __func__, daemonpath, strerror(errno));
 
        strcpy(daemonpath, serverdir);
        strcat(daemonpath, name);

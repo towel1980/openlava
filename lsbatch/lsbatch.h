@@ -18,19 +18,9 @@
 
 #ifndef LSBATCH_H
 #define LSBATCH_H
-#ifndef _LSF_H_
-#include <lsf/lsf.h>
-#endif
+#include <lsf.h>
 
 #define _PATH_NULL      "/dev/null"
-
-#define SKIP_SPACES(word) \
-    while ( word[0] == ' ' ) \
-        word++;
-
-#define  LAVA_EVENT_VERSION1_0   1.0
-
-#define  THIS_VERSION      "1.0"
 
 #define  MAX_VERSION_LEN     12
 #define  MAX_HPART_USERS     100
@@ -40,9 +30,6 @@
 #define  MAX_CMD_DESC_LEN    256
 #define  MAX_USER_EQUIVALENT 128
 #define  DEFAULT_MSG_DESC    "no description"
-
-#undef MSGSIZE
-#define MSGSIZE             4096
 
 #define HOST_STAT_OK         0x0
 #define HOST_STAT_BUSY       0x01

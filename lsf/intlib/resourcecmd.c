@@ -16,11 +16,9 @@
  *
  */
 
-#include <malloc.h>
-#include "../lim/lim.h"
-#include "intlib.h"
-#include "../lib/lproto.h"
-#define NL_SETN      22    
+#include "intlibout.h"
+
+#define NL_SETN      22
 
 static void prtOneInstance (char *, struct lsSharedResourceInstance *);
 static int makeShare(char *, char ***, char ***, char ***,
@@ -39,7 +37,7 @@ getResourceNames (int argc, char **argv, int optind, char **resourceNames)
     if (argc >= optind+1) {
         for (numNames = 0; argc > optind; optind++) {
             for (i = 0; i < numNames; i++) {
-                if (strcmp (resourceNames[i], argv[optind]) == 0) 
+                if (strcmp (resourceNames[i], argv[optind]) == 0)
   		    break;
             }
 
@@ -52,9 +50,9 @@ getResourceNames (int argc, char **argv, int optind, char **resourceNames)
         }
     }
     return (numNames);
-} 
+}
 
-  
+
 void
 displayShareResource(int argc, char **argv, int index, int flag, int extflag)
 {
@@ -63,14 +61,14 @@ displayShareResource(int argc, char **argv, int index, int flag, int extflag)
     struct lsInfo *lsInfo;
     char **resources = NULL, **resourceNames = NULL;
     int firstFlag = 1;
- 
+
     if ((lsInfo = ls_info()) == NULL) {
         ls_perror("lsinfo");
         exit(-10);
     }
 
     if (argc > index) {
-        if ((resourceNames = 
+        if ((resourceNames =
              (char **) malloc ((argc - index) * sizeof (char *))) == NULL) {
             lserrno = LSE_MALLOC;
             ls_perror("lshosts");
@@ -78,23 +76,23 @@ displayShareResource(int argc, char **argv, int index, int flag, int extflag)
         }
         numRes = getResourceNames (argc, argv, index, resourceNames);
     }
-    
-    if (numRes > 0) 
+
+    if (numRes > 0)
         resources = resourceNames;
 
     TIMEIT(0, (lsResourceInfo = ls_sharedresourceinfo (resources, &numRes, NULL, 0)), "ls_sharedresourceinfo");
-    
+
     if (lsResourceInfo == NULL) {
         ls_perror("ls_sharedresourceinfo");
         exit(-1);
     }
 
-    
+
 
     for (k = 0; k < numRes; k++) {
-        
+
         for (i = 0; i < lsResourceInfo[k].nInstances; i++)  {
-            
+
 
             for (j = 0; j < lsInfo->nRes; j++) {
 
@@ -102,21 +100,21 @@ displayShareResource(int argc, char **argv, int index, int flag, int extflag)
                     if (lsInfo->resTable[j].flags & RESF_EXTERNAL)
                         continue;
 
-                if (strcmp(lsInfo->resTable[j].name, 
+                if (strcmp(lsInfo->resTable[j].name,
                     lsResourceInfo[k].resourceName) == 0) {
                     if (flag == TRUE) {
                         if (!(lsInfo->resTable[j].flags & RESF_DYNAMIC)) {
-                            
+
                             if (firstFlag){
                                 firstFlag = 0;
-                                prtTableHeader(); 
+                                prtTableHeader();
                             }
-                            prtOneInstance(lsResourceInfo[k].resourceName, 
+                            prtOneInstance(lsResourceInfo[k].resourceName,
                                            &(lsResourceInfo[k].instances[i]));
                         }
-                    } else  { 
+                    } else  {
                         if (lsInfo->resTable[j].flags & RESF_DYNAMIC) {
-                            
+
                             if (firstFlag) {
                                 firstFlag = 0;
 				prtTableHeader();
@@ -130,26 +128,26 @@ displayShareResource(int argc, char **argv, int index, int flag, int extflag)
         }
     }
     if (firstFlag){
-        if (flag) 
+        if (flag)
             printf(_i18n_msg_get(ls_catd, NL_SETN, 753,
-				 "No static shared resources defined \n")); /* catgets 753 */ 
-        else      
+				 "No static shared resources defined \n")); /* catgets 753 */
+        else
             printf(_i18n_msg_get(ls_catd, NL_SETN, 754,
-				  "No dynamic shared resources defined \n"));  /* catgets 754 */ 
+				  "No dynamic shared resources defined \n"));  /* catgets 754 */
     }
     FREEUP(resourceNames);
-} 
+}
 
 static void
-prtTableHeader() 
+prtTableHeader()
 {
       char *res, *val, *loc;
 
-      res = putstr_(_i18n_msg_get(ls_catd, NL_SETN, 750, 
+      res = putstr_(_i18n_msg_get(ls_catd, NL_SETN, 750,
 				  "RESOURCE")); /* catgets 750 */
       val = putstr_(_i18n_msg_get(ls_catd, NL_SETN, 751,
 				  "VALUE"));   /* catgets 751 */
-      
+
       loc = putstr_(_i18n_msg_get(ls_catd, NL_SETN, 752,
 				  "LOCATION")); /* catgets 752 */
 
@@ -159,7 +157,7 @@ prtTableHeader()
       } else
           printf("%-25s%20s%15s\n", res, val, loc);
       return;
-}      
+}
 
 static void
 prtOneInstance (char *name, struct lsSharedResourceInstance *instance)
@@ -167,7 +165,7 @@ prtOneInstance (char *name, struct lsSharedResourceInstance *instance)
     int i, currentPos, len;
     char space52[] = "                                                    ";
     char fmt[10];
- 
+
     if ((len = strlen(instance->value)) <= 20)  {
         currentPos = 45 + 7;
         printf ("%-25s%20s       ", name, instance->value);
@@ -175,10 +173,10 @@ prtOneInstance (char *name, struct lsSharedResourceInstance *instance)
         currentPos = 25 + len + 2;
         printf ("%-25s%20s  ", name, instance->value);
     }
- 
+
     for (i = 0; i < instance->nHosts; i++) {
-     
-        len = strlen(instance->hostList[i]); 
+
+        len = strlen(instance->hostList[i]);
         currentPos = currentPos + len + 1;
         sprintf (fmt, "%s%d%s ", "%", len, "s");
         if (currentPos > 80) {
@@ -188,10 +186,10 @@ prtOneInstance (char *name, struct lsSharedResourceInstance *instance)
         printf (fmt, instance->hostList[i]);
     }
     printf("\n");
-} 
+}
 
 int
-makeShareField(char *hostname, int flag, 
+makeShareField(char *hostname, int flag,
                char ***nameTable, char ***valueTable, char ***formatTable)
 {
     if (flag == TRUE) {
@@ -201,34 +199,34 @@ makeShareField(char *hostname, int flag,
 	return makeShare(hostname, nameTable, valueTable, formatTable,
 			 &isDynamicSharedResource);
     }
-} 
+}
 
 static int
 makeShare(char *hostname, char ***nameTable, char ***valueTable,
 	  char ***formatTable, int (*resourceSelect)(struct resItem *))
 {
-    static int first = TRUE;    
+    static int first = TRUE;
     static struct lsSharedResourceInfo *resourceInfo;
     static struct lsInfo *lsInfo;
-    static char **namTable;    
-    static char **valTable;  
-    static char **fmtTable;   
+    static char **namTable;
+    static char **valTable;
+    static char **fmtTable;
     static int numRes, nRes;
     int k, i, j;
     char *hPtr;
     int ii, numHosts, found;
-    
-    if (first == TRUE) { 
+
+    if (first == TRUE) {
         if ((lsInfo = ls_info()) == NULL) {
             return (-1);
         }
-   
+
         TIMEIT(0, (resourceInfo = ls_sharedresourceinfo (NULL, &numRes, NULL, 0)), "ls_sharedresourceinfo");
-    
+
         if (resourceInfo == NULL) {
             return (-1);
         }
-        if ((namTable = 
+        if ((namTable =
                         (char **) malloc (numRes * sizeof(char *))) == NULL){
             lserrno = LSE_MALLOC;
             return (-1);
@@ -244,17 +242,17 @@ makeShare(char *hostname, char ***nameTable, char ***valueTable,
         }
         first = FALSE;
     } else {
-	
+
         for (i = 0; i < nRes; i++) {
             FREEUP(fmtTable[i]);
         }
-    }   
-    
+    }
+
     nRes = 0;
     for (k = 0; k < numRes; k++) {
 	found = FALSE;
 	for (j = 0; j < lsInfo->nRes; j++) {
-	    if (strcmp(lsInfo->resTable[j].name, 
+	    if (strcmp(lsInfo->resTable[j].name,
 			resourceInfo[k].resourceName) == 0) {
 		if (resourceSelect(&lsInfo->resTable[j])) {
 		    found = TRUE;
@@ -287,22 +285,22 @@ makeShare(char *hostname, char ***nameTable, char ***valueTable,
 	}
 	nRes++;
     }
-    if (nRes) { 
+    if (nRes) {
         j = 0;
-        for (i = 0; i < nRes; i++) { 
+        for (i = 0; i < nRes; i++) {
             char fmt[16];
 	    int nameLen;
 
 	    nameLen = strlen(namTable[i]);
 	    sprintf(fmt, "%s%d.%d%s", "%", nameLen+2, nameLen+1, "s");
             fmtTable[j++] = putstr_(fmt);
-        } 
+        }
     }
     *nameTable = namTable;
     *valueTable = valTable;
     *formatTable = fmtTable;
-    return (nRes); 
-} 
+    return (nRes);
+}
 
 static int
 isStaticSharedResource(struct resItem *resEnt)
@@ -310,10 +308,10 @@ isStaticSharedResource(struct resItem *resEnt)
     return ((!(resEnt->flags & RESF_DYNAMIC)) &&
 	    ((resEnt->valueType & LS_STRING) ||
 	     (resEnt->valueType & LS_NUMERIC)));
-} 
+}
 
 static int
 isDynamicSharedResource(struct resItem *resEnt)
 {
     return (resEnt->flags & RESF_DYNAMIC);
-} 
+}

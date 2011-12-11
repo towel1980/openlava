@@ -1,4 +1,4 @@
-/* $Id: mbd.job.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,16 +16,8 @@
  *
  */
 
-#include <stdlib.h>
-#include <math.h>
 #include "mbd.h"
-#include <string.h>
-
 #define NL_SETN         10
-
-#include <dirent.h>
-
-#include <malloc.h>
 
 #define SUSP_CAN_PREEMPT_FOR_RSRC(s) !((s)->jStatus & JOB_STAT_USUSP)
 
@@ -194,10 +186,11 @@ newJob (struct submitReq *subReq, struct submitMbdReply *Reply, int chan,
                 return (LSBE_MBATCHD);
             }
             if (getHostByType (subReq->schedHostType) == NULL) {
-                ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6501,
-                                                 "%s: Can not find restarted job's submission host<%s> and its type <%s>"), /* catgets 6501 */
-                          fname, subReq->fromHost, subReq->schedHostType);
-                return (LSBE_BAD_SUBMISSION_HOST);
+                ls_syslog(LOG_ERR, "\
+%s: Can not find restarted job's submission host %s and type %s",
+                          __func__, subReq->fromHost,
+                          subReq->schedHostType);
+                return LSBE_BAD_SUBMISSION_HOST;
             }
             strcpy (hostType, subReq->schedHostType);
         } else
@@ -312,28 +305,24 @@ newJob (struct submitReq *subReq, struct submitMbdReply *Reply, int chan,
 }
 
 struct hData *
-getHostByType (char *hostType)
+getHostByType(char *hostType)
 {
-    static char fname[] = "getHostByType()";
-    int i;
-    struct hData *hData;
+    struct hData *hPtr;
 
-    for (i = 1; i <= numofhosts; i++) {
-        if ((hData = hDataPtrTb[i]) == NULL) {
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6503,
-                                             "%s: Got a NULL hData in hDataPtrTb[%d]"), /* catgets 6503 */
-                      fname, i);
+    for (hPtr = (struct hData *)hostList->back;
+         hPtr != (void *)hostList;
+         hPtr = hPtr->back) {
+
+        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
             continue;
-        }
-        if (strcmp (hData->host, LOST_AND_FOUND) == 0) {
+
+        if (strcmp (hostType, hPtr->hostType) != 0)
             continue;
-        }
-        if (strcmp (hostType, hData->hostType) != 0)
-            continue;
-        return (hData);
+
+        return hPtr;
     }
-    return (NULL);
 
+    return NULL;
 }
 
 
@@ -5055,13 +5044,12 @@ resigJobs(int *resignal)
 {
     static char          fname[] = "resigJobs()";
     static char          first = TRUE;
-    int                  num;
     int                  sigcnt = 0;
     int                  sVsigcnt;
     int                  mxsigcnt = 5;
     int                  list;
     int                  retVal = TRUE;
-    struct hData         *hData;
+    struct hData         *hPtr;
     struct jData         *jpbw;
     struct jData         *next;
     static LS_BITSET_T   *processedHosts;
@@ -5076,8 +5064,10 @@ resigJobs(int *resignal)
     mxsigcnt = 5;
 
     for (list = 0; list < NJLIST; list++) {
+
         if (list != MJL && list != PJL)
             continue;
+
         /* For pending and migrating jobs only...
          */
         for (jpbw = jDataList[list]->back;
@@ -5096,8 +5086,8 @@ resigJobs(int *resignal)
     }
 
     if (first) {
-        processedHosts = simpleSetCreate(numofhosts + 1,
-                                         "resigJobs");
+        processedHosts = simpleSetCreate(numofhosts() + 1,
+                                         (char *)__func__);
         if (processedHosts == NULL) {
             ls_syslog(LOG_ERR, "\
 %s: simpleSetCreate() failed %s",
@@ -5129,19 +5119,19 @@ resigJobs(int *resignal)
             if (!jpbw->hPtr)
                 continue;
 
-            hData = jpbw->hPtr[0];
+            hPtr = jpbw->hPtr[0];
 
-            if (setIsMember(processedHosts, (void *)&hData->hostId))
+            if (setIsMember(processedHosts, (void *)&hPtr->hostId))
                 continue;
 
-            if (hData->hStatus & HOST_STAT_REMOTE)
+            if (hPtr->hStatus & HOST_STAT_REMOTE)
                 continue;
 
-            if (UNREACHABLE (hData->hStatus)) {
+            if (UNREACHABLE (hPtr->hStatus)) {
                 continue;
             }
 
-            if (strcmp (hData->host, LOST_AND_FOUND) == 0)
+            if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
                 continue;
 
             sVsigcnt = sigcnt;
@@ -5150,38 +5140,38 @@ resigJobs(int *resignal)
                     ls_syslog (LOG_DEBUG2, "\
 %s: Signaling job %s failed; sigcnt= %d host=%s",
                                fname, lsb_jobid2str(jpbw->jobId),
-                               sigcnt, hData->host);
+                               sigcnt, hPtr->host);
                 return retVal;
             }
 
             if (sigcnt > sVsigcnt)
-                setAddElement(processedHosts, (void *)&hData->hostId);
+                setAddElement(processedHosts, (void *)&hPtr->hostId);
         }
     }
 
-    for (num = 1; num <= numofhosts && sigcnt < mxsigcnt ; num++) {
-
-        hData = hDataPtrTb[num];
+    for (hPtr = (struct hData *)hostList->back;
+         hPtr != (void *)hostList && sigcnt < mxsigcnt;
+         hPtr = hPtr->back) {
 
         INC_CNT(PROF_CNT_hostLoopresigJobs);
 
         if (logclass & (LC_SIGNAL))
-            ls_syslog (LOG_DEBUG2, "%s: host=%s", fname, hData->host);
+            ls_syslog (LOG_DEBUG2, "%s: host=%s", fname, hPtr->host);
 
-        if (hData->hStatus & HOST_STAT_REMOTE)
+        if (hPtr->hStatus & HOST_STAT_REMOTE)
             continue;
 
-        if (UNREACHABLE (hData->hStatus)) {
+        if (UNREACHABLE (hPtr->hStatus)) {
             continue;
         }
-        if (strcmp (hData->host, LOST_AND_FOUND) == 0)
+
+        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
             continue;
 
-
-        if (setIsMember(processedHosts, (void *)&hData->hostId))
+        if (setIsMember(processedHosts, (void *)&hPtr->hostId))
             continue;
 
-        TIMEIT(1, sndJobMsgs (hData, &sigcnt), "sndJobMsgs");
+        TIMEIT(1, sndJobMsgs (hPtr, &sigcnt), "sndJobMsgs");
     }
 
     for (list = 0; list <= NJLIST && sigcnt < mxsigcnt; list++) {
@@ -5189,7 +5179,8 @@ resigJobs(int *resignal)
         if (list != SJL && list != FJL && list != ZJL)
             continue;
         for (jpbw = jDataList[list]->back;
-             jpbw != jDataList[list] && sigcnt < mxsigcnt; jpbw = next) {
+             jpbw != jDataList[list] && sigcnt < mxsigcnt;
+             jpbw = next) {
 
             INC_CNT(PROF_CNT_nqsLoopresigJobs);
 
@@ -5213,8 +5204,8 @@ resigJobs(int *resignal)
                 next = jpbw->back;
 
                 if (jpbw->hPtr != NULL
-                    && (hData = jpbw->hPtr[0]) != NULL)
-                    bucket = hData->msgq[MSG_STAT_QUEUED];
+                    && (hPtr = jpbw->hPtr[0]) != NULL)
+                    bucket = hPtr->msgq[MSG_STAT_QUEUED];
                 else
                     bucket = NULL;
 
@@ -7093,8 +7084,9 @@ inZomJobList (struct jData *oldjob, int mail)
     newjob->userName  = safeSave(oldjob->userName);
     newjob->jFlags = oldjob->jFlags;
     if (oldjob->numHostPtr > 0) {
-        newjob->hPtr = ( struct hData **)
-            my_malloc (sizeof (char *) * oldjob->numHostPtr, "inZomJobList");
+        newjob->hPtr = my_calloc(oldjob->numHostPtr,
+                                 sizeof(char *),
+                                 "inZomJobList");
         for (i = 0; i < oldjob->numHostPtr; i++)
             newjob->hPtr[i] = oldjob->hPtr[i];
     }
@@ -7615,23 +7607,26 @@ getReserveParams (struct resVal *resValPtr, int *duration, int *rusgBitMaps)
 }
 
 void
-tryResume (void)
+tryResume(void)
 {
     char fname[] = "tryResume";
     struct jData *jp;
-    int resumeSig, returnCode;
+    int resumeSig;
+    int returnCode;
+    int found;
     struct sbdNode *sbdPtr;
-    int found, i;
-    struct jData *next = NULL;
+    struct jData *next;
+    struct hData *hPtr;
 
     if (logclass & (LC_SCHED | LC_EXEC))
         ls_syslog (LOG_DEBUG1, "%s: Enter this routinue....", fname);
 
+    for (hPtr = (struct hData *)hostList->back;
+         hPtr != (void *)hostList;
+         hPtr = hPtr->back) {
 
-    for (i = 1; i <= numofhosts; i++) {
-        hDataPtrTb[i]->flags &= ~HOST_JOB_RESUME;
+        hPtr->flags &= ~HOST_JOB_RESUME;
     }
-
 
     for (jp = jDataList[SJL]->back; jp != jDataList[SJL]; jp = next) {
         next = jp->back;

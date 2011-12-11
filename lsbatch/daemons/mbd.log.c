@@ -1,4 +1,4 @@
-/* $Id: mbd.log.c 397 2007-11-26 19:04:00Z mblack $
+/*
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,13 +15,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
-
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <dirent.h>
-#include <malloc.h>
-#include <stdlib.h>
 
 #include "mbd.h"
 
@@ -95,8 +88,6 @@ static int              createAcct0File(void);
 void                    log_timeExpired(int, time_t);
 static int canSwitch(struct eventRec *, struct jData *);
 static char *instrJobStarter1(char *, int, char *, char *, char *);
-
-int                     jsLogExceptWhileReplay = FALSE;
 int                     nextJobId_t = 1;
 time_t                  dieTime;
 static char             elogFname[MAXFILENAMELEN];
@@ -156,12 +147,11 @@ init_log(void)
     int            ConfigError = 0;
     int            lineNum = 0;
     int            list;
-    int            i;
     struct jData   *jp;
     char           dirbuf[MAXPATHLEN];
     char           infoDir[MAXPATHLEN];
-    struct stat    sbuf, ebuf;
-    struct hData   *hPtr;
+    struct stat    sbuf;
+    struct stat ebuf;
 
     mSchedStage = M_STAGE_REPLAY;
 
@@ -230,8 +220,6 @@ init_log(void)
     stat(elogFname, &ebuf);
     log_fp = fopen(elogFname, "r");
 
-    jsLogExceptWhileReplay = TRUE;
-
     chuser(batchId);
 
     if (log_fp != NULL) {
@@ -277,33 +265,32 @@ init_log(void)
         if (log_fp)
             FCLOSEUP(&log_fp);
 
-        jsLogExceptWhileReplay = FALSE;
-
-
-        for (i = 1; i <= numofhosts; i++) {
-            hPtr = hDataPtrTb[i];
-            if (hPtr == NULL)
-                continue;
-            hPtr->hStatus &= ~HOST_STAT_EXCLUSIVE;
-        }
-
         for (list = SJL; list <= PJL; list++) {
+
             if (list != SJL && list != MJL && list != PJL)
                 continue;
-            for (jp = jDataList[list]->back; jp != jDataList[list];
+
+            for (jp = jDataList[list]->back;
+                 jp != jDataList[list];
                  jp = jp->back) {
+
                 int svJStatus = jp->jStatus;
-                int i, num;
+                int i;
+                int num;
+
                 num = jp->shared->jobBill.maxNumProcessors;
 
                 jp->jStatus = JOB_STAT_PEND;
 
                 updQaccount (jp, num, num, 0, 0, 0, 0);
                 updUserData (jp, num, num, 0, 0, 0, 0);
+
                 jp->jStatus = svJStatus;
                 if (jp->jStatus & JOB_STAT_PEND)
                     continue;
+
                 updCounters (jp, JOB_STAT_PEND, !LOG_IT);
+
                 if ((jp->shared->jobBill.options & SUB_EXCLUSIVE)
                     && IS_START (jp->jStatus)) {
                     for (i = 0; i < jp->numHostPtr; i ++)
@@ -319,7 +306,6 @@ init_log(void)
 
         if (logclass & LC_JGRP)
             printTreeStruct(treeFile);
-
 
         if (nextJobId == 1) {
             nextJobId = nextJobId_t + SAFE_JID_GAP;
@@ -2085,9 +2071,10 @@ openEventFile(char *fname)
 
     chmod(elogFname, 0644);
     chuser(batchId);
-    logPtr = (struct eventRec *) my_malloc
-        (sizeof(struct eventRec), "openEventFile");
-    strcpy(logPtr->version, THIS_VERSION);
+    logPtr = my_calloc(1, sizeof(struct eventRec), __func__);
+
+    sprintf(logPtr->version, "%d", OPENLAVA_VERSION);
+
     return 0;
 }
 
@@ -2177,7 +2164,7 @@ logFinishedjob(struct jData * job)
     jobFinishLog = &logPtr->eventLog.jobFinishLog;
 
     logPtr->type = EVENT_JOB_FINISH;
-    strcpy(logPtr->version, THIS_VERSION);
+    sprintf(logPtr->version, "%d", OPENLAVA_VERSION);
     jobFinishLog->jobId = LSB_ARRAY_JOBID(job->jobId);
     jobFinishLog->idx = LSB_ARRAY_IDX(job->jobId);
     jobFinishLog->userId = job->userId;

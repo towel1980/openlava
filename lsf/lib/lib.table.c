@@ -199,7 +199,7 @@ h_delEnt_(hTab *tabPtr, hEnt *hEntPtr)
 
         remList_((struct hLinks *) hEntPtr);
         free(hEntPtr->keyname);
-        if (hEntPtr->hData != (int *)NULL)
+        if (hEntPtr->hData != NULL)
             free((char *)hEntPtr->hData);
         free((char *) hEntPtr);
         tabPtr->numEnts--;

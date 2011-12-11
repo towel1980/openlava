@@ -19,22 +19,10 @@
 #ifndef DAEMONS_H
 #define DAEMONS_H
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <signal.h>
-
-#include <netinet/in.h>
-#include <sys/stat.h>
-#include <rpc/types.h>
-
-#include <pwd.h>
-
 #include "../../lsf/lib/lproto.h"
 #include "../../lsf/intlib/intlibout.h"
 #include "../../lsf/lib/lib.table.h"
 #include "../lsbatch.h"
-
-
 #include "../../lsf/lib/lib.queue.h"
 #include "daemonout.h"
 
@@ -59,28 +47,17 @@
 #define MASK_STATUS(s) ((s) & MASK_INT_JOB_STAT)
 
 #define JOB_STAT_CHKPNTED_ONCE 	0x10000000
-
 #define JOB_STAT_RESERVE         0x20000000
-
 #define JOB_STAT_MIG            0x40000000
-
-
 #define JOB_STAT_MODIFY_ONCE    0x01000000
-
 #define JOB_STAT_ZOMBIE         0x02000000
-
-
 #define JOB_STAT_PRE_EXEC       0x04000000
-
 #define JOB_STAT_SIGNAL         0x08000000
-
 #define JOB_STAT_KILL           0x00800000
 #define JOB_STAT_RSRC_PREEMPT_WAIT 0x00400000
 #define JOB_STAT_VOID           0x00100000
 
-
-
-#define SET_STATE(s,n) ((s) = ((s) & ~(MASK_INT_JOB_STAT)) | (n))
+#define SET_STATE(s ,n) ((s) = ((s) & ~(MASK_INT_JOB_STAT)) | (n))
 
 
 #define SBD_SET_STATE(jp, n) { \

@@ -38,6 +38,11 @@
 #include <values.h>
 #include <grp.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <time.h>
+#include <termios.h>
+#include <pwd.h>
+#include <limits.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -45,6 +50,7 @@
 #include <sys/resource.h>
 #include <sys/param.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <rpc/types.h>
@@ -207,6 +213,14 @@ typedef enum {
 
 #define LIM_CMD_REBOOT          1
 #define LIM_CMD_SHUTDOWN        2
+
+#ifndef MAX
+#define MAX(x,y)  ((x) > (y) ? (x) : (y))
+#endif
+
+#ifndef MIN
+#define MIN(x,y)  ((x) < (y) ? (x) : (y))
+#endif
 
 struct connectEnt {
     char *hostname;
@@ -745,9 +759,6 @@ typedef void (*SIGFUNCTYPE)(int);
 #endif
 
 #define BSD_NICE
-
-#define getpwuiddir getpwuid
-#define getpwnamdir getpwnam
 
 typedef struct stat LS_STAT_T;
 #define LSTMPDIR        lsTmpDir_

@@ -70,8 +70,8 @@ xdr_LSFHeader(XDR *xdrs, struct LSFHeader *header)
         header->opCode = word1 & 0xFFFF;
         header->length = word2;
         header->version = word3 >> 16;
-        header->reserved0 = word3 & 0xFFFF;
-        header->reserved = word4;
+        header->reserved = word3 & 0xFFFF;
+        header->reserved0 = word4;
     }
 
     return TRUE;

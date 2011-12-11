@@ -17,12 +17,7 @@
  */
 
 
-#include <string.h>
-#include <unistd.h>
-#include "../lib/lproto.h"
-#include "intlib.h"
 #include "intlibout.h"
-#include "../lib/lproto.h"
 
 LIST_T *
 listCreate(char *name)
@@ -634,7 +629,7 @@ listPError(char *usrmsg)
 }
 
 void
-inList (struct listEntry *pred, struct listEntry *entry)
+inList(struct listEntry *pred, struct listEntry *entry)
 {
     entry->forw = pred;
     entry->back = pred->back;
@@ -643,12 +638,10 @@ inList (struct listEntry *pred, struct listEntry *entry)
 }
 
 void
-offList (struct listEntry *entry)
+offList(struct listEntry *entry)
 {
-
     entry->back->forw = entry->forw;
     entry->forw->back = entry->back;
-
 }
 
 struct listEntry *

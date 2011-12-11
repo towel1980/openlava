@@ -16,10 +16,6 @@
  *
  */
 
-#include <assert.h>
-#include <string.h>
-#include <unistd.h>
-#include <pwd.h>
 #include "lib.h"
 #include "lib.so.h"
 
@@ -318,7 +314,7 @@ getpwdirlsfuser_(const char *lsfUserName)
         return NULL;
     }
 
-    if ((pw = getpwnamdir(osUserName)) == NULL) {
+    if ((pw = getpwnam(osUserName)) == NULL) {
         lserrno = LSE_BADUSER;
         return NULL;
     }

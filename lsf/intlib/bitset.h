@@ -18,10 +18,7 @@
 #ifndef LS_BITSET_H
 #define LS_BITSET_H
 
-#include"intlib.h"
 #include"../lib/lproto.h"
-
-
 #include "list.h"
 
 typedef struct _bitsetEvent         LS_BITSET_EVENT_T;
