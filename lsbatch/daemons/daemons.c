@@ -84,7 +84,7 @@ struct config_param daemonParams[] = {
     {"LSB_SBD_FINISH_SLEEP", NULL},
     {"LSB_VIRTUAL_SLOT", NULL},
     {"LSB_STDOUT_DIRECT", NULL},
-    {"LSB_DONT_FORK", NULL},
+    {"MBD_DONT_FORK", NULL},
     {NULL, NULL}
 };
 

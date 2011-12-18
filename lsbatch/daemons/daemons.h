@@ -151,7 +151,7 @@
 #define LSB_SBD_FINISH_SLEEP   51
 #define LSB_VIRTUAL_SLOT       52
 #define LSB_STDOUT_DIRECT      53
-#define LSB_DONT_FORK          54
+#define MBD_DONT_FORK          54
 #define NOT_LOG  INFINIT_INT
 
 #define JOB_SAVE_OUTPUT   0x10000000

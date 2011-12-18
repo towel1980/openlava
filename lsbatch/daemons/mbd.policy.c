@@ -997,15 +997,8 @@ getLsbUsable(void)
          hPtr != (void *)hostList;
          hPtr = hPtr->back) {
 
-        /* for very historical reasons
-         * this counter must start from 1
-         */
-        ++i;
         hReason = 0;
-
         if (hPtr->hStatus & HOST_STAT_REMOTE)
-            continue;
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
             continue;
 
         if (hPtr->numJobs == 0)
@@ -1016,9 +1009,7 @@ getLsbUsable(void)
         if (OUT_SCHED_RS(hReasonTb[1][i])
             && HOST_UNUSABLE_DUE_TO_H_REASON(hReasonTb[1][i])) {
             hReason = hReasonTb[1][i];
-        }
-
-        else if (LS_ISUNAVAIL(hPtr->limStatus))
+        } else if (LS_ISUNAVAIL(hPtr->limStatus))
             hReason = PEND_LOAD_UNAVAIL;
         else if (hPtr->hStatus & HOST_STAT_UNREACH)
             hReason = PEND_SBD_UNREACH;
@@ -1036,6 +1027,10 @@ getLsbUsable(void)
             hReason = PEND_HOST_LOCKED;
         else if (LS_ISLOCKEDM(hPtr->limStatus))
             hReason = PEND_HOST_LOCKED_MASTER;
+        else if (hPtr->numJobs >= hPtr->maxJobs) {
+            hPtr->hStatus |= HOST_STAT_FULL;
+            hReason = PEND_HOST_JOB_LIMIT;
+        }
 
         if (!hReason
             && overThreshold(hPtr->lsbLoad, hPtr->loadSched, &ldReason))
@@ -1108,8 +1103,6 @@ getQUsable(struct qData *qp)
 
         hReason = 0;
         if (hPtr->hStatus & HOST_STAT_REMOTE)
-            continue;
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
             continue;
 
         if (!isHostQMember (hPtr, qp)) {
@@ -1290,9 +1283,6 @@ getJUsable(struct jData *jp, int *numJUsable, int *nProc)
             continue;
 
         if (hPtr->hStatus & HOST_STAT_REMOTE)
-            continue;
-
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
             continue;
 
         if (jp->numAskedPtr == 0 || jp->askedOthPrio >= 0) {
@@ -4230,7 +4220,7 @@ scheduleAndDispatchJobs(void)
                 }
                 /* The purpose of the pending job reference
                  * list is to make sure that each pending job
-                 * is looked at the scheduler only once.
+                 * is looked at by the scheduler only once.
                  */
                 jR = calloc(1, sizeof(struct jRef));
                 jR->job = jPtr;
@@ -4448,7 +4438,7 @@ again:
             || jPtr->qPtr->priority != jPtr0->qPtr->priority) {
             /* either at the end of the list, in which case
              * jPtr0 is bogus, or we just hit another queue
-             * so we have to git to the dispatcher the current
+             * so we have to give to the dispatcher the current
              * higher priority job.
              */
             listRemoveEntry(jRefList, (struct _listEntry *)jR0);
@@ -6144,7 +6134,7 @@ updateQueueJobPtr(int listNo, struct qData *qp)
 }
 
 static void
-copyReason()
+copyReason(void)
 {
     struct qData *qp;
     sTab stab;
@@ -6155,7 +6145,6 @@ copyReason()
     memcpy(hReasonTb[0], hReasonTb[1], cc * sizeof(int));
 
     for (qp = qDataList->forw; qp != qDataList; qp = qp->forw) {
-
         if (qp->reasonTb == NULL)
             continue;
         memcpy(qp->reasonTb[0], qp->reasonTb[1], cc * sizeof(int));
@@ -6170,15 +6159,15 @@ copyReason()
 }
 
 static void
-clearJobReason()
+clearJobReason(void)
 {
     struct jData *jp;
     int i;
 
     for (i = MJL; i <= PJL; i++) {
         for (jp = jDataList[i]->back; jp != jDataList[i]; jp = jp->back) {
-            if (jp->jFlags & JFLAG_READY2) {
 
+            if (jp->jFlags & JFLAG_READY2) {
                 if (jp->qPtr->reasonTb[1][0]) {
 
                     jp->newReason = jp->qPtr->reasonTb[1][0];
@@ -6220,8 +6209,6 @@ enoughMaxUsableSlots(struct jData *jp)
          hPtr = hPtr->back) {
 
         if (hPtr->hStatus & HOST_STAT_REMOTE)
-            continue;
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
             continue;
 
         if (hPtr->hStatus & HOST_STAT_NO_LIM)

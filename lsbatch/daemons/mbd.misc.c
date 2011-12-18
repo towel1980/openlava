@@ -1126,8 +1126,8 @@ checkUsers (struct infoReq *req, struct userInfoReply *reply)
 }
 
 struct uData *
-addUserData (char *username, int maxjobs, float pJobLimit,
-             char *filename, int override, int config)
+addUserData(char *username, int maxjobs, float pJobLimit,
+            char *filename, int override, int config)
 {
     static char fname[] = "addUserData";
     hEnt *userEnt;
@@ -1147,8 +1147,7 @@ addUserData (char *username, int maxjobs, float pJobLimit,
         uData = my_calloc(1,
                           sizeof(struct uData),
                           "addUserData");
-
-        initUData (uData);
+        initUData(uData);
     } else if (override) {
         uData = (struct uData *)userEnt->hData;
         FREEUP (uData->user);
@@ -1491,43 +1490,35 @@ updResCounters(struct jData *jData, int newStatus)
 }
 
 static void
-initUData (struct uData *uData)
+initUData(struct uData *uPtr)
 {
-    static char fname[] = "initUData";
-    int i;
-
-    uData->user = NULL;
-    uData->maxJobs = INFINIT_INT;
-    uData->pJobLimit = INFINIT_FLOAT;
-    uData->hAcct = NULL;
-    uData->flags = 0;
-    uData->numJobs   = 0;
-    uData->numPEND   = 0;
-    uData->numRUN    = 0;
-    uData->numSSUSP  = 0;
-    uData->numUSUSP  = 0;
-    uData->numRESERVE  = 0;
-    uData->numSlots  = INFINIT_INT;
-
-    uData->numGrpPtr = 0;
-    uData->gPtr = NULL;
-    uData->gData = NULL;
-    uData->reasonTb = (int **) my_calloc(2, sizeof(int *), fname);
-    uData->reasonTb[0] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
-    uData->reasonTb[1] = (int *) my_calloc(numLsfHosts+2, sizeof(int), fname);
-    for (i = 0; i <= numLsfHosts + 1; i++) {
-        uData->reasonTb[0][i] = 0;
-        uData->reasonTb[1][i] = 0;
-    }
-
-    uData->uDataIndex  = -1;
-    uData->children    = NULL;
-    uData->descendants = NULL;
-    uData->parents     = NULL;
-    uData->ancestors   = NULL;
-
-    uData->pxySJL = NULL;
-
+    uPtr->user = NULL;
+    uPtr->maxJobs = INFINIT_INT;
+    uPtr->pJobLimit = INFINIT_FLOAT;
+    uPtr->hAcct = NULL;
+    uPtr->flags = 0;
+    uPtr->numJobs   = 0;
+    uPtr->numPEND   = 0;
+    uPtr->numRUN    = 0;
+    uPtr->numSSUSP  = 0;
+    uPtr->numUSUSP  = 0;
+    uPtr->numRESERVE  = 0;
+    uPtr->numSlots  = INFINIT_INT;
+    uPtr->numGrpPtr = 0;
+    uPtr->gPtr = NULL;
+    uPtr->gData = NULL;
+    FREEUP(uPtr->reasonTb);
+    uPtr->reasonTb = my_calloc(2, sizeof(int *), __func__);
+    uPtr->reasonTb[0] = my_calloc(numofhosts() + 1,
+                                  sizeof(int), __func__);
+    uPtr->reasonTb[1] = my_calloc(numofhosts() + 1,
+                                  sizeof(int), __func__);
+    uPtr->uDataIndex  = -1;
+    uPtr->children    = NULL;
+    uPtr->descendants = NULL;
+    uPtr->parents     = NULL;
+    uPtr->ancestors   = NULL;
+    uPtr->pxySJL = NULL;
 }
 
 void
@@ -1557,13 +1548,13 @@ updHostLeftRusageMem(struct jData *jobP, int order)
 
                     int i;
                     getLsfHostInfo(FALSE);
-                    for (i = 0; i < numLsfHosts; i++) {
-                        if (strcmp(lsfHostInfo[i].hostName,
+                    for (i = 0; i < numLIMhosts; i++) {
+                        if (strcmp(LIMhosts[i].hostName,
                                    jobP->hPtr[numHost]->host) == 0)
                             break;
                     }
-                    if (i < numLsfHosts && lsfHostInfo[i].maxMem != 0)
-                        jobP->hPtr[numHost]->leftRusageMem = lsfHostInfo[i].maxMem;
+                    if (i < numLIMhosts && LIMhosts[i].maxMem != 0)
+                        jobP->hPtr[numHost]->leftRusageMem = LIMhosts[i].maxMem;
                     else
                         return;
                 }

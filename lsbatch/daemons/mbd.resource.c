@@ -143,9 +143,8 @@ addInstances (struct lsSharedResourceInfo *lsResourceInfo,
                 continue;
             }
 
-            if ((hPtr->hStatus & HOST_STAT_REMOTE) ||
-			   !strcmp (hPtr->host, LOST_AND_FOUND)) {
-
+            if ((hPtr->hStatus & HOST_STAT_REMOTE)
+                || (hPtr->flags & HOST_LOST_FOUND)) {
                 continue;
             }
 
@@ -203,19 +202,20 @@ freeHostInstances (void)
         hData = (struct hData *) hashEntryPtr->hData;
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 
-        if (!strcmp (hData->host, LOST_AND_FOUND))
+        if (hData->flags & HOST_LOST_FOUND)
             continue;
+
         if (hData->hStatus & HOST_STAT_REMOTE)
             continue;
 
-        FREEUP (hData->instances);
+        FREEUP(hData->instances);
         hData->numInstances = 0;
     }
 
 }
 
 static void
-initHostInstances (int num)
+initHostInstances(int num)
 {
     sTab hashSearchPtr;
     hEnt *hashEntryPtr;
@@ -226,13 +226,15 @@ initHostInstances (int num)
         hData = (struct hData *) hashEntryPtr->hData;
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 
-        if (!strcmp (hData->host, LOST_AND_FOUND))
+        if (hData->flags & HOST_LOST_FOUND)
             continue;
+
         if (hData->hStatus & HOST_STAT_REMOTE)
             continue;
 
-        hData->instances = (struct resourceInstance **) my_malloc
-	      (num * sizeof (struct resourceInstance *), "initHostInstances");
+        hData->instances = my_calloc(num,
+                                     sizeof (struct resourceInstance *),
+                                     __func__);
         hData->numInstances = 0;
     }
 

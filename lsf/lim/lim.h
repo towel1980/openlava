@@ -320,7 +320,7 @@ typedef enum {
     LIM_RSYNC_CONFIG,
     LIM_SLAVE_ONLY,
     LSB_SHAREDIR,
-    LIM_ALLOW_MIGRANT_HOSTS,
+    LIM_NO_MIGRANT_HOSTS,
     LIM_NO_FORK
 } limParams_t;
 

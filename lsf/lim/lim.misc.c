@@ -118,7 +118,7 @@ findHostbyAddr(struct sockaddr_in *from,
          * for some TCP operation, so just return
          * NULL and the caller will know what to do.
          */
-        if (!limParams[LIM_ALLOW_MIGRANT_HOSTS].paramValue)
+        if (limParams[LIM_NO_MIGRANT_HOSTS].paramValue)
             ls_syslog(LOG_ERR, "\
 %s: Host %s (hp=%s/%s) is unknown by configuration; all hosts used by openlava must have unique official names", fname, sockAdd2Str_(from),
                       hp->h_name,

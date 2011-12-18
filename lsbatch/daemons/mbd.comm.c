@@ -531,7 +531,7 @@ probe_slave(struct hData *hData, char sendJobs)
     }
 
     if (reply == ERR_NULL || reply == ERR_FAIL || reply == ERR_UNREACH_SBD)
-        return (reply);
+        return reply;
 
     switch (reply) {
         case ERR_NO_ERROR:
@@ -545,7 +545,8 @@ probe_slave(struct hData *hData, char sendJobs)
 
     if (reply_buf)
         free(reply_buf);
-    return (reply);
+
+    return reply;
 }
 
 sbdReplyType

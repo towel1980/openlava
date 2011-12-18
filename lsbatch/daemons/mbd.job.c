@@ -313,9 +313,6 @@ getHostByType(char *hostType)
          hPtr != (void *)hostList;
          hPtr = hPtr->back) {
 
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
-            continue;
-
         if (strcmp (hostType, hPtr->hostType) != 0)
             continue;
 
@@ -587,7 +584,7 @@ chkAskedHosts(int inNumAskedHosts, char **inAskedHosts, int numProcessors,
         } else {
             if ((hp = Gethostbyname_(hName)) == NULL
                 || (hData = getHostData(hp->h_name)) == NULL
-                || strcmp(hData->host, LOST_AND_FOUND) == 0
+                || (hData->flags & HOST_LOST_FOUND)
                 || (hData->hStatus & HOST_STAT_REMOTE)) {
                 if (!returnBadHost)
                     continue;
@@ -726,8 +723,10 @@ queueOk (char *queuename, struct jData *job, int *errReqIndx,
 }
 
 static int
-acceptJob (struct qData *qp, struct jData *jp, int *errReqIndx,
-           struct lsfAuth *auth)
+acceptJob(struct qData *qp,
+          struct jData *jp,
+          int *errReqIndx,
+          struct lsfAuth *auth)
 {
     int j;
 
@@ -745,10 +744,9 @@ acceptJob (struct qData *qp, struct jData *jp, int *errReqIndx,
     }
 
     if (qp->numProcessors > 0
-        && qp->numProcessors < jp->shared->jobBill.numProcessors)
-    {
+        && qp->numProcessors < jp->shared->jobBill.numProcessors) {
         if (qp->numHUnAvail == 0)
-            return (LSBE_PROC_NUM);
+            return LSBE_PROC_NUM;
     }
 
     if ((jp->shared->jobBill.options & SUB_INTERACTIVE)
@@ -1420,19 +1418,14 @@ signalJob (struct signalReq *signalReq, struct lsfAuth *auth)
     if ((jpbw = getJobData (signalReq->jobId)) == NULL)
         return (LSBE_NO_JOB);
 
-
-
     if (signalReq->sigValue == SIGSTOP)
         signalReq->sigValue = SIG_SUSP_USER;
 
     if (signalReq->sigValue == SIGKILL)
         signalReq->sigValue = SIG_TERM_USER;
 
-
     if (signalReq->sigValue == SIGCONT)
         signalReq->sigValue = SIG_RESUME_USER;
-
-
 
     if (auth) {
         if (auth->uid != 0 && !jgrpPermitOk(auth, jpbw->jgrpNode)
@@ -1449,7 +1442,6 @@ signalJob (struct signalReq *signalReq, struct lsfAuth *auth)
     if (signalReq->sigValue == SIG_ARRAY_REQUEUE) {
         int      cc;
 
-
         cc = arrayRequeue(jpbw, signalReq, auth);
         if (cc != LSBE_NO_ERROR) {
             return(cc);
@@ -1458,14 +1450,12 @@ signalJob (struct signalReq *signalReq, struct lsfAuth *auth)
         return(LSBE_NO_ERROR);
     }
 
-
     if (jpbw->nodeType == JGRP_NODE_ARRAY &&
         ARRAY_DATA(jpbw->jgrpNode)->counts[JGRP_COUNT_NJOBS] ==
         (ARRAY_DATA(jpbw->jgrpNode)->counts[JGRP_COUNT_NEXIT] +
          ARRAY_DATA(jpbw->jgrpNode)->counts[JGRP_COUNT_NDONE])) {
         return(LSBE_JOB_FINISH);
     }
-
 
     if (jpbw->nodeType == JGRP_NODE_ARRAY) {
 
@@ -1490,7 +1480,6 @@ signalJob (struct signalReq *signalReq, struct lsfAuth *auth)
         log_signaljob(jpbw, signalReq, auth->uid, auth->lsfUserName);
         return (LSBE_OP_RETRY);
     }
-
 
     if (jpbw->jStatus & JOB_STAT_SIGNAL)
         if (signalReq->sigValue != SIG_TERM_USER
@@ -1520,12 +1509,8 @@ signalJob (struct signalReq *signalReq, struct lsfAuth *auth)
             return (LSBE_J_UNREPETITIVE);
     }
 
-
-
     if (signalReq->sigValue == SIG_DELETE_JOB)
         jpbw->pendEvent.sigDel = TRUE;
-
-
 
     if (signalReq->sigValue == SIG_KILL_REQUEUE &&
         !IS_START(MASK_STATUS(jpbw->jStatus))) {
@@ -1727,9 +1712,10 @@ sigStartedJob (struct jData *jData, int sigValue, time_t chkPeriod,
     struct jobSig jobSig;
     int resumeSig, returnCode;
 
-    memset((struct jobReply *) &jobReply, 0, sizeof(struct jobReply));
+    memset(&jobReply, 0, sizeof(struct jobReply));
 
-    if (strcmp (jData->hPtr[0]->host, LOST_AND_FOUND) == 0) {
+    if (jData->hPtr[0]->flags & HOST_LOST_FOUND) {
+
         if ((sigValue == SIG_TERM_USER)
             || (sigValue == SIGTERM) || (sigValue == SIGINT)
             || (sigValue == SIG_TERM_FORCE) ) {
@@ -1737,6 +1723,7 @@ sigStartedJob (struct jData *jData, int sigValue, time_t chkPeriod,
             jData->newReason &= ~( SUB_RESTART | SUB_RESTART_FORCE);
             jStatusChange(jData, JOB_STAT_EXIT, LOG_IT, fname);
             return (ERR_NO_ERROR);
+
         } else if ((sigValue >= 0)
                    || (sigValue == SIG_RESUME_USER) || (sigValue == SIG_SUSP_USER)) {
             jData->pendEvent.sig = sigValue;
@@ -2526,7 +2513,7 @@ freeThresholds (struct thresholds *thresholds)
     FREEUP (thresholds->loadStop);
 }
 int
-statusJob (struct statusReq *statusReq, struct hostent *hp, int *schedule)
+statusJob(struct statusReq *statusReq, struct hostent *hp, int *schedule)
 {
     static char       fname[] = "statusJob";
     struct jData      *jpbw,
@@ -2972,13 +2959,11 @@ handleJobJCCA:
         }
     }
 
-
-
     if (statusReq->newStatus & JOB_STAT_PEND) {
         if (IS_START(jpbw->jStatus)) {
             if (!jpbw->lsfRusage) {
-                jpbw->lsfRusage = (struct lsfRusage *)
-                    my_malloc (sizeof(struct lsfRusage), fname);
+                jpbw->lsfRusage = my_malloc (sizeof(struct lsfRusage),
+                                             fname);
                 cleanLsfRusage (jpbw->lsfRusage);
             }
             accumulateRU(jpbw, statusReq);
@@ -3038,11 +3023,7 @@ handleJobJCCA:
                 jStatusChange (jpbw, JOB_STAT_PEND, LOG_IT, "statusJob");
                 statusReq->newStatus = JOB_STAT_EXIT;
             } else if (statusReq->reason == PEND_JOB_NO_PASSWD){
-
-
-
                 char mailmsg[400];
-
                 sprintf(mailmsg,
                         _i18n_msg_get(ls_catd, NL_SETN, 1515,
                                       "We are unable to start your job <%s> because the your password \ncould not be found or was invalid.\nWe have suspended your job.  You may resume it when the \npassword problem is fixed.\n"), /* catgets 1515 */
@@ -3083,14 +3064,12 @@ handleJobJCCA:
         accumulateRU(jpbw, statusReq);
         if (jpbw->lsfRusage == NULL)
             jpbw->lsfRusage = &(statusReq->lsfRusage);
+
         if ((statusReq->newStatus & JOB_STAT_EXIT)
             && statusReq->sbdReply == ERR_HOST_BOOT
             && (jpbw->shared->jobBill.options & SUB_RERUNNABLE)) {
-
             mailUser (jpbw);
-
             jpbw->jStatus |= JOB_STAT_ZOMBIE;
-
             if ( jpbw->shared->jobBill.options & SUB_CHKPNTABLE &&
                  jpbw->jStatus & JOB_STAT_CHKPNTED_ONCE) {
                 jpbw->shared->jobBill.options |= SUB_RESTART | SUB_RESTART_FORCE;
@@ -3239,7 +3218,7 @@ rusageJob (struct statusReq *statusReq, struct hostent *hp)
 
 
 void
-jStatusChange (struct jData *jData, int newStatus, time_t eventTime, char *fname)
+jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
 {
     int oldStatus = jData->jStatus;
     int freeExec = FALSE;
@@ -3587,20 +3566,17 @@ handleRequeueJob (struct jData *jData, time_t requeueTime)
     FREEUP(jData->lsfRusage);
 
 
-    if ( jData->shared->jobBill.userPriority > 0 ) {
+    if (jData->shared->jobBill.userPriority > 0) {
         jData->jobPriority = jData->shared->jobBill.userPriority;
-    } else if ( maxUserPriority > 0 ) {
+    } else if (maxUserPriority > 0) {
         jData->jobPriority = maxUserPriority/2 ;
     } else {
         jData->jobPriority = -1;
     }
 
-
-
     offJobList(jData, FJL);
 
     inPendJobList(jData, PJL, requeueTime);
-
 
     jobRequeueTimeUpdate(jData, requeueTime);
 
@@ -3737,7 +3713,6 @@ changeJobParams (struct jData *jData)
             jFlags |= JFLAG_DEPCOND_INVALID;
         }
 
-
         freeIdxListContext();
 
     } else {
@@ -3759,13 +3734,13 @@ changeJobParams (struct jData *jData)
 }
 
 static void
-freeExecParams (struct jData *jData)
+freeExecParams(struct jData *jData)
 {
     jData->numHostPtr = 0;
     jData->nextSeq = 1;
-    FREEUP (jData->execHome);
-    FREEUP (jData->queuePreCmd);
-    FREEUP (jData->queuePostCmd);
+    FREEUP(jData->execHome);
+    FREEUP(jData->queuePreCmd);
+    FREEUP(jData->queuePostCmd);
 
 
     if (jData->execCwd != NULL
@@ -3773,69 +3748,55 @@ freeExecParams (struct jData *jData)
         int len = 0;
         static char execCwd[MAXLINELEN + 1];
 
-
-        if ( jData->execCwd) {
-            len = strlen( jData->execCwd ) + strlen( jData->hPtr[0]->host ) + 5;
+        if (jData->execCwd) {
+            len = strlen(jData->execCwd) + strlen(jData->hPtr[0]->host) + 5;
         } else {
-            len = strlen( jData->hPtr[0]->host ) + 5;
+            len = strlen(jData->hPtr[0]->host) + 5;
         }
 
+        if (jData->execCwd != NULL
+            && ((strlen(jData->execCwd) == 1)
+                || ((strlen(jData->execCwd) > 1)
+                    && ((jData->execCwd[0] != '/' )
+                        || (jData->execCwd[1] != '/'))))) {
+            strcpy(execCwd, jData->execCwd);
+            jData->execCwd = realloc(jData->execCwd, len);
 
-        if (
-            ( jData->execCwd != NULL      )
-            && (
-                ( strlen(jData->execCwd) == 1 )
-                || (
-                    ( strlen(jData->execCwd) > 1 )
-                    && (
-                        ( jData->execCwd[0] != '/' )
-                        || ( jData->execCwd[1] != '/' )
-                        )
-                    )
-                )
-            ) {
-            strcpy(execCwd, jData->execCwd );
-            jData->execCwd = (char * ) realloc( jData->execCwd, len );
-
-            sprintf( jData->execCwd, "//%s%s" ,jData->hPtr[0]->host ,execCwd );
+            sprintf(jData->execCwd, "//%s%s", jData->hPtr[0]->host,
+                    execCwd);
         }
     }
 
-    FREEUP (jData->hPtr);
-
-    cleanCandHosts (jData);
-
+    FREEUP(jData->hPtr);
+    cleanCandHosts(jData);
 }
 
 
 void
 clean(time_t curTime)
 {
-    struct jData       *jpbw;
-    struct jData       *nextJobPtr;
-    struct sbdNode     *sbdPtr;
-    int                found;
+    struct jData *jpbw;
+    struct jData *nextJobPtr;
+    struct sbdNode *sbdPtr;
+    int found;
 
-
-    for (jpbw = jDataList[FJL]->back; (jpbw != jDataList[FJL]);
+    for (jpbw = jDataList[FJL]->back;
+         jpbw != jDataList[FJL];
          jpbw = nextJobPtr) {
 
         nextJobPtr = jpbw->back;
         found = FALSE;
 
-
-
-
-        if ( jpbw->jStatus & JOB_STAT_DONE ) {
+        if (jpbw->jStatus & JOB_STAT_DONE) {
             if ( !IS_POST_FINISH(jpbw->jStatus) ) {
                 continue;
             }
         }
 
         if (jpbw->jFlags & JFLAG_REQUEUE) {
+
             handleRequeueJob(jpbw, time(0));
             jpbw->startTime = jpbw->endTime = 0;
-
             jpbw->pendEvent.sig = SIG_NULL;
             log_jobrequeue (jpbw);
             continue;
@@ -3863,23 +3824,20 @@ clean(time_t curTime)
             }
         }
 
-
-        if ((curTime - jpbw->endTime) > clean_period) {
-
+        if (curTime - jpbw->endTime > clean_period) {
             removeJob(jpbw->jobId);
         }
     }
 }
 
 void
-job_abort (struct jData *jData, char reason)
+job_abort(struct jData *jData, char reason)
 {
     static char fname[] = "job_abort";
     char mailmsg[2048];
     char *cp;
     char  *reasonp;
     char  *temp;
-
 
     jData->shared->jobBill.options &= ~(SUB_RESTART | SUB_RESTART_FORCE);
     jData->newReason &= ~(SUB_RESTART | SUB_RESTART_FORCE);
@@ -5131,7 +5089,7 @@ resigJobs(int *resignal)
                 continue;
             }
 
-            if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
+            if (hPtr->flags & HOST_LOST_FOUND)
                 continue;
 
             sVsigcnt = sigcnt;
@@ -5164,9 +5122,6 @@ resigJobs(int *resignal)
         if (UNREACHABLE (hPtr->hStatus)) {
             continue;
         }
-
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0)
-            continue;
 
         if (setIsMember(processedHosts, (void *)&hPtr->hostId))
             continue;
@@ -7259,7 +7214,7 @@ msgStartedJob (struct jData *jData, struct bucket *bucket)
     sbdReplyType reply;
     struct jobReply jobReply;
 
-    if (strcmp (jData->hPtr[0]->host, LOST_AND_FOUND) == 0) {
+    if (jData->hPtr[0]->flags & HOST_LOST_FOUND) {
 
         if (bucket->bufstat == MSG_STAT_SENT) {
             QUEUE_REMOVE(bucket);
@@ -7846,10 +7801,12 @@ shouldResumeByLoad (struct jData *jp)
     for (i = 0; i < jp->numHostPtr; i++) {
         if (i > 0 && jp->hPtr[i] == jp->hPtr[i-1])
             continue;
-        if (strcmp (jp->hPtr[i]->host, LOST_AND_FOUND) == 0) {
+
+        if (jp->hPtr[i]->flags & HOST_LOST_FOUND) {
             loads[j].li = NULL;
             continue;
         }
+
         if (!(jp->hPtr[i]->flags & HOST_UPDATE_LOAD)) {
 
             freeThresholds (&thresholds);
@@ -8756,7 +8713,6 @@ arrayRequeue(struct jData      *jArray,
 
     } else {
 
-
         requeueOneElement = TRUE;
         jPtr = jArray;
     }
@@ -8772,14 +8728,12 @@ arrayRequeue(struct jData      *jArray,
 
             handleRequeueJob(jPtr, requeueTime);
 
-
             if (mSchedStage != M_STAGE_REPLAY) {
                 log_signaljob(jPtr,
                               sigPtr,
                               authPtr->uid,
                               authPtr->lsfUserName);
             }
-
 
             jPtr->startTime = jPtr->endTime = 0;
 
@@ -8853,11 +8807,10 @@ arrayRequeue(struct jData      *jArray,
     } while ((jPtr = jPtr->nextJob)
              && (requeueOneElement == FALSE));
 
-    if (requeueSuccess) {
-        return(LSBE_NO_ERROR);
-    } else {
-        return(requeueReply);
-    }
+    if (requeueSuccess)
+        return LSBE_NO_ERROR;
+
+    return requeueReply;
 }
 
 
@@ -8885,36 +8838,30 @@ static int checkSubHost(struct jData *job)
 
     int isTypeUnkown = FALSE;
     int isModelUnkown = FALSE;
-
     int requireType = FALSE;
     int requireModel = FALSE;
     int requireLocalType = FALSE;
     int requireLocalModel = FALSE;
-
     char *select = NULL;
     char *jSelect = NULL;
     char *qSelect = NULL;
-
     int len = 0;
-
     struct hostInfo *submitHost = NULL;
-
 
     if (mSchedStage == M_STAGE_REPLAY) {
         return LSBE_NO_ERROR;
     }
-
 
     submitHost = getLsfHostData(job->shared->jobBill.fromHost);
     if (submitHost == NULL) {
         return LSBE_BAD_SUBMISSION_HOST;
     }
 
-    if ( strcmp(submitHost->hostType, "UNKNOWN_AUTO_DETECT") == 0) {
+    if (strcmp(submitHost->hostType, "UNKNOWN_AUTO_DETECT") == 0) {
         isTypeUnkown = TRUE;
     }
 
-    if ( strcmp(submitHost->hostModel, "UNKNOWN_AUTO_DETECT") == 0) {
+    if (strcmp(submitHost->hostModel, "UNKNOWN_AUTO_DETECT") == 0) {
         isModelUnkown = TRUE;
     }
 

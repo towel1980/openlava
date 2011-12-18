@@ -80,7 +80,7 @@ struct config_param limParams[] =
     {"LIM_RSYNC_CONFIG", NULL},
     {"LIM_SLAVE_ONLY", NULL},
     {"LSB_SHAREDIR", NULL},
-    {"LIM_ALLOW_MIGRANT_HOSTS", NULL},
+    {"LIM_NO_MIGRANT_HOSTS", NULL},
     {"LIM_NO_FORK", NULL},
     {NULL, NULL},
 };
@@ -415,7 +415,7 @@ processUDPMsg(void)
          * about if we don't accept hosts
          * at runtime.
          */
-        if (! limParams[LIM_ALLOW_MIGRANT_HOSTS].paramValue) {
+        if (limParams[LIM_NO_MIGRANT_HOSTS].paramValue) {
 
             ls_syslog(LOG_WARNING,"\
 %s: Received request %d from non-LSF host %s",
@@ -553,7 +553,7 @@ doAcceptConn(void)
 
     fromHost = findHostbyAddr(&from, "doAcceptConn()");
     if (fromHost == NULL
-        && !limParams[LIM_ALLOW_MIGRANT_HOSTS].paramValue) {
+        && limParams[LIM_NO_MIGRANT_HOSTS].paramValue) {
         /* A migrant host is asking the master for
          * a tcp operation it should be its registation.
          */

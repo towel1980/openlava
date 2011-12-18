@@ -35,7 +35,7 @@
 
 # include <stdarg.h>
 
-#define NL_SETN		10	
+#define NL_SETN		10
 
 #ifdef NO_MAIL
 void lsb_mperr (char *msg) {}
@@ -63,11 +63,11 @@ lsb_mperr (char *msg)
     if (strerror(errno) != NULL && errno >= 0)
         strcpy(err, strerror(errno));
     else
-        sprintf(err, _i18n_msg_get(ls_catd, NL_SETN, 3200, 
-	    "%s: Unknown error"), fname); /* catgets 3200 */
+        sprintf(err, _i18n_msg_get(ls_catd, NL_SETN, 3200,
+                                   "%s: Unknown error"), fname); /* catgets 3200 */
 
     lsb_merr2("%s: %s\n", msg, err);
-}  
+}
 
 void
 lsb_merr (char *s)
@@ -83,7 +83,7 @@ lsb_merr (char *s)
         ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_getmyhostname");
         if (masterme)
             die(MASTER_FATAL);
-        else 
+        else
             die (SLAVE_FATAL);
     }
     if (lsbManager == NULL || (getpwlsfuser_(lsbManager)) == NULL) {
@@ -98,13 +98,13 @@ lsb_merr (char *s)
 		lsbManager);
         if (masterme)
             die (MASTER_FATAL);
-        else 
+        else
             die (SLAVE_FATAL);
     }
     mail = smail(lsbManager, myhostnm);
 
     if (masterme)
-        fprintf(mail, _i18n_msg_get(ls_catd, NL_SETN, 3201, 
+        fprintf(mail, _i18n_msg_get(ls_catd, NL_SETN, 3201,
 	    "Subject: mbatchd on %s: %s\n"), /* catgets 3201 */
 	    myhostnm, s);
     else
@@ -113,7 +113,7 @@ lsb_merr (char *s)
 	    myhostnm, s);
 
     mclose(mail);
-} 
+}
 
 void
 merr_user (char *user, char *host, char *msg, char *type)
@@ -128,16 +128,16 @@ merr_user (char *user, char *host, char *msg, char *type)
     }
 
     mail = smail(user, host);
-    fprintf(mail, _i18n_msg_get(ls_catd, NL_SETN, 3203, 
+    fprintf(mail, _i18n_msg_get(ls_catd, NL_SETN, 3203,
 	"Subject: job %s report from %s\n"), /* catgets 3203 */
-	type, 
+	type,
 	myhostnm);
-    fprintf(mail, _i18n_msg_get(ls_catd, NL_SETN, 3204, 
+    fprintf(mail, _i18n_msg_get(ls_catd, NL_SETN, 3204,
 	"\n\nDear %s,\n\n%s\n\n"), /* catgets 3204 */
-	user, 
+	user,
 	msg);
     mclose(mail);
-} 
+}
 
 static void
 addr_process (char *adbuf, char *user, char *tohost, char *spec)
@@ -145,7 +145,7 @@ addr_process (char *adbuf, char *user, char *tohost, char *spec)
     char *bp, *sp, *up;
 
     if (strrchr(user, '@') != NULL) {
-        strcpy(adbuf, user);    
+        strcpy(adbuf, user);
         return;
     }
 
@@ -159,14 +159,14 @@ addr_process (char *adbuf, char *user, char *tohost, char *spec)
 	    case 'U':
 		for (up = user ; *up ; )
 		    *bp++ = *up++;
-		continue;	
+		continue;
 	    case 'H':
 		for (up = tohost ; *up ; )
 		    *bp++ = *up++;
-		continue;	
+		continue;
 	    default:
 		sp -= 1;
-		
+
 	    }
 	}
 	*bp++ = *sp;
@@ -196,13 +196,13 @@ smail (char *to, char *tohost)
         return stderr;
     }
 
-    
+
     if (getOSUserName_(to, osUserName, MAXLINELEN) != 0) {
         strncpy(osUserName, to, MAXLINELEN);
         osUserName[MAXLINELEN - 1] = '\0';
     }
 
-    
+
     if (debug > 2)
 	return(stderr);
 
@@ -213,7 +213,7 @@ smail (char *to, char *tohost)
     addr_process(toaddr, osUserName, tohost,
 			 daemonParams[LSB_MAILTO].paramValue);
     if (logclass & (LC_TRACE | LC_EXEC))
-        ls_syslog(LOG_DEBUG1, "%s: user=%s host=%s toaddr=%s spec=%s", fname, 
+        ls_syslog(LOG_DEBUG1, "%s: user=%s host=%s toaddr=%s spec=%s", fname,
             osUserName, tohost, toaddr, daemonParams[LSB_MAILTO].paramValue);
     switch(pid = fork()) {
     case 0:
@@ -227,7 +227,7 @@ smail (char *to, char *tohost)
 	sendmailp = daemonParams[LSB_MAILPROG].paramValue;
 
       userid = geteuid();
-      chuser(getuid());          
+      chuser(getuid());
       setuid(userid);
 
         sprintf(smcmd, "%s -oi -F%s -f%s %s", sendmailp,
@@ -237,7 +237,7 @@ smail (char *to, char *tohost)
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "execle",
             daemonParams[LSB_MAILPROG].paramValue);
         exit(-1);
-        
+
     case -1:
         close(maild[1]);
         close(maild[0]);
@@ -264,7 +264,7 @@ smail (char *to, char *tohost)
         return stderr;
     }
     return fmail;
-} 
+}
 
 void
 mclose (FILE *file)
@@ -273,5 +273,5 @@ mclose (FILE *file)
         (void) fclose(file);
     else
         (void) fflush(file);
-} 
-#endif 
+}
+#endif

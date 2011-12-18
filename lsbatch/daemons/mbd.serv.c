@@ -446,8 +446,8 @@ packJobInfo(struct jData * jobData,
     job_reasonTb = jobData->reasonTb;
 
     if (reasonTb == NULL) {
-        reasonTb = my_calloc (numofhosts() + 1, sizeof(int), fname);
-        jReasonTb = my_calloc (numofhosts() + 1, sizeof(int), fname);
+        reasonTb = my_calloc(numofhosts() + 1, sizeof(int), fname);
+        jReasonTb = my_calloc(numofhosts() + 1, sizeof(int), fname);
     }
 
     jobInfoReply.jobId = jobData->jobId;
@@ -527,10 +527,6 @@ packJobInfo(struct jData * jobData,
                      hPtr != (void *)hostList;
                      hPtr = (struct hData *)hPtr->back) {
 
-                    /* for historical reasons this counter
-                     * MUST start from 1.
-                     */
-                    ++i;
                     if (jReasonTb[i] == PEND_HOST_USR_SPEC)
                         continue;
 
@@ -669,10 +665,10 @@ packJobInfo(struct jData * jobData,
     cpuFactor = NULL;
     if ((jobData->numHostPtr > 0) && (jobData->hPtr[0] != NULL)
         && !IS_PEND (jobData->jStatus)
-        && strcmp(jobData->hPtr[0]->host, LOST_AND_FOUND)) {
+        && ! (jobData->hPtr[0]->flags & HOST_LOST_FOUND)) {
         cpuFactor = &jobData->hPtr[0]->cpuFactor;
         FREEUP (jobInfoReply.jobBill->hostSpec);
-        jobInfoReply.jobBill->hostSpec = safeSave (jobData->hPtr[0]->host);
+        jobInfoReply.jobBill->hostSpec = safeSave(jobData->hPtr[0]->host);
     } else {
         if (getModelFactor_r(jobInfoReply.jobBill->hostSpec, &cpuF) < 0) {
             cpuFactor = getHostFactor(jobInfoReply.jobBill->hostSpec);
@@ -683,8 +679,9 @@ packJobInfo(struct jData * jobData,
                     cpuFactor = &cpuF;
                 }
                 if (cpuFactor == NULL) {
-                    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7809,
-                                                     "%s: Cannot find cpu factor for hostSpec  <%s>; cpuFactor is set to 1.0"), fname, jobInfoReply.jobBill->fromHost); /* catgets 7809 */
+                    ls_syslog(LOG_ERR, "\
+%s: Cannot find cpu factor for hostSpec %s; cpuFactor is set to 1.0",
+                              fname, jobInfoReply.jobBill->fromHost);
                     cpuFactor = &one;
                 }
             } else {
@@ -715,14 +712,14 @@ packJobInfo(struct jData * jobData,
 
     jobInfoReply.jRusageUpdateTime = jobData->jRusageUpdateTime;
 
-    memcpy((char *) &jobInfoReply.runRusage,
-           (char *) &jobData->runRusage, sizeof(struct jRusage));
+    memcpy(&jobInfoReply.runRusage,
+           &jobData->runRusage, sizeof(struct jRusage));
 
     len = jobInfoReplyXdrBufLen(&jobInfoReply);
     len += 1024;
 
     FREEUP (request_buf);
-    request_buf = (char *) my_malloc(len, "packJobInfo");
+    request_buf = my_malloc(len, "packJobInfo");
     xdrmem_create(&xdrs, request_buf, len, XDR_ENCODE);
     hdr.reserved = remain;
     hdr.version = version;
@@ -828,6 +825,7 @@ do_signalReq (XDR *xdrs, int chfd, struct sockaddr_in *from, char *hostName,
     } else {
         reply = signalJob(&signalReq, auth);
     }
+
 Reply:
     xdrmem_create(&xdrs2, reply_buf, MSGSIZE, XDR_ENCODE);
     replyHdr.opCode = reply;
@@ -1776,11 +1774,6 @@ do_reconfigReq(XDR *xdrs,
         millisleep_(3000);
         mbdDie(MASTER_RECONFIG);
     }
-
-    ls_syslog(LOG_DEBUG, "\
-%s: reread the configuration files", __func__);
-    if (mSchedStage != M_STAGE_REPLAY)
-        mbdReConf(RECONFIG_CONF);
 
     return 0;
 }

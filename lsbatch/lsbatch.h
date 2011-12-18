@@ -501,8 +501,7 @@
 #define  SUB2_MODIFY_RUN_JOB 0x800
 #define  SUB2_MODIFY_PEND_JOB 0x1000
 
-
-#define  LOST_AND_FOUND      "lost_and_found"
+#define  LOST_AND_FOUND  "lost_and_found"
 
 #define  DELETE_NUMBER     -2
 #define  DEL_NUMPRO        INFINIT_INT

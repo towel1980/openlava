@@ -573,10 +573,10 @@ replay_movejob(char *filename, int lineNum)
 static int
 replay_startjob(char *filename, int lineNum, int preExecStart)
 {
-    static char             fname[] = "replay_startjob";
-    struct jData            job, *jp;
-    struct jShared          shared;
-    int                     i;
+    struct jData job;
+    struct jData *jp;
+    struct jShared shared;
+    int i;
 
     job.jobId = LSB_JOBID(logPtr->eventLog.jobStartLog.jobId,
                           logPtr->eventLog.jobStartLog.idx);
@@ -591,32 +591,37 @@ replay_startjob(char *filename, int lineNum, int preExecStart)
     job.shared = &shared;
 
     if ((jp = getJobData(job.jobId)) == NULL) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6715,
-                                         "%s: Job <%s> not found in job list"), /* catgets 6715 */
-                  fname,
-                  lsb_jobid2str(job.jobId));
-        return (FALSE);
+        ls_syslog(LOG_ERR, "\
+%s: Job %s not found in job list",
+                  __func__, lsb_jobid2str(job.jobId));
+        return FALSE;
     }
 
     if (job.numHostPtr > 0) {
-        job.hPtr = (struct hData **) my_calloc(job.numHostPtr,
-                                               sizeof(struct hData *), fname);
+        job.hPtr = my_calloc(job.numHostPtr,
+                             sizeof(struct hData *), __func__);
     } else {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6868,
-                                         "%s: File %s at line %d: The number of execution hosts is zero for job <%s>"), /* catgets 6868 */
-                  fname,
+        ls_syslog(LOG_ERR, "\
+%s: File %s at line %d: No execution hosts for job %s ??",
+                  __func__,
                   filename,
                   lineNum,
                   lsb_jobid2str(job.jobId));
-        return (FALSE);
+        return FALSE;
     }
 
     for (i = 0; i < job.numHostPtr; i++) {
+
         job.hPtr[i] = getHostData(logPtr->eventLog.jobStartLog.execHosts[i]);
         if (job.hPtr[i] == NULL) {
-            ls_syslog(LOG_DEBUG, "replay_startjob: Execution host <%s> not found; saving job <%s> to host <%s>", logPtr->eventLog.jobStartLog.execHosts[i], lsb_jobid2str(job.jobId), LOST_AND_FOUND);
-            if ((job.hPtr[i] = getHostData(LOST_AND_FOUND)) == NULL)
-                job.hPtr[i] = lostFoundHost();
+            ls_syslog(LOG_WARNING, "\
+%s: Execution host %s not found; saving job %s to host %s",
+                      __func__,
+                      logPtr->eventLog.jobStartLog.execHosts[i],
+                      lsb_jobid2str(job.jobId),
+                      LOST_AND_FOUND);
+            job.hPtr[i] = getHostData(LOST_AND_FOUND);
+            assert(job.hPtr[i]);
         }
     }
 
@@ -638,23 +643,15 @@ replay_startjob(char *filename, int lineNum, int preExecStart)
         return (TRUE);
     }
 
-
-
     if (job.queuePreCmd && job.queuePreCmd[0] != '\0')
         jp->queuePreCmd = safeSave(job.queuePreCmd);
     if (job.queuePostCmd && job.queuePostCmd[0] != '\0')
         jp->queuePostCmd = safeSave(job.queuePostCmd);
 
-
-
     jStatusChange(jp, job.jStatus, logPtr->eventTime, "replay_startjob");
-
     if  (!preExecStart){
-
         updHostLeftRusageMem(jp, -1);
     }
-
-
 
     if (jp->shared->jobBill.options & SUB_EXCLUSIVE)
         for (i = 0; i < jp->numHostPtr; i ++)
@@ -663,8 +660,7 @@ replay_startjob(char *filename, int lineNum, int preExecStart)
     if (preExecStart)
         jp->jStatus |= JOB_STAT_PRE_EXEC;
 
-    return (TRUE);
-
+    return TRUE;
 }
 
 static int
@@ -3458,10 +3454,10 @@ replaceJobInfoFile(char *jobFileName,
 void
 log_mbdStart(void)
 {
-    char                    hname[MAXHOSTNAMELEN];
+    char hname[MAXHOSTNAMELEN];
     struct qData *qp;
-    int num_queues, num_hosts;
-
+    int num_queues;
+    int num_hosts;
 
     if (openEventFile("log_mbdStart") < 0)
         mbdDie(MASTER_FATAL);
@@ -3481,7 +3477,7 @@ log_mbdStart(void)
 
 
     num_queues = numofqueues;
-    num_hosts = numofhosts;
+    num_hosts = numofhosts();
     for (qp = qDataList->forw; qp != qDataList; qp = qp->forw) {
         if (strcmp(qp->queue, "lost_and_found") == 0) {
             num_queues--;
@@ -3612,18 +3608,22 @@ replay_jobdata(char *filename, int lineNum, char *fname)
     int                     i, errcode;
     struct lsfAuth          auth;
 
-    (void)memset((void *)&auth, '\0', sizeof (auth));
+    memset(&auth, 0, sizeof (auth));
 
     jobNewLog = &logPtr->eventLog.jobNewLog;
 
     qp = getQueueData(jobNewLog->queue);
     if (qp == NULL) {
-        ls_syslog(LOG_DEBUG, "%s: File %s at line %d: Queue <%s> not found, saving job <%d> in queue <%s>", fname, filename, lineNum, jobNewLog->queue, jobNewLog->jobId, LOST_AND_FOUND);
+        ls_syslog(LOG_DEBUG, "\
+%s: File %s at line %d: queue %s not found, saving job %d in queue %s",
+                  __func__, filename, lineNum,
+                  jobNewLog->queue, jobNewLog->jobId, LOST_AND_FOUND);
         qp = getQueueData(LOST_AND_FOUND);
         if (qp == NULL)
             qp = lostFoundQueue();
     }
-    job = initJData((struct jShared *) my_calloc(1, sizeof(struct jShared), "replay_jobdata"));
+
+    job = initJData(my_calloc(1, sizeof(struct jShared), __func__));
 
     if (job->jobSpoolDir) {
         FREEUP(job->jobSpoolDir);
@@ -3660,8 +3660,6 @@ replay_jobdata(char *filename, int lineNum, char *fname)
     jobBill->umask = jobNewLog->umask;
     job->cpuTime = 0.0;
     job->jobId = jobNewLog->jobId;
-
-
     job->dispTime = now + retryIntvl * msleeptime;
     job->newReason = PEND_SYS_NOT_READY;
     job->oldReason = PEND_SYS_NOT_READY;
@@ -3699,18 +3697,19 @@ replay_jobdata(char *filename, int lineNum, char *fname)
         struct askedHost *askedHosts;
         int returnErr, badReqIndx, others;
 
-        jobBill->askedHosts = (char **) my_calloc(jobBill->numAskedHosts,
-                                                  sizeof(char *), fname);
+        jobBill->askedHosts = my_calloc(jobBill->numAskedHosts,
+                                        sizeof(char *), fname);
         for (i = 0; i < jobBill->numAskedHosts; i++)
             jobBill->askedHosts[i] = safeSave(jobNewLog->askedHosts[i]);
 
-        returnErr = chkAskedHosts(jobBill->numAskedHosts, jobBill->askedHosts,
+        returnErr = chkAskedHosts(jobBill->numAskedHosts,
+                                  jobBill->askedHosts,
                                   jobBill->numProcessors, &numAskedHosts,
                                   &askedHosts, &badReqIndx, &others, 0);
         if (returnErr == LSBE_NO_ERROR) {
             if (numAskedHosts > 0) {
-                job->askedPtr = (struct askedHost *) my_calloc (numAskedHosts,
-                                                                sizeof(struct askedHost), fname);
+                job->askedPtr = my_calloc (numAskedHosts,
+                                           sizeof(struct askedHost), fname);
                 for (i = 0; i < numAskedHosts; i++) {
                     job->askedPtr[i].hData = askedHosts[i].hData;
                     job->askedPtr[i].priority = askedHosts[i].priority;
@@ -3722,12 +3721,10 @@ replay_jobdata(char *filename, int lineNum, char *fname)
         }
     }
 
-    if (strcmp(jobNewLog->projectName, "") == 0) {
-
+    if (strcmp(jobNewLog->projectName, "") == 0)
         jobBill->projectName = safeSave(getDefaultProject());
-    } else
+    else
         jobBill->projectName = safeSave(jobNewLog->projectName);
-
 
     if (jobBill->options & SUB_JOB_NAME)
         jobBill->jobName = safeSave(jobNewLog->jobName);
@@ -3740,18 +3737,12 @@ replay_jobdata(char *filename, int lineNum, char *fname)
     if (strcmp(jobBill->dependCond, "") == 0) {
         job->shared->dptRoot = NULL;
     } else {
-
-
         setIdxListContext(jobBill->jobName);
 
         job->shared->dptRoot
             = parseDepCond(jobBill->dependCond, &auth, &errcode,
                            NULL, &job->jFlags, 0);
-
-
         freeIdxListContext();
-
-
         if (!job->shared->dptRoot)  {
             job->jFlags |= JFLAG_DEPCOND_INVALID;
         } else
@@ -3760,6 +3751,7 @@ replay_jobdata(char *filename, int lineNum, char *fname)
 
     if (jobBill->resReq  && jobBill->resReq[0] != '\0') {
         int useLocal = TRUE;
+
         if (job->numAskedPtr > 0 || job->askedOthPrio >= 0)
             useLocal = FALSE;
 
@@ -3767,18 +3759,18 @@ replay_jobdata(char *filename, int lineNum, char *fname)
         if ((job->shared->resValPtr =
              checkResReq (jobBill->resReq, useLocal | PARSE_XOR | CHK_TCL_SYNTAX)) == NULL)
 
-            ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 6832,
-                                             "%s: File %s at line %d: Bad resource requirment <%s> of Job <%s>"), fname, filename, lineNum, jobBill->resReq, lsb_jobid2str(job->jobId));  /* catgets 6832 */
-
+            ls_syslog(LOG_ERR, "\
+%s: File %s at line %d: Bad resource requirement %s job %s",
+                      __func__, filename, lineNum, jobBill->resReq,
+                      lsb_jobid2str(job->jobId));
     }
     jobBill->nxf = jobNewLog->nxf;
     if (jobBill->nxf > 0) {
-        jobBill->xf = (struct xFile *) my_calloc(jobBill->nxf,
-                                                 sizeof(struct xFile), fname);
-        memcpy((char *) jobBill->xf, (char *) jobNewLog->xf,
-               jobBill->nxf * sizeof(struct xFile));
+        jobBill->xf = my_calloc(jobBill->nxf,
+                                sizeof(struct xFile), fname);
+        memcpy(jobBill->xf, jobNewLog->xf, jobBill->nxf * sizeof(struct xFile));
     } else {
-        jobBill->xf = NULL;
+       jobBill->xf = NULL;
     }
 
     jobBill->niosPort = jobNewLog->niosPort;
@@ -3786,8 +3778,7 @@ replay_jobdata(char *filename, int lineNum, char *fname)
     jobBill->userPriority = jobNewLog->userPriority;
     job->jobPriority = jobBill->userPriority;
 
-    return (job);
-
+    return job;
 }
 
 void

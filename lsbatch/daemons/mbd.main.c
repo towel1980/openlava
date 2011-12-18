@@ -128,8 +128,8 @@ static int jobPriorityUpdIntvl = -1;
 int nSbdConnections = 0;
 int maxSbdConnections = DEF_MAX_SBD_CONNS;
 int numResources = 0;
-struct hostInfo *lsfHostInfo = NULL;
-int    numLsfHosts = 0;
+struct hostInfo *LIMhosts = NULL;
+int    numLIMhosts = 0;
 
 float maxCpuFactor = 0.0;
 struct sharedResource **sharedResources = NULL;
@@ -903,7 +903,6 @@ houseKeeping (int *hsKeeping)
 static void
 periodicCheck(void)
 {
-    static char fname[] = "periodicCheck";
     char *myhostnm;
     static time_t last_chk_time = 0;
     static int winConf = FALSE;
@@ -914,8 +913,7 @@ periodicCheck(void)
     static time_t last_jobPriUpdTime = 0;
     static time_t first_hostInfoRefreshTime = 0;
 
-    if (logclass & (LC_TRACE))
-        ls_syslog(LOG_DEBUG3, "%s: Entering this routine...", fname);
+    ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     if (last_chk_time == 0) {
         last_hostInfoRefreshTime = now;
@@ -925,9 +923,8 @@ periodicCheck(void)
 
     switchELog();
 
-    if ( jobPriorityUpdIntvl > 0 ) {
+    if (jobPriorityUpdIntvl > 0) {
         if (now - last_jobPriUpdTime >= jobPriorityUpdIntvl * 60 ) {
-
             TIMEIT(0, updateJobPriorityInPJL( ), "updateJobPriorityInPJL()");
             last_jobPriUpdTime = now;
         }
@@ -977,8 +974,6 @@ periodicCheck(void)
             winConf = TRUE;
         if (dispatch == FALSE && winConf == TRUE) {
             readNumber++;
-            mbdReConf(WINDOW_CONF);
-            pollSbatchds(WINDOW_CONF);
             winConf = FALSE;
         }
         last_checkConf = now;
@@ -1063,8 +1058,15 @@ authRequest(struct lsfAuth *auth,
     sprintf(buf, "mbatchd@%s", clusterName);
     putEauthServerEnvVar(buf);
 
-    if (!userok(s, from, hostName, local, auth, debug))
-        return LSBE_PERMISSION;
+    if (0) {
+        /* openlava 20 there is a memory problem that has
+         * to be fixed, root cause is xdr_shortLsInfo()
+         * invoked by getLSFAdmin() is freeing static
+         * memory we use from ls_gethostinfo().
+         */
+        if (!userok(s, from, hostName, local, auth, debug))
+            return LSBE_PERMISSION;
+    }
 
     switch(reqType) {
         case BATCH_JOB_SUB:
@@ -1095,7 +1097,7 @@ authRequest(struct lsfAuth *auth,
 static int
 forkOnRequest(mbdReqType req)
 {
-    if (daemonParams[LSB_DONT_FORK].paramValue)
+    if (daemonParams[MBD_DONT_FORK].paramValue)
         return 0;
 
     if (req == BATCH_JOB_INFO

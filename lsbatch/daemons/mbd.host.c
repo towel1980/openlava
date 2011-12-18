@@ -28,8 +28,8 @@ extern void addHost(struct hostInfo *lsf,
                     int override);
 
 static void   initHostStat(void);
-static void   hostJobs(struct hData *hp, int stateTransit);
-static void   hostQueues(struct hData *hp, int stateTransit);
+static void   hostJobs(struct hData *, int, int);
+static void   hostQueues(struct hData *, int);
 static void   copyHostInfo (struct hData *, struct hostInfoEnt *);
 static int    getAllHostInfoEnt (struct hostDataReply *, struct hData **,
                                  struct infoReq *);
@@ -38,10 +38,9 @@ static int    returnHostInfo(struct hostDataReply *, int, struct hData **,
 
 static struct resPair * getResPairs(struct hData *);
 static int    hasResReserve(struct resVal *);
-static void getAHostInfo (struct hData *hp);
 
-static void addMigrant(struct hostInfo *);
-static int goneMigrant(void);
+static void addRuntimeHost(struct hostInfo *);
+static int rmRuntimeHost(void);
 
 typedef enum {
     OK_UNREACH,
@@ -54,20 +53,20 @@ int
 checkHosts(struct infoReq *hostsReqPtr,
            struct hostDataReply *hostsReplyPtr)
 {
-    static char fname[] = "checkHosts";
     struct hData *hData;
     struct hData **hDList = NULL;
     struct gData *gp;
-    int i, k, numHosts = 0;
+    int i;
+    int k;
+    int numHosts = 0;
 
-    if (logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
+    ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     hostsReplyPtr->numHosts = 0;
     hostsReplyPtr->nIdx = allLsInfo->numIndx;
     hostsReplyPtr->hosts = my_calloc(numofhosts(),
                                      sizeof(struct hostInfoEnt),
-                                     "checkHosts");
+                                     __func__);
 
     for (i = 0; i < allLsInfo->nRes; i++) {
         if (allLsInfo->resTable[i].flags &  RESF_SHARED
@@ -86,7 +85,7 @@ checkHosts(struct infoReq *hostsReqPtr,
 
     for (i = 0; i < hostsReqPtr->numNames; i++) {
 
-        if (strcmp (hostsReqPtr->names[i], LOST_AND_FOUND) == 0) {
+        if (strcmp(hostsReqPtr->names[i], LOST_AND_FOUND) == 0) {
             if ((hData = getHostData(LOST_AND_FOUND)) != NULL
                 && hData->numJobs != 0
                 && (!hostsReqPtr->resReq
@@ -221,8 +220,8 @@ returnHostInfo(struct hostDataReply *hostsReplyPtr, int numHosts,
 
         for(k = 0; k < hostsReplyPtr->numHosts; k++) {
             lostandfound = 0;
-            if ( strcmp(hDList[i]->host, hDList[k]->host) == 0
-                 &&  strcmp(hDList[i]->host, LOST_AND_FOUND) == 0) {
+            if (strcmp(hDList[i]->host, hDList[k]->host) == 0
+                &&  strcmp(hDList[i]->host, LOST_AND_FOUND) == 0) {
 
                 struct hostInfoEnt *orgHInfo;
                 orgHInfo =  &(hostsReplyPtr->hosts[k]);
@@ -297,7 +296,7 @@ getAllHostInfoEnt(struct hostDataReply *hostsReplyPtr,
         hInfo = &(hostsReplyPtr->hosts[hostsReplyPtr->numHosts]);
         hashEntryPtr = h_nextEnt_(&hashSearchPtr);
 
-        if (strcmp (hData->host, LOST_AND_FOUND) == 0
+        if ((hData->flags & HOST_LOST_FOUND)
             && (hData->numJobs == 0
                 || (hostReq->resReq && hostReq->resReq[0] != '\0')))
             continue;
@@ -309,22 +308,21 @@ getAllHostInfoEnt(struct hostDataReply *hostsReplyPtr,
     if (numHosts == 0) {
         return (LSBE_BAD_HOST);
     }
-    return (returnHostInfo(hostsReplyPtr, numHosts, hDList, hostReq));
 
+    return (returnHostInfo(hostsReplyPtr, numHosts, hDList, hostReq));
 }
 
 struct hData *
-getHostData (char *host)
+getHostData(char *host)
 {
-    hEnt   *hostEnt;
+    hEnt *hostEnt;
     struct hostent *hp;
 
     hostEnt = h_getEnt_(&hostTab, host);
     if (hostEnt != NULL)
-        return (struct hData *)hostEnt->hData;
+        return hostEnt->hData;
 
-
-    if (strcmp (host, LOST_AND_FOUND) == 0)
+    if (strcmp(host, LOST_AND_FOUND) == 0)
         return NULL;
 
     if ((hp = Gethostbyname_(host)) == NULL)
@@ -334,7 +332,7 @@ getHostData (char *host)
     if (!hostEnt)
         return NULL;
 
-    return (struct hData *)hostEnt->hData;
+    return hostEnt->hData;
 }
 
 
@@ -449,7 +447,8 @@ pollSbatchds(int mbdRunFlag)
     static struct sTab stab;
     hEnt *ent;
     struct hData *hPtr;
-    int num, maxprobes;
+    int num;
+    int maxprobes;
     int result;
     char sendJobs;
 
@@ -475,20 +474,15 @@ pollSbatchds(int mbdRunFlag)
         if (hPtr->hStatus & HOST_STAT_REMOTE)
             continue;
 
-        if (strcmp (hPtr->host, LOST_AND_FOUND) == 0
-            && strcmp(ent->keyname, LOST_AND_FOUND) == 0 ) {
-
-            if (countHostJobs(hPtr) == 0)
-                freeHData(hPtr);
+        if (hPtr->flags & HOST_LOST_FOUND)
             continue;
-        }
 
         if (now - hPtr->pollTime < retryIntvl * msleeptime)
             continue;
 
         if (mbdRunFlag != NORMAL_RUN) {
-            if (mbdRunFlag & FIRST_START) {
 
+            if (mbdRunFlag & FIRST_START) {
                 TIMEIT(2, (result = probe_slave(hPtr, TRUE)), hPtr->host);
             } else {
                 if ((mbdRunFlag & WINDOW_CONF) &&
@@ -504,8 +498,8 @@ pollSbatchds(int mbdRunFlag)
 
             sendJobs = (hPtr->flags & HOST_NEEDPOLL);
             if (LS_ISUNAVAIL(hPtr->limStatus)) {
-                if (hPtr->sbdFail == 0) {
 
+                if (hPtr->sbdFail == 0) {
                     TIMEIT(2, (result = probe_slave(hPtr, sendJobs)),
                            hPtr->host);
                     if (result == ERR_NO_ERROR)
@@ -517,9 +511,10 @@ pollSbatchds(int mbdRunFlag)
 
                     maxprobes++;
                 }
-            } else if (LS_ISSBDDOWN(hPtr->limStatus)) {
-                if (hPtr->sbdFail == 0) {
 
+            } else if (LS_ISSBDDOWN(hPtr->limStatus)) {
+
+                if (hPtr->sbdFail == 0) {
                     TIMEIT(2, (result = probe_slave(hPtr, sendJobs)),
                            hPtr->host);
                 } else {
@@ -528,9 +523,7 @@ pollSbatchds(int mbdRunFlag)
                     maxprobes++;
                 }
             } else {
-
                 if (hPtr->sbdFail > 0 || sendJobs) {
-
                     TIMEIT(2, (result = probe_slave(hPtr, sendJobs)),
                            hPtr->host);
 
@@ -541,8 +534,12 @@ pollSbatchds(int mbdRunFlag)
             }
         }
         hPtr->pollTime = now;
-        if (logclass & LC_COMM)
-            ls_syslog (LOG_DEBUG3, "pollSbatchds: host <%s> status <%x> lim status<%x> result=%d sbdFail = %d", hPtr->host, hPtr->hStatus, *hPtr->limStatus, result, hPtr->sbdFail);
+
+        ls_syslog (LOG_DEBUG, "\
+%s: host %s status %x lim status %x result %d sbdFail %d",
+                   __func__, hPtr->host, hPtr->hStatus,
+                   *hPtr->limStatus, result, hPtr->sbdFail);
+
         if (result == ERR_NO_LIM)
             hPtr->hStatus |= HOST_STAT_NO_LIM;
         if (result == ERR_NO_ERROR)
@@ -551,16 +548,13 @@ pollSbatchds(int mbdRunFlag)
         if (result != ERR_UNREACH_SBD && result != ERR_FAIL) {
 
             if (hPtr->hStatus & HOST_STAT_UNAVAIL) {
-                hostJobs (hPtr, UNAVAIL_OK);
+                hostJobs(hPtr, UNAVAIL_OK, 0);
                 hPtr->hStatus &= ~HOST_STAT_UNAVAIL;
-
-                getAHostInfo(hPtr);
             }
-            if (hPtr->hStatus & HOST_STAT_UNREACH) {
-                hostJobs (hPtr,  UNREACH_OK);
-                hPtr->hStatus &= ~HOST_STAT_UNREACH;
 
-                getAHostInfo (hPtr);
+            if (hPtr->hStatus & HOST_STAT_UNREACH) {
+                hostJobs(hPtr,  UNREACH_OK, 0);
+                hPtr->hStatus &= ~HOST_STAT_UNREACH;
             }
             hPtr->sbdFail = 0;
             hPtr->flags &= ~HOST_NEEDPOLL;
@@ -569,28 +563,34 @@ pollSbatchds(int mbdRunFlag)
             hPtr->sbdFail++;
             if (lsberrno == LSBE_CONN_REFUSED)
                 hPtr->sbdFail++;
+
             if (!(hPtr->hStatus & (HOST_STAT_UNREACH | HOST_STAT_UNAVAIL))
                 && hPtr->sbdFail > 1) {
-                hostJobs (hPtr, OK_UNREACH);
-                if (logclass & LC_COMM)
-                    ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 6011, "%s: Declaring host %s unreachable. result=%d ")), "pollSbatchds", hPtr->host, result);   /* catgets 6011 */
+
+                hostJobs(hPtr, OK_UNREACH, 0);
+                ls_syslog(LOG_INFO, "\
+%s: Declaring host %s unreachable. result %d", __func__,
+                          hPtr->host, result);
                 hPtr->hStatus |= HOST_STAT_UNREACH;
 
             }
 
             if (hPtr->sbdFail > 2) {
+
                 if (!LS_ISUNAVAIL(hPtr->limStatus)) {
-                    if (logclass & LC_COMM)
-                        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 6012, "%s: The sbatchd on host <%s> is unreachable")), "pollSbatchds", hPtr->host);    /* catgets 6012 */
+                    ls_syslog(LOG_INFO, "\
+%s: The sbatchd on host %s is unreachable", __func__, hPtr->host);
                     hPtr->hStatus |= HOST_STAT_UNREACH;
                     hPtr->hStatus &= ~HOST_STAT_UNAVAIL;
                     hPtr->sbdFail = 1;
-                } if ((hPtr->sbdFail >=  max_sbdFail)) {
+
+                } if (hPtr->sbdFail >=  max_sbdFail) {
+
                     hPtr->sbdFail = max_sbdFail;
                     if (! (hPtr->hStatus & HOST_STAT_UNAVAIL)) {
-                        if (logclass & LC_COMM)
-                            ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 6013, "%s: The sbatchd on host <%s> is unavailable")), "pollSbatchds", hPtr->host);         /* catgets 6013 */
-                        hostJobs (hPtr, UNREACH_UNAVAIL);
+                        ls_syslog(LOG_INFO, "\
+%s: The sbatchd on host %s is unavailable", __func__, hPtr->host);
+                        hostJobs(hPtr, UNREACH_UNAVAIL, 0);
                         hPtr->hStatus |= HOST_STAT_UNAVAIL;
                         hPtr->hStatus &= ~HOST_STAT_UNREACH;
                     }
@@ -601,15 +601,19 @@ pollSbatchds(int mbdRunFlag)
 }
 
 int
-countHostJobs (struct hData *hData)
+countHostJobs(struct hData *hData)
 {
     struct jData *jp;
     int numJobs = 0, list, i;
 
     for (list = 0; list < NJLIST; list++) {
+
         if (list != SJL && list != FJL)
             continue;
-        for (jp = jDataList[list]->back; jp != jDataList[list]; jp = jp->back)
+
+        for (jp = jDataList[list]->back;
+             jp != jDataList[list];
+             jp = jp->back)
             for (i = 0; i < jp->numHostPtr; i++)
                 if (jp->hPtr && jp->hPtr[i] == hData)
                     numJobs++;
@@ -645,9 +649,7 @@ hStatChange(struct hData *hp, int newStatus)
         && !(newStatus & (HOST_STAT_UNAVAIL | HOST_STAT_UNREACH))) {
         hp->sbdFail = 0;
         hp->hStatus &= ~HOST_STAT_UNREACH;
-        hostJobs (hp, UNREACH_OK);
-
-        getAHostInfo(hp);
+        hostJobs(hp, UNREACH_OK, 0);
         return;
     }
 
@@ -659,81 +661,119 @@ hStatChange(struct hData *hp, int newStatus)
             hp->sbdFail++;
         if (hp->sbdFail > 1) {
             hp->hStatus |= HOST_STAT_UNREACH;
-            hostJobs (hp, OK_UNREACH);
-
+            hostJobs(hp, OK_UNREACH, 0);
         }
         return;
     }
 
     if ((hp->hStatus & HOST_STAT_UNAVAIL)
-        && !(newStatus & (HOST_STAT_UNAVAIL | HOST_STAT_UNREACH)))
-    {
-        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 6015, "%s: The sbatchd on host <%s> is up now")), "hStatChange", hp->host);  /* catgets 6015 */
+        && !(newStatus & (HOST_STAT_UNAVAIL | HOST_STAT_UNREACH))) {
+
+        ls_syslog(LOG_INFO, "\
+%s: The sbatchd on host %s is up now", __func__, hp->host);
 
         hp->sbdFail = 0;
         hp->hStatus &= ~HOST_STAT_UNAVAIL;
-        hostJobs(hp, UNAVAIL_OK);
-        getAHostInfo(hp);
+        hostJobs(hp, UNAVAIL_OK, 0);
     }
 }
 
 static void
-hostJobs(struct hData *hp, int stateTransit)
+hostJobs(struct hData *hPtr, int stateTransit, int kill)
 {
-    struct jData *jpbw;
+    struct jData *jPtr;
     struct jData *nextJobPtr;
+    int numJobs;
+    int numFound;
+    int cc;
 
-    for (jpbw = jDataList[SJL]->back;
-         jpbw != jDataList[SJL];
-         jpbw = nextJobPtr) {
+    numJobs = hPtr->numRUN + hPtr->numSSUSP + hPtr->numUSUSP;
+    numFound = 0;
+    /* Linear search through SJL to find which
+     * jobs are running on the host which is
+     * changing state, this does not happen
+     * that often so perhaps it is on.
+     */
+    for (jPtr = jDataList[SJL]->back;
+         jPtr != jDataList[SJL];
+         jPtr = nextJobPtr) {
 
-        nextJobPtr = jpbw->back;
+        nextJobPtr = jPtr->back;
 
-        if (hp != jpbw->hPtr[0])
+        if (numFound >= numJobs)
+            break;
+
+        if (hPtr != jPtr->hPtr[0])
             continue;
+
+        ++numFound;
 
         if ((stateTransit == UNREACH_OK
              || stateTransit == UNAVAIL_OK)
-            && (jpbw->jStatus & JOB_STAT_UNKWN)) {
-            jpbw->jStatus &= ~JOB_STAT_UNKWN;
-            log_newstatus(jpbw);
+            && (jPtr->jStatus & JOB_STAT_UNKWN)) {
+            jPtr->jStatus &= ~JOB_STAT_UNKWN;
+            log_newstatus(jPtr);
             continue;
         }
 
         if (stateTransit == OK_UNREACH
-            && !(jpbw->jStatus & JOB_STAT_UNKWN)) {
-            jpbw->jStatus |= JOB_STAT_UNKWN;
-            log_newstatus(jpbw);
+            && !(jPtr->jStatus & JOB_STAT_UNKWN)) {
+            jPtr->jStatus |= JOB_STAT_UNKWN;
+            log_newstatus(jPtr);
             continue;
         }
 
         if (stateTransit != UNREACH_UNAVAIL)
             continue;
 
-        if (jpbw->shared->jobBill.options & SUB_RERUNNABLE) {
+        if (jPtr->shared->jobBill.options & SUB_RERUNNABLE) {
             int sendMail;
-
-            if (jpbw->shared->jobBill.options & SUB_RERUNNABLE) {
+            /* Requeue the jobs regardless if on migrant host
+             * or not.
+             */
+            if (jPtr->shared->jobBill.options & SUB_RERUNNABLE) {
                 sendMail = TRUE;
             } else {
                 sendMail = FALSE;
             }
 
-            jpbw->endTime = now;
-            jpbw->newReason = EXIT_ZOMBIE;
-            jpbw->jStatus |= JOB_STAT_ZOMBIE;
+            jPtr->endTime = now;
+            jPtr->newReason = EXIT_ZOMBIE;
+            jPtr->jStatus |= JOB_STAT_ZOMBIE;
 
-            if ((jpbw->shared->jobBill.options & SUB_CHKPNTABLE)
-                && ((jpbw->shared->jobBill.options & SUB_RESTART)
-                    ||(jpbw->jStatus & JOB_STAT_CHKPNTED_ONCE))) {
-                jpbw->newReason |= EXIT_RESTART;
+            if ((jPtr->shared->jobBill.options & SUB_CHKPNTABLE)
+                && ((jPtr->shared->jobBill.options & SUB_RESTART)
+                    ||(jPtr->jStatus & JOB_STAT_CHKPNTED_ONCE))) {
+                jPtr->newReason |= EXIT_RESTART;
             }
-            inZomJobList(jpbw, sendMail);
-            jStatusChange(jpbw, JOB_STAT_EXIT, LOG_IT, "hostJobs");
+            inZomJobList(jPtr, sendMail);
+            jStatusChange(jPtr, JOB_STAT_EXIT, LOG_IT, "hostJobs");
+
+            continue;
+        }
+
+        if (kill) {
+            /* kill non rerunnable jobs on
+             * migrant host.
+             */
+            jPtr->newReason = EXIT_NORMAL;
+            jPtr->exitStatus = 255;
+            jPtr->shared->jobBill.options &= ~(SUB_RESTART | SUB_RESTART_FORCE);
+            jPtr->newReason &= ~(SUB_RESTART | SUB_RESTART_FORCE);
+            jStatusChange(jPtr, JOB_STAT_EXIT, LOG_IT, (char *)__func__);
+
+            /* Reset hosts' references
+             */
+            for (cc = 0; cc < jPtr->numHostPtr; cc++) {
+                jPtr->hPtr[cc] = NULL;
+            }
+            jPtr->numHostPtr = 1;
+            jPtr->hPtr[0] = getHostData(LOST_AND_FOUND);
         }
     }
 
-    hostQueues(hp, stateTransit);
+    if (0)
+        hostQueues(hPtr, stateTransit);
 }
 
 static void
@@ -907,25 +947,25 @@ getLsbHostInfo(void)
     getLsfHostInfo(FALSE);
 
     numofprocs = 0;
-    for (i = 0; i < numLsfHosts; i++) {
+    for (i = 0; i < numLIMhosts; i++) {
 
-        if (lsfHostInfo[i].isServer != TRUE)
+        if (LIMhosts[i].isServer != TRUE)
             continue;
 
-        if ((hPtr = getHostData(lsfHostInfo[i].hostName)) == NULL) {
+        if ((hPtr = getHostData(LIMhosts[i].hostName)) == NULL) {
 
             /* openlava add batch host with some
              * reasonable defaults.
              */
-            addMigrant(&lsfHostInfo[i]);
+            addRuntimeHost(&LIMhosts[i]);
             continue;
         }
 
-        hPtr->cpuFactor = lsfHostInfo[i].cpuFactor;
-        if (lsfHostInfo[i].maxCpus <= 0) {
+        hPtr->cpuFactor = LIMhosts[i].cpuFactor;
+        if (LIMhosts[i].maxCpus <= 0) {
             hPtr->numCPUs = 1;
         } else
-            hPtr->numCPUs = lsfHostInfo[i].maxCpus;
+            hPtr->numCPUs = LIMhosts[i].maxCpus;
 
         if (hPtr->flags & HOST_AUTOCONF_MXJ) {
             hPtr->maxJobs = hPtr->numCPUs;
@@ -936,20 +976,20 @@ getLsbHostInfo(void)
 
         numofprocs += hPtr->numCPUs;
         FREEUP (hPtr->hostType);
-        hPtr->hostType = safeSave (lsfHostInfo[i].hostType);
+        hPtr->hostType = safeSave (LIMhosts[i].hostType);
         FREEUP (hPtr->hostModel);
-        hPtr->hostModel = safeSave (lsfHostInfo[i].hostModel);
-        hPtr->maxMem    = lsfHostInfo[i].maxMem;
+        hPtr->hostModel = safeSave (LIMhosts[i].hostModel);
+        hPtr->maxMem    = LIMhosts[i].maxMem;
 
         if (hPtr->leftRusageMem == INFINIT_LOAD && hPtr->maxMem != 0)
             hPtr->leftRusageMem = hPtr->maxMem;
 
-        hPtr->maxSwap = lsfHostInfo[i].maxSwap;
-        hPtr->maxTmp  = lsfHostInfo[i].maxTmp;
-        hPtr->nDisks  = lsfHostInfo[i].nDisks;
+        hPtr->maxSwap = LIMhosts[i].maxSwap;
+        hPtr->maxTmp  = LIMhosts[i].maxTmp;
+        hPtr->nDisks  = LIMhosts[i].nDisks;
         FREEUP (hPtr->resBitMaps);
-        hPtr->resBitMaps = getResMaps(lsfHostInfo[i].nRes,
-                                      lsfHostInfo[i].resources);
+        hPtr->resBitMaps = getResMaps(LIMhosts[i].nRes,
+                                      LIMhosts[i].resources);
     }
 
     i = TRUE;
@@ -1012,6 +1052,10 @@ getLsbHostLoad(void)
 
         if ((hPtr = getHostData(hosts[i].hostName)) == NULL) {
             /* force update...
+             * Here a new host has been return by LIM but
+             * we don't know anything about it, by default
+             * we assume it is a migrant host and we rebuild
+             * all host information.
              */
             if (!update) {
                 getLsbHostInfo();
@@ -1085,7 +1129,7 @@ getLsbHostLoad(void)
     /* Detect which hosts has left the
      * cluster.
      */
-    gone = goneMigrant();
+    gone = rmRuntimeHost();
 
     if (update || gone)
         updHostList();
@@ -1119,10 +1163,11 @@ getHostsByResReq(struct resVal *resValPtr,
                           sizeof(struct hData *), fname);
     numHosts = 0;
     for (i = 0, k = 0; i < *num; i++) {
+
         INC_CNT(PROF_CNT_loopgetHostsByResReq);
         if (hosts[i] == NULL)
             continue;
-        if (strcmp (hosts[i]->host, LOST_AND_FOUND) == 0)
+        if (hosts[i]->flags & HOST_LOST_FOUND)
             continue;
 
         hData[k++] = hosts[i];
@@ -1454,7 +1499,7 @@ adjLsbLoad(struct jData *jpbw, int forResume, bool_t doAdj)
 }
 
 struct resVal *
-getReserveValues (struct resVal *jobResVal, struct resVal *qResVal)
+getReserveValues(struct resVal *jobResVal, struct resVal *qResVal)
 {
     static char fname[]= "getReserveValues";
     static int first = TRUE;
@@ -1553,22 +1598,29 @@ getLsfHostInfo(int retry)
 {
     int i;
 
+    /* openlava 2.0 we don't copy the host information
+     * we get from lim anymore for performance reasons.
+     * This also means thet we must always call this
+     * functiona sking about all lim hosts since the libray
+     * is keeping the memory state for us.
+     */
+
     TIMEIT(0,
-           lsfHostInfo = ls_gethostinfo("-",
-                                        &numLsfHosts,
-                                        NULL,
-                                        0,
-                                        LOCAL_ONLY),
+           LIMhosts = ls_gethostinfo("-",
+                                     &numLIMhosts,
+                                     NULL,
+                                     0,
+                                     LOCAL_ONLY),
            __func__);
 
     for (i = 0; i < 3 && hostList == NULL
              && lserrno == LSE_TIME_OUT && retry == TRUE; i++) {
         millisleep_(6000);
-        TIMEIT(0, lsfHostInfo = ls_gethostinfo("-",
-                                               &numLsfHosts,
-                                               NULL,
-                                               0,
-                                               LOCAL_ONLY),
+        TIMEIT(0, LIMhosts = ls_gethostinfo("-",
+                                            &numLIMhosts,
+                                            NULL,
+                                            0,
+                                            LOCAL_ONLY),
                __func__);
     }
 }
@@ -1578,18 +1630,18 @@ getLsfHostData(char *host)
 {
     int i;
 
-    if (lsfHostInfo == NULL || numLsfHosts <= 0 || host == NULL)
-        return (NULL);
+    if (LIMhosts == NULL || numLIMhosts <= 0 || host == NULL)
+        return NULL;
 
-    for (i = 0; i < numLsfHosts; i++) {
-        if (equalHost_(host, lsfHostInfo[i].hostName))
-            return (&lsfHostInfo[i]);
+    for (i = 0; i < numLIMhosts; i++) {
+        if (equalHost_(host, LIMhosts[i].hostName))
+            return &LIMhosts[i];
     }
-    return (NULL);
+    return NULL;
 }
 
 static int
-hasResReserve (struct resVal *resVal)
+hasResReserve(struct resVal *resVal)
 {
     int i;
 
@@ -1605,107 +1657,10 @@ hasResReserve (struct resVal *resVal)
 
 }
 
-static void
-getAHostInfo (struct hData *hp)
-{
-    static char fname[] = "getAHostInfo";
-    struct hostInfo *hostInfo;
-    struct qData *qp;
-    int i, j, num = 1, oldMaxCpus;
-
-
-    if (logclass & (LC_TRACE | LC_SCHED))
-        ls_syslog(LOG_DEBUG3, "%s: Entering this routine...", fname);
-
-    if (hp == NULL)
-        return;
-
-
-    TIMEIT(0, hostInfo = ls_gethostinfo("-", &num, &hp->host, num, LOCAL_ONLY),
-           fname);
-
-    for (i = 0; i < 3 && hostInfo == NULL
-             && lserrno == LSE_TIME_OUT; i++) {
-        millisleep_(6000);
-        TIMEIT(0, hostInfo = ls_gethostinfo("-", &num, &hp->host, num,
-                                            LOCAL_ONLY), fname);
-    }
-    if (hostInfo == NULL) {
-
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_gethostinfo");
-        return;
-    }
-    if (hostInfo[0].isServer != TRUE)
-        return;
-
-    hp->cpuFactor = hostInfo[0].cpuFactor;
-    oldMaxCpus = hp->numCPUs;
-    if (hp->numCPUs != hostInfo[0].maxCpus) {
-        if (hostInfo[0].maxCpus <= 0) {
-            hp->numCPUs = 1;
-        } else {
-            hp->numCPUs = hostInfo[0].maxCpus;
-        }
-        ls_syslog(LOG_DEBUG3, "%s: host <%s> CPU=%d", fname, hp->host, hp->numCPUs);
-    }
-
-
-
-    if (hp->flags & HOST_AUTOCONF_MXJ) {
-        hp->maxJobs = hp->numCPUs;
-    }
-
-
-
-    if (daemonParams[LSB_VIRTUAL_SLOT].paramValue) {
-        if (!strcasecmp("y", daemonParams[LSB_VIRTUAL_SLOT].paramValue)) {
-            if (hp->maxJobs > 0 && hp->maxJobs < INFINIT_INT) {
-                hp->numCPUs = hp->maxJobs;
-            }
-        }
-    }
-    numofprocs += (hp->numCPUs - oldMaxCpus);
-    FREEUP (hp->hostType);
-    hp->hostType = safeSave (hostInfo[0].hostType);
-    FREEUP (hp->hostModel);
-    hp->hostModel = safeSave (hostInfo[0].hostModel);
-    hp->maxMem    = hostInfo[0].maxMem;
-    hp->maxSwap    = hostInfo[0].maxSwap;
-    hp->maxTmp    = hostInfo[0].maxTmp;
-    hp->nDisks    = hostInfo[0].nDisks;
-    FREEUP (hp->resBitMaps);
-    hp->resBitMaps  = getResMaps(hostInfo[0].nRes, hostInfo[0].resources);
-
-
-    for (i = 0; i < numLsfHosts; i++) {
-        if (strcmp (lsfHostInfo[i].hostName, hostInfo[0].hostName) != 0)
-            continue;
-        FREEUP (lsfHostInfo[i].hostType);
-        FREEUP (lsfHostInfo[i].hostModel);
-        if (lsfHostInfo[i].resources != NULL) {
-            for (j = 0; j < lsfHostInfo[i].nRes; j++)  {
-                FREEUP (lsfHostInfo[i].resources[j]);
-            }
-            FREEUP (lsfHostInfo[i].resources);
-        }
-        copyLsfHostInfo (&lsfHostInfo[i], hostInfo);
-        break;
-    }
-
-
-    i = TRUE;
-    for (qp = qDataList->forw; (qp != qDataList); qp = qp->forw)
-        queueHostsPF (qp, &i);
-
-    if (logclass & LC_TRACE)
-        ls_syslog(LOG_DEBUG2, "%s: Leaving this routine...", fname);
-
-}
-
-/* addMigrant()
+/* addRuntimeHost()
  */
 static void
-addMigrant(struct hostInfo *info)
+addRuntimeHost(struct hostInfo *info)
 {
     struct hData hPtr;
 
@@ -1723,10 +1678,10 @@ addMigrant(struct hostInfo *info)
     addHost(info, &hPtr, NULL, 0);
 }
 
-/* goneMigrant()
+/* rmRuntimeHost()
  */
 static int
-goneMigrant(void)
+rmRuntimeHost(void)
 {
     struct hData *hPtr;
     struct hData *next;
@@ -1751,10 +1706,12 @@ goneMigrant(void)
 
         /* jobs? we have to think a bit
          * about what's the correct state
-         * transition here.
+         * transition here. For now move the
+         * jobs by 2 states and kill running
+         * jobs and requeue rerunnable ones.
          */
-        hostJobs(hPtr, OK_UNREACH);
-        hostJobs(hPtr, UNREACH_UNAVAIL);
+        hostJobs(hPtr, OK_UNREACH, 0);
+        hostJobs(hPtr, UNREACH_UNAVAIL, 1);
         freeHData(hPtr);
         gone = 1;
 
@@ -1770,9 +1727,11 @@ goneMigrant(void)
 int
 numofhosts(void)
 {
-    assert(hostTab.numEnts == hostList->num);
+    /*
+     * assert(hostTab.numEnts == hostList->num);
+     */
 
-    return hostTab.numEnts;
+    return hostList->num;
 }
 
 int
@@ -1871,8 +1830,6 @@ initLSBLoad(void)
         hPtr->flags |= HOST_UPDATE_LOAD;
 
     } /* for ( i = 0; i < num; i++) */
-
-    assert(num == hostTab.numEnts);
 
     return 0;
 }

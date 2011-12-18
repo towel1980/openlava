@@ -813,11 +813,14 @@ typedef enum profCounterType {
 #define QUEUE_REMOTEONLY  0x04
 #define QUEUE_UPDATE_USABLE 0x08
 
-#define HOST_UPDATE  (1 << 0)
-#define HOST_NEEDPOLL  (1 << 1)
+/* Various host flags..
+ */
+#define HOST_UPDATE       (1 << 0)
+#define HOST_NEEDPOLL     (1 << 1)
 #define HOST_UPDATE_LOAD  (1 << 2)
-#define HOST_JOB_RESUME  (1 << 3)
+#define HOST_JOB_RESUME   (1 << 3)
 #define HOST_AUTOCONF_MXJ (1 << 5)
+#define HOST_LOST_FOUND   (1 << 6)
 
 #define USER_GROUP     0x001
 #define USER_UPDATE    0x002
@@ -928,8 +931,8 @@ extern int                     nSbdConnections;
 extern int                     maxSbdConnections;
 extern int                     maxJobPerSession;
 
-extern struct hostInfo *       lsfHostInfo;
-extern int                     numLsfHosts;
+extern struct hostInfo *       LIMhosts;
+extern int                     numLIMhosts;
 
 extern float                   maxCpuFactor;
 extern int                     freedSomeReserveSlot;
@@ -1291,7 +1294,6 @@ extern void                 checkQusable(struct qData *, int, int);
 extern void                 updHostLeftRusageMem(struct jData *, int);
 extern int                  minit(int);
 extern struct qData *       lostFoundQueue(void);
-extern struct hData *       lostFoundHost(void);
 extern void                 freeHData(struct hData *);
 extern void                 deleteQData(struct qData *);
 

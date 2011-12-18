@@ -655,14 +655,19 @@ ls_info(void)
     static struct lsInfo lsInfo;
 
     if (initenv_(NULL, NULL) < 0)
-        return (NULL);
+        return NULL;
 
-    if (callLim_(LIM_GET_INFO, NULL, NULL, &lsInfo, xdr_lsInfo, NULL, _USE_TCP_, NULL) < 0)
-        return (NULL);
+    if (callLim_(LIM_GET_INFO,
+                 NULL,
+                 NULL,
+                 &lsInfo,
+                 xdr_lsInfo,
+                 NULL,
+                 _USE_TCP_,
+                 NULL) < 0)
+        return NULL;
 
-
-    return (&lsInfo);
-
+    return &lsInfo;
 }
 
 
