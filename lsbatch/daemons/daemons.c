@@ -85,6 +85,7 @@ struct config_param daemonParams[] = {
     {"LSB_VIRTUAL_SLOT", NULL},
     {"LSB_STDOUT_DIRECT", NULL},
     {"MBD_DONT_FORK", NULL},
+    {"LIM_NO_MIGRANT_HOSTS", NULL},
     {NULL, NULL}
 };
 
@@ -93,14 +94,15 @@ extern int removeSpoolFile(const char*,const char*);
 extern char* getSpoolHostBySpoolFile(const char *);
 
 int
-init_ServSock (u_short port)
+init_ServSock(u_short port)
 {
     int ch;
 
     ch = chanServSocket_(SOCK_STREAM, ntohs(port), 1024, CHAN_OP_SOREUSE);
     if (ch < 0) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, "init_ServSock", "chanServSocket_");
-        return(-1);
+        ls_syslog(LOG_ERR, "\
+%s: chanServSocket_() failed to get socket %m", __func__);
+        return -1;
     }
 
     return ch;
@@ -118,7 +120,7 @@ rcvJobFile(int chfd, struct lenData *jf)
     if ((cc = chanRead_(chfd, NET_INTADDR_(&jf->len), NET_INTSIZE_)) !=
 	NET_INTSIZE_) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanRead_");
-	return (-1);
+	return -1;
     }
 
     jf->len = ntohl(jf->len);
@@ -127,15 +129,15 @@ rcvJobFile(int chfd, struct lenData *jf)
     if ((cc = chanRead_(chfd, jf->data, jf->len)) != jf->len) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "chanRead_");
         free(jf->data);
-	return (-1);
+	return -1;
     }
 
-    return (0);
+    return 0;
 }
 
 int
-do_readyOp (XDR *xdrs, int chanfd, struct sockaddr_in *from,
-               struct LSFHeader *reqHdr )
+do_readyOp(XDR *xdrs, int chanfd, struct sockaddr_in *from,
+           struct LSFHeader *reqHdr )
 {
     static char fname[]="do_readyOp";
     XDR xdrs2;
@@ -173,7 +175,7 @@ do_readyOp (XDR *xdrs, int chanfd, struct sockaddr_in *from,
 
 
 void childRemoveSpoolFile(const char* spoolFile, int options,
-				 const struct passwd* pwUser)
+                          const struct passwd* pwUser)
 {
     char fname[] = "childRemoveSpoolFile";
     char apiName[] = "ls_initrex";
@@ -187,7 +189,7 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
 
     status = -1;
 
-    if ( ( fromHost =  (char *) getSpoolHostBySpoolFile(spoolFile)) != NULL) {
+    if ((fromHost = (char *)getSpoolHostBySpoolFile(spoolFile)) != NULL) {
         strcpy( hostName, fromHost );
     } else {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 8000,
@@ -196,9 +198,9 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
         goto Done;
     }
 
-    if ( pwUser == NULL ) {
+    if (pwUser == NULL) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 8001,
-	    "%s: Parameter const struct passwd * pwUser is NULL!") /* catgets 8001 */
+                                         "%s: Parameter const struct passwd * pwUser is NULL") /* catgets 8001 */
             ,fname);
        goto Done;
     }
@@ -211,29 +213,29 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
         strcpy(dirName, spoolFile);
     }
 
-    sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3000,
-            "%s: Unable to remove spool file:\n,\'%s\'\n on host %s\n") /* catgets 3000 */
-            ,fname, dirName ,fromHost );
+    sprintf(errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3000,
+                                  "%s: Unable to remove spool file:\n,\'%s\'\n on host %s\n"), /* catgets 3000 */
+            fname, dirName, fromHost);
 
-    if ( ! (options &  FORK_REMOVE_SPOOL_FILE) ) {
+    if (!(options &  FORK_REMOVE_SPOOL_FILE)) {
 
-        if ( (options &  CALL_RES_IF_NEEDED) ) {
+        if ((options &  CALL_RES_IF_NEEDED)) {
             if (ls_initrex(1, 0) < 0) {
                 status = -1;
                 sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3001,
-                  "%s: %s failed when trying to delete %s from %s\n") /* catgets 3001 */
-                  ,fname, apiName, dirName, fromHost );
+                                               "%s: %s failed when trying to delete %s from %s\n"), /* catgets 3001 */
+                         fname, apiName, dirName, fromHost);
                 goto Error;
             }
         }
 
-        chuser( pwUser->pw_uid );
+        chuser(pwUser->pw_uid);
 
-        status = removeSpoolFile( hostName, dirName );
+        status = removeSpoolFile(hostName, dirName);
 
         chuser(batchId);
 
-        if ( status != 0 ) {
+        if (status != 0) {
             goto Error;
         }
         goto Done;
@@ -246,22 +248,22 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
                  closeExceptFD(-1);
             }
 
-            if ( (options &  CALL_RES_IF_NEEDED) ) {
+            if ((options &  CALL_RES_IF_NEEDED)) {
                 if (ls_initrex(1, 0) < 0) {
                     status = -1;
                     sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3001,
-                      "%s: %s failed when trying to delete %s from %s\n") /* catgets 3001 */
-                      ,fname, apiName, dirName, fromHost );
+                                                   "%s: %s failed when trying to delete %s from %s\n"), /* catgets 3001 */
+                             fname, apiName, dirName, fromHost );
                     goto Error;
                 }
             }
 
-            chuser( pwUser->pw_uid );
+            chuser(pwUser->pw_uid);
             status = 0;
-            if ( removeSpoolFile( hostName, dirName ) == 0 ) {
-                exit( 0 );
+            if (removeSpoolFile(hostName, dirName) == 0) {
+                exit(0);
             } else {
-                exit( -1);
+                exit(-1);
             }
             goto Done;
             break;
@@ -273,27 +275,20 @@ void childRemoveSpoolFile(const char* spoolFile, int options,
             }
             status = -1;
             sprintf( errMsg, _i18n_msg_get(ls_catd , NL_SETN, 3002,
-              "%s: Unable to fork to remove spool file:\n,\'%s\'\n on host %s\n") /* catgets 3002 */
-              ,fname, dirName ,fromHost );
-
+                                           "%s: Unable to fork to remove spool file:\n,\'%s\'\n on host %s\n"), /* catgets 3002 */
+                     fname, dirName ,fromHost );
             goto Error;
-
         default:
-
             status = 0;
             goto Done;
     }
 
 Error:
 
-    if ( status == -1 )
-    {
-
-
+    if (status == -1) {
         lsb_merr(errMsg);
     }
 Done:
-
     return;
 }
 

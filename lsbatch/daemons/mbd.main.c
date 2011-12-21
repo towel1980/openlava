@@ -92,7 +92,7 @@ struct hTab uDataList;
 /* Host data main global data structures.
  */
 struct hTab hostTab;
-struct list_ *hostList = NULL;
+LIST_T *hostList = NULL;
 
 struct qData *qDataList = NULL;
 struct jData *jDataList[ALLJLIST];

@@ -39,8 +39,8 @@ static int    returnHostInfo(struct hostDataReply *, int, struct hData **,
 static struct resPair * getResPairs(struct hData *);
 static int    hasResReserve(struct resVal *);
 
-static void addRuntimeHost(struct hostInfo *);
-static int rmRuntimeHost(void);
+static void addMigrantHost(struct hostInfo *);
+static int rmMigrantHost(void);
 
 typedef enum {
     OK_UNREACH,
@@ -957,7 +957,7 @@ getLsbHostInfo(void)
             /* openlava add batch host with some
              * reasonable defaults.
              */
-            addRuntimeHost(&LIMhosts[i]);
+            addMigrantHost(&LIMhosts[i]);
             continue;
         }
 
@@ -1013,12 +1013,16 @@ getLsbHostLoad(void)
     ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     /* Reset the HOST_UPDATE flag to detect migrant
-     * hosts that left the cluster.
+     * hosts that left the cluster. Only if allow
+     * migrants and the hostlist is already built.
      */
-    for (hPtr = (struct hData *)hostList->back;
-         hPtr != (void *)hostList;
-         hPtr = hPtr->back) {
-        hPtr->flags &= ~HOST_UPDATE;
+    if (! daemonParams[LIM_NO_MIGRANT_HOSTS].paramValue
+        && hostList) {
+        for (hPtr = (struct hData *)hostList->back;
+             hPtr != (void *)hostList;
+             hPtr = (struct hData *)hPtr->back) {
+            hPtr->flags &= ~HOST_UPDATE;
+        }
     }
 
     num = 0;
@@ -1057,7 +1061,8 @@ getLsbHostLoad(void)
              * we assume it is a migrant host and we rebuild
              * all host information.
              */
-            if (!update) {
+            if (! daemonParams[LIM_NO_MIGRANT_HOSTS].paramValue
+                && !update) {
                 getLsbHostInfo();
                 update = 1;
                 --i;
@@ -1065,8 +1070,9 @@ getLsbHostLoad(void)
             }
 
             ls_syslog(LOG_ERR, "\
-%s: host %s unknown to MBD", __func__, hosts[i].hostName);
-            mbdDie(MASTER_FATAL);
+%s: host %s unknown to MBD at this moment.",
+                      __func__, hosts[i].hostName);
+            continue;
         }
 
         if (!LS_ISUNAVAIL(hosts[i].status))
@@ -1127,12 +1133,22 @@ getLsbHostLoad(void)
     }
 
     /* Detect which hosts has left the
-     * cluster.
+     * cluster only if the migrant hosts
+     * are not disabled in which case
+     * no point in look for migrants.
      */
-    gone = rmRuntimeHost();
+    if (! daemonParams[LIM_NO_MIGRANT_HOSTS].paramValue) {
 
-    if (update || gone)
-        updHostList();
+        gone = rmMigrantHost();
+        if (update || gone) {
+            /* At runtime during scheduling it is
+             * important for performance reasons
+             * that we call this function
+             * only when the host set has changed.
+             */
+            updHostList();
+        }
+    }
 
     return 0;
 }
@@ -1657,10 +1673,10 @@ hasResReserve(struct resVal *resVal)
 
 }
 
-/* addRuntimeHost()
+/* addMigrantHost()
  */
 static void
-addRuntimeHost(struct hostInfo *info)
+addMigrantHost(struct hostInfo *info)
 {
     struct hData hPtr;
 
@@ -1678,14 +1694,17 @@ addRuntimeHost(struct hostInfo *info)
     addHost(info, &hPtr, NULL, 0);
 }
 
-/* rmRuntimeHost()
+/* rmMigrantHost()
  */
 static int
-rmRuntimeHost(void)
+rmMigrantHost(void)
 {
     struct hData *hPtr;
     struct hData *next;
     int gone;
+
+    if (hostList == NULL)
+        return 0;
 
     gone = 0;
     for (hPtr = (struct hData *)hostList->back;
@@ -1727,109 +1746,5 @@ rmRuntimeHost(void)
 int
 numofhosts(void)
 {
-    /*
-     * assert(hostTab.numEnts == hostList->num);
-     */
-
-    return hostList->num;
-}
-
-int
-initLSBLoad(void)
-{
-    static int errorcnt;
-    struct hostLoad *hosts;
-    int i;
-    int num;
-    int j;
-    struct hData *hPtr;
-
-    ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
-
-    num = 0;
-    hosts = ls_loadofhosts("-:server",
-                           &num,
-                           EFFECTIVE | LOCAL_ONLY,
-                           NULL,
-                           NULL,
-                           0);
-    if (hosts == NULL) {
-        if (lserrno == LSE_LIM_DOWN) {
-            ls_syslog(LOG_ERR, "%s: failed, lim is down %M", __func__);
-            mbdDie(MASTER_FATAL);
-        }
-        errorcnt++;
-        if (errorcnt > MAX_FAIL) {
-            ls_syslog(LOG_ERR, "\
-%s: %s() failed for %d times: %M", __func__, errorcnt);
-            mbdDie(MASTER_FATAL);
-        }
-        return -1;
-    }
-    errorcnt = 0;
-
-    assert(hostList == NULL);
-    hostList = listmake("Host List");
-
-    for (i = 0; i < num; i++) {
-        int k;
-
-        ls_syslog(LOG_DEBUG2, "\
-%s: %s host status %x", __func__,
-                  hosts[i].hostName, hosts[i].status[0]);
-
-        if ((hPtr = getHostData(hosts[i].hostName)) == NULL) {
-            assert(hPtr);
-            ls_syslog(LOG_ERR, "\
-%s: host %s unknown to MBD", __func__, hosts[i].hostName);
-            mbdDie(MASTER_FATAL);
-        }
-
-        /* yuhuu....
-         */
-        listpush(hostList, (struct list_ *)hPtr);
-
-        if (!LS_ISUNAVAIL(hosts[i].status))
-            hPtr->hStatus &= ~HOST_STAT_NO_LIM;
-
-        for (j = 0; j < allLsInfo->numIndx; j++) {
-            hPtr->lsfLoad[j] = hosts[i].li[j];
-            hPtr->lsbLoad[j] = hosts[i].li[j];
-        }
-
-        for (j = 0; j < 1 + GET_INTNUM(allLsInfo->numIndx); j++)
-            hPtr->limStatus[j] = hosts[i].status[j];
-
-        hPtr->hStatus &= ~HOST_STAT_BUSY;
-        hPtr->hStatus &= ~HOST_STAT_LOCKED;
-        hPtr->hStatus &= ~HOST_STAT_LOCKED_MASTER;
-
-        for (k = 0; k < allLsInfo->numIndx; k++) {
-
-            if (hPtr->lsbLoad[k] >= INFINIT_LOAD
-                || hPtr->lsbLoad[k] <= -INFINIT_LOAD)
-                continue;
-
-            if (allLsInfo->resTable[k].orderType == INCR) {
-                if (hPtr->lsfLoad[k] >= hPtr->loadStop[k]) {
-                    hPtr->hStatus |= HOST_STAT_BUSY;
-                }
-                if (hPtr->lsbLoad[k] >= hPtr->loadSched[k]){
-                    hPtr->hStatus |= HOST_STAT_BUSY;
-                }
-            } else {
-                if (hPtr->lsfLoad[k] <= hPtr->loadStop[k]) {
-                    hPtr->hStatus |= HOST_STAT_BUSY;
-                }
-                if (hPtr->lsbLoad[k]<= hPtr->loadSched[k]){
-                    hPtr->hStatus |= HOST_STAT_BUSY;
-                }
-            }
-        }
-
-        hPtr->flags |= HOST_UPDATE_LOAD;
-
-    } /* for ( i = 0; i < num; i++) */
-
-    return 0;
+    return LIST_NUM_ENTRIES(hostList);
 }

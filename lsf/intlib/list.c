@@ -40,19 +40,19 @@ listDestroy(LIST_T *list, void (*destroy)(LIST_ENTRY_T *))
     LIST_ENTRY_T *entry;
 
     while (! LIST_IS_EMPTY(list)) {
-	entry = list->forw;
+        entry = list->forw;
 
-	listRemoveEntry(list, entry);
-	if (destroy)
-	    (*destroy)(entry);
-	else
-	    free(entry);
+        listRemoveEntry(list, entry);
+        if (destroy)
+            (*destroy)(entry);
+        else
+            free(entry);
     }
 
     if (list->allowObservers) {
 
-	listDestroy(list->observers,
-		    (LIST_ENTRY_DESTROY_FUNC_T)&listObserverDestroy);
+        listDestroy(list->observers,
+                    (LIST_ENTRY_DESTROY_FUNC_T)&listObserverDestroy);
     }
 
     free(list->name);
@@ -64,14 +64,14 @@ listAllowObservers(LIST_T *list)
 {
     if (list->allowObservers)
 
-	return 0;
+        return 0;
 
     list->allowObservers = TRUE;
     list->observers = listCreate("Observer list");
 
     if (! list->observers)
 
-	return(-1);
+        return(-1);
 
     return(0);
 }
@@ -80,7 +80,7 @@ LIST_ENTRY_T *
 listGetFrontEntry(LIST_T *list)
 {
     if (LIST_IS_EMPTY(list))
-	return NULL;
+        return NULL;
 
     return list->forw;
 }
@@ -89,13 +89,15 @@ LIST_ENTRY_T *
 listGetBackEntry(LIST_T *list)
 {
     if (LIST_IS_EMPTY(list))
-	return NULL;
+        return NULL;
 
     return list->back;
 }
 
 int
-listInsertEntryBefore(LIST_T * list, LIST_ENTRY_T *succ, LIST_ENTRY_T *entry)
+listInsertEntryBefore(LIST_T * list,
+                      LIST_ENTRY_T *succ,
+                      LIST_ENTRY_T *entry)
 {
     entry->forw = succ;
     entry->back = succ->back;
@@ -103,12 +105,12 @@ listInsertEntryBefore(LIST_T * list, LIST_ENTRY_T *succ, LIST_ENTRY_T *entry)
     succ->back = entry;
 
     if (list->allowObservers && ! LIST_IS_EMPTY(list->observers)) {
-	LIST_EVENT_T event;
+        LIST_EVENT_T event;
 
-	event.type = LIST_EVENT_ENTER;
-	event.entry = entry;
+        event.type = LIST_EVENT_ENTER;
+        event.entry = entry;
 
-	listNotifyObservers(list, &event);
+        listNotifyObservers(list, &event);
     }
 
     list->numEnts++;
@@ -138,8 +140,8 @@ listInsertEntryAtBack(LIST_T * list, LIST_ENTRY_T *entry)
 
 LIST_ENTRY_T *
 listSearchEntry(LIST_T *list, void *subject,
-		bool_t (*equal)(void *, void *, int),
-		int hint)
+                bool_t (*equal)(void *, void *, int),
+                int hint)
 {
     LIST_ITERATOR_T iter;
     LIST_ENTRY_T *ent;
@@ -148,10 +150,10 @@ listSearchEntry(LIST_T *list, void *subject,
     listIteratorAttach(&iter, list);
 
     for (ent = listIteratorGetCurEntry(&iter);
-	 ent != NULL;
-	 listIteratorNext(&iter, &ent)) {
-	if ((*equal)((void *)ent, subject, hint) == TRUE)
-	    return ent;
+         ent != NULL;
+         listIteratorNext(&iter, &ent)) {
+        if ((*equal)((void *)ent, subject, hint) == TRUE)
+            return ent;
     }
 
     return NULL;
@@ -167,12 +169,12 @@ listRemoveEntry(LIST_T *list, LIST_ENTRY_T *entry)
     entry->forw->back = entry->back;
 
     if (list->allowObservers && ! LIST_IS_EMPTY(list->observers)) {
-	LIST_EVENT_T event;
+        LIST_EVENT_T event;
 
-	event.type = LIST_EVENT_LEAVE;
-	event.entry = entry;
+        event.type = LIST_EVENT_LEAVE;
+        event.entry = entry;
 
-	(void) listNotifyObservers(list, &event);
+        (void) listNotifyObservers(list, &event);
     }
 
     list->numEnts--;
@@ -187,27 +189,27 @@ listNotifyObservers(LIST_T *list, LIST_EVENT_T *event)
     listIteratorAttach(&iter, list->observers);
 
     for (observer = (LIST_OBSERVER_T *)listIteratorGetCurEntry(&iter);
-	 ! listIteratorIsEndOfList(&iter);
-	 listIteratorNext(&iter, (LIST_ENTRY_T **)&observer))
+         ! listIteratorIsEndOfList(&iter);
+         listIteratorNext(&iter, (LIST_ENTRY_T **)&observer))
     {
-	if (observer->select != NULL) {
-	    if (! (*observer->select)(observer->extra, event))
-		continue;
-	}
+        if (observer->select != NULL) {
+            if (! (*observer->select)(observer->extra, event))
+                continue;
+        }
 
-	switch (event->type) {
-	case (int) LIST_EVENT_ENTER:
-	    if (observer->enter)
-		(*observer->enter)(list, observer->extra, event);
-	    break;
-	case (int) LIST_EVENT_LEAVE:
-	    if (observer->leave_)
-		(*observer->leave_)(list, observer->extra, event);
-	    break;
-	default:
-	    listerrno = LIST_ERR_BADARG;
-	    return -1;
-	}
+        switch (event->type) {
+        case (int) LIST_EVENT_ENTER:
+            if (observer->enter)
+                (*observer->enter)(list, observer->extra, event);
+            break;
+        case (int) LIST_EVENT_LEAVE:
+            if (observer->leave_)
+                (*observer->leave_)(list, observer->extra, event);
+            break;
+        default:
+            listerrno = LIST_ERR_BADARG;
+            return -1;
+        }
     }
 
     return 0;
@@ -215,70 +217,70 @@ listNotifyObservers(LIST_T *list, LIST_EVENT_T *event)
 
 void
 list2Vector(LIST_T *list, int direction, void *vector,
-	    void (*putVecEnt)(void *vector, int index, LIST_ENTRY_T *entry))
+            void (*putVecEnt)(void *vector, int index, LIST_ENTRY_T *entry))
 {
     LIST_ITERATOR_T iter;
     LIST_ENTRY_T *entry;
     int entIdx;
 
     if (direction == 0)
-	direction = LIST_TRAVERSE_FORWARD;
+        direction = LIST_TRAVERSE_FORWARD;
 
     LIST_ITERATOR_ZERO_OUT(&iter);
     listIteratorAttach(&iter, list);
 
     if (direction & LIST_TRAVERSE_BACKWARD)
-	listIteratorSetCurEntry(&iter, listGetBackEntry(list), FALSE);
+        listIteratorSetCurEntry(&iter, listGetBackEntry(list), FALSE);
 
     entIdx = 0;
     for (entry = listIteratorGetCurEntry(&iter);
-	 entry != NULL;
-	 (direction & LIST_TRAVERSE_FORWARD) ?
-	 listIteratorNext(&iter, &entry) : listIteratorPrev(&iter, &entry))
+         entry != NULL;
+         (direction & LIST_TRAVERSE_FORWARD) ?
+         listIteratorNext(&iter, &entry) : listIteratorPrev(&iter, &entry))
     {
-	if (putVecEnt != NULL)
-	    (*putVecEnt)(vector, entIdx, entry);
+        if (putVecEnt != NULL)
+            (*putVecEnt)(vector, entIdx, entry);
         else
-	    *(void **)((long)vector + entIdx * sizeof(void *)) = (void *)entry;
+            *(void **)((long)vector + entIdx * sizeof(void *)) = (void *)entry;
 
-	entIdx++;
+        entIdx++;
     }
 }
 
 void
 listDisplay(LIST_T *list,
-	    int direction,
-	    void (*displayFunc)(LIST_ENTRY_T *, void *),
-	    void *hint)
+            int direction,
+            void (*displayFunc)(LIST_ENTRY_T *, void *),
+            void *hint)
 {
     LIST_ITERATOR_T iter;
     LIST_ENTRY_T *entry;
 
     if (direction == 0)
-	direction = LIST_TRAVERSE_FORWARD;
+        direction = LIST_TRAVERSE_FORWARD;
 
     LIST_ITERATOR_ZERO_OUT(&iter);
     listIteratorAttach(&iter, list);
 
     if (direction & LIST_TRAVERSE_BACKWARD)
-	listIteratorSetCurEntry(&iter, listGetBackEntry(list), FALSE);
+        listIteratorSetCurEntry(&iter, listGetBackEntry(list), FALSE);
 
     for (entry = listIteratorGetCurEntry(&iter);
-	 entry != NULL;
-	 (direction & LIST_TRAVERSE_FORWARD) ?
-	 listIteratorNext(&iter, &entry) : listIteratorPrev(&iter, &entry))
+         entry != NULL;
+         (direction & LIST_TRAVERSE_FORWARD) ?
+         listIteratorNext(&iter, &entry) : listIteratorPrev(&iter, &entry))
     {
-	(*displayFunc)(entry, hint);
+        (*displayFunc)(entry, hint);
     }
 }
 
 void
 listCat(LIST_T *list,
-	int direction,
-	char *buffer,
-	int bufferSize,
-	char * (*catFunc)(LIST_ENTRY_T *, void *),
-	void *hint)
+        int direction,
+        char *buffer,
+        int bufferSize,
+        char * (*catFunc)(LIST_ENTRY_T *, void *),
+        void *hint)
 {
     LIST_ITERATOR_T iter;
     LIST_ENTRY_T *entry;
@@ -286,33 +288,33 @@ listCat(LIST_T *list,
 
     buffer[0] = '\000';
     if (direction == 0)
-	direction = LIST_TRAVERSE_FORWARD;
+        direction = LIST_TRAVERSE_FORWARD;
 
     LIST_ITERATOR_ZERO_OUT(&iter);
     listIteratorAttach(&iter, list);
 
     if (direction & LIST_TRAVERSE_BACKWARD)
-	listIteratorSetCurEntry(&iter, listGetBackEntry(list), FALSE);
+        listIteratorSetCurEntry(&iter, listGetBackEntry(list), FALSE);
 
     curSize = 0;
     for (entry = listIteratorGetCurEntry(&iter);
-	 entry != NULL;
-	 (direction & LIST_TRAVERSE_FORWARD) ?
-	 listIteratorNext(&iter, &entry) : listIteratorPrev(&iter, &entry))
+         entry != NULL;
+         (direction & LIST_TRAVERSE_FORWARD) ?
+         listIteratorNext(&iter, &entry) : listIteratorPrev(&iter, &entry))
     {
-	char *str;
+        char *str;
 
-	str = (*catFunc)(entry, hint);
-	if (! str) {
-	    continue;
-	}
+        str = (*catFunc)(entry, hint);
+        if (! str) {
+            continue;
+        }
 
-	if (curSize + strlen(str) > bufferSize - 1) {
-	    break;
-	}
+        if (curSize + strlen(str) > bufferSize - 1) {
+            break;
+        }
 
-	strcat(buffer, str);
-	curSize += strlen(str);
+        strcat(buffer, str);
+        curSize += strlen(str);
     }
 
 }
@@ -328,21 +330,21 @@ listDup(LIST_T* list, int sizeOfEntry)
 
     newList = listCreate(list->name);
     if (! newList) {
-	return NULL;
+        return NULL;
     }
 
     LIST_ITERATOR_ZERO_OUT(&iter);
     listIteratorAttach(&iter, list);
 
     for (listEntry = listIteratorGetCurEntry(&iter);
-	 listEntry != NULL;
-	 listIteratorNext(&iter, &listEntry)) {
+         listEntry != NULL;
+         listIteratorNext(&iter, &listEntry)) {
 
-	newListEntry = (LIST_ENTRY_T *)calloc(1, sizeOfEntry);
+        newListEntry = (LIST_ENTRY_T *)calloc(1, sizeOfEntry);
 
-	memcpy(newListEntry, listEntry, sizeOfEntry);
+        memcpy(newListEntry, listEntry, sizeOfEntry);
 
-	listInsertEntryAtBack(newList, newListEntry);
+        listInsertEntryAtBack(newList, newListEntry);
 
     }
 
@@ -361,10 +363,10 @@ listDump(LIST_T* list)
     listIteratorAttach(&iter, list);
 
     for (listEntry = listIteratorGetCurEntry(&iter);
-	 ! listIteratorIsEndOfList(&iter);
-	 listIteratorNext(&iter, &listEntry)) {
+         ! listIteratorIsEndOfList(&iter);
+         listIteratorNext(&iter, &listEntry)) {
 
-	ls_syslog(LOG_DEBUG,"\
+        ls_syslog(LOG_DEBUG,"\
 %s: Entry=<%x> is in list=<%s>", __func__, listEntry, list->name);
 
     }
@@ -383,8 +385,8 @@ listObserverCreate(char *name, void *extra, LIST_ENTRY_SELECT_OP_T select, ...)
 
     observer = calloc(1, sizeof(LIST_OBSERVER_T));
     if (observer == NULL) {
-	listerrno = LIST_ERR_NOMEM;
-	goto Fail;
+        listerrno = LIST_ERR_NOMEM;
+        goto Fail;
     }
 
     observer->name = putstr_(name);
@@ -394,26 +396,26 @@ listObserverCreate(char *name, void *extra, LIST_ENTRY_SELECT_OP_T select, ...)
     va_start(ap, select);
 
     for (;;) {
-	etype = va_arg(ap, LIST_EVENT_TYPE_T);
+        etype = va_arg(ap, LIST_EVENT_TYPE_T);
 
-	if (etype == LIST_EVENT_NULL)
-	    break;
+        if (etype == LIST_EVENT_NULL)
+            break;
 
-	callback = va_arg(ap, LIST_EVENT_CALLBACK_FUNC_T);
+        callback = va_arg(ap, LIST_EVENT_CALLBACK_FUNC_T);
 
-	switch (etype) {
-	case (int) LIST_EVENT_ENTER:
-	    observer->enter = callback;
-	    break;
+        switch (etype) {
+        case (int) LIST_EVENT_ENTER:
+            observer->enter = callback;
+            break;
 
-	case (int) LIST_EVENT_LEAVE:
-	    observer->leave_ = callback;
-	    break;
+        case (int) LIST_EVENT_LEAVE:
+            observer->leave_ = callback;
+            break;
 
-	default:
-	    listerrno = LIST_ERR_BADARG;
-	    goto Fail;
-	}
+        default:
+            listerrno = LIST_ERR_BADARG;
+            goto Fail;
+        }
     }
 
     return observer;
@@ -438,15 +440,15 @@ listObserverAttach(LIST_OBSERVER_T *observer, LIST_T *list)
     int cc;
 
     if (! list->allowObservers) {
-	listerrno = (int) LIST_ERR_NOOBSVR;
-	return -1;
+        listerrno = (int) LIST_ERR_NOOBSVR;
+        return -1;
     }
 
     cc = listInsertEntryBefore(list->observers,
                                (LIST_ENTRY_T *)list->observers,
                                (LIST_ENTRY_T *)observer);
     if (cc < 0)
-	return cc;
+        return cc;
 
     observer->list = list;
 
@@ -458,7 +460,7 @@ void
 listObserverDetach(LIST_OBSERVER_T *observer, LIST_T *list)
 {
     if (observer->list)
-	listRemoveEntry(observer->list, (LIST_ENTRY_T *)observer);
+        listRemoveEntry(observer->list, (LIST_ENTRY_T *)observer);
 
     observer->list = NULL;
 }
@@ -470,8 +472,8 @@ listIteratorCreate(char *name)
 
     iter = calloc(1, sizeof(LIST_ITERATOR_T));
     if (! iter) {
-	listerrno = (int)LIST_ERR_NOMEM;
-	return NULL;
+        listerrno = (int)LIST_ERR_NOMEM;
+        return NULL;
     }
 
     iter->name = putstr_(name);
@@ -514,7 +516,7 @@ LIST_ENTRY_T *
 listIteratorGetCurEntry(LIST_ITERATOR_T *iter)
 {
     if (iter->curEnt == (LIST_ENTRY_T *)iter->list)
-	return NULL;
+        return NULL;
 
     return iter->curEnt;
 }
@@ -522,33 +524,33 @@ listIteratorGetCurEntry(LIST_ITERATOR_T *iter)
 
 int
 listIteratorSetCurEntry(LIST_ITERATOR_T *iter,
-			LIST_ENTRY_T *entry,
-			bool_t validateEnt)
+                        LIST_ENTRY_T *entry,
+                        bool_t validateEnt)
 {
     LIST_ENTRY_T *savedCurEnt;
     LIST_ENTRY_T *ent;
 
     if (validateEnt) {
-	bool_t found = FALSE;
+        bool_t found = FALSE;
 
-	savedCurEnt = iter->curEnt;
+        savedCurEnt = iter->curEnt;
 
-	iter->curEnt = listGetFrontEntry(iter->list);
-	for (ent = listIteratorGetCurEntry(iter);
-	     ! listIteratorIsEndOfList(iter);
-	     listIteratorNext(iter, (LIST_ENTRY_T **)&ent))
+        iter->curEnt = listGetFrontEntry(iter->list);
+        for (ent = listIteratorGetCurEntry(iter);
+             ! listIteratorIsEndOfList(iter);
+             listIteratorNext(iter, (LIST_ENTRY_T **)&ent))
         {
-	    if (ent == entry) {
-		found = TRUE;
-		break;
-	    }
-	}
+            if (ent == entry) {
+                found = TRUE;
+                break;
+            }
+        }
 
-	if (! found) {
-	    listerrno = LIST_ERR_BADARG;
-	    iter->curEnt = savedCurEnt;
-	    return -1;
-	}
+        if (! found) {
+            listerrno = LIST_ERR_BADARG;
+            iter->curEnt = savedCurEnt;
+            return -1;
+        }
     }
 
     iter->curEnt = entry;
@@ -586,10 +588,10 @@ int listerrno;
 
 static char *listErrList[] = {
 
-/* catgets 6510  */ 	    "No Error",
-/* catgets 6511  */  	    "Bad arguments",
-/* catgets 6512  */ 	    "Memory allocation failed",
-/* catgets 6513  */	    "Permission denied for attaching observers",
+/* catgets 6510  */         "No Error",
+/* catgets 6511  */         "Bad arguments",
+/* catgets 6512  */         "Memory allocation failed",
+/* catgets 6513  */         "Permission denied for attaching observers",
                             "Last Error (no error)"
 };
 
@@ -608,8 +610,8 @@ listStrError(int errnum)
     static char buf[216];
 
     if (errnum < 0 || errnum > (int) LIST_ERR_LAST) {
-	sprintf(buf, "Unknown error number %d", errnum);
-	return (buf);
+        sprintf(buf, "Unknown error number %d", errnum);
+        return (buf);
     }
 
     return listErrList[errnum];
@@ -620,8 +622,8 @@ void
 listPError(char *usrmsg)
 {
     if (usrmsg) {
-	fputs(usrmsg, stderr);
-	fputs(": ", stderr);
+        fputs(usrmsg, stderr);
+        fputs(": ", stderr);
     }
     fputs(listStrError(listerrno), stderr);
     putc('\n', stderr);
@@ -651,12 +653,10 @@ mkListHeader (void)
 
     q = calloc(1, sizeof (struct listEntry));
     if (q == NULL)
-	return NULL;
+        return NULL;
 
     q->forw = q->back = q;
     q->entryData = 0;
 
     return q;
 }
-
-

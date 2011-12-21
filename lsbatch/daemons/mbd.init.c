@@ -264,11 +264,13 @@ minit(int mbdInitFlags)
     TIMEIT(0, readParamConf(mbdInitFlags), "minit_readParamConf");
     TIMEIT(0, readHostConf(mbdInitFlags), "minit_readHostConf");
     getLsbResourceInfo();
+
     /* Call LIM and update the load information
      * about the batch hosts we just built.
      */
-    initLSBLoad();
+    getLsbHostLoad();
     updHostList();
+
     if ((hPtr = getHostData(masterHost)) == NULL) {
         ls_syslog(LOG_ERR, "\
 %s: Master host %s is not defined in the lsb.hosts file",
@@ -877,15 +879,13 @@ freeHData(struct hData *hPtr)
 {
     hEnt *ent;
     int  i;
-    struct hData *hPtr2;
 
     ent = h_getEnt_(&hostTab, hPtr->host);
     assert(ent);
 
     /* Remove from the hostlist
      */
-    hPtr2 = (struct hData *)listrm(hostList, (struct list_ *)hPtr);
-    assert(hPtr == hPtr2);
+    listRemoveEntry(hostList, (LIST_ENTRY_T *)hPtr);
 
     FREEUP(hPtr->host);
     FREEUP(hPtr->hostType);
@@ -2807,18 +2807,6 @@ needPollQHost (struct qData *newQp, struct qData *oldQp)
 
 }
 
-static void
-rmlist(void *e)
-{
-    struct hData *hPtr;
-
-    hPtr = (struct hData *)e;
-
-    ls_syslog(LOG_DEBUG, "\
-%s: host %s", __func__, hPtr->host);
-
-}
-
 void
 updHostList(void)
 {
@@ -2833,10 +2821,10 @@ updHostList(void)
 %s: Entering this routine...", __func__);
 
     if (hostList) {
-        listfree(hostList, rmlist);
+        FREEUP(hostList);
     }
 
-    hostList = listmake("Host List");
+    hostList = listCreate("Host List");
 
     cc = 0;
     for (e = h_firstEnt_(&hostTab, &stab);
@@ -2863,7 +2851,7 @@ updHostList(void)
 
         /* Hopsa in da lista...
          */
-        listpush(hostList, (struct list_ *)hPtr);
+        listInsertEntryAtBack(hostList, (LIST_ENTRY_T *)hPtr);
 
         if (hPtr->maxJobs > 0 && hPtr->maxJobs < INFINIT_INT)
             hPtr->numCPUs = hPtr->maxJobs;

@@ -844,7 +844,7 @@ typedef enum profCounterType {
 #define dptWindow dptUnion.window.timeWindow
 
 
-extern struct list_ *hostList;
+extern LIST_T *hostList;
 extern struct hTab            hostTab;
 extern struct jData           *jDataList[];
 extern struct migJob          *migJobList;
@@ -951,25 +951,24 @@ extern float *              getModelFactor (char *hostModel);
 extern int                  getModelFactor_r(char *hostModel, float *cpuFactor);
 extern void                 checkHWindow(void);
 extern hEnt *               findHost(char *hname);
-extern void                 renewJob (struct jData *oldjob);
-extern void                 getTclHostData (struct tclHostData *,
-                                            struct hData *, struct hData *);
+extern void                 renewJob(struct jData *oldjob);
+extern void                 getTclHostData(struct tclHostData *,
+                                           struct hData *, struct hData *);
 extern int                  getLsbHostNames (char ***);
 extern void                 getLsbHostInfo(void);
 extern int                  getLsbHostLoad(void);
-extern int                  getHostsByResReq (struct resVal *, int *,
-                                              struct hData **,
-                                              struct hData ***,
-                                              struct hData *,int *);
+extern int                  getHostsByResReq(struct resVal *, int *,
+                                             struct hData **,
+                                             struct hData ***,
+                                             struct hData *,int *);
 
 extern struct resVal *      checkResReq(char *, int);
-extern int                  initLSBLoad(void);
-extern void                 adjLsbLoad (struct jData *, int, bool_t);
-extern int                  countHostJobs (struct hData *hData);
-extern void                 getLsbResourceInfo (void);
-extern struct resVal *      getReserveValues (struct resVal *,struct resVal *);
+extern void                 adjLsbLoad(struct jData *, int, bool_t);
+extern int                  countHostJobs(struct hData *);
+extern void                 getLsbResourceInfo(void);
+extern struct resVal *      getReserveValues(struct resVal *,struct resVal *);
 extern void                 getLsfHostInfo(int);
-extern struct hData *       getHostByType (char *);
+extern struct hData *       getHostByType(char *);
 
 extern void                 checkQWindow(void);
 extern int                  checkQueues(struct infoReq *,
@@ -980,13 +979,13 @@ extern int                  ctrlHost(struct controlReq *, struct hData *,
 extern void                 sumHosts(void);
 extern void                 inQueueList(struct qData *);
 extern struct qData *       getQueueData(char *);
-extern char                 hostQMember(char *host, struct qData *qp);
-extern char                 userQMember(char *user, struct qData *qp);
+extern char                 hostQMember(char *, struct qData *);
+extern char                 userQMember(char *, struct qData *);
 extern int                  isQueAd (struct qData *, char *);
 extern int                  isAuthQueAd (struct qData *, struct lsfAuth *);
-extern int                  isInQueues (char *, char **, int);
-extern void                 freeQueueInfoReply (struct queueInfoReply *,
-                                                char *);
+extern int                  isInQueues(char *, char **, int);
+extern void                 freeQueueInfoReply(struct queueInfoReply *,
+                                               char *);
 extern struct hostInfo *    getLsfHostData (char *);
 extern int                  createQueueHostSet(struct qData *);
 extern int                  gethIndexByhData(void *);
@@ -1013,14 +1012,15 @@ extern int                  rusageJob(struct statusReq *, struct hostent *);
 extern int                  statusMsgAck(struct statusReq *);
 extern int                  switchJobArray(struct jobSwitchReq *,
                                            struct lsfAuth *);
-extern int                  sbatchdJobs (struct sbdPackage *, struct hData *);
-extern int                  countNumSpecs (struct hData *hData);
-extern void                 packJobSpecs (struct jData *, struct jobSpecs *);
-extern void                 freeJobSpecs (struct jobSpecs *);
-extern int                  peekJob (struct jobPeekReq *,
-                                     struct jobPeekReply *,
-                                     struct lsfAuth *);
-extern int                  migJob (struct migReq *, struct submitMbdReply *,
+extern int                  sbatchdJobs(struct sbdPackage *, struct hData *);
+extern int                  countNumSpecs(struct hData *);
+extern void                 packJobSpecs(struct jData *, struct jobSpecs *);
+extern void                 freeJobSpecs(struct jobSpecs *);
+extern int                  peekJob(struct jobPeekReq *,
+                                    struct jobPeekReply *,
+                                    struct lsfAuth *);
+extern int                  migJob(struct migReq *,
+                                   struct submitMbdReply *,
                                     struct lsfAuth *);
 extern void                 clean(time_t);
 extern int                  moveJobArray(struct jobMoveReq *,
@@ -1499,4 +1499,4 @@ extern void copyJUsage(struct jRusage*, struct jRusage*);
 extern struct timeWindow *newTimeWindow (void);
 extern void freeTimeWindow(struct timeWindow *);
 extern void updateTimeWindow(struct timeWindow *);
-extern int numofhosts(void);
+extern inline int numofhosts(void);
