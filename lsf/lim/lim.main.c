@@ -157,8 +157,6 @@ main(int argc, char **argv)
                 return 0;
             case 't':
                 showTypeModel = 1;
-                putEnv("RECONFIG_CHECK","YES");
-                lim_CheckMode = 1;
                 break;
             case 'h':
             case '?':
@@ -190,6 +188,20 @@ Reading configuration from %s/lsf.conf\n", env_dir);
         ls_syslog(LOG_ERR, "\
 %s: initenv() failed reading lsf.conf from %s", env_dir);
         lim_Exit("main");
+    }
+
+    if (showTypeModel) {
+        /* Print my type, model, architecture
+         * and CPU factor, even if some are hardcoded.
+         */
+        cc = initAndConfig(lim_CheckMode, &kernelPerm);
+        if (cc < 0) {
+            ls_syslog(LOG_ERR, "\
+%s: failed to configure, exiting...", __func__);
+            return -1;
+        }
+        printTypeModel();
+        return 0;
     }
 
     if (!lim_debug && limParams[LSF_LIM_DEBUG].paramValue) {
@@ -1104,8 +1116,8 @@ printTypeModel(void)
            allInfo.hostModels[myHostPtr->hModelNo]);
     printf("CPU Factor            : %.1f\n",
            allInfo.cpuFactor[myHostPtr->hModelNo]);
-    if (myHostPtr->hTypeNo==1 || myHostPtr->hModelNo==1)
-    {
+
+    if (myHostPtr->hTypeNo == 1 || myHostPtr->hModelNo == 1) {
         printf("When automatic detection of host type or model fails, the type or\n");
         printf("model is set to DEFAULT. LSF will still work on the host. A DEFAULT\n");
         printf("model may be inefficient because of incorrect CPU factor. A DEFAULT\n");
@@ -1130,13 +1142,13 @@ initMiscLiStruct(void)
     li = realloc(li, sizeof(struct liStruct) * allInfo.numIndx);
 
     for (i = NBUILTINDEX; i < allInfo.numIndx; i++) {
-        li[i].delta[0]=9000;
-        li[i].delta[1]=9000;
-        li[i].extraload[0]=0;
-        li[i].extraload[1]=0;
-        li[i].valuesent=0.0;
-        li[i].exchthreshold=0.0001;
-        li[i].sigdiff=0.0001;
+        li[i].delta[0] = 9000;
+        li[i].delta[1] = 9000;
+        li[i].extraload[0] = 0;
+        li[i].extraload[1] = 0;
+        li[i].valuesent = 0.0;
+        li[i].exchthreshold = 0.0001;
+        li[i].sigdiff = 0.0001;
     }
 
 } /* initMiscLiStruct() */

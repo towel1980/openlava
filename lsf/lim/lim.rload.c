@@ -1250,8 +1250,8 @@ initConfInfo(void)
         myHostPtr->statInfo.maxCpus = numCpus();
     if (myHostPtr->statInfo.maxCpus <= 0) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5928,
-            "%s: Invalid num of CPUs %d. Default to 1"), /* catgets 5928 */
-            fname,
+                                         "%s: Invalid num of CPUs %d. Default to 1"), /* catgets 5928 */
+                  fname,
             myHostPtr->statInfo.maxCpus);
         myHostPtr->statInfo.maxCpus = 1;
     }

@@ -3439,9 +3439,10 @@ addHostInstance (struct sharedResource *sharedResource,  int nHosts, char **host
 }
 
 static char **
-getValidHosts (char *hostName, int *numHost, struct sharedResource *resource)
+getValidHosts(char *hostName,
+              int *numHost,
+              struct sharedResource *resource)
 {
-
     static char fname[] = "getValidHosts";
     static char **temp = NULL;
     int num;
@@ -4150,8 +4151,7 @@ reCheckClusterClass(struct clusterNode *clPtr)
 
     ls_syslog(LOG_DEBUG1, "reCheckClusterClass: cluster <%s>", clPtr->clName);
     if (clPtr->resBitMaps == NULL) {
-        clPtr->resBitMaps = (int *)malloc (GET_INTNUM(allInfo.nRes) *
-                                           sizeof (int));
+        clPtr->resBitMaps = calloc(GET_INTNUM(allInfo.nRes), sizeof (int));
         if (clPtr->resBitMaps == NULL) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return (-1);
@@ -4159,9 +4159,9 @@ reCheckClusterClass(struct clusterNode *clPtr)
         for (i = 0; i < GET_INTNUM(allInfo.nRes); i++)
             clPtr->resBitMaps[i] = 0;
     }
+
     if (clPtr->hostTypeBitMaps == NULL) {
-        clPtr->hostTypeBitMaps = (int *)malloc (GET_INTNUM(allInfo.nTypes) *
-                                                sizeof (int));
+        clPtr->hostTypeBitMaps = calloc(GET_INTNUM(allInfo.nTypes), sizeof(int));
         if (clPtr->hostTypeBitMaps == NULL) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return (-1);
@@ -4169,9 +4169,9 @@ reCheckClusterClass(struct clusterNode *clPtr)
         for (i = 0; i < GET_INTNUM(allInfo.nTypes); i++)
             clPtr->hostTypeBitMaps[i] = 0;
     }
+
     if (clPtr->hostModelBitMaps == NULL) {
-        clPtr->hostModelBitMaps = (int *)malloc (GET_INTNUM(allInfo.nModels) *
-                                                 sizeof (int));
+        clPtr->hostModelBitMaps = calloc(GET_INTNUM(allInfo.nModels), sizeof(int));
         if (clPtr->hostModelBitMaps == NULL) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
             return (-1);
@@ -4179,7 +4179,8 @@ reCheckClusterClass(struct clusterNode *clPtr)
         for (i = 0; i < GET_INTNUM(allInfo.nModels); i++)
             clPtr->hostModelBitMaps[i] = 0;
     }
-    for (hPtr=clPtr->hostList; hPtr; hPtr=hPtr->nextPtr) {
+
+    for (hPtr = clPtr->hostList; hPtr; hPtr=hPtr->nextPtr) {
         clPtr->numHosts++;
         clPtr->resClass |= hPtr->resClass;
         if (hPtr->hTypeNo >= 0) {
@@ -4193,7 +4194,8 @@ reCheckClusterClass(struct clusterNode *clPtr)
 
         addMapBits (allInfo.nRes, clPtr->resBitMaps, hPtr->resBitMaps);
     }
-    for (hPtr=clPtr->clientList; hPtr; hPtr=hPtr->nextPtr) {
+
+    for (hPtr = clPtr->clientList; hPtr; hPtr=hPtr->nextPtr) {
         clPtr->numClients++;
         clPtr->resClass |= hPtr->resClass;
         if (hPtr->hTypeNo >= 0) {
@@ -4208,12 +4210,13 @@ reCheckClusterClass(struct clusterNode *clPtr)
 
         addMapBits (allInfo.nRes, clPtr->resBitMaps,  hPtr->resBitMaps);
     }
+
     for (i = 0; i < GET_INTNUM(allInfo.nRes); i++)
         for (j = 0; j <INTEGER_BITS; j++)
             if (clPtr->resBitMaps[i] &(1<<j))
                 clPtr->nRes++;
 
-    return (0);
+    return 0;
 }
 
 static void
@@ -4229,11 +4232,10 @@ addMapBits (int num, int *toBitMaps, int *fromMaps)
 int
 reCheckClass(void)
 {
-
     if (reCheckClusterClass(myClusterPtr) < 0)
-        return (-1);
-    return (0);
+        return -1;
 
+    return 0;
 }
 
 static int
@@ -4245,16 +4247,17 @@ configCheckSum(char *file, u_short *checkSum)
     FILE *fp;
     char *line;
 
-
     if ((fp = confOpen(file, "r")) == NULL) {
         ls_syslog(LOG_ERR, I18N_CANNOT_OPEN, fname, file);
-        return(-1);
+        return -1;
     }
+
     sum = 0;
     while ((line = getNextLine_(fp, TRUE)) != NULL ) {
-        i=0;
+        i = 0;
         linesum = 0;
-        while(line[i] != '\0') {
+
+        while (line[i] != '\0') {
             if (line[i] == ' ' || line[i] == '\t' ||
                 line[i] == '(' || line[i] == ')'  ||
                 line[i] == '[' || line[i] == ']'  ) {
@@ -4264,7 +4267,8 @@ configCheckSum(char *file, u_short *checkSum)
             linesum += (int) line[i];
             i++;
         }
-        for (i=0; i<4; i++) {
+
+        for (i = 0; i<4; i++) {
             if (sum&01)
                 sum = (sum>>1) + 0x8000;
             else
@@ -4276,7 +4280,8 @@ configCheckSum(char *file, u_short *checkSum)
     }
     FCLOSEUP(&fp);
     *checkSum = (u_short)sum;
-    return(0);
+
+    return 0;
 }
 
 static struct admins *
@@ -4303,7 +4308,7 @@ getAdmins (char *line, char *lsfile, int *LineNum, char *secName)
     admins.nAdmins = 0;
     sp = line;
 
-    while ((word=getNextWord_(&sp)) != NULL)
+    while ((word = getNextWord_(&sp)) != NULL)
         numAds++;
     if (numAds) {
         admins.adminIds = (int *) malloc (numAds * sizeof(int));
@@ -4323,7 +4328,7 @@ getAdmins (char *line, char *lsfile, int *LineNum, char *secName)
         return (&admins);
 
     sp = line;
-    while ((word=getNextWord_(&sp)) != NULL) {
+    while ((word = getNextWord_(&sp)) != NULL) {
         if ((pw = getpwlsfuser_(word)) != NULL) {
             if (putInLists (word, &admins, &numAds, forWhat) < 0)
                 return(&admins);
@@ -4345,7 +4350,7 @@ getAdmins (char *line, char *lsfile, int *LineNum, char *secName)
 
 
 static int
-doubleResTable (char *lsfile, int lineNum)
+doubleResTable(char *lsfile, int lineNum)
 {
     static char fname[] = "doubleResTable()";
     struct resItem *tempTable;
@@ -4664,6 +4669,7 @@ int
 initTypeModel(struct hostNode *me)
 {
     static char fname[] = "initTypeModel";
+
     if (me->hTypeNo == DETECTMODELTYPE) {
         me->hTypeNo = typeNameToNo(getHostType());
         if (me->hTypeNo < 0) {
