@@ -794,10 +794,11 @@ getusr(void)
     int bw, scc;
 
     if (first) {
-        for(i=0; i < NBUILTINDEX; i++)
+        for(i = 0; i < NBUILTINDEX; i++)
             overRide[i] = INFINIT_LOAD;
         first = FALSE;
     }
+
     if (!callElim()) {
         return;
     }
@@ -810,13 +811,11 @@ getusr(void)
 
     if ((elim_pid < 0) && (time(0) - lastStart > 90)) {
 
-
       if (ELIMrestarts < 0 || ELIMrestarts > 0) {
 
         if (ELIMrestarts > 0) {
             ELIMrestarts--;
         }
-
 
         if (!myClusterPtr->eLimArgv) {
             char *path = malloc(strlen(limParams[LSF_SERVERDIR].paramValue) +
@@ -850,7 +849,6 @@ getusr(void)
             fp = NULL;
         }
 
-
         lastStart = time(0);
 
         if (masterMe)
@@ -862,14 +860,13 @@ getusr(void)
 
         hostNamePtr = ls_getmyhostname();
 
-
         size = 0;
         for (tmpSharedRes=sharedResourceHead;
              tmpSharedRes ;
              tmpSharedRes=tmpSharedRes->nextPtr ){
              size += strlen(tmpSharedRes->resName) + sizeof(char) ;
         }
-        for (i=NBUILTINDEX; i < allInfo.nRes; i++) {
+        for (i = NBUILTINDEX; i < allInfo.nRes; i++) {
             if (allInfo.resTable[i].flags & RESF_EXTERNAL)
                 continue;
             if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
@@ -878,7 +875,7 @@ getusr(void)
                 size += strlen(allInfo.resTable[i].name) + sizeof(char);
             }
         }
-        resStr = (char *)malloc((size+1) * sizeof(char)) ;
+        resStr = calloc(size + 1, sizeof(char)) ;
         if (!resStr) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "malloc");
             setUnkwnValues();
@@ -886,7 +883,7 @@ getusr(void)
         }
         resStr[0] = '\0' ;
 
-        for (i=NBUILTINDEX; i < allInfo.nRes; i++) {
+        for (i = NBUILTINDEX; i < allInfo.nRes; i++) {
            if (allInfo.resTable[i].flags & RESF_EXTERNAL)
                continue;
            if ((allInfo.resTable[i].flags & RESF_DYNAMIC)
@@ -901,7 +898,6 @@ getusr(void)
                if( (allInfo.resTable[i].flags & RESF_SHARED)
                    && (!isResourceSharedByHost(myHostPtr, allInfo.resTable[i].name)) )
                    continue;
-
 
                if (resStr[0] == '\0')
                    sprintf(resStr, "%s", allInfo.resTable[i].name);
@@ -1378,6 +1374,7 @@ startElim(void)
     int i;
 
     if (!notFirst){
+
         for (i = 0; i < allInfo.nRes; i++) {
             if (allInfo.resTable[i].flags & RESF_EXTERNAL)
                 continue;

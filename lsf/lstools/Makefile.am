@@ -45,3 +45,5 @@ lsaddhost_LDADD = ../lib/liblsf.a
 lsrmhost_SOURCES = lsrmhost.c
 lsrmhost_LDADD = ../lib/liblsf.a 
 
+etags :
+	etags *.[hc] ../*.h ../lib/*.[hc] 

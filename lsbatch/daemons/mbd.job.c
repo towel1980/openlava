@@ -3218,7 +3218,10 @@ rusageJob (struct statusReq *statusReq, struct hostent *hp)
 
 
 void
-jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
+jStatusChange(struct jData *jData,
+              int newStatus,
+              time_t eventTime,
+              char *fname)
 {
     int oldStatus = jData->jStatus;
     int freeExec = FALSE;
@@ -3235,30 +3238,27 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
 
 
     if (eventTime == LOG_IT && JOB_PREEMPT_WAIT(jData) &&
-        ( (!IS_PEND(newStatus) && !(newStatus & JOB_STAT_SSUSP) )
-          || (newStatus & JOB_STAT_PSUSP) || IS_FINISH(newStatus) ) ) {
+        ((!IS_PEND(newStatus) && !(newStatus & JOB_STAT_SSUSP))
+          || (newStatus & JOB_STAT_PSUSP) || IS_FINISH(newStatus))) {
         freeReservePreemptResources(jData);
     }
 
 
     if (eventTime == LOG_IT) {
-        if ( ( jData->jStatus & JOB_STAT_RUN ) &&
-             (!(newStatus & JOB_STAT_RUN) || IS_FINISH(newStatus) ||
-              IS_SUSP(newStatus)))
+        if ((jData->jStatus & JOB_STAT_RUN)
+            && (!(newStatus & JOB_STAT_RUN) || IS_FINISH(newStatus)
+                || IS_SUSP(newStatus)))
             updateStopJobPreemptResources(jData);
     }
-
-
 
     if (jData->jobId >= 0)
         updJgrpCountByJStatus(jData, jData->jStatus, newStatus);
 
     accumRunTime (jData, newStatus, eventTime);
 
-
-    if ( (mSchedStage != M_STAGE_REPLAY) &&
-         ((IS_PEND(jData->jStatus) && IS_START(newStatus))  ||
-          (IS_START(jData->jStatus) && IS_FINISH(newStatus)))) {
+    if ((mSchedStage != M_STAGE_REPLAY)
+        && ((IS_PEND(jData->jStatus) && IS_START(newStatus))
+            || (IS_START(jData->jStatus) && IS_FINISH(newStatus)))) {
         statusChanged = 1;
     }
 
@@ -3266,7 +3266,6 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
 
     if ((jData->jStatus & JOB_STAT_PSUSP)
         && (jData->shared->jobBill.options2 & SUB2_HOLD)) {
-
         jData->startTime = jData->endTime = 0;
     }
 
@@ -3295,12 +3294,10 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
         }
 
 
-        if (   (   (jData->shared->jobBill.options & SUB_INTERACTIVE)
-                   || (jData->shared->jobBill.options2 & SUB2_BSUB_BLOCK))
-               && eventTime == LOG_IT) {
-
-
-            if ( ! (jData->jStatus & JOB_STAT_ZOMBIE))
+        if (((jData->shared->jobBill.options & SUB_INTERACTIVE)
+             || (jData->shared->jobBill.options2 & SUB2_BSUB_BLOCK))
+            && eventTime == LOG_IT) {
+            if (!(jData->jStatus & JOB_STAT_ZOMBIE))
                 breakCallback(jData, IS_PEND(oldStatus));
         }
 
@@ -3309,13 +3306,12 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
         if (jData->runCount != INFINIT_INT)
             jData->runCount = MAX(0, jData->runCount-1);
 
-        handleFinishJob (jData, oldStatus, eventTime);
+        handleFinishJob(jData, oldStatus, eventTime);
 
     } else if ((newStatus & JOB_STAT_PEND) && IS_START (oldStatus)) {
 
         if (eventTime == LOG_IT)
             log_newstatus(jData);
-
 
         if (eventTime == LOG_IT) {
             jobRequeueTimeUpdate(jData, now);
@@ -3324,7 +3320,6 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
         }
 
         listRemoveEntry((LIST_T *)jDataList[SJL], (LIST_ENTRY_T *)jData);
-
 
         if (jData->newReason == PEND_JOB_PRE_EXEC
             || jData->newReason == PEND_QUE_PRE_FAIL
@@ -3338,35 +3333,27 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
                 jData->shared->jobBill.options |= SUB_RESTART | SUB_RESTART_FORCE;
 
             if (glMigToPendFlag == TRUE) {
-                if (logclass & LC_SCHED)
-                    ls_syslog( LOG_DEBUG2,
-                               "jStatusChange: Migrating job moved to Pending Job List.");
-                inPendJobList( jData, PJL, now);
-
+                inPendJobList(jData, PJL, now);
                 jData->jStatus &= ~JOB_STAT_MIG;
             } else {
-                if (logclass & LC_SCHED)
-                    ls_syslog( LOG_DEBUG2,
-                               "jStatusChange: Migrating job moved to Migrating Job List.");
                 inPendJobList(jData, MJL, 0);
-
             }
+
         } else if (jData->newReason == PEND_SBD_JOB_REQUEUE) {
 
             inPendJobList(jData, PJL, now);
         } else  {
             inPendJobList(jData, PJL, 0);
         }
-
-
         jData->jStatus &= ~JOB_STAT_PRE_EXEC;
         setJobPendReason(jData, jData->newReason);
         freeExec = TRUE;
 
     } else {
-        if (eventTime == LOG_IT)
 
+        if (eventTime == LOG_IT)
             log_newstatus(jData);
+
         if (newStatus & JOB_STAT_RUN) {
             jData->newReason = 0;
             jData->subreasons = 0;
@@ -3378,34 +3365,28 @@ jStatusChange(struct jData *jData, int newStatus, time_t eventTime, char *fname)
 
     if (mSchedStage != M_STAGE_REPLAY) {
         updCounters (jData, oldStatus, eventTime);
-    }
-    else {
+    } else {
 
         if (eventTime == LOG_IT) {
             updCounters (jData, oldStatus, eventTime);
-        } else if(  oldStatus & JOB_STAT_RUN
-                    && oldStatus & JOB_STAT_WAIT
-                    && newStatus & (JOB_STAT_SSUSP | JOB_STAT_USUSP)) {
+        } else if (oldStatus & JOB_STAT_RUN
+                   && oldStatus & JOB_STAT_WAIT
+                   && newStatus & (JOB_STAT_SSUSP | JOB_STAT_USUSP)) {
             offJobList(jData, SJL);
-            if(newStatus & JOB_STAT_SSUSP) {
+            if (newStatus & JOB_STAT_SSUSP) {
                 jData->jStatus = JOB_STAT_PEND;
-            }else{
+            } else {
                 jData->jStatus = JOB_STAT_PSUSP;
             }
             FREEUP(jData->hPtr);
             jData->numHostPtr = 0;
             inPendJobList(jData, PJL, 0);
-            ls_syslog(LOG_DEBUG2, "jStatusChange: Job %s's status may be wrong!",
-                      lsb_jobid2str(jData->jobId) );
-
         }
     }
 
     if (freeExec == TRUE) {
-
         freeExecParams (jData);
     }
-
 }
 
 void
@@ -3488,19 +3469,16 @@ resetReserve (struct jData *jData, int newStatus)
 }
 
 static void
-handleFinishJob (struct jData *jData, int oldStatus, int eventTime)
+handleFinishJob(struct jData *jData, int oldStatus, int eventTime)
 {
     int listno;
 
 
     if (((jData->shared->jobBill.options & SUB_RERUNNABLE)
          || (jData->pendEvent.sigDel & DEL_ACTION_REQUEUE))
-
         && ((oldStatus & JOB_STAT_ZOMBIE)
             || (jData->pendEvent.sigDel & DEL_ACTION_REQUEUE))
-        && !(jData->newReason & EXIT_KILL_ZOMBIE)
-        )
-    {
+        && !(jData->newReason & EXIT_KILL_ZOMBIE)) {
         jData->jFlags |= JFLAG_REQUEUE;
     }
 
@@ -3565,7 +3543,6 @@ handleRequeueJob (struct jData *jData, time_t requeueTime)
 
     FREEUP(jData->lsfRusage);
 
-
     if (jData->shared->jobBill.userPriority > 0) {
         jData->jobPriority = jData->shared->jobBill.userPriority;
     } else if (maxUserPriority > 0) {
@@ -3575,32 +3552,23 @@ handleRequeueJob (struct jData *jData, time_t requeueTime)
     }
 
     offJobList(jData, FJL);
-
     inPendJobList(jData, PJL, requeueTime);
-
     jobRequeueTimeUpdate(jData, requeueTime);
-
 
     if (jData->runRusage.npids > 0)
         FREEUP (jData->runRusage.pidInfo);
     if (jData->runRusage.npgids > 0)
         FREEUP (jData->runRusage.pgid);
-    memset((char *) &jData->runRusage, 0, sizeof(jData->runRusage));
-
+    memset(&jData->runRusage, 0, sizeof(jData->runRusage));
 
     if (jData->pendEvent.sig1Flags == JOB_STAT_PSUSP){
 
         jData->jStatus = JOB_STAT_PSUSP;
         setJobPendReason(jData, PEND_USER_STOP);
-
-
         updJgrpCountByJStatus(jData, JOB_STAT_PEND, JOB_STAT_PSUSP);
-
-
         jData->pendEvent.sig1Flags = 0;
 
     } else {
-
         setJobPendReason(jData, PEND_JOB_REQUEUED);
     }
 
@@ -3608,20 +3576,20 @@ handleRequeueJob (struct jData *jData, time_t requeueTime)
     if (mSchedStage != M_STAGE_REPLAY) {
         if (!jData->uPtr)
             jData->uPtr = getUserData(jData->userName);
-        updQaccount (jData, jData->shared->jobBill.maxNumProcessors,
-                     jData->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
-        updUserData (jData, jData->shared->jobBill.maxNumProcessors,
-                     jData->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
+        updQaccount(jData, jData->shared->jobBill.maxNumProcessors,
+                    jData->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
+        updUserData(jData, jData->shared->jobBill.maxNumProcessors,
+                    jData->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
     }
+
     if (jData->jFlags & JFLAG_HAS_BEEN_REQUEUED)
         numRemoveJobs++;
     else
         jData->jFlags |= JFLAG_HAS_BEEN_REQUEUED;
-
 }
 
 static void
-changeJobParams (struct jData *jData)
+changeJobParams(struct jData *jData)
 {
     static char fname[]="changeJobParams";
     struct submitReq *oldSub = NULL;
@@ -3771,45 +3739,48 @@ freeExecParams(struct jData *jData)
     cleanCandHosts(jData);
 }
 
-
+/* clean()
+ * Free done jobs requeue jobs that have to be
+ * requeued from FJL to PJL.
+ */
 void
 clean(time_t curTime)
 {
-    struct jData *jpbw;
+    struct jData *jPtr;
     struct jData *nextJobPtr;
     struct sbdNode *sbdPtr;
     int found;
 
-    for (jpbw = jDataList[FJL]->back;
-         jpbw != jDataList[FJL];
-         jpbw = nextJobPtr) {
+    for (jPtr = jDataList[FJL]->back;
+         jPtr != jDataList[FJL];
+         jPtr = nextJobPtr) {
 
-        nextJobPtr = jpbw->back;
+        nextJobPtr = jPtr->back;
         found = FALSE;
 
-        if (jpbw->jStatus & JOB_STAT_DONE) {
-            if ( !IS_POST_FINISH(jpbw->jStatus) ) {
+        if (jPtr->jStatus & JOB_STAT_DONE) {
+            if (!IS_POST_FINISH(jPtr->jStatus)) {
                 continue;
             }
         }
 
-        if (jpbw->jFlags & JFLAG_REQUEUE) {
+        if (jPtr->jFlags & JFLAG_REQUEUE) {
 
-            handleRequeueJob(jpbw, time(0));
-            jpbw->startTime = jpbw->endTime = 0;
-            jpbw->pendEvent.sig = SIG_NULL;
-            log_jobrequeue (jpbw);
+            handleRequeueJob(jPtr, time(NULL));
+            jPtr->startTime = jPtr->endTime = 0;
+            jPtr->pendEvent.sig = SIG_NULL;
+            log_jobrequeue(jPtr);
             continue;
         }
 
-        if (getZombieJob(jpbw->jobId) != NULL)
+        if (getZombieJob(jPtr->jobId) != NULL)
             continue;
 
         if (nSbdConnections > 0) {
 
             for (sbdPtr = sbdNodeList.forw; sbdPtr != &sbdNodeList;
                  sbdPtr = sbdPtr->forw) {
-                if (sbdPtr->jData != jpbw)
+                if (sbdPtr->jData != jPtr)
                     continue;
                 found = TRUE;
                 break;
@@ -3817,16 +3788,16 @@ clean(time_t curTime)
             if (found == TRUE)
                 continue;
         }
-        if (jpbw->pendEvent.sigDel) {
-            if (!jpbw->runCount)  {
-                removeJob(jpbw->jobId);
+
+        if (jPtr->pendEvent.sigDel) {
+            if (!jPtr->runCount)  {
+                removeJob(jPtr->jobId);
                 continue;
             }
         }
 
-        if (curTime - jpbw->endTime > clean_period) {
-            removeJob(jpbw->jobId);
-        }
+        if (curTime - jPtr->endTime > clean_period)
+            removeJob(jPtr->jobId);
     }
 }
 
@@ -7025,14 +6996,17 @@ inZomJobList (struct jData *oldjob, int mail)
     newjob->subreasons = oldjob->subreasons;
     newjob->jobId = oldjob->jobId;
 
-    memcpy((char *) &newjob->shared->jobBill, (char *) &oldjob->shared->jobBill,
+    memcpy(&newjob->shared->jobBill,
+           &oldjob->shared->jobBill,
            sizeof(struct submitReq));
 
     newjob->jgrpNode = NULL;
     newjob->nextJob  = NULL;
     newjob->numRef   = 0;
 
-    copyJobBill (&oldjob->shared->jobBill, &newjob->shared->jobBill, newjob->jobId);
+    copyJobBill(&oldjob->shared->jobBill,
+                &newjob->shared->jobBill,
+                newjob->jobId);
     newjob->restartPid = oldjob->restartPid;
     newjob->chkpntPeriod = oldjob->chkpntPeriod;
 
@@ -7078,27 +7052,29 @@ inZomJobList (struct jData *oldjob, int mail)
     oldjob->shared->jobBill.options &= ~JOB_STAT_CHKPNTED_ONCE;
 
     inList ((struct listEntry *)jp, (struct  listEntry *)newjob);
-    return;
-
 }
 
 static struct jData *
-isInZomJobList (struct hData *hData, struct statusReq *statusReq)
+isInZomJobList(struct hData *hData, struct statusReq *statusReq)
 {
     struct jData *jData;
 
-    for (jData = jDataList[ZJL]->back; jData != jDataList[ZJL];
+    for (jData = jDataList[ZJL]->back;
+         jData != jDataList[ZJL];
          jData = jData->back) {
+
         if (jData->jobId != statusReq->jobId)
             continue;
+
         if (jData->hPtr != NULL && hData != jData->hPtr[0])
             continue;
         if (jData->jobPid != statusReq->jobPid)
             continue;
-        return (jData);
-    }
-    return (NULL);
 
+        return jData;
+    }
+
+    return NULL;
 }
 
 struct jData *

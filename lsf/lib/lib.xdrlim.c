@@ -1237,8 +1237,7 @@ xdr_hostEntry(XDR *xdrs,
     }
 
     for (cc = 0; cc < hPtr->nRes; cc++) {
-        s = hPtr->resList[cc];
-        if (! xdr_var_string(xdrs, &s))
+        if (! xdr_var_string(xdrs, &hPtr->resList[cc]))
             return FALSE;
     }
 

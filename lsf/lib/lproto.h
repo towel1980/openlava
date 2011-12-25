@@ -101,12 +101,12 @@ struct lsbShareResourceInfoReply {
 
 extern int sharedResConfigured_;
 
-#define VALID_IO_ERR(x)	((x) == EWOULDBLOCK || (x) == EINTR || (x) == EAGAIN)
-#define BAD_IO_ERR(x)	( ! VALID_IO_ERR(x))
+#define VALID_IO_ERR(x) ((x) == EWOULDBLOCK || (x) == EINTR || (x) == EAGAIN)
+#define BAD_IO_ERR(x)   ( ! VALID_IO_ERR(x))
 
-#define INVALID_FD	(-1)
-#define FD_IS_VALID(x)	((x) >= 0 && (x) < sysconf(_SC_OPEN_MAX) )
-#define FD_NOT_VALID(x)	( ! FD_IS_VALID(x))
+#define INVALID_FD      (-1)
+#define FD_IS_VALID(x)  ((x) >= 0 && (x) < sysconf(_SC_OPEN_MAX) )
+#define FD_NOT_VALID(x) ( ! FD_IS_VALID(x))
 
 #define AUTH_IDENT      "ident"
 #define AUTH_PARAM_DCE  "dce"
@@ -115,21 +115,13 @@ extern int sharedResConfigured_;
 #define AUTOMOUNT_NEVER_STR "AMNEVER"
 
 #define FREEUP(pointer)   if (pointer != NULL) {  \
-			      free(pointer);      \
+                              free(pointer);      \
                               pointer = NULL;     \
                           }
 
 #define STRNCPY(str1, str2, len)  { strncpy(str1, str2, len); \
                                     str1[len -1] = '\0';  \
                                   }
-
-#define FREE_STRING_VECTOR_ENTRIES(NumEnts, Vector) \
-    if (NumEnts > 0) { \
-        int _i_; \
-	for (_i_ = 0; _i_ < (NumEnts); _i_++) { \
-	    FREEUP((Vector)[_i_]); \
-	} \
-    }
 
 #define IS_UNC(a) \
         ((a!=NULL) && (*a == '\\') && (*(a+1) == '\\') ? TRUE : FALSE)
@@ -164,8 +156,8 @@ extern int sharedResConfigured_;
 
 #define FOR_EACH_WORD_IN_SPACE_DELIMITED_STRING(String, Word) \
     if ((String) != NULL) { \
-	char *Word; \
-	while (((Word) = getNextWord_(&String)) != NULL) { \
+        char *Word; \
+        while (((Word) = getNextWord_(&String)) != NULL) { \
 
 #define END_FOR_EACH_WORD_IN_SPACE_DELIMITED_STRING }}
 
@@ -177,7 +169,7 @@ extern int sharedResConfigured_;
 #define LSF_LIM_ERES_TYPE "!"
 
 extern int lsResMsg_ (int, resCmd, char *, char *, int,
-		      bool_t (*)(), int *, struct timeval *);
+                      bool_t (*)(), int *, struct timeval *);
 extern int expectReturnCode_(int, int, struct LSFHeader *);
 extern int ackAsyncReturnCode_(int, struct LSFHeader *);
 extern int resRC2LSErr_(int);
@@ -220,18 +212,13 @@ extern int getAuth_(struct lsfAuth *, char *);
 extern int verifyEAuth_(struct lsfAuth *, struct sockaddr_in *);
 extern int putEauthClientEnvVar(char *);
 extern int putEauthServerEnvVar(char *);
-#ifdef INTER_DAEMON_AUTH
-extern int putEauthAuxDataEnvVar(char *);
-extern int putEauthAuxStatusEnvVar(char *);
-#endif
-
 
 extern void sw_remtty(int);
 extern void sw_loctty(int);
 
 extern int doAcceptResCallback_(int s, struct niosConnect *connReq);
 extern int niosCallback_(struct sockaddr_in *from, u_short port,
-	   int rpid, int exitStatus, int terWhiPendStatus);
+           int rpid, int exitStatus, int terWhiPendStatus);
 
 extern int sig_encode(int);
 extern int sig_decode(int);
@@ -347,17 +334,17 @@ extern int b_accept_(int, struct sockaddr *, socklen_t *);
 extern int blockSigs_(int, sigset_t *, sigset_t *);
 
 extern int readDecodeHdr_ (int s, char *buf, int (*readFunc)(), XDR *xdrs,
-			   struct LSFHeader *hdr);
+                           struct LSFHeader *hdr);
 extern int readDecodeMsg_ (int s, char *buf, struct LSFHeader *hdr,
-			   int (*readFunc)(), XDR *xdrs, char *data,
-			   bool_t (*xdrFunc)(), struct lsfAuth *auth);
+                           int (*readFunc)(), XDR *xdrs, char *data,
+                           bool_t (*xdrFunc)(), struct lsfAuth *auth);
 extern int writeEncodeMsg_(int, char *, int, struct LSFHeader *, char *,
-			   int (*)(), bool_t (*)(), int);
+                           int (*)(), bool_t (*)(), int);
 extern int writeEncodeHdr_(int, struct LSFHeader *, int (*)());
 extern int lsSendMsg_(int, int, int, char *, char *, int, bool_t (*)(),
-		      int (*)(), struct lsfAuth *);
+                      int (*)(), struct lsfAuth *);
 extern int lsRecvMsg_(int, char *, int, struct LSFHeader *, char *,
-		      bool_t (*)(), int (*)());
+                      bool_t (*)(), int (*)());
 
 extern int io_nonblock_(int);
 extern int io_block_(int);

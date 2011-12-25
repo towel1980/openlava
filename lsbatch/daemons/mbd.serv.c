@@ -1194,16 +1194,22 @@ do_restartReq(XDR * xdrs, int chfd, struct sockaddr_in * from,
     }
 
     if ((hData = getHostData(hp->h_name)) == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL, fname, "getHostData",
-                  hp->h_name);
+        /* For example a migrant host that knows who
+         * is the master but MBD did not configure it
+         * yet. In this case sbatchd has to retry.
+         */
+        ls_syslog(LOG_ERR, "\
+%s: Got registration request from unknown host %s at %s",
+                  __func__, hp->h_name, sockAdd2Str_(from));
         errorBack(chfd, LSBE_BAD_HOST, from);
         return (-1);
     }
     hStatChange(hData, 0);
 
     if ((sbdPackage.numJobs = countNumSpecs(hData)) > 0)
-        sbdPackage.jobs = (struct jobSpecs *) my_calloc(sbdPackage.numJobs,
-                                                        sizeof(struct jobSpecs), "do_restartReq");
+        sbdPackage.jobs = my_calloc(sbdPackage.numJobs,
+                                    sizeof(struct jobSpecs),
+                                    __func__);
     else
         sbdPackage.jobs = NULL;
     buflen = sbatchdJobs(&sbdPackage, hData);

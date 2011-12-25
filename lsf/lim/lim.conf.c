@@ -2984,7 +2984,7 @@ addHost(struct clusterNode *clPtr,
         if ((resNo = validResource(resStr)) >= 0)  {
             if (resNo < INTEGER_BITS)
                 hPtr->resClass |= (1<<resNo);
-            SET_BIT (resNo, hPtr->resBitMaps);
+            SET_BIT(resNo, hPtr->resBitMaps);
             if (dedicated) {
                 if (resNo < INTEGER_BITS)
                     hPtr->DResClass |= (1<<resNo);
@@ -3733,19 +3733,18 @@ isInHostList (struct sharedResource  *sharedResource,  char *hostName)
 }
 
 struct sharedResource *
-inHostResourcs (char *resName)
+inHostResourcs(char *resName)
 {
-
     int i;
 
     if (numHostResources <= 0)
-        return (NULL);
+        return NULL;
 
-    for (i=0; i < numHostResources; i++) {
+    for (i = 0; i < numHostResources; i++) {
         if (strcmp(hostResources[i]->resourceName, resName) == 0)
-            return (hostResources[i]);
+            return hostResources[i];
     }
-    return (NULL);
+    return NULL;
 
 }
 
@@ -3756,14 +3755,10 @@ validResource(const char *resName)
 
     for (i = 0; i < shortInfo.nRes; i++) {
         if (strcmp(shortInfo.resName[i], resName) == 0)
-            break;
+            return i;
     }
 
-
-    if (i == shortInfo.nRes)
-        return (-1);
-
-    return(i);
+    return -1 ;
 }
 
 int
@@ -4036,52 +4031,53 @@ findClusterServers(char *clName)
 void
 reCheckRes(void)
 {
-    static char fname[] = "reCheckRes()";
-    int i,j, resNo;
+    int i;
+    int j;
+    int resNo;
     struct resItem *newTable;
 
     allInfo.numIndx = 0;
-
-
-    newTable = (struct resItem *)malloc(allInfo.nRes * sizeof(struct resItem));
+    newTable = calloc(allInfo.nRes, sizeof(struct resItem));
     if (newTable == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        lim_Exit("reCheckRes");
+        lim_Exit(__func__);
     }
 
-
-    for (i=0,j=0; i < allInfo.nRes; i++) {
+    for (i = 0, j = 0; i < allInfo.nRes; i++) {
 
         if (allInfo.resTable[i].valueType == LS_NUMERIC
             && (allInfo.resTable[i].flags & RESF_DYNAMIC)
             && (allInfo.resTable[i].flags & RESF_GLOBAL)) {
-            memcpy((char *)&newTable[j], (char *)&allInfo.resTable[i],
+            memcpy(&newTable[j],
+                   &allInfo.resTable[i],
                    sizeof(struct resItem));
             j++;
         }
     }
-    for (i=0; i < allInfo.nRes; i++) {
+    for (i = 0; i < allInfo.nRes; i++) {
 
         if (allInfo.resTable[i].valueType == LS_NUMERIC
             && (!(allInfo.resTable[i].flags & RESF_DYNAMIC) ||
                 !(allInfo.resTable[i].flags & RESF_GLOBAL))) {
-            memcpy((char *)&newTable[j], (char *)&allInfo.resTable[i],
+            memcpy(&newTable[j],
+                   &allInfo.resTable[i],
                    sizeof(struct resItem));
             j++;
         }
     }
 
-    for (i=0; i < allInfo.nRes; i++) {
+    for (i = 0; i < allInfo.nRes; i++) {
         if (allInfo.resTable[i].valueType == LS_BOOLEAN) {
-            memcpy((char *)&newTable[j], (char *)&allInfo.resTable[i],
+            memcpy(&newTable[j],
+                   &allInfo.resTable[i],
                    sizeof(struct resItem));
             j++;
         }
     }
 
-    for (i=0; i < allInfo.nRes; i++) {
+    for (i = 0; i < allInfo.nRes; i++) {
         if (allInfo.resTable[i].valueType == LS_STRING) {
-            memcpy((char *)&newTable[j], (char *)&allInfo.resTable[i],
+            memcpy(&newTable[j],
+                   &allInfo.resTable[i],
                    sizeof(struct resItem));
             j++;
         }
@@ -4089,50 +4085,46 @@ reCheckRes(void)
     free(allInfo.resTable);
     allInfo.resTable = newTable;
 
-
     shortInfo.nRes = 0;
-    shortInfo.resName = (char **) malloc (allInfo.nRes * sizeof(char*));
-    shortInfo.stringResBitMaps = (int *) malloc (GET_INTNUM(allInfo.nRes) *
-                                                 sizeof (int));
-    shortInfo.numericResBitMaps = (int *) malloc (GET_INTNUM(allInfo.nRes) *
-                                                  sizeof (int));
-    if (shortInfo.resName == NULL || shortInfo.stringResBitMaps == NULL
+    shortInfo.resName = calloc(allInfo.nRes, sizeof(char *));
+    shortInfo.stringResBitMaps = calloc(GET_INTNUM(allInfo.nRes),
+                                        sizeof (int));
+    shortInfo.numericResBitMaps = calloc(GET_INTNUM(allInfo.nRes),
+                                         sizeof (int));
+    if (shortInfo.resName == NULL
+        || shortInfo.stringResBitMaps == NULL
         || shortInfo.numericResBitMaps == NULL) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-        lim_Exit("reCheckRes");
+        lim_Exit(__func__);
     }
-    for (i = 0; i < GET_INTNUM(allInfo.nRes); i++) {
-        shortInfo.stringResBitMaps[i] = 0;
-        shortInfo.numericResBitMaps[i] = 0;
-    }
-    for (resNo=0; resNo < allInfo.nRes; resNo++) {
+
+    for (resNo = 0; resNo < allInfo.nRes; resNo++) {
+
         if ((allInfo.resTable[resNo].flags & RESF_DYNAMIC)
             && (allInfo.resTable[resNo].valueType == LS_NUMERIC)
             && (allInfo.resTable[resNo].flags & RESF_GLOBAL))
             allInfo.numIndx++;
 
-
         if ((allInfo.resTable[resNo].flags & RESF_BUILTIN)
             || (allInfo.resTable[resNo].flags & RESF_DYNAMIC
-                && allInfo.resTable[resNo].valueType == LS_NUMERIC) ||
-            (allInfo.resTable[resNo].valueType != LS_STRING
-             && allInfo.resTable[resNo].valueType != LS_BOOLEAN))
+                && allInfo.resTable[resNo].valueType == LS_NUMERIC)
+            || (allInfo.resTable[resNo].valueType != LS_STRING
+                && allInfo.resTable[resNo].valueType != LS_BOOLEAN))
             continue;
-        shortInfo.resName[shortInfo.nRes] = putstr_(allInfo.resTable[resNo].name);
+
+        shortInfo.resName[shortInfo.nRes]
+            = putstr_(allInfo.resTable[resNo].name);
         if (shortInfo.resName[shortInfo.nRes] == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
-            lim_Exit(fname);
+            lim_Exit(__func__);
         }
         if (allInfo.resTable[resNo].valueType == LS_STRING)
             SET_BIT (shortInfo.nRes,  shortInfo.stringResBitMaps);
         shortInfo.nRes++;
     }
     shortInfo.nModels = allInfo.nModels;
-    for (i=0; i < allInfo.nModels; i++) {
+    for (i = 0; i < allInfo.nModels; i++) {
         shortInfo.hostModels[i] = allInfo.hostModels[i];
         shortInfo.cpuFactors[i] = allInfo.cpuFactor[i];
     }
-
 }
 
 static int

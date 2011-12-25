@@ -152,17 +152,17 @@ sendLoad(void)
                 myClusterPtr->prevMasterPtr = myClusterPtr->masterPtr;
                 myClusterPtr->masterPtr = NULL;
                 ls_syslog(LOG_INFO, "%s: Master LIM unknown now", __func__);
-                if (limParams[LIM_SLAVE_ONLY].paramValue)
+                if (limParams[LIM_COMPUTE_ONLY].paramValue)
                     ls_syslog(LOG_INFO, "\
-%s: slave only host will not try to take over mastership", __func__);
+%s: compute only host will not try to take over mastership", __func__);
             }
 
             /* Try to take over the current master only if
-             * I am not a slave only server and the master inactivity
+             * I am not a compute only server and the master inactivity
              * counter has reached its limit times my position in
              * the cluster file.
              */
-            if (limParams[LIM_SLAVE_ONLY].paramValue == NULL
+            if (limParams[LIM_COMPUTE_ONLY].paramValue == NULL
                 && (myClusterPtr->masterInactivityCount > hostInactivityLimit
                     + myHostPtr->hostNo * masterInactivityLimit)) {
 

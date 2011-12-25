@@ -1,0 +1,193 @@
+
+Ho Ho Ho Merry Christmas to everybody.
+
+Santa brought us openlava 2.0 alpha code which everybody
+on this list is invited to test, it is the master branch on
+github.
+
+This is a first version of the openlava 2.0 Release Notes.
+
+1) lsrun.
+
+lsrun was missing from the original Platform Lava distribution, so
+openlava did not have it. We have developed our own version which
+merges lsrun and lsgrun functionality in one command.
+
+2) Copy openlava configuration as part of the LIM startup.
+
+In openlava you should have shared file system only among the first two
+or three hosts that are listed in the Host section, those that you want
+to become masters. You can then either copy manually the configuration
+files to compute hosts or set this variable in the lsf.conf on the compute
+host:
+
+LIM_RSYNC_CONFIG=y
+
+if this is configured LIM will execute the 'esync' script which is installed
+in the bin directory. By default the esync script uses rsync to sync up
+the entire configuration directory LSF_CONFDIR. The script can be changed
+to use any remote copy program users like.
+
+3) Compute only hosts configuration.
+
+A part from the first two or three hosts other LIMs
+listed in the Host section of the lsf.cluster.openlava don't have to
+become masters they should be compute only. In case of network partition
+or problems compute only LIMs should not attempt to become masters.
+In lsf.conf configure:
+
+LIM_COMPUTE_ONLY=y
+
+and the compute only host will never attempt to become master.
+
+The recommended compute only configuration should be as follow.
+Add the LIM_COMPUTE_ONLY variable, then in the lsf.cluster.openlava file
+add the master hosts and the compute itself. For example assuming the
+host 'bokis' is the only master of the cluster on compute host 'banana'
+the host section would look like:
+
+Begin   Host
+HOSTNAME   model    type  server  r1m  RESOURCES
+bokis      IntelI5 linux   1      3.5    (cs)
+banana     IntelI5 linux   1      3.5    (cs)
+End     Host
+
+while on the host 'nuts':
+
+Begin   Host
+HOSTNAME   model    type  server  r1m  RESOURCES
+bokis      IntelI5 linux   1      3.5    (cs)
+nuts       IntelI5 linux   1      3.5    (cs)
+End     Host
+
+The master host bokis would list all of them unless user
+use the migrant host feature.
+
+3) Migrant compute hosts.
+
+Migrant compute hosts are compute hosts which can join and leave
+the cluster without the need of being explicitly configured in
+the master cluster file.
+Migrant hosts join both openlava base and openlava batch without the
+need of any reconfiguration. The in and out migration is API and
+command driven. openlava 2.0 accepts by default migrant hosts if you
+wish to disable this behaviour you have to do it explicitly by
+configuring:
+
+LIM_NO_MIGRANT_HOSTS=y
+
+in lsf.conf.
+
+3.1) To have a host join a cluster use the 'lsaddhost' command or
+the 'ls_addhost()' API.
+
+3.2) To remove a host from the cluster use the 'lsrmhost' command or
+the 'ls_rmhost()' API.
+
+The commands can be run from any host, either the master, the compute
+itself, but also from the openlava admin computer from which s/he
+controls and administers the cluster.
+
+The host that is being added to the cluster must have its own
+compute configuration as show above. The resource of a compute
+node must be known to the master host. The IP address of the compute
+node must be known to the master, i.e. gethostbyaddr()/gethostbyname()
+must work.
+
+In this example we show how a host can be added and removed.
+
+3.3) Start master.
+
+=> lsid
+openlava project 2.0, Dec 15 2011
+
+My cluster name is openlava
+My master name is bokis
+
+=> lsload
+HOST_NAME status r15s  r1m  r15m   ut    pg  ls   it   tmp   swp   mem
+bokis     ok      3.0  0.1   0.1   5%   0.0   1    2   60G 8000M 2480M
+
+ => bhosts
+HOST_NAME   STATUS   JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV
+bokis       ok         -      4      0      0      0      0      0
+
+3.4) On the compute node start the daemons then run the 'lsaddhost'
+command. By starting the daemon first we have the shortest join in
+time.
+
+=> lsaddhost -m IntelI5 -t linux sofia
+Host sofia added all right.
+=> lshosts
+HOST_NAME      type    model  cpuf ncpus maxmem maxswp server RESOURCES
+sofia         linux  IntelI5 100.0     2   997M  1023M    Yes ()
+bokis         linux  IntelI5 100.0     4  3822M  7999M    Yes (cs)
+=> bhosts
+HOST_NAME   STATUS       JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV
+bokis        ok              -      4      0      0      0      0      0
+sofia        closed          -      2      0      0      0      0      0
+
+The host is closed as the load information are not immediately
+available but a minute later the host is ready and accepts jobs.
+
+ => bsub -o /dev/null -J 'runme[1-8]' sleep 120
+Job <1040> is submitted to default queue <normal>.
+=> bhosts
+HOST_NAME    STATUS       JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV
+bokis        closed          -      4      4      4      0      0      0
+sofia        closed          -      2      2      2      0      0      0
+=> bjobs -A
+JOBID    ARRAY_SPEC  OWNER   NJOBS PEND DONE  RUN EXIT SSUSP USUSP PSUSP
+1040     runme[1-    david       8    2    0    6    0     0     0     0
+
+3.5) To remove the host run the 'lsrmhost'. The running jobs will be
+killed, the running jobs submitted as rerunnable will be requeued.
+
+ => lsrmhost sofia
+Host bokis removed all right.
+ => lshosts;bhosts;bjobs -A
+HOST_NAME  type    model  cpuf ncpus maxmem maxswp server RESOURCES
+bokis      linux  IntelI5 100.0     4  3822M  7999M    Yes (cs)
+HOST_NAME  STATUS       JL/U    MAX  NJOBS    RUN  SSUSP  USUSP    RSV
+bokis      ok              -      4      0      0      0      0      0
+JOBID    ARRAY_SPEC  OWNER   NJOBS PEND DONE  RUN EXIT SSUSP USUSP PSUSP
+1040     runme[1-    david       8    0    6    0    2     0     0     0
+
+4) Prepost execution user.
+
+The LSB_PRE_POST_EXEC_USER parameter, documented on the page 59 of the
+Inside Platform Lava document version 6.1 from 2006, is not supported
+by the Platform Lava code so it was not inherited by the openlava fork.
+This feature has been developed as queue based feature in openlava.
+To configure it enable in lsb.queues in the queue section:
+
+ PRE_POST_EXEC_USER = user
+
+The user cannot be root for security reasons.
+
+Thanks to Taras Shapovalov (taras.shapovalov@brightcomputing.com) for
+design and development of this feature.
+
+5) User based round robin scheduler.
+
+Beside standard first come first serve scheduling algorithm, openlava
+now supports a round robin scheduler weighted on the number of pending
+user jobs in a queue, the user with less jobs has his jobs
+dispatched first, then the priorities are recalculated. In the case two
+users have the same number of pending jobs fcfs among them is observed.
+By observing the output of 'busers all' it is easy to see whose job
+will be dispatched next.
+
+To configure it enable in lsb.queues in the queue section:
+
+ROUND_ROBIN = Y | y
+
+5) Ubuntu port.
+
+The code now compiles on Ubuntu.
+
+6) Distribution.
+
+The favorite distribution method for openlava 2.0 is the tar.gz
+file. 2.0 will probably stop supporting the rpm because of no man
+power to maintain all rpm distributions.

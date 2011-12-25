@@ -882,7 +882,6 @@ sinit (void)
 	Signal_(SIGTSTP, SIG_IGN);
     }
 
-
     jobQueHead = (struct jobCard *) mkListHeader () ;
     clientList = (struct clientNode *) mkListHeader () ;
     if (!jobQueHead || !clientList ) {
@@ -913,7 +912,7 @@ sinit (void)
     }
 
     while ((myinfo = ls_gethostinfo(NULL, NULL, &myhostname,
-		1, 0)) == NULL) {
+                                    1, 0)) == NULL) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_gethostinfo");
 	millisleep_(sbdSleepTime * 1000);
     }
@@ -962,10 +961,7 @@ init_sstate (void)
     int i;
 
     getJobsState(&sbdPackage);
-
-
     getManagerId(&sbdPackage);
-
     mbdPid = sbdPackage.mbdPid;
 
     sbdSleepTime = sbdPackage.sbdSleepTime;

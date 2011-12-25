@@ -28,7 +28,7 @@ extern void addHost(struct hostInfo *lsf,
                     int override);
 
 static void   initHostStat(void);
-static void   hostJobs(struct hData *, int, int);
+static void   hostJobs(struct hData *, int);
 static void   hostQueues(struct hData *, int);
 static void   copyHostInfo (struct hData *, struct hostInfoEnt *);
 static int    getAllHostInfoEnt (struct hostDataReply *, struct hData **,
@@ -41,6 +41,7 @@ static int    hasResReserve(struct resVal *);
 
 static void addMigrantHost(struct hostInfo *);
 static int rmMigrantHost(void);
+static void migrantHostJobs(struct hData *);
 
 typedef enum {
     OK_UNREACH,
@@ -548,12 +549,12 @@ pollSbatchds(int mbdRunFlag)
         if (result != ERR_UNREACH_SBD && result != ERR_FAIL) {
 
             if (hPtr->hStatus & HOST_STAT_UNAVAIL) {
-                hostJobs(hPtr, UNAVAIL_OK, 0);
+                hostJobs(hPtr, UNAVAIL_OK);
                 hPtr->hStatus &= ~HOST_STAT_UNAVAIL;
             }
 
             if (hPtr->hStatus & HOST_STAT_UNREACH) {
-                hostJobs(hPtr,  UNREACH_OK, 0);
+                hostJobs(hPtr,  UNREACH_OK);
                 hPtr->hStatus &= ~HOST_STAT_UNREACH;
             }
             hPtr->sbdFail = 0;
@@ -567,7 +568,7 @@ pollSbatchds(int mbdRunFlag)
             if (!(hPtr->hStatus & (HOST_STAT_UNREACH | HOST_STAT_UNAVAIL))
                 && hPtr->sbdFail > 1) {
 
-                hostJobs(hPtr, OK_UNREACH, 0);
+                hostJobs(hPtr, OK_UNREACH);
                 ls_syslog(LOG_INFO, "\
 %s: Declaring host %s unreachable. result %d", __func__,
                           hPtr->host, result);
@@ -590,7 +591,7 @@ pollSbatchds(int mbdRunFlag)
                     if (! (hPtr->hStatus & HOST_STAT_UNAVAIL)) {
                         ls_syslog(LOG_INFO, "\
 %s: The sbatchd on host %s is unavailable", __func__, hPtr->host);
-                        hostJobs(hPtr, UNREACH_UNAVAIL, 0);
+                        hostJobs(hPtr, UNREACH_UNAVAIL);
                         hPtr->hStatus |= HOST_STAT_UNAVAIL;
                         hPtr->hStatus &= ~HOST_STAT_UNREACH;
                     }
@@ -649,7 +650,7 @@ hStatChange(struct hData *hp, int newStatus)
         && !(newStatus & (HOST_STAT_UNAVAIL | HOST_STAT_UNREACH))) {
         hp->sbdFail = 0;
         hp->hStatus &= ~HOST_STAT_UNREACH;
-        hostJobs(hp, UNREACH_OK, 0);
+        hostJobs(hp, UNREACH_OK);
         return;
     }
 
@@ -661,7 +662,7 @@ hStatChange(struct hData *hp, int newStatus)
             hp->sbdFail++;
         if (hp->sbdFail > 1) {
             hp->hStatus |= HOST_STAT_UNREACH;
-            hostJobs(hp, OK_UNREACH, 0);
+            hostJobs(hp, OK_UNREACH);
         }
         return;
     }
@@ -674,18 +675,17 @@ hStatChange(struct hData *hp, int newStatus)
 
         hp->sbdFail = 0;
         hp->hStatus &= ~HOST_STAT_UNAVAIL;
-        hostJobs(hp, UNAVAIL_OK, 0);
+        hostJobs(hp, UNAVAIL_OK);
     }
 }
 
 static void
-hostJobs(struct hData *hPtr, int stateTransit, int kill)
+hostJobs(struct hData *hPtr, int stateTransit)
 {
     struct jData *jPtr;
     struct jData *nextJobPtr;
     int numJobs;
     int numFound;
-    int cc;
 
     numJobs = hPtr->numRUN + hPtr->numSSUSP + hPtr->numUSUSP;
     numFound = 0;
@@ -750,25 +750,6 @@ hostJobs(struct hData *hPtr, int stateTransit, int kill)
             jStatusChange(jPtr, JOB_STAT_EXIT, LOG_IT, "hostJobs");
 
             continue;
-        }
-
-        if (kill) {
-            /* kill non rerunnable jobs on
-             * migrant host.
-             */
-            jPtr->newReason = EXIT_NORMAL;
-            jPtr->exitStatus = 255;
-            jPtr->shared->jobBill.options &= ~(SUB_RESTART | SUB_RESTART_FORCE);
-            jPtr->newReason &= ~(SUB_RESTART | SUB_RESTART_FORCE);
-            jStatusChange(jPtr, JOB_STAT_EXIT, LOG_IT, (char *)__func__);
-
-            /* Reset hosts' references
-             */
-            for (cc = 0; cc < jPtr->numHostPtr; cc++) {
-                jPtr->hPtr[cc] = NULL;
-            }
-            jPtr->numHostPtr = 1;
-            jPtr->hPtr[0] = getHostData(LOST_AND_FOUND);
         }
     }
 
@@ -1729,8 +1710,7 @@ rmMigrantHost(void)
          * jobs by 2 states and kill running
          * jobs and requeue rerunnable ones.
          */
-        hostJobs(hPtr, OK_UNREACH, 0);
-        hostJobs(hPtr, UNREACH_UNAVAIL, 1);
+        migrantHostJobs(hPtr);
         freeHData(hPtr);
         gone = 1;
 
@@ -1747,4 +1727,120 @@ int
 numofhosts(void)
 {
     return LIST_NUM_ENTRIES(hostList);
+}
+
+/* migrantHostJobs()
+ * In a large dynamic cluster this routine can
+ * take a while, watch it. We should have a reference
+ * hPtr->jPtr which would make stuff easier.
+ */
+static void
+migrantHostJobs(struct hData *hPtr)
+{
+    struct jData *jPtr;
+    struct jData *nextJobPtr;
+    struct hData *lost;
+    int numJobs;
+    int numFound;
+    int cc;
+    jlistno_t L;
+
+    numJobs = hPtr->numRUN + hPtr->numSSUSP + hPtr->numUSUSP;
+    numFound = 0;
+    lost = getHostData(LOST_AND_FOUND);
+    /* Linear search through SJL to find which
+     * jobs are running on the host which is
+     * changing state, this does not happen
+     * that often so perhaps it is on.
+     */
+    for (jPtr = jDataList[SJL]->back;
+         jPtr != jDataList[SJL];
+         jPtr = nextJobPtr) {
+
+        /* during processing of this function
+         * the job may leave SJL so record da
+         * nexte dude
+         */
+        nextJobPtr = jPtr->back;
+
+        if (numFound >= numJobs)
+            break;
+
+        if (hPtr != jPtr->hPtr[0])
+            continue;
+
+        ++numFound;
+
+        if (jPtr->shared->jobBill.options & SUB_RERUNNABLE) {
+            int sendMail;
+            /* Requeue the jobs regardless if on migrant host
+             * or not.
+             */
+            if (jPtr->shared->jobBill.options & SUB_RERUNNABLE) {
+                sendMail = TRUE;
+            } else {
+                sendMail = FALSE;
+            }
+
+            jPtr->endTime = now;
+            jPtr->newReason = EXIT_ZOMBIE;
+            jPtr->jStatus |= JOB_STAT_ZOMBIE;
+
+            if ((jPtr->shared->jobBill.options & SUB_CHKPNTABLE)
+                && ((jPtr->shared->jobBill.options & SUB_RESTART)
+                    ||(jPtr->jStatus & JOB_STAT_CHKPNTED_ONCE))) {
+                jPtr->newReason |= EXIT_RESTART;
+            }
+            /* no zombie for a host which may never come back
+             */
+            if (0)
+                inZomJobList(jPtr, sendMail);
+            jStatusChange(jPtr, JOB_STAT_EXIT, LOG_IT, "hostJobs");
+            continue;
+        }
+
+        /* kill non rerunnable jobs on
+         * migrant host.
+         */
+        jPtr->newReason = EXIT_NORMAL;
+        jPtr->exitStatus = 255;
+        jPtr->shared->jobBill.options &= ~(SUB_RESTART | SUB_RESTART_FORCE);
+        jPtr->newReason &= ~(SUB_RESTART | SUB_RESTART_FORCE);
+        jStatusChange(jPtr, JOB_STAT_EXIT, LOG_IT, (char *)__func__);
+
+        /* Reset hosts' references
+         */
+        for (cc = 0; cc < jPtr->numHostPtr; cc++) {
+            jPtr->hPtr[cc] = NULL;
+        }
+        jPtr->numHostPtr = 1;
+        jPtr->hPtr[0] = lost;
+    }
+
+    L = FJL;
+znovu:
+    for (jPtr = jDataList[L]->back;
+         jPtr != jDataList[L];
+         jPtr = jPtr->back) {
+
+        /* reset the host pointers for
+         * FJL and ZJL jobs too
+         */
+        if (hPtr != jPtr->hPtr[0])
+            continue;
+
+        for (cc = 0; cc < jPtr->numHostPtr; cc++) {
+            jPtr->hPtr[cc] = NULL;
+        }
+        jPtr->numHostPtr = 1;
+        jPtr->hPtr[0] = lost;
+    }
+
+    if (L == FJL) {
+        /* ha ha ha ha...
+         */
+        L = ZJL;
+        goto znovu;
+    }
+
 }

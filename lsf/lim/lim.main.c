@@ -78,7 +78,7 @@ struct config_param limParams[] =
     {"LSF_REJECT_NONLSFHOST", NULL},
     {"LSF_LIM_JACKUP_BUSY", NULL},
     {"LIM_RSYNC_CONFIG", NULL},
-    {"LIM_SLAVE_ONLY", NULL},
+    {"LIM_COMPUTE_ONLY", NULL},
     {"LSB_SHAREDIR", NULL},
     {"LIM_NO_MIGRANT_HOSTS", NULL},
     {"LIM_NO_FORK", NULL},

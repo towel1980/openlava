@@ -17,7 +17,7 @@
  */
 
 #include "../lsf.h"
-extern int optind;
+#include "../lib/lib.h"
 
 static void
 usage(void)
@@ -31,6 +31,7 @@ static int getResList(struct hostEntry *, const char *);
 static int getBusyThr(struct hostEntry *, const char *);
 static void freeInfo(struct hostEntry **);
 static void printInfo(struct hostEntry *);
+static char buf[BUFSIZ];
 
 /* Da main()
  *
@@ -120,6 +121,28 @@ main(int argc, char **argv)
 static int
 getResList(struct hostEntry *hPtr, const char *str)
 {
+    /* these are the static resources defined in the
+     * lsf.cluster file.
+     */
+    char *p;
+    char *word;
+    int cc;
+
+    cc = 0;
+    p = buf;
+    strcpy(buf, str);
+    while (getNextWord_(&p))
+        ++cc;
+
+    hPtr->nRes = cc;
+    hPtr->resList = calloc(cc, sizeof(char *));
+    p = buf;
+    cc = 0;
+    while ((word = getNextWord_(&p))) {
+        hPtr->resList[cc] = strdup(word);
+        ++cc;
+    }
+
     return 0;
 }
 static int

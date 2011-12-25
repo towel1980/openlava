@@ -32,10 +32,10 @@ extern int jRusageUpdatePeriod;
 
 #define NL_SETN     11
 int
-status_job (mbdReqType reqType,
-            struct jobCard *jp,
-            int newStatus,
-	    sbdReplyType err)
+status_job(mbdReqType reqType,
+           struct jobCard *jp,
+           int newStatus,
+           sbdReplyType err)
 {
     static char        fname[] = "status_job()";
     static int         seq = 1;
@@ -53,11 +53,11 @@ status_job (mbdReqType reqType,
     struct lsfAuth     *auth = NULL;
 
     if ((logclass & LC_TRACE) && (logclass & LC_SIGNAL))
-	ls_syslog(LOG_DEBUG, "%s: Entering ... regType %d jobId %s",
-		  fname, reqType, lsb_jobid2str(jp->jobSpecs.jobId));
+        ls_syslog(LOG_DEBUG, "%s: Entering ... regType %d jobId %s",
+                  fname, reqType, lsb_jobid2str(jp->jobSpecs.jobId));
 
     if ( newStatus == JOB_STAT_EXIT ) {
-	jp->userJobSucc = FALSE;
+        jp->userJobSucc = FALSE;
     }
 
     if ( MASK_STATUS(newStatus) == JOB_STAT_DONE ) {
@@ -295,6 +295,7 @@ getJobsState(struct sbdPackage *sbdPackage)
         die(SLAVE_FATAL);
     }
 
+znovu:
     mbdReqtype = BATCH_SLAVE_RESTART;
     xdrmem_create(&xdrs, request_buf, MSGSIZE/8, XDR_ENCODE);
     initLSFHeader_(&hdr);
@@ -313,44 +314,55 @@ getJobsState(struct sbdPackage *sbdPackage)
                          mbd_port,
                          request_buf,
                          XDR_GETPOS(&xdrs),
-			 &reply_buf,
+                         &reply_buf,
                          &hdr,
                          connTimeout,
                          60 * 30,
                          NULL,
                          NULL,
-			 NULL,
+                         NULL,
                          0);
-        if (cc < 0) {
-
-            if (equalHost_(masterHost, myhostnm)) {
-                if ((mbdPid == 0) || (kill(mbdPid, 0) != 0)) {
-                    now = time(0);
-                    start_master();
-                }
-            } else
-                if (debug)
-                    ls_syslog(LOG_ERR, "\
-%s: mbatchd on host %s not responding: %s",
-                              __func__, masterHost, lsb_sysmsg());
-        } else {
+        if (cc >= 0)
             break;
+
+        /* If we did not get an answer from MBD then
+         * either we are booting on the master host
+         * so we have to start the master, or the master
+         * is down for whatever reason and we just have
+         * to retry,
+         */
+        if (equalHost_(masterHost, myhostnm)) {
+            if (mbdPid == 0
+                || (kill(mbdPid, 0) != 0)) {
+                now = time(0);
+                start_master();
+                millisleep_(sbdSleepTime * 1000);
+                continue;
+            }
         }
+
+        ls_syslog(LOG_ERR, "\
+%s: mbatchd on host %s not responding: %s, EAGAIN...",
+                  __func__, masterHost, lsb_sysmsg());
 
         millisleep_(sbdSleepTime * 1000);
         masterHost = ls_getmastername();
         while (masterHost == NULL) {
+            /* Meanwhile master might have
+             * changed...
+             */
             int cnt = 0;
             if (cnt == 0) {
                 ls_syslog(LOG_ERR, "\
 %s: waiting to get my master name %M", __func__);
                 cnt = 10;
             }
-            cnt--;
+            --cnt;
             millisleep_(sbdSleepTime * 1000);
             masterHost = ls_getmastername();
         }
-    }
+
+    } /* for (call_server()) */
 
     master_unknown = FALSE;
     xdr_destroy(&xdrs);
@@ -360,7 +372,7 @@ getJobsState(struct sbdPackage *sbdPackage)
         char ebuf[256];
 
         case LSBE_NO_ERROR:
-            xdrmem_create(&xdrs, reply_buf, XDR_DECODE_SIZE_(cc), XDR_DECODE);
+            xdrmem_create(&xdrs, reply_buf, cc, XDR_DECODE);
             if (!xdr_sbdPackage (&xdrs, sbdPackage, &hdr)) {
                 ls_syslog(LOG_ERR, "\
 %s: Ohmygosh failed to decode sbdPackage from %s", __func__, masterHost);
@@ -399,15 +411,18 @@ getJobsState(struct sbdPackage *sbdPackage)
             if (cc)
                 free(reply_buf);
 
+            ls_syslog(LOG_DEBUG, "\
+%s: got configuration from master %s all right", __func__, masterHost);
+
             return;
 
         case LSBE_BAD_HOST:
             ls_syslog(LOG_ERR, "\
-%s: This host is not yet used by the batch system... trying again",
+%s: This host is not yet used by the batch system... EAGAIN",
                       __func__);
             free(reply_buf);
-            die(SLAVE_FATAL);
-
+            millisleep_(sbdSleepTime * 1000);
+            goto znovu;
         case LSBE_PORT:
             ls_syslog(LOG_ERR, "\
 %s: mbatchd reports that it is using a bad port",
@@ -446,14 +461,14 @@ jobSetupStatus(int jStatus, int pendReason, struct jobCard *jp)
     jsetup.w_status = jp->w_status;
 
     while (msgSbd(jp->jobSpecs.jobId, (char *) &jsetup, SBD_JOB_SETUP,
-		  xdr_jobSetup) == -1) {
-	ls_syslog(LOG_DEBUG, "%s: Job %s msgSbd() failed", fname,
-		  lsb_jobid2str(jp->jobSpecs.jobId));
-	millisleep_(10000);
+                  xdr_jobSetup) == -1) {
+        ls_syslog(LOG_DEBUG, "%s: Job %s msgSbd() failed", fname,
+                  lsb_jobid2str(jp->jobSpecs.jobId));
+        millisleep_(10000);
     }
 
     if (jStatus & JOB_STAT_RUN)
-	return;
+        return;
 
     exit(jp->w_status);
 
@@ -491,45 +506,45 @@ msgSbd(LS_LONG_INT jobId, char *req, sbdReqType reqType, int (*xdrFunc)())
 
     if (!xdr_encodeMsg(&xdrs, req, &hdr, xdrFunc, 0, NULL)) {
         ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, lsb_jobid2str(jobId), "xdr_encodeMsg");
-	xdr_destroy(&xdrs);
-	return(-1);
+        xdr_destroy(&xdrs);
+        return(-1);
     }
 
     for (retryInterval = 5, cc = -1; cc != 0;) {
 
 
-	initenv_(daemonParams, env_dir);
-	get_ports();
+        initenv_(daemonParams, env_dir);
+        get_ports();
 
-	if ((myhostnm = ls_getmyhostname()) == NULL) {
-	    ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, lsb_jobid2str(jobId),
+        if ((myhostnm = ls_getmyhostname()) == NULL) {
+            ls_syslog(LOG_ERR, I18N_JOB_FAIL_S_M, fname, lsb_jobid2str(jobId),
                       "ls_getmyhostname");
-	    myhostnm = "localhost";
-	}
+            myhostnm = "localhost";
+        }
 
 
 
-	cc = call_server(myhostnm, sbd_port, requestBuf, XDR_GETPOS(&xdrs),
-			 &reply_buf, &hdr, 100000, 0, NULL, NULL, NULL, 0);
-	if (cc < 0) {
-	    ls_syslog(LOG_DEBUG, "%s: Job <%s> call_server(%s,%d) failed: %s",
-		      fname, lsb_jobid2str(jobId), myhostnm,
-		      ntohs(sbd_port), lsb_sysmsg());
-	    millisleep_(retryInterval*1000);
-	    retryInterval *= 2;
-	    if (retryInterval > sbdSleepTime)
-		retryInterval = sbdSleepTime;
-	}
+        cc = call_server(myhostnm, sbd_port, requestBuf, XDR_GETPOS(&xdrs),
+                         &reply_buf, &hdr, 100000, 0, NULL, NULL, NULL, 0);
+        if (cc < 0) {
+            ls_syslog(LOG_DEBUG, "%s: Job <%s> call_server(%s,%d) failed: %s",
+                      fname, lsb_jobid2str(jobId), myhostnm,
+                      ntohs(sbd_port), lsb_sysmsg());
+            millisleep_(retryInterval*1000);
+            retryInterval *= 2;
+            if (retryInterval > sbdSleepTime)
+                retryInterval = sbdSleepTime;
+        }
     }
 
     xdr_destroy(&xdrs);
 
     if (hdr.opCode != LSBE_NO_ERROR) {
-	lsberrno = hdr.opCode;
-	if (logclass & LC_EXEC)
-	    ls_syslog(LOG_DEBUG, "msgSbd: Job <%s> got error <%s>, exiting",
-		      lsb_jobid2str(jobId), lsb_sysmsg());
-	exit(-1);
+        lsberrno = hdr.opCode;
+        if (logclass & LC_EXEC)
+            ls_syslog(LOG_DEBUG, "msgSbd: Job <%s> got error <%s>, exiting",
+                      lsb_jobid2str(jobId), lsb_sysmsg());
+        exit(-1);
     }
 
     return (0);
@@ -546,33 +561,33 @@ msgSupervisor(struct lsbMsg *lsbMsg, struct clientNode *cliPtr)
     XDR xdrs;
 
     if (logclass & LC_TRACE)
-	ls_syslog(LOG_DEBUG, "%s: Entering this routine ...", fname);
+        ls_syslog(LOG_DEBUG, "%s: Entering this routine ...", fname);
 
     if (cliPtr == NULL) {
-	ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5220,
+        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5220,
                                          "%s: cliPtr is null"), fname); /* catgets 5220 */
-	return (-1);
+        return (-1);
     }
 
     initLSFHeader_(&reqHdr);
     xdrmem_create(&xdrs, reqBuf, sizeof(reqBuf), XDR_ENCODE);
 
     if (!xdr_encodeMsg(&xdrs, (char *) lsbMsg, &reqHdr, xdr_lsbMsg, 0, NULL)) {
-	if (logclass & LC_COMM)
-	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
-	xdr_destroy(&xdrs);
-	return (-1);
+        if (logclass & LC_COMM)
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_encodeMsg");
+        xdr_destroy(&xdrs);
+        return (-1);
     }
 
     if ((cc = b_write_fix(chanSock_(cliPtr->chanfd), reqBuf,
-			  XDR_GETPOS(&xdrs)))
-	!= XDR_GETPOS(&xdrs)) {
-	if (logclass & LC_COMM)
-	    ls_syslog(LOG_ERR, I18N_FUNC_D_D_FAIL_M, fname, "b_write_fix",
+                          XDR_GETPOS(&xdrs)))
+        != XDR_GETPOS(&xdrs)) {
+        if (logclass & LC_COMM)
+            ls_syslog(LOG_ERR, I18N_FUNC_D_D_FAIL_M, fname, "b_write_fix",
                       chanSock_(cliPtr->chanfd),
                       XDR_GETPOS(&xdrs));
-	xdr_destroy(&xdrs);
-	return (-1);
+        xdr_destroy(&xdrs);
+        return (-1);
     }
 
     xdr_destroy(&xdrs);
@@ -588,7 +603,7 @@ getSbdAuth(struct lsfAuth *auth)
     char buf[1024];
 
     if (daemonParams[LSF_AUTH_DAEMONS].paramValue == NULL)
-	return 0;
+        return 0;
 
     putEauthClientEnvVar("sbatchd");
     sprintf(buf, "mbatchd@%s", clusterName);
@@ -597,7 +612,7 @@ getSbdAuth(struct lsfAuth *auth)
     rc = getAuth_(auth, masterHost);
 
     if (rc) {
-	ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "getAuth_");
+        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "getAuth_");
     }
 
     return (rc);
@@ -687,7 +702,7 @@ sendUnreportedStatus (struct chunkStatusReq *chunkStatusReq)
                      connTimeout,
                      readTimeout,
                      &statusChan,
-		     NULL,
+                     NULL,
                      NULL,
                      flags);
     if (cc < 0) {
