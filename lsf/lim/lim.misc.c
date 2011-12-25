@@ -1,4 +1,5 @@
-/* $Id: lim.misc.c 397 2007-11-26 19:04:00Z mblack $
+/*
+ * Copyright (C) 2011 David Bigagli
  * Copyright (C) 2007 Platform Computing Inc
  *
  * This program is free software; you can redistribute it and/or modify
@@ -294,6 +295,10 @@ int
 logInit(void)
 {
     static char eFile[PATH_MAX];
+    static char eFile2[PATH_MAX];
+    struct tm *t;
+    time_t tp;
+    int cc;
 
     sprintf(eFile, "\
 %s/lim.events", limParams[LSB_SHAREDIR].paramValue);
@@ -306,6 +311,30 @@ logInit(void)
     }
 
     loadEvents();
+    fclose(logFp);
+
+    /* Move the current lim.events to
+     * lim.events-day-month-hour:min:sec
+     */
+    tp = time(NULL);
+    t = localtime(&tp);
+    sprintf(eFile2, "\
+%s-%d-%d-%d:%d:%d", eFile, t->tm_mday, t->tm_mon + 1,
+            t->tm_hour, t->tm_min, t->tm_sec);
+
+    cc = rename(eFile, eFile2);
+    if (cc != 0) {
+        ls_syslog(LOG_ERR, "\
+%s: failed to rename %s in %s %m, keeping the old file",
+                  __func__, eFile, eFile2);
+    }
+
+    logFp = fopen(eFile, "a+");
+    if (logFp == NULL) {
+            ls_syslog(LOG_ERR, "\
+%s: failed opening %s: %m", __func__, eFile);
+            return -1;
+    }
 
     logLimStart();
 
