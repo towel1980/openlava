@@ -297,6 +297,7 @@ logInit(void)
     static char eFile[PATH_MAX];
     static char eFile2[PATH_MAX];
     struct tm *t;
+    struct stat sbuf;
     time_t tp;
     int cc;
 
@@ -311,15 +312,33 @@ logInit(void)
     }
 
     loadEvents();
+
+    /* If the size of the file is greater
+     * then an arbitrary 1024 * 1024
+     * switch it.
+     */
+    cc = stat(eFile, &sbuf);
+    if (cc != 0) {
+        ls_syslog(LOG_ERR, "\
+%s: Ohmygosh stat() failed on %s.. %m",
+                  __func__, eFile);
+        return -1;
+    }
+
+    logLIMStart();
+
+    if (! (sbuf.st_size > LIM_EVENT_MAXSIZE))
+        return 0;
+
     fclose(logFp);
 
     /* Move the current lim.events to
-     * lim.events-day-month-hour:min:sec
+     * lim.events.day.month.hour.min.sec
      */
     tp = time(NULL);
     t = localtime(&tp);
     sprintf(eFile2, "\
-%s-%d-%d-%d:%d:%d", eFile, t->tm_mday, t->tm_mon + 1,
+%s.%d.%d.%d.%d.%d", eFile, t->tm_mday, t->tm_mon + 1,
             t->tm_hour, t->tm_min, t->tm_sec);
 
     cc = rename(eFile, eFile2);
@@ -331,22 +350,37 @@ logInit(void)
 
     logFp = fopen(eFile, "a+");
     if (logFp == NULL) {
-            ls_syslog(LOG_ERR, "\
+        ls_syslog(LOG_ERR, "\
 %s: failed opening %s: %m", __func__, eFile);
-            return -1;
+        return -1;
     }
 
-    logLimStart();
+    logLIMStart();
 
     return 0;
 }
 
 int
-logLimStart(void)
+logLIMStart(void)
 {
     struct lsEventRec ev;
 
     ev.event = EV_LIM_START;
+    ev.etime = time(NULL);
+    ev.version = OPENLAVA_VERSION;
+    ev.record = NULL;
+
+    ls_writeeventrec(logFp, &ev);
+
+    return 0;
+}
+
+int
+logLIMDown(void)
+{
+    struct lsEventRec ev;
+
+    ev.event = EV_LIM_SHUTDOWN;
     ev.etime = time(NULL);
     ev.version = OPENLAVA_VERSION;
     ev.record = NULL;

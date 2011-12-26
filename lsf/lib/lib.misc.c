@@ -586,7 +586,12 @@ ls_strcat(char *trustedBuffer, int bufferLength, char *strToAdd)
     return 0;
 }
 
-static char *emap[] = {
+/* Every even has a header like that:
+ * EVENT_TYPE openlavaversion unixtime
+ */
+
+static char *emap[] =
+{
     "LIM_START",
     "LIM_SHUTDOWN",
     "ADD_HOST",
@@ -671,6 +676,7 @@ ls_writeeventrec(FILE *fp,
             fputc('\n', fp);
             break;
         case EV_LIM_SHUTDOWN:
+            fputc('\n', fp);
             break;
         case EV_ADD_HOST:
             writeAddHost(fp, ev);
@@ -698,8 +704,6 @@ writeEventHeader(FILE *fp,
         return -1;
     }
 
-    /* Quote strings just like lsbatch.
-     */
     fprintf(fp, "\
 %s %hu %lu ", emap[ev->event], ev->version, ev->etime);
 

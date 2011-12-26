@@ -37,18 +37,14 @@
 #define RESINACTIVITYLIMIT    9
 #define RETRYLIMIT            2
 
-#define INTERCLUSCACHEINTVL   60
-
 #define SBD_ACTIVE_TIME 60*5
 
 #define KEEPTIME   2
-
 #define MAXCANDHOSTS  10
 #define MAXCLIENTS   64
-
 #define WARNING_ERR   EXIT_WARNING_ERROR
-
 #define MIN_FLOAT16  2.328306E-10
+#define LIM_EVENT_MAXSIZE  (1024 * 1024)
 
 #ifndef MIN
 #define MIN(x,y)        ((x) < (y) ? (x) : (y))
@@ -515,7 +511,8 @@ extern void rmMigrantHost(XDR *,
                           struct LSFHeader *,
                           int);
 extern int logInit(void);
-extern int logLimStart(void);
+extern int logLIMStart(void);
+extern int logLIMDown(void);
 extern int logAddHost(struct hostEntry *);
 extern int logRmHost(struct hostEntry *);
 extern int addHostByTab(hTab *);

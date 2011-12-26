@@ -70,39 +70,31 @@ Reply:
         xdr_destroy(&xdrs2);
         reconfig();
     }
+
     if (chanSendDgram_(limSock, mbuf, XDR_GETPOS(&xdrs2), from) < 0) {
         ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7300,
                                          "%s: Error sending reconfig acknowledgement to %s (len=%d): %m"), fname, sockAdd2Str_(from), XDR_GETPOS(&xdrs2)); /* catgets 7300 */
     }
     xdr_destroy(&xdrs2);
 
-
     if (limReplyCode == LIME_NO_ERR)
         reconfig();
-    else
-        return;
-
 }
 
 void
 reconfig(void)
 {
-    static char fname[] = "reconfig()";
     char debug_buf[10];
     char *myargv[5];
-    int i, sdesc;
+    int i;
+    int sdesc;
     sigset_t newmask;
     pid_t pid;
 
-
-    ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd, NL_SETN, 7305, "Restarting LIM")));   /* catgets 7305 */
-
-
+    ls_syslog(LOG_INFO, "%s: Restarting LIM", __func__);
 
     sigemptyset(&newmask);
     sigprocmask(SIG_SETMASK, &newmask, NULL);
-
-
 
     if (elim_pid > 0) {
         kill(elim_pid, SIGTERM);
@@ -111,18 +103,16 @@ reconfig(void)
 
     chanClose_(limSock);
     chanClose_(limTcpSock);
+    logLIMDown();
 
-    pid= fork();
-
+    pid = fork();
     switch (pid) {
         case 0:
             myargv[0] = getDaemonPath_("/lim",
                                        limParams[LSF_SERVERDIR].paramValue);
-            ls_syslog(LOG_DEBUG,"reconfig: reexecing from %s",myargv[0]);
-
+            ls_syslog(LOG_DEBUG, "\
+%s: re-exec argv[0] %s", __func__, myargv[0]);
             i = 1;
-
-
             if (lim_debug) {
                 sprintf(debug_buf, "-%d", lim_debug);
                 myargv[i] = debug_buf;
@@ -140,9 +130,8 @@ reconfig(void)
             else
                 sdesc = 0;
 
-            for (i=sdesc; i<sysconf(_SC_OPEN_MAX); i++)
+            for (i = sdesc; i < sysconf(_SC_OPEN_MAX); i++)
                 close(i);
-
 
             if (limLock.on) {
                 char lsfLimLock[MAXLINELEN];
@@ -151,42 +140,27 @@ reconfig(void)
 
                     limLock.on &= ~LIM_LOCK_STAT_USER;
                     if ( limLock.on & LIM_LOCK_STAT_MASTER) {
-
                         sprintf(lsfLimLock,"LSF_LIM_LOCK=%d %d", limLock.on, 0);
                         putenv(lsfLimLock);
                     } else {
-
                         sprintf(lsfLimLock,"LSF_LIM_LOCK=");
                         putenv(lsfLimLock);
                     }
                 } else {
-
                     sprintf(lsfLimLock,"LSF_LIM_LOCK=%d %ld", limLock.on, limLock.time);
                     putenv(lsfLimLock);
                 }
-                if ( logclass & LC_TRACE) {
-                    ls_syslog(LOG_DEBUG2, "reconfig: putenv <%s>", lsfLimLock);
-                }
             } else {
                 char lsfLimLock[MAXLINELEN];
-
                 sprintf(lsfLimLock,"LSF_LIM_LOCK=");
                 putenv(lsfLimLock);
-                if ( logclass & LC_TRACE) {
-                    ls_syslog(LOG_DEBUG2, "reconfig: putenv <%s>", lsfLimLock);
-                }
             }
 
-
             putLastActiveTime();
-
-
             lsfExecvp(myargv[0], myargv);
-
-
-            ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M,
-                      fname, "execvp", myargv[0]);
-            lim_Exit(fname);
+            ls_syslog(LOG_ERR, "\
+%s: execvp %s failed %m", myargv[0]);
+            lim_Exit(__func__);
 
         default:
             exit(0);
@@ -240,11 +214,8 @@ Reply:
 
     xdr_destroy(&xdrs2);
 
-    if (limReplyCode == LIME_NO_ERR) {
+    if (limReplyCode == LIME_NO_ERR)
         shutdownLim();
-    } else
-        return;
-
 }
 
 
@@ -253,22 +224,17 @@ shutdownLim(void)
 {
     chanClose_(limSock);
 
-    ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 7303,
-                                     "Lim shutting down: shutdown request received")); /* catgets 7303 */
+    ls_syslog(LOG_ERR, "\
+%s: LIM shutting down: shutdown request received", __func__);
 
     if (elim_pid > 0) {
         kill(elim_pid, SIGTERM);
-        millisleep_(2000);
     }
-
-
     if (pimPid > 0) {
         kill(pimPid, SIGTERM);
-        millisleep_(2000);
     }
 
-
-
+    logLIMDown();
     exit(EXIT_NO_ERROR);
 }
 
@@ -377,14 +343,13 @@ servAvailReq(XDR *xdrs,
              struct sockaddr_in *from,
              struct LSFHeader *reqHdr)
 {
-    static char fname[] = "servAvailReq()";
     int servId;
 
-    if (hPtr != NULL && hPtr != myHostPtr) {
-
+    if (hPtr != NULL
+        && hPtr != myHostPtr) {
         ls_syslog(LOG_WARNING, "\
 %s: Request from non-local host: <%s>",
-                  fname, hPtr->hostName);
+                  __func__, hPtr->hostName);
         return;
     }
 
@@ -393,15 +358,15 @@ servAvailReq(XDR *xdrs,
             || ntohs(from->sin_port) < IPPORT_RESERVED/2) {
             ls_syslog(LOG_WARNING, "\
 %s: Request from non-privileged port: <%d>",
-                      fname, ntohs(from->sin_port));
+                      __func__, ntohs(from->sin_port));
             return;
         }
     }
 
-    if (!xdr_int(xdrs, &servId)) {
+    if (! xdr_int(xdrs, &servId)) {
         ls_syslog(LOG_ERR, "\
 %s: failed decoding servID from host %s port %d",
-                  fname, hPtr->hostName, ntohs(from->sin_port));
+                  __func__, hPtr->hostName, ntohs(from->sin_port));
         return;
     }
 
@@ -416,7 +381,7 @@ servAvailReq(XDR *xdrs,
             break;
         default:
             ls_syslog(LOG_WARNING, "\
-%s: Invalid service  %d", fname, servId);
+%s: Invalid service  %d", __func__, servId);
     }
 }
 

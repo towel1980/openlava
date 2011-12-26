@@ -786,7 +786,7 @@ term_handler(int signum)
         millisleep_(2000);
     }
 
-    kill(getpid(), signum);
+    logLIMDown();
 
     exit(0);
 
