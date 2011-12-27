@@ -38,11 +38,11 @@ extern int ELIMdebug, ELIMrestarts, ELIMblocktime;
 
 #define ILLEGAL_CHARS     ".!-=+*/[]@:&|{}'`\""
 
-static struct hostNode *addHost(struct clusterNode *,
-                                struct hostEntry *,
-                                char *,
-                                char *,
-                                int *);
+static struct hostNode *addHost_(struct clusterNode *,
+                                 struct hostEntry *,
+                                 char *,
+                                 char *,
+                                 int *);
 static char addHostType(char *);
 static char dotypelist(FILE *fp, int *LineNum, char *lsfile);
 static char addHostModel(char *, char *, float);
@@ -2824,7 +2824,7 @@ dohosts(FILE *clfp, struct clusterNode *clPtr, char *lsfile, int *LineNum)
                     window = keyList[RUNWINDOW].val;
             }
 
-            if (!addHost(clPtr, &hostEntry, window, lsfile, LineNum)) {
+            if (!addHost_(clPtr, &hostEntry, window, lsfile, LineNum)) {
                 clPtr->checkSum += hostEntry.hostName[0];
                 lim_CheckError = WARNING_ERR;
             }
@@ -2929,11 +2929,11 @@ int modelNameToNo(char *modelName)
 }
 
 static struct hostNode *
-addHost(struct clusterNode *clPtr,
-        struct hostEntry *hEntPtr,
-        char *window,
-        char *fileName,
-        int *LineNumPtr)
+addHost_(struct clusterNode *clPtr,
+         struct hostEntry *hEntPtr,
+         char *window,
+         char *fileName,
+         int *LineNumPtr)
 {
     struct hostNode *hPtr;
     struct hostent *hp;
@@ -3117,7 +3117,7 @@ addFloatClientHost(struct hostent *hp)
     if (findHostInCluster(hp->h_name)) {
         ls_syslog(LOG_ERR, "%\
 s: %s already defined in this cluster",
-            __func__, hp->h_name);
+                  __func__, hp->h_name);
         return NULL;
     }
 
@@ -4795,11 +4795,11 @@ addMigrantHost(XDR *xdrs,
     /* add the host
      */
     cc = 0;
-    if ((node = addHost(myClusterPtr,
-                        &hPtr,
-                        hPtr.window,
-                        (char *)__func__,
-                        &cc)) == NULL) {
+    if ((node = addHost_(myClusterPtr,
+                         &hPtr,
+                         hPtr.window,
+                         (char *)__func__,
+                         &cc)) == NULL) {
         ls_syslog(LOG_ERR, "\
 %s: failed adding migrant host %s", __func__, hPtr.hostName);
         /* free the shit...
@@ -4868,11 +4868,11 @@ addHostByTab(hTab *tab)
         hLog = e->hData;
         memcpy(&hPtr, hLog, sizeof(struct hostEntry));
 
-        if ((node = addHost(myClusterPtr,
-                            &hPtr,
-                            hPtr.window,
-                            (char *)__func__,
-                            &cc)) == NULL) {
+        if ((node = addHost_(myClusterPtr,
+                             &hPtr,
+                             hPtr.window,
+                             (char *)__func__,
+                             &cc)) == NULL) {
             ls_syslog(LOG_ERR, "\
 %s: failed adding runtime host %s", __func__, hPtr.hostName);
             continue;

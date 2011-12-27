@@ -46,7 +46,7 @@ masterRegister(XDR *xdrs,
 
         if (masterReg.checkSum != myClusterPtr->checkSum
             && checkSumMismatch < 2
-            &&  (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL)) {
+            && (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL)) {
 
             ls_syslog(LOG_WARNING, "\
 %s: Sender %s may have different config.",
@@ -138,16 +138,16 @@ Run lim -C on this host to find more information",
 
             } else {
 
-                if (myClusterPtr->masterKnown &&
-                    myClusterPtr->masterInactivityCount < hostInactivityLimit){
+                if (myClusterPtr->masterKnown
+                    && myClusterPtr->masterInactivityCount < hostInactivityLimit){
                     announceMasterToHost(hPtr, SEND_NO_INFO);
                     ls_syslog(LOG_INFO, "\
-%s: Host <%s> is trying to take over master LIM from %s, not accepted",
+%s: Host %s is trying to take over master LIM from %s, not accepted",
                               __func__, masterReg.hostName,
                               myClusterPtr->masterPtr->hostName);
                 } else
                     ls_syslog(LOG_INFO, "\
-%s: Host <%s> is trying to take over master LIM, not accepted", __func__,
+%s: Host %s is trying to take over master LIM, not accepted", __func__,
                               masterReg.hostName);
             }
         }
@@ -163,7 +163,7 @@ announceElimInstance(struct clusterNode *clPtr)
 
     for (tmp = sharedResourceHead; tmp ; tmp = tmp->nextPtr) {
 
-        for (i = 0;i<tmp->nHosts;i++){
+        for (i = 0; i <tmp->nHosts; i++){
             hostPtr = tmp->hosts[i] ;
             if (hostPtr){
                 if (hostPtr->infoValid){
@@ -192,11 +192,18 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
     struct masterReg masterReg;
     static int cnt = 0;
     struct LSFHeader reqHdr;
-    int announceInIntvl,numAnnounce,i;
+    int announceInIntvl;
+    int numAnnounce;
+    int i;
     int periods;
 
-    announceElimInstance(clPtr) ;
+    announceElimInstance(clPtr);
 
+    /* hostInactivityLimit = 5
+     * exchIntvl = 15
+     * sampleIntvl = 5
+     * periods = (5 - 1) * 15/5 = 60/5 = 12
+     */
     periods = (hostInactivityLimit - 1) * exchIntvl/sampleIntvl;
     if (!all && (++cnt > (periods - 1))) {
         cnt = 0;
@@ -243,7 +250,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
     tmasterReg.flags = SEND_NO_INFO | SEND_ELIM_REQ;
 
     xdrmem_create(&xdrs4, buf4, MSGSIZE/4, XDR_ENCODE);
-    if ( ! xdr_LSFHeader(&xdrs4, &reqHdr)) {
+    if (! xdr_LSFHeader(&xdrs4, &reqHdr)) {
         ls_syslog(LOG_ERR, "\
 %s: failed in xdr_LSFHeader", __func__);
         xdr_destroy(&xdrs1);
@@ -252,7 +259,7 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
         return;
     }
 
-    if ( ! xdr_masterReg(&xdrs4, &tmasterReg, &reqHdr)) {
+    if (! xdr_masterReg(&xdrs4, &tmasterReg, &reqHdr)) {
         ls_syslog(LOG_ERR,"\
 %s: failed in xdr_masterRegister", __func__);
         xdr_destroy(&xdrs1);
@@ -288,19 +295,27 @@ announceMaster(struct clusterNode *clPtr, char broadcast, char all)
             announceInIntvl = 1;
 
         hPtr = clPtr->hostList;
-        for (i = 0; i < cnt*announceInIntvl; i++) {
+        for (i = 0; i < cnt * announceInIntvl; i++) {
             if (!hPtr)
                 break;
             hPtr = hPtr->nextPtr;
         }
 
-        if (cnt == 11)
+        /* Let's announce the rest of the hosts,
+         * this takes care of the reminder
+         * numHosts/periods.
+         */
+        if (cnt == (periods - 1))
             announceInIntvl = clPtr->numHosts;
     }
 
-    for (numAnnounce=0;
+    ls_syslog(LOG_DEBUG, "\
+%s: all %d cnt %d announceInIntvl %d",
+              __func__, all, cnt, announceInIntvl);
+
+    for (numAnnounce = 0;
          hPtr && (numAnnounce < announceInIntvl);
-         hPtr=hPtr->nextPtr,numAnnounce++) {
+         hPtr = hPtr->nextPtr, numAnnounce++) {
 
         if (hPtr == myHostPtr)
             continue;

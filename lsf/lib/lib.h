@@ -99,7 +99,7 @@ typedef enum {
     LSF_MASTER_LIST,
     LSF_MLS_LOG,
     LSF_INTERACTIVE_STDERR,
-    HOSTS_FILE,
+    NO_HOSTS_FILE,
     LSB_SHAREDIR /* we share this with batch system */
 } genparams_t;
 

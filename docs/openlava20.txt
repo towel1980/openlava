@@ -191,3 +191,16 @@ The code now compiles on Ubuntu.
 The favorite distribution method for openlava 2.0 is the tar.gz
 file. 2.0 will probably stop supporting the rpm because of no man
 power to maintain all rpm distributions.
+
+7) Host cache.
+
+The host name and IP address management was redesigned and rebuild.
+All host names are now stripped by their domain name. The hosts names
+and IPs are cached into a hash table for fast access. The cache does
+not expire and does not get refreshed we need some use cases to
+understand how to implement this feature. The openlava hosts file
+is loaded by the library if the LSF_CONFDIR/hosts file is found,
+the hosts file can be disabled by defining NO_HOSTS_FILE variable
+in lsf.conf or in the caller environment.
+The host cache is mostly designed to speed up daemon operation.
+

@@ -745,8 +745,7 @@ periodic(int kernelPerm)
     static time_t ckWtime = 0;
     time_t now = time(0);
 
-    if (logclass & (LC_TRACE | LC_HANG))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
+    ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     TIMEIT(0, readLoad(kernelPerm), "readLoad()");
 
