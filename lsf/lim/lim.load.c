@@ -40,7 +40,6 @@ char   mustSendLoad = TRUE;
 extern int maxnLbHost;
 
 static void rcvLoadVector (XDR *, struct sockaddr_in *, struct LSFHeader *);
-static void logcnt(int);
 static void copyResValues (struct loadVectorStruct, struct hostNode *);
 
 void
@@ -188,7 +187,6 @@ sendLoad(void)
             return;
     }
 
-
     if (!mustSendLoad) {
         for (i = 0; i < allInfo.numIndx; i++) {
             if (fabs(myHostPtr->loadIndex[i] - li[i].valuesent)
@@ -199,7 +197,7 @@ sendLoad(void)
         }
     }
 
-    if (!mustSendLoad && noSendCount < hostInactivityLimit - 2 ) {
+    if (!mustSendLoad && noSendCount < hostInactivityLimit - 2) {
         noSendCount++;
         return;
     }
@@ -254,9 +252,9 @@ sendLoad(void)
         reqHdr.opCode  = (short) limReqCode;
         reqHdr.refCode =  0;
 
-        if (!(xdr_LSFHeader(&xdrs, &reqHdr) &&
-              xdr_enum(&xdrs, (int *) &loadType) &&
-              xdr_loadvector(&xdrs, &myLoadVector, &reqHdr))) {
+        if (!(xdr_LSFHeader(&xdrs, &reqHdr)
+              && xdr_enum(&xdrs, (int *) &loadType)
+              && xdr_loadvector(&xdrs, &myLoadVector, &reqHdr))) {
             ls_syslog(LOG_ERR, I18N_FUNC_FAIL, __func__, "xdr_enum/xdr_loadvector");
             xdr_destroy(&xdrs);
             FREEUP (repBuf);
@@ -268,8 +266,6 @@ sendLoad(void)
         memcpy(&toAddr.sin_addr.s_addr,
                &myClusterPtr->masterPtr->addr[0],
                sizeof(in_addr_t));
-
-        logcnt(1);
 
         if (logclass & LC_COMM)
             ls_syslog(LOG_DEBUG, "\
@@ -290,69 +286,60 @@ sendLoad: sending to %s (len=%d,port=%d)",
 
     mustSendLoad = FALSE;
     noSendCount = 0;
-
 }
 
 struct resPair *
-getResPairs (struct hostNode *hPtr)
+getResPairs(struct hostNode *hPtr)
 {
-    static char fname[] = "getResPairs()";
     int i;
-    static struct resPair *resPairs = NULL;
+    static struct resPair *resPairs;
 
-    FREEUP (resPairs);
+    FREEUP(resPairs);
 
     if (hPtr->numInstances > 0) {
-        if ((resPairs = (struct resPair *) malloc
-              (hPtr->numInstances * sizeof (struct resPair))) == NULL) {
-            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
+        resPairs = calloc(hPtr->numInstances,
+                          sizeof(struct resPair));
+        if (resPairs == NULL) {
+            ls_syslog(LOG_ERR, "\
+%s: malloc %dbytes failed %m", __func__,
+                      hPtr->numInstances * sizeof(struct resPair));
             return NULL;
         }
     }
-
 
     for (i = 0; i <  hPtr->numInstances; i++) {
         resPairs[i].name = hPtr->instances[i]->resName;
         resPairs[i].value = hPtr->instances[i]->value;
     }
 
-
-    return (resPairs);
-
+    return resPairs;
 }
 
-
 void
 rcvLoad(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
 {
-    static char fname[] = "rcvLoad";
     enum   loadstruct loadType;
 
-    logcnt(0);
-
-
-
     if (from->sin_port != lim_port) {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5600,
-            "%s: Update not from LIM: <%s>, expected %d"),  /* catgets 5600 */
-            fname, sockAdd2Str_(from), ntohs(lim_port));
+        ls_syslog(LOG_ERR, "\
+%s: Update not from LIM: %s, expected %d",
+                  __func__, sockAdd2Str_(from), ntohs(lim_port));
         return;
     }
-
 
     if (!xdr_enum(xdrs, (int *) &loadType)) {
-        ls_syslog(LOG_ERR, I18N_FUNC_FAIL, fname, "xdr_enum");
+        ls_syslog(LOG_ERR, "%s: xdr_enum failed", __func__);
         return;
     }
 
-    if (loadType == e_vec)
-        rcvLoadVector(xdrs, from, hdr);
-    else  {
-        ls_syslog(LOG_ERR, _i18n_msg_get(ls_catd , NL_SETN, 5601,
-            "%s: Invalide load type (%d) from host <%s>"),  /* catgets 5601 */
-            fname, loadType, sockAdd2Str_(from));
+    if (loadType != e_vec) {
+        ls_syslog(LOG_ERR, "\
+%s: Invalid load type %d from host %s",
+                  __func__, loadType, sockAdd2Str_(from));
         return;
     }
+
+    rcvLoadVector(xdrs, from, hdr);
 }
 
 
@@ -421,6 +408,7 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
     if (hPtr->status[0] & LIM_LOCKEDM) {
         masterLock = TRUE;
     }
+
     hPtr->status[0] = loadVector->status[0];
     if (masterLock) {
         hPtr->status[0] |= LIM_LOCKEDM;
@@ -457,7 +445,7 @@ rcvLoadVector(XDR *xdrs, struct sockaddr_in *from, struct LSFHeader *hdr)
 }
 
 static void
-copyResValues (struct loadVectorStruct loadVector, struct hostNode *hPtr)
+copyResValues(struct loadVectorStruct loadVector, struct hostNode *hPtr)
 {
     static char fname[] = "copyResValues";
     int i, j, updHostNo, curHostNo;
@@ -470,11 +458,11 @@ copyResValues (struct loadVectorStruct loadVector, struct hostNode *hPtr)
         return;
 
     for (i = 0; i < loadVector.numResPairs; i++) {
-        if ((resource = inHostResourcs (loadVector.resPairs[i].name)) == NULL) {
+        if ((resource = inHostResourcs(loadVector.resPairs[i].name)) == NULL) {
             ls_syslog(LOG_DEBUG2, "%s: Resource name <%s> reported by host <%s> is not in shared resource list", fname, loadVector.resPairs[i].name, hPtr->hostName);
             continue;
         }
-        if ((instance = isInHostList (resource, hPtr->hostName)) == NULL) {
+        if ((instance = isInHostList(resource, hPtr->hostName)) == NULL) {
             ls_syslog(LOG_DEBUG2, "%s: Host <%s> does not have the resource <%s> defined", fname, hPtr->hostName, loadVector.resPairs[i].name);
             continue;
         }
@@ -523,46 +511,6 @@ copyResValues (struct loadVectorStruct loadVector, struct hostNode *hPtr)
         instance->value = temp;
         instance->updHost = hostPtr;
     }
-
-}
-
-static void
-logcnt(int sendlog)
-{
-    static int sendcnt;
-    static int recvcnt;
-    static int first = TRUE;
-    static int sloglimit, rloglimit;
-    char   *sp;
-
-    if (first) {
-        first = FALSE;
-        if ((sp = getenv("SLIM_LOG")) == NULL)
-            sloglimit = 0;
-        else
-            sloglimit = atoi(sp);
-        if ((sp = getenv("RLIM_LOG")) == NULL)
-            rloglimit = 0;
-        else
-            rloglimit = atoi(sp);
-    }
-
-    if (sendlog)
-        sendcnt++;
-    else
-        recvcnt++;
-
-    if (sloglimit == 0 && rloglimit == 0)
-        return;
-
-    if (sendcnt > sloglimit || recvcnt > rloglimit) {
-        ls_syslog(LOG_INFO, (_i18n_msg_get(ls_catd , NL_SETN, 5621, "%s: sendcnt=%d recvcnt=%d sloglimit=%d rloglimit=%d")), /* catgets 5621 */ "logcnt",
-                  sendcnt, recvcnt, sloglimit, rloglimit);
-        sendcnt = 0;
-        recvcnt = 0;
-        return;
-    }
-
 }
 
 void

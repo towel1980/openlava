@@ -42,116 +42,133 @@ masterRegister(XDR *xdrs,
         return;
     }
 
-    if (strcmp(myClusterPtr->clName, masterReg.clName) == 0) {
+    if (strcmp(myClusterPtr->clName, masterReg.clName) != 0) {
+        ls_syslog(LOG_WARNING, "\
+%s: Discard announce from a different cluster %s than mine %s (?)",
+                  __func__, masterReg.clName, myClusterPtr->clName);
+        return;
+    }
 
-        if (masterReg.checkSum != myClusterPtr->checkSum
-            && checkSumMismatch < 2
-            && (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL)) {
+    if (masterReg.checkSum != myClusterPtr->checkSum
+        && checkSumMismatch < 2
+        && (limParams[LSF_LIM_IGNORE_CHECKSUM].paramValue == NULL)) {
 
-            ls_syslog(LOG_WARNING, "\
+        ls_syslog(LOG_WARNING, "\
 %s: Sender %s may have different config.",
-                      __func__, masterReg.hostName);
-            checkSumMismatch++;
-        }
+                  __func__, masterReg.hostName);
+        checkSumMismatch++;
+    }
 
-        if (equalHost_(myHostPtr->hostName, masterReg.hostName))
-            return;
+    if (equalHost_(myHostPtr->hostName, masterReg.hostName))
+        return;
 
-        hPtr = findHostbyList(myClusterPtr->hostList, masterReg.hostName);
-        if (hPtr == NULL) {
-            ls_syslog(LOG_ERR, "\
+    hPtr = findHostbyList(myClusterPtr->hostList, masterReg.hostName);
+    if (hPtr == NULL) {
+        ls_syslog(LOG_ERR, "\
 %s: Got master announcement from unused host %s; \
 Run lim -C on this host to find more information",
-                      __func__, masterReg.hostName);
-            return;
-        }
-
-        if (myClusterPtr->masterKnown
-            && hPtr == myClusterPtr->masterPtr) {
-
-            myClusterPtr->masterInactivityCount = 0;
-
-            if (masterReg.flags & SEND_ELIM_REQ)
-                myHostPtr->callElim = TRUE ;
-            else
-                myHostPtr->callElim = FALSE ;
-
-            if ((masterReg.seqNo - hPtr->lastSeqNo > 2)
-                && (masterReg.seqNo > hPtr->lastSeqNo)
-                && (hPtr->lastSeqNo != 0))
-
-                ls_syslog(LOG_WARNING, "\
-%s: master %s lastSeqNo=%d seqNo=%d. Packets dropped?",
-                          __func__, hPtr->hostName,
-                          hPtr->lastSeqNo, masterReg.seqNo);
-
-            hPtr->lastSeqNo = masterReg.seqNo;
-            hPtr->statInfo.portno = masterReg.portno;
-
-            if (masterReg.flags & SEND_CONF_INFO)
-                sndConfInfo(from);
-
-            if (masterReg.flags & SEND_LOAD_INFO) {
-                mustSendLoad = TRUE;
-                ls_syslog(LOG_DEBUG, "\
-%s: Master lim is probing me. Send my load in next interval", __func__);
-            }
-
-        } else {
-
-            if (myClusterPtr->masterKnown
-                && hPtr->hostNo < myHostPtr->hostNo
-                && myClusterPtr->masterPtr->hostNo < hPtr->hostNo
-                && myClusterPtr->masterInactivityCount <= hostInactivityLimit) {
-                ls_syslog(LOG_INFO, "\
-%s: Host %s is trying to take over from %s, not accepted",
-                          __func__, masterReg.hostName,
-                          myClusterPtr->masterPtr->hostName);
-                announceMasterToHost(hPtr, SEND_NO_INFO);
-                return;
-            }
-
-            if (hPtr->hostNo < myHostPtr->hostNo) {
-
-                hPtr->protoVersion = reqHdr->version;
-                myClusterPtr->prevMasterPtr = myClusterPtr->masterPtr;
-                myClusterPtr->masterPtr   = hPtr;
-
-                myClusterPtr->masterPtr->statInfo.portno = masterReg.portno;
-                if (masterMe) {
-                    ls_syslog(LOG_INFO, "\
-%s: Give in master to %s", __func__, masterReg.hostName);
-                }
-                masterMe                  = 0;
-                myClusterPtr->masterKnown = 1;
-                myClusterPtr->masterInactivityCount = 0;
-                mustSendLoad = 1;
-
-                if (masterReg.flags | SEND_CONF_INFO)
-                    sndConfInfo(from);
-
-                if (masterReg.flags & SEND_LOAD_INFO) {
-                    mustSendLoad = 1;
-                    ls_syslog(LOG_DEBUG, "\
-%s: Master lim is probing me. Send my load in next interval",__func__);
-                }
-
-            } else {
-
-                if (myClusterPtr->masterKnown
-                    && myClusterPtr->masterInactivityCount < hostInactivityLimit){
-                    announceMasterToHost(hPtr, SEND_NO_INFO);
-                    ls_syslog(LOG_INFO, "\
-%s: Host %s is trying to take over master LIM from %s, not accepted",
-                              __func__, masterReg.hostName,
-                              myClusterPtr->masterPtr->hostName);
-                } else
-                    ls_syslog(LOG_INFO, "\
-%s: Host %s is trying to take over master LIM, not accepted", __func__,
-                              masterReg.hostName);
-            }
-        }
+                  __func__, masterReg.hostName);
+        return;
     }
+    /* Regular announce from the master.
+     */
+    if (myClusterPtr->masterKnown
+        && hPtr == myClusterPtr->masterPtr) {
+
+        myClusterPtr->masterInactivityCount = 0;
+
+        if (masterReg.flags & SEND_ELIM_REQ)
+            myHostPtr->callElim = TRUE ;
+        else
+            myHostPtr->callElim = FALSE ;
+
+        if ((masterReg.seqNo - hPtr->lastSeqNo > 2)
+            && (masterReg.seqNo > hPtr->lastSeqNo)
+            && (hPtr->lastSeqNo != 0))
+
+            ls_syslog(LOG_WARNING, "\
+%s: master %s lastSeqNo=%d seqNo=%d. Packets dropped?",
+                      __func__, hPtr->hostName,
+                      hPtr->lastSeqNo, masterReg.seqNo);
+
+        hPtr->lastSeqNo = masterReg.seqNo;
+        hPtr->statInfo.portno = masterReg.portno;
+
+        if (masterReg.flags & SEND_CONF_INFO)
+            sndConfInfo(from);
+
+        if (masterReg.flags & SEND_LOAD_INFO) {
+            mustSendLoad = TRUE;
+            ls_syslog(LOG_DEBUG, "\
+%s: Master lim is probing me. Send my load in next interval", __func__);
+        }
+
+        return;
+
+    }
+
+    /* Someone out there is trying to be a master,
+     * get lost buddy...
+     */
+    if (myClusterPtr->masterKnown
+        && hPtr->hostNo < myHostPtr->hostNo
+        && myClusterPtr->masterPtr->hostNo < hPtr->hostNo
+        && myClusterPtr->masterInactivityCount <= hostInactivityLimit) {
+        ls_syslog(LOG_INFO, "\
+%s: Host %s is trying to take over from %s, not accepted",
+                  __func__, masterReg.hostName,
+                  myClusterPtr->masterPtr->hostName);
+        announceMasterToHost(hPtr, SEND_NO_INFO);
+        return;
+    }
+
+    /* A host with hostnumber higher than me has the
+     * right to become a new master. Welcome.
+     */
+    if (hPtr->hostNo < myHostPtr->hostNo) {
+        /* This is the regular master registration.
+         */
+        hPtr->protoVersion = reqHdr->version;
+        myClusterPtr->prevMasterPtr = myClusterPtr->masterPtr;
+        myClusterPtr->masterPtr   = hPtr;
+
+        myClusterPtr->masterPtr->statInfo.portno = masterReg.portno;
+        if (masterMe) {
+            ls_syslog(LOG_INFO, "\
+%s: Give in master to %s", __func__, masterReg.hostName);
+        }
+        masterMe                  = 0;
+        myClusterPtr->masterKnown = 1;
+        myClusterPtr->masterInactivityCount = 0;
+        mustSendLoad = 1;
+
+        if (masterReg.flags | SEND_CONF_INFO)
+            sndConfInfo(from);
+
+        if (masterReg.flags & SEND_LOAD_INFO) {
+            mustSendLoad = 1;
+            ls_syslog(LOG_DEBUG, "\
+%s: Master lim is probing me. Send my load in next interval", __func__);
+        }
+
+        return;
+    }
+
+    if (myClusterPtr->masterKnown
+        && myClusterPtr->masterInactivityCount < hostInactivityLimit) {
+
+        announceMasterToHost(hPtr, SEND_NO_INFO);
+        ls_syslog(LOG_INFO, "\
+%s: Host %s is trying to take over master LIM from %s, not accepted",
+                  __func__, masterReg.hostName,
+                  myClusterPtr->masterPtr->hostName);
+        return;
+
+    }
+
+    ls_syslog(LOG_INFO, "\
+%s: Host %s is trying to take over master LIM, not accepted", __func__,
+              masterReg.hostName);
 }
 
 static void
