@@ -16,20 +16,13 @@
  *
  */
 
-#include <sys/types.h>
-#include <curses.h>
-#include <ctype.h>
-#include <errno.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
-#include <signal.h>
-
-#include <rpc/types.h>
-#include <rpc/xdr.h>
 
 #include "../lsf.h"
+#if defined(__CYGWIN__)
+#include <ncurses/curses.h>
+#else
+#include <curses.h>
+#endif
 
 #include "../lib/lsi18n.h"
 

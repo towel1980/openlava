@@ -21,7 +21,7 @@
 #include "lib.h"
 
 
-#define NL_SETN   23    
+#define NL_SETN   23
 
 
 
@@ -31,34 +31,34 @@ void
 ls_remtty(int ind, int enableIntSus)
 {
      ttymode_(1, ind, enableIntSus);
-} 
-    
+}
+
 void
 ls_loctty(int ind)
 {
     ttymode_(0, ind, 0);
-} 
+}
 
 static void
 ttymode_(int mode, int ind, int enableIntSus)
-                          
-           
+
+
 {
 
-    static int lastmode;             
-    static int first = 1;            
-    
+    static int lastmode;
+    static int first = 1;
+
     static struct termios  loxio;
 
     struct termios  xio;
     tcflag_t  tmpflag;
     int i;
-    
-    
-    if (getpgrp(0) != tcgetpgrp(ind)) { 
+
+
+    if (getpgrp(0) != tcgetpgrp(ind)) {
 	return;
     }
-    
+
     if (first && ! mode)
 	return;
     first = 0;
@@ -70,7 +70,7 @@ ttymode_(int mode, int ind, int enableIntSus)
             if (! lastmode) {
 		if (tcgetattr(ind, &loxio) == -1) {
                     perror("ttymode_");
-                    fprintf(stderr, I18N_ERROR_LD, "tcgetattr", (long)ind);  
+                    fprintf(stderr, I18N_ERROR_LD, "tcgetattr", (long)ind);
 		    fprintf(stderr, "\n");
                 }
             }
@@ -80,22 +80,22 @@ ttymode_(int mode, int ind, int enableIntSus)
 
             tmpflag  = xio.c_oflag & (NLDLY|CRDLY|TABDLY|BSDLY|VTDLY|FFDLY);
             xio.c_oflag &= (OPOST | OFILL| OFDEL | tmpflag);
-	    
-            
+
+#if !defined(__CYGWIN__)
 	    if (enableIntSus)
 		xio.c_lflag &= (XCASE | ISIG);
 	    else
 		xio.c_lflag &= (XCASE);
-	    
+#endif
             for (i=0; i < NCCS; i++)
-		xio.c_cc[i] = _POSIX_VDISABLE;  
+		xio.c_cc[i] = _POSIX_VDISABLE;
 
-            
+
 	    if (enableIntSus) {
 		xio.c_cc[VINTR] = loxio.c_cc[VINTR];
 		xio.c_cc[VSUSP] = loxio.c_cc[VSUSP];
 	    }
-	    
+
 	    xio.c_cc[VMIN] = 0;
 	    xio.c_cc[VTIME] = 0;
 
@@ -111,5 +111,5 @@ ttymode_(int mode, int ind, int enableIntSus)
 
     lastmode = mode;
 
-} 
+}
 

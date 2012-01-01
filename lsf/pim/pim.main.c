@@ -16,22 +16,10 @@
  *
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <sys/fcntl.h>
-
-#include <sys/time.h>
-
 #include "../lsf.h"
 #include "../lib/lproto.h"
 #include "../intlib/intlibout.h"
-
+#include "pim.linux.h"
 
 #define NL_SETN         (28)
 

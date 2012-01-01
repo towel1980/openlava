@@ -22,6 +22,7 @@
 #include "lib.hdr.h"
 #include "lib.xdrlim.h"
 #include "lib.xdr.h"
+#include "mls.h"
 
 struct taskMsg {
     char *inBuf;

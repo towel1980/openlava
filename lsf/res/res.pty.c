@@ -30,7 +30,7 @@ char *ptsname(int);
 #include "res.h"
 
 #include "../../lsf/lib/lsi18n.h"
-#define NL_SETN		29	
+#define NL_SETN		29
 
 static int letterInd = 0;
 static int digitInd = 0;
@@ -51,7 +51,7 @@ ptymaster(char *line)
     int ptyno;
     char *slave;
 
-    
+
     master_fd = open("/dev/ptmx", O_RDWR);
     if (master_fd < 0) {
         ls_syslog(LOG_ERR, I18N_FUNC_S_FAIL_M, fname, "open", "/dev/ptmx");
@@ -69,6 +69,15 @@ ptymaster(char *line)
             master_fd);
         close(master_fd);
     }
+#if defined(__CYGWIN__)
+        slave = ptsname(master_fd);
+        if (slave == NULL) {
+            ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "ptsname");
+            close(master_fd);
+            return(-1);
+        }
+        strcpy(line,slave);
+#else
     if (ioctl(master_fd, TIOCGPTN, &ptyno) != 0) {
         ls_syslog(LOG_DEBUG, I18N_FUNC_FAIL_M, fname, "ioctl(TIOCGPTN)");
         slave = ptsname(master_fd);
@@ -81,16 +90,16 @@ ptymaster(char *line)
     } else {
         sprintf(line, "/dev/pts/%d", ptyno);
     }
-
+#endif
     return(master_fd);
-} 
+}
 
 int
 ptyslave(char *tty_name)
 {
     int slave;
 
-    
+
     slave = open(tty_name, O_RDWR);
 
     if (slave < 0) {
@@ -98,7 +107,7 @@ ptyslave(char *tty_name)
     }
 
     return(slave);
-} 
+}
 
 
 
@@ -111,13 +120,13 @@ char *pty_translate(char *pty_name)
 
     tmp[8] = pty_name[n-2];
     tmp[9] = pty_name[n-1];
-    
+
     if (debug > 1)
 	printf("%s -> %s\n", pty_name, tmp);
 
 
     return tmp;
-} 
+}
 
 
 
@@ -130,5 +139,5 @@ int check_valid_tty(char *tty_name)
                 if (tty_name[i] != valid_name[i])
                         return 0;
         return 1;
-} 
+}
 

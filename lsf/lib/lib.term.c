@@ -18,7 +18,7 @@
 
 #include <termios.h>
 #include <unistd.h>
-#include <sys/types.h>   
+#include <sys/types.h>
 #include <netinet/in.h>
 #include "lib.h"
 #include "../res/resout.h"
@@ -32,9 +32,9 @@
 #define VDISCARD VFLUSHO
 #endif
 
-#define	LOBLK 0040000  
+#define	LOBLK 0040000
 #define VDSUSP  11
-#define	VSWTCH	7	
+#define	VSWTCH	7
 
 #define IN_TABLE_SIZE 13
 static tcflag_t in_table[IN_TABLE_SIZE] = {IGNBRK
@@ -103,7 +103,9 @@ static tcflag_t ctrl_table[CTRL_TABLE_SIZE] = {CLOCAL
 #define LOC_TABLE_SIZE 10
 static tcflag_t loc_table[LOC_TABLE_SIZE] = {ISIG
                                             ,ICANON
+#if !defined(__CYGWIN__)
                                             ,XCASE
+#endif
                                             ,ECHO
                                             ,ECHOE
                                             ,ECHOK
@@ -114,27 +116,27 @@ static tcflag_t loc_table[LOC_TABLE_SIZE] = {ISIG
                                             };
 
 #define CHR_TABLE_SIZE 18
-static int chr_table[CHR_TABLE_SIZE] = {VINTR  
-                                       ,VQUIT  
-                                       ,VERASE 
-                                       ,VKILL  
-                                       ,VEOF   
-                                       ,VEOL   
-                                       ,VEOL2  
-                                       ,VSWTCH 
-                                       ,VSTART 
-                                       ,VSTOP  
-                                       ,VMIN   
-                                       ,VTIME  
+static int chr_table[CHR_TABLE_SIZE] = {VINTR
+                                       ,VQUIT
+                                       ,VERASE
+                                       ,VKILL
+                                       ,VEOF
+                                       ,VEOL
+                                       ,VEOL2
+                                       ,VSWTCH
+                                       ,VSTART
+                                       ,VSTOP
+                                       ,VMIN
+                                       ,VTIME
 
 #                                     define CHR_TABLE_SPLIT    12
 
-				       ,VSUSP          
-                                       ,VDSUSP         
-                                       ,VREPRINT       
-                                       ,VDISCARD       
-                                       ,VWERASE        
-                                       ,VLNEXT         
+				       ,VSUSP
+                                       ,VDSUSP
+                                       ,VREPRINT
+                                       ,VDISCARD
+                                       ,VWERASE
+                                       ,VLNEXT
                                       };
 
 #define BAUD_TABLE_SIZE 16
@@ -168,7 +170,7 @@ encodeTermios_(XDR *xdrs, struct termios *ptr_termios)
 {
     speed_t speed_value;
     int i;
-    
+
     if (!encode_mode(xdrs, ptr_termios->c_iflag, in_table, IN_TABLE_SIZE))
 	return (FALSE);
 
@@ -180,7 +182,7 @@ encodeTermios_(XDR *xdrs, struct termios *ptr_termios)
 	   encode_mode(xdrs, ptr_termios->c_lflag, loc_table, LOC_TABLE_SIZE)))
 	return (FALSE);
 
-    
+
     speed_value = cfgetospeed(ptr_termios);
     for (i = 0; i < BAUD_TABLE_SIZE; i++) {
         if (speed_value == baud_table[i]) {
@@ -188,12 +190,12 @@ encodeTermios_(XDR *xdrs, struct termios *ptr_termios)
         }
     }
     if (i == BAUD_TABLE_SIZE) {
-        i = 0;         
+        i = 0;
     }
     if (!xdr_int(xdrs, &i))
 	return (FALSE);
 
-    
+
 
     for (i = 0; i < CHR_TABLE_SIZE; i++) {
         if (i < CHR_TABLE_SPLIT) {
@@ -205,13 +207,13 @@ encodeTermios_(XDR *xdrs, struct termios *ptr_termios)
         }
     }
     return (TRUE);
-} 
+}
 
 static int
 encode_mode(XDR *xdrs, tcflag_t mode_set, tcflag_t *attr_table,
 	    int table_count)
 {
-    
+
 
     int encode_set;
     int i;
@@ -225,7 +227,7 @@ encode_mode(XDR *xdrs, tcflag_t mode_set, tcflag_t *attr_table,
 
     return (xdr_int(xdrs, &encode_set));
 
-} 
+}
 
 
 int
@@ -233,7 +235,7 @@ decodeTermios_(XDR *xdrs, struct termios *ptr_termios)
 {
     speed_t speed_value;
     int i;
-    
+
     if (!decode_mode(xdrs, in_table,   IN_TABLE_SIZE,   &ptr_termios->c_iflag))
 	return (FALSE);
 
@@ -246,7 +248,7 @@ decodeTermios_(XDR *xdrs, struct termios *ptr_termios)
 		       &ptr_termios->c_lflag)))
 	return (FALSE);
 
-    
+
 
     if (!xdr_int(xdrs, &i))
 	return (FALSE);
@@ -254,12 +256,12 @@ decodeTermios_(XDR *xdrs, struct termios *ptr_termios)
     speed_value = baud_table[i];
     (void)cfsetospeed(ptr_termios, speed_value);
 
-    
+
     for (i = 0; i < NCCS; i++) {
       ptr_termios->c_cc[i] = _POSIX_VDISABLE;
     }
 
-    
+
 
     for (i = 0; i < CHR_TABLE_SIZE; i++) {
         if (i < CHR_TABLE_SPLIT) {
@@ -273,7 +275,7 @@ decodeTermios_(XDR *xdrs, struct termios *ptr_termios)
 
     return (TRUE);
 
-} 
+}
 
 static int
 decode_mode(XDR *xdrs, tcflag_t *attr_table, int table_count,
@@ -293,6 +295,6 @@ decode_mode(XDR *xdrs, tcflag_t *attr_table, int table_count,
 
     return (TRUE);
 
-} 
+}
 
 

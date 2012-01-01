@@ -1812,42 +1812,28 @@ send_results (struct jobCard *jp)
 
     if (cpuTime > MIN_CPU_TIME) {
         if (WIFEXITED(w_status) && !WEXITSTATUS(w_status))
-            fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 431,
-                                         "Successfully completed")); /* catgets 431 */
+            fprintf(notif, "Successfully completed");
         else {
             if (WIFSIGNALED(w_status)) {
                 int sig = WTERMSIG(w_status);
-                if(sig > LSF_NSIG)
-                    fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 432,
-                                                 "Exited with unknown status 0%o"), /* catgets 432 */
-                            jp->w_status);
-                else
 
-                {
-
-                    char *temp1;
-
-                    temp1 = putstr_( _i18n_msg_get(ls_catd, NL_SETN,
-                                                   sys_siglist_ID[sig],
-                                                   (char *)sys_siglist[sig]));
-
-                    fprintf(notif, _i18n_msg_get(ls_catd, NL_SETN, 433,
-                                                 "Exited with signal termination: %s"), /* catgets 433 */
-                            temp1);
-                    free(temp1);
+                if (sig > LSF_NSIG) {
+                    fprintf(notif, "\
+Exited with unknown status 0%o", jp->w_status);
+                } else {
+                    fprintf(notif, "\
+Exited with signal termination: %s", strsignal(sig));
                 }
                 if (WCOREDUMP(w_status))
-                    fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 434,
-                                                 ", and core dumped")); /* catgets 434 */
+                    fprintf(notif, ", and core dumped");
             } else {
                 if (jp->jobSpecs.reasons & EXIT_REQUEUE) {
-                    fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 453,
-                                                 "Job was killed by user or admin, and will be re-queued with the same jobid."));
+                    fprintf(notif, "\
+Job was killed by user or admin, and will be re-queued with the same jobid.");
                 }
                 else {
-                    fprintf(notif, _i18n_msg_get(ls_catd , NL_SETN, 435,
-                                                 "Exited with exit code %d"), /* catgets 435 */
-                            WEXITSTATUS(w_status));
+                    fprintf(notif, "\
+Exited with exit code %d", WEXITSTATUS(w_status));
                 }
             }
         }
@@ -1857,88 +1843,69 @@ send_results (struct jobCard *jp)
     }
 
     if (jp->jobSpecs.lastCpuTime + cpuTime > MIN_CPU_TIME) {
-        fprintf(notif, ".\n\n%s\n\n", _i18n_msg_get(ls_catd , NL_SETN, 437,
-                                                    "Resource usage summary:")); /* catgets 437 */
-
-        fprintf(notif, "    %s   :%10.2f ",
-                _i18n_msg_get(ls_catd , NL_SETN, 438,
-                              "CPU time"), /* catgets 438 */
+        fprintf(notif, ".\n\n%s\n\n", "Resource usage summary:");
+        fprintf(notif, "    %s   :%10.2f ", "CPU time",
                 (cpuTime + jp->jobSpecs.lastCpuTime));
 
-        fprintf(notif, "%s.\n", I18N_sec);
+        fprintf(notif, "%s.\n", "sec");
 
         if (jp->maxRusage.mem > 1024)
-            fprintf(notif, "    %s :%10d MB\n",
-                    _i18n_msg_get(ls_catd , NL_SETN, 439,
-                                  "Max Memory"), /* catgets 439 */
-                    (jp->maxRusage.mem + 512) / 1024);
+            fprintf(notif, "\
+    %s :%10d MB\n", "Max Memory", (jp->maxRusage.mem + 512) / 1024);
         else
             if (jp->maxRusage.mem > 0)
-                fprintf(notif, "    %s :%10d KB\n",
-                        _i18n_msg_get(ls_catd , NL_SETN, 439,
-                                      "Max Memory"),
-                        jp->maxRusage.mem);
+                fprintf(notif, "\
+    %s :%10d KB\n", "Max Memory", jp->maxRusage.mem);
 
         if (jp->maxRusage.swap > 1024)
-            fprintf(notif, "    %s   :%10d MB\n\n",
-                    _i18n_msg_get(ls_catd , NL_SETN, 441,
-                                  "Max Swap"), /* catgets 441 */
+            fprintf(notif, "    %s   :%10d MB\n\n", "Max Swap",
                     (jp->maxRusage.swap + 512) / 1024);
         else
             if (jp->maxRusage.swap > 0)
-                fprintf(notif, "    %s   :%10d KB\n\n",
-                        _i18n_msg_get(ls_catd , NL_SETN, 441,
-                                      "Max Swap"),
-                        jp->maxRusage.swap);
+                fprintf(notif, "    %s   :%10d KB\n\n", "Max Swap",
+                    jp->maxRusage.swap);
         if (jp->maxRusage.npids > 0)
-            fprintf(notif, "    %s  :%10d\n",
-                    _i18n_msg_get(ls_catd , NL_SETN, 443,
-                                  "Max Processes"), /* catgets 443 */
+            fprintf(notif, "    %s  :%10d\n", "Max Processes",
                     jp->maxRusage.npids);
     }
 
-    if ( !copyStdoutFromLsbatch
-         && (output==notif)
-         && !errorOpeningOutputFile ) {
+    if (! copyStdoutFromLsbatch
+        && (output==notif)
+        && !errorOpeningOutputFile ) {
 
         fprintf(notif, "\n");
-        fprintf(notif, "%s\n\n", _i18n_msg_get(ls_catd , NL_SETN, 582,
-                                               "The output (if any) is above this job summary."));/*catgets 582 */
+        fprintf(notif, "%s\n\n", "\
+The output (if any) is above this job summary.");
     }
-
 
     if (notif != output && strcmp(jp->jobSpecs.outFile, "/dev/null")) {
         if (errout == output)
-            sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 444,
-                                        "Read file <%s> for stdout and stderr ouput of this job.\n"), jp->jobSpecs.outFile); /* catgets 444 */
+            sprintf(line, "\
+Read file <%s> for stdout and stderr ouput of this job.\n",
+                    jp->jobSpecs.outFile);
         else
-            sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 445,
-                                        "Read file <%s> for stdout output of this job.\n"), /* catgets 445 */ jp->jobSpecs.outFile);
+            sprintf(line, "\
+Read file <%s> for stdout output of this job.\n", jp->jobSpecs.outFile);
         strcat(ps, line);
         withps = TRUE;
     }
-
-
-
 
     if (!((jp->jobSpecs.options & SUB_OUT_FILE)
           && !strcmp(jp->jobSpecs.outFile,"/dev/null"))
         && copyStdoutFromLsbatch) {
         sprintf(fileName, "%s.out", jp->jobSpecs.jobFile);
+
         if ((fp = myfopen_(fileName, "r", hp)) == NULL) {
-            sprintf(line, _i18n_msg_get(ls_catd , NL_SETN, 446,
-                                        "Unable to read output data from the stdout buffer file <%s>: your job was probably aborted prematurely.\n"), fileName); /* catgets 446 */
+            sprintf(line, "Unable to read output data from the stdout buffer file <%s>: your job was probably aborted prematurely.\n", fileName);
             strcat(ps, line);
             withps = TRUE;
         } else {
 
-            if ( (output == mail) && (mailSizeLimit > 0)
+            if ((output == mail) && (mailSizeLimit > 0)
                  && (outfileStat.st_size > mailSizeLimit*1024)) {
 
                 fprintf(output, "\n");
-                fprintf(output, I18N(479,
-                                     "Output is larger than limit of %ld KB set by administrator.\n"),  /* catgets 479 */
-                        mailSizeLimit);
+                fprintf(output, "Output is larger than limit of %ld KB set by administrator.\n", mailSizeLimit);
                 fprintf(output, I18N(480, "Output will be saved at %s.out.\n"), /* catgets 480 */
                         jp->jobSpecs.jobFile);
 

@@ -1029,7 +1029,10 @@ extern int                  moveJobArray(struct jobMoveReq *,
 extern void                 job_abort(struct jData *jData, char reason);
 extern void                 marktime(struct jData *, int);
 extern int                  rmjobfile(struct jData *jData);
-extern void                 jStatusChange(struct jData *, int, time_t, char *);
+extern void                 jStatusChange(struct jData *,
+                                          int,
+                                          time_t,
+                                          const char *);
 extern int                  findLastJob(int, struct jData *, struct jData **);
 extern void                 initJobIdHT(void);
 extern struct jData *       getJobData(LS_LONG_INT jobId);

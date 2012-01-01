@@ -34,7 +34,10 @@ lsplace_SOURCES = lsplace.c
 lsplace_LDADD = ../lib/liblsf.a ../intlib/liblsfint.a
 
 lsrcp_SOURCES = lsrcp.c
-lsrcp_LDADD = ../lib/liblsf.a ../intlib/liblsfint.a -lnsl
+lsrcp_LDADD = ../lib/liblsf.a ../intlib/liblsfint.a 
+if !CYGWIN
+lsrcp_LDADD += -lnsl
+endif
 
 lsrun_SOURCES = lsrun.c
 lsrun_LDADD = ../lib/liblsf.a 

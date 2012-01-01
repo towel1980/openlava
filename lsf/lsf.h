@@ -35,8 +35,6 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <values.h>
-#include <grp.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <time.h>
@@ -55,6 +53,9 @@
 #include <netinet/in.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#if !defined(__CYGWIN__)
+#include <rpcsvc/ypclnt.h>
+#endif
 
 typedef long long int LS_LONG_INT;
 typedef unsigned long long LS_UNS_LONG_INT;
@@ -114,6 +115,7 @@ typedef enum {
     USR2
 } lsindx_t;
 
+#define MAXFLOAT        3.40282347e+38F
 #define INFINIT_LOAD    (float) (0x7fffffff)
 #define INFINIT_FLOAT   (float) (0x7fffffff)
 

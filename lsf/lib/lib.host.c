@@ -335,8 +335,18 @@ addHost2Tab(const char *name,
          */
         sprintf(ipbuf, "%u", *(addrs[cc]));
         e2 = h_addEnt_(addrTab, ipbuf, &new);
-        assert(new);
-        e2->hData = hp;
+        /* If new is false it means this IP
+         * is configured for another host already,
+         * confusion is waiting down the road as
+         * Gethostbyadrr_() will always return the
+         * first configured host.
+         * 192.168.1.4 joe
+         * 192.168.1.4 banana
+         * when banana will call the library will
+         * always tell you joe called.
+         */
+        if (new)
+            e2->hData = hp;
 
         ++cc; /* nexte */
     }

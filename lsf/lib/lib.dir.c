@@ -16,30 +16,8 @@
  *
  */
 
-#include <unistd.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/param.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-#include "../lsf.h"
-
-#include "lsi18n.h"
-#include "mls.h"
-
-#include <ctype.h>
-
-#include <rpcsvc/ypclnt.h>
-#include "lib.table.h"
 #include "lib.h"
 #include "lproto.h"
-#include <netdb.h>
 
 extern struct config_param genParams_[];
 
@@ -282,6 +260,7 @@ tryPwd(char *path, char *pwdpath)
 static
 int getMap_(void)
 {
+#if !defined(__CYGWIN__)
     char *domain;
     struct ypall_callback incallback;
     int i;
@@ -291,15 +270,18 @@ int getMap_(void)
     if ((i = yp_get_default_domain(&domain)) != 0)
 	return(i);
     return (yp_all(domain, "auto.master", &incallback));
+#else
+    return 0;
+#endif
 }
 
 static int
 putin_(int status, char *inkey, int inkeylen, char *inval, int invallen, char *indata)
 {
-
+#if !defined(__CYGWIN__)
     if (ypprot_err(status) != 0)
 	return TRUE;
-
+#endif
     inkey[inkeylen] = '\0';
     if (strcmp(inkey, "/-") == 0)
 	return FALSE;

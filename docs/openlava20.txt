@@ -30,7 +30,7 @@ to use any remote copy program users like.
 
 3) Compute only hosts configuration.
 
-A part from the first two or three hosts other LIMs
+Apart from the first two or three hosts other LIMs
 listed in the Host section of the lsf.cluster.openlava don't have to
 become masters they should be compute only. In case of network partition
 or problems compute only LIMs should not attempt to become masters.

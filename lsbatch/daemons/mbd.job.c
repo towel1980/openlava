@@ -381,12 +381,9 @@ addJobIdHT(struct jData *job)
 }
 
 void
-handleNewJob (struct jData *jpbw, int job, int eventTime)
+handleNewJob(struct jData *jpbw, int job, int eventTime)
 {
-    static char fname[] = "handleNewJob";
-
-    if (logclass & (LC_TRACE))
-        ls_syslog(LOG_DEBUG, "%s: Entering this routine...", fname);
+    ls_syslog(LOG_DEBUG, "%s: Entering this routine...", __func__);
 
     addJobIdHT(jpbw);
     inPendJobList(jpbw, PJL, 0);
@@ -395,29 +392,23 @@ handleNewJob (struct jData *jpbw, int job, int eventTime)
 
     jpbw->uPtr = getUserData(jpbw->userName);
 
-    if (jpbw->jobId >= 0) {
-        putOntoTree(jpbw, job);
-    } else {
-        jpbw->jFlags |= JFLAG_READY2;
-    }
-
+    putOntoTree(jpbw, job);
+    jpbw->jFlags |= JFLAG_READY2;
 
     if (mSchedStage != M_STAGE_REPLAY) {
-        updQaccount (jpbw, jpbw->shared->jobBill.maxNumProcessors,
-                     jpbw->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
-        updUserData (jpbw, jpbw->shared->jobBill.maxNumProcessors,
-                     jpbw->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
+        updQaccount(jpbw, jpbw->shared->jobBill.maxNumProcessors,
+                    jpbw->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
+        updUserData(jpbw, jpbw->shared->jobBill.maxNumProcessors,
+                    jpbw->shared->jobBill.maxNumProcessors, 0, 0, 0, 0);
     }
 
     if (job == JOB_NEW && eventTime == LOG_IT) {
         log_newjob(jpbw);
     }
 
-
-    if ( job == JOB_REPLAY) {
-        if ( maxUserPriority > 0 ) {
-            if ( jpbw->shared->jobBill.userPriority < 0 ) {
-
+    if (job == JOB_REPLAY) {
+        if (maxUserPriority > 0) {
+            if (jpbw->shared->jobBill.userPriority < 0) {
                 modifyJobPriority(jpbw, maxUserPriority/2);
             } else {
                 modifyJobPriority(jpbw, jpbw->shared->jobBill.userPriority);
@@ -429,9 +420,8 @@ handleNewJob (struct jData *jpbw, int job, int eventTime)
 
     if (jpbw->shared->jobBill.options2 & SUB2_HOLD) {
         jpbw->newReason = PEND_USER_STOP;
-        jStatusChange(jpbw, JOB_STAT_PSUSP, -1, fname);
+        jStatusChange(jpbw, JOB_STAT_PSUSP, -1, __func__);
     }
-    return;
 
 }
 int
@@ -3221,7 +3211,7 @@ void
 jStatusChange(struct jData *jData,
               int newStatus,
               time_t eventTime,
-              char *fname)
+              const char *fname)
 {
     int oldStatus = jData->jStatus;
     int freeExec = FALSE;
@@ -3505,7 +3495,7 @@ handleFinishJob(struct jData *jData, int oldStatus, int eventTime)
 }
 
 void
-handleRequeueJob (struct jData *jData, time_t requeueTime)
+handleRequeueJob(struct jData *jData, time_t requeueTime)
 {
     jData->jFlags &= ~JFLAG_REQUEUE;
 

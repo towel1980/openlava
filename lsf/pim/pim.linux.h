@@ -16,35 +16,17 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <sys/sysmacros.h>
-#include <sys/vfs.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include "../lim/lim.h"
-
-#include "../../lsf/lib/lsi18n.h"
-#define NL_SETN		28	
-
-
-
+#ifndef _PIM_HEADER_
+#define _PIM_HEADER_
 
 static char buffer[1024];
 
-extern int bytes;			
-extern int nproc;			
-extern int pagesize;			
-extern int nr_of_processes;		
-extern struct lsPidInfo *pbase;		
-extern struct lsPidInfo *old_pbase;	
+extern int bytes;
+extern int nproc;
+extern int pagesize;
+extern int nr_of_processes;
+extern struct lsPidInfo *pbase;
+extern struct lsPidInfo *old_pbase;
 
 extern int scanIt;
 
@@ -52,8 +34,8 @@ static struct dirent *process;
 static DIR *dir_proc_fd;
 static struct lsPidInfo info_rec;
 
-#define MAX_NR_OF_PROCESSES		50 
-#define PROCESSES_INCREMENT		10 
+#define MAX_NR_OF_PROCESSES		50
+#define PROCESSES_INCREMENT		10
 
 extern int getpagesize(void);
 extern char *strdup __P ((__const char *__s));
@@ -69,8 +51,6 @@ open_kern(void)
 
     nproc = MAX_NR_OF_PROCESSES;
 
-    
-
     bytes = nproc * sizeof(struct lsPidInfo);
     pbase = (struct lsPidInfo *)malloc(bytes);
     memset( (char*)pbase, 0, bytes );
@@ -78,22 +58,20 @@ open_kern(void)
     memset( (char*)old_pbase, 0, bytes );
 
     if (pbase == (struct lsPidInfo *)NULL ||
-	    old_pbase == (struct lsPidInfo *)NULL ) {
+        old_pbase == (struct lsPidInfo *)NULL ) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_M, fname, "malloc");
         ls_syslog(LOG_ERR, I18N_Exiting);
         exit(-1);
     }
 
-    
     pagesize = getpagesize();
 
-    
     info_rec.command = (char*)malloc( 1024 );
 
     scanIt = TRUE;
 
     return;
-} 
+}
 
 void
 scan_procs(void)
@@ -101,7 +79,7 @@ scan_procs(void)
     static char fname[] = "pim/get_process_id";
     int j;
 
-    
+
 
     for ( j=0; j < nr_of_processes; j++ ) {
         if ( pbase[j].command != (char*)0 ) {
@@ -110,7 +88,7 @@ scan_procs(void)
         }
     }
 
-    
+
 
     dir_proc_fd = opendir("/proc");
 
@@ -122,19 +100,19 @@ scan_procs(void)
 
     nr_of_processes = 0;
     while (( process = readdir( dir_proc_fd ))) {
-	
-	if (isdigit( process->d_name[0] ) ) {
-	    
 
-	    
+	if (isdigit( process->d_name[0] ) ) {
+
+
+
 	    if ( nr_of_processes == nproc - 1 ) {
 		nproc += PROCESSES_INCREMENT;
 		bytes = nproc * sizeof( struct lsPidInfo );
 		pbase = (struct lsPidInfo *)realloc( pbase, bytes );
-		memset( (char*)&pbase[nr_of_processes], 0, 
+		memset( (char*)&pbase[nr_of_processes], 0,
 			PROCESSES_INCREMENT * sizeof( struct lsPidInfo ) );
 
-		
+
 
 		old_pbase = (struct lsPidInfo *)realloc( old_pbase, bytes );
 		memset( (char*)&old_pbase[nr_of_processes], 0,
@@ -148,19 +126,19 @@ scan_procs(void)
 		}
 	    }
 	    if (get_lsPidInfo(atoi(process->d_name), &info_rec) != 0) {
-		
+
 		continue;
 	    }
 
-	    
+
 	    if (isNfsDaemon(buffer, "/nfsiod"))
 		continue;
 
-	     
-	    if (info_rec.pgid == 1) 
+
+	    if (info_rec.pgid == 1)
 		continue;
 
-	    
+
             pbase[nr_of_processes].pid = info_rec.pid;
             pbase[nr_of_processes].ppid = info_rec.ppid;
             pbase[nr_of_processes].pgid = info_rec.pgid;
@@ -169,7 +147,7 @@ scan_procs(void)
 	    pbase[nr_of_processes].stime = info_rec.stime/100;
 	    pbase[nr_of_processes].cutime = info_rec.cutime/100;
 	    pbase[nr_of_processes].cstime = info_rec.cstime/100;
-          
+
             pbase[nr_of_processes].proc_size = info_rec.proc_size;
             pbase[nr_of_processes].resident_size = info_rec.resident_size*(getpagesize()/1024);
             pbase[nr_of_processes].stack_size = info_rec.stack_size;
@@ -178,10 +156,10 @@ scan_procs(void)
 	    pbase[nr_of_processes].status = info_rec.status;
 
 #if defined(_COMMAND_LINE_)
-	    
+
 
             pbase[nr_of_processes].command = strdup( info_rec.command );
-#endif 
+#endif
 
 	    nr_of_processes++;
 	}
@@ -190,7 +168,7 @@ scan_procs(void)
 
     return;
 
-} 
+}
 
 
 
@@ -202,7 +180,7 @@ get_lsPidInfo( int PID, struct lsPidInfo *info_rec )
     char filename[30];
 
 
-     
+
 
     sprintf( filename, "/proc/%d/stat", PID );
 
@@ -219,7 +197,7 @@ get_lsPidInfo( int PID, struct lsPidInfo *info_rec )
     close( fd );
 
     if (parse_stat((char*)&buffer, info_rec) < 0) {
-	if (logclass & LC_PIM) 
+	if (logclass & LC_PIM)
 	    ls_syslog(LOG_DEBUG, "%s: failed for process <%d>, continuing", fname, PID);
 	return(1);
     }
@@ -241,11 +219,11 @@ get_lsPidInfo( int PID, struct lsPidInfo *info_rec )
     info_rec->command[len] = 0;
     close( fd );
     nulls2spc( info_rec->command, len );
-#endif 
+#endif
 
     return(0);
 
-} 
+}
 
 
 static int
@@ -258,11 +236,11 @@ parse_stat(char* S, struct lsPidInfo* P)
     sscanf(S, "%d %s %c %d %d %*d %*d %*d %*u %*u %*u %*u %*u %d %d %d "
 	      "%d %*d %*d %*u %*u %*d %lu %u %u %u %u %u %u",
            &P->pid, P->command, &status, &P->ppid, &P->pgid,
-           &P->utime, &P->stime, &P->cutime, &P->cstime, 
-           &vsize, &P->resident_size, &rss_rlim, &start_code, 
+           &P->utime, &P->stime, &P->cutime, &P->cstime,
+           &vsize, &P->resident_size, &rss_rlim, &start_code,
 	   &end_code, &start_stack, &end_stack);
 
-    
+
     if (P->pid == 0) {
 	if (logclass & LC_PIM)
             ls_syslog(LOG_DEBUG, "parse_stat(): invalid process 0 found: %s", S);
@@ -270,25 +248,25 @@ parse_stat(char* S, struct lsPidInfo* P)
     }
 
     P->stack_size = start_stack - end_stack;
-    P->proc_size = vsize/1024; 
+    P->proc_size = vsize/1024;
 
     switch ( status ) {
-	case 'R' : 
+	case 'R' :
 	    P->status = LS_PSTAT_RUNNING;
 	    break;
-	case 'S' : 
+	case 'S' :
 	    P->status = LS_PSTAT_SLEEP;
 	    break;
-	case 'D' : 
+	case 'D' :
 	    P->status = LS_PSTAT_SLEEP;
 	    break;
-	case 'T' : 
+	case 'T' :
 	    P->status = LS_PSTAT_STOPPED;
 	    break;
-	case 'Z' : 
+	case 'Z' :
 	    P->status = LS_PSTAT_ZOMBI;
 	    break;
-	case 'W' : 
+	case 'W' :
 	    P->status = LS_PSTAT_SWAPPED;
 	    break;
 	default :
@@ -297,7 +275,7 @@ parse_stat(char* S, struct lsPidInfo* P)
     }
     return (0);
 
-} 
+}
 
 #if defined(_COMMAND_LINE_)
 static void
@@ -307,5 +285,7 @@ nulls2spc(char* str, int len)
     for (i=0; i < len; i++)
 	if (str[i]==0)
 	    str[i]=' ';
-} 
-#endif 
+}
+#endif
+
+#endif /* _PIM_HEADER_ */

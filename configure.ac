@@ -7,15 +7,27 @@ AC_INIT(openlava, 2.0)
 AC_CONFIG_HEADERS(config.h)
 AC_PREFIX_DEFAULT([/opt/openlava-2.0])
 
+
 # Set some cluster configuration variables .
 AC_SUBST([openlavadmin], [openlava])
 AC_ARG_VAR([openlavaadmin], "")
-
 AC_SUBST([openlavacluster], [openlava])
 AC_ARG_VAR([openlavacluster], "")
 
+# Cygwin support
+AC_CANONICAL_SYSTEM
+case "${target_os}" in
+  *cygwin*)
+    AM_CONDITIONAL([CYGWIN], [true]) ;;
+  *)
+    AM_CONDITIONAL([CYGWIN], [false]) ;;
+esac
+
 # Initialize the automake
 AM_INIT_AUTOMAKE
+
+# Expirimental scheduling module
+AM_CONDITIONAL([SCHED_EXPERIMENTAL], [false])
 
 # Clean output if possible
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -37,9 +49,10 @@ if test "x$ac_compiler_gnu" = xyes; then
 fi
 
 #AC_CHECK_HEADERS(ncurses.h,[cf_cv_ncurses_header="ncurses.h"])
-# Check for tcl, we try all 8.X versions
+# Check for tcl, we try tcl and all 8.X versions
 AC_CHECK_HEADERS([tcl.h], [], [AC_CHECK_HEADERS([tcl/tcl.h], [], AC_MSG_ERROR([cannot build openlava without tcl])]))
-AC_CHECK_LIB([tcl8.6], [Tcl_CreateInterp], [], [
+AC_CHECK_LIB([tcl], [Tcl_CreateInterp], [], [
+ AC_CHECK_LIB([tcl8.6], [Tcl_CreateInterp], [], [
     AC_CHECK_LIB([tcl8.5], [Tcl_CreateInterp], [], [
         AC_CHECK_LIB([tcl8.4], [Tcl_CreateInterp], [], [
             AC_CHECK_LIB([tcl8.3], [Tcl_CreateInterp], [], [
@@ -47,7 +60,7 @@ AC_CHECK_LIB([tcl8.6], [Tcl_CreateInterp], [], [
                     AC_CHECK_LIB([tcl8.1], [Tcl_CreateInterp], [], [
                         AC_CHECK_LIB([tcl8.0], [Tcl_CreateInterp], [], [
                             AC_MSG_ERROR([cannot build openlava without tcl8.*])
-])])])])])])])
+])])])])])])])])
 
 AC_CONFIG_FILES([
 	Makefile                 \
