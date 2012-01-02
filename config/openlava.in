@@ -126,14 +126,15 @@ case "$opcode" in
         exit 1
         ;;
   'status')
-        PID=`pidof lim`
+        OPENLAVA_DAEMONS=`(ps -ef; ps auxww) 2>/dev/null | grep "$LSF_SERVERDIR"`
+        PID=`echo "${OPENLAVA_DAEMONS}" | sed '/\/lim$\|lim -1$/!d;s/^[^ ]* *\([0-9]*\).*/\1/;q'`
         echo "lim pid: <$PID>"
-        PID=`pidof res`
+        PID=`echo "${OPENLAVA_DAEMONS}" | sed '/\/res$\|res -1$/!d;s/^[^ ]* *\([0-9]*\).*/\1/;q'`
         echo "res pid: <$PID>"
-        PID=`pidof sbatchd`
+        PID=`echo "${OPENLAVA_DAEMONS}" | sed '/\/sbatchd$\|sbatchd -1$/!d;s/^[^ ]* *\([0-9]*\).*/\1/;q'`
         echo "sbatchd pid: <$PID>"
-        PID=`pidof mbatchd`
-        echo "lim mbatchd: <$PID>"
+        PID=`echo "${OPENLAVA_DAEMONS}" | sed '/\/mbatchd /!d;s/^[^ ]* *\([0-9]*\).*/\1/;q'`
+        echo "mbatchd pid: <$PID>"
         exit 0
         ;;
   *)
