@@ -20,7 +20,8 @@
 
 # This is the root of openlava installation
 # change it if installed somewhere else.
-export OPENLAVA_TOP=@prefix@
+OPENLAVA_TOP=@prefix@
+export OPENLAVA_TOP
 
 # kill the old daemons first.
 #
@@ -59,28 +60,65 @@ case "$opcode" in
 
             # Export this env.variable to notify openlava daemons the loc. of
             # lsf.conf
-            export LSF_ENVDIR
-            export LSF_SERVERDIR
+
+            ID=`id -u`
+
+            # Some checks on LSF_ENVDIR and LSF_SERVERDIR
+            if [ ! -x "$LSF_ENVDIR" ]; then
+              echo "LSF_ENVDIR=$LSF_ENVDIR unaccessible by user $ID"
+              exit 1
+            fi
+            if [ -x "$LSF_SERVERDIR/lim" -a -x "$LSF_SERVERDIR/res" -a -x "$LSF_SERVERDIR/sbatchd" ]; then
+              export LSF_ENVDIR
+              export LSF_SERVERDIR
+            else
+              echo "user $ID cannot execute daemons under $LSF_SERVERDIR"
+              exit 1
+            fi
+
             echo "Starting daemons..."
 
-	    ID=`id -u`
             if [ "$ID" != 0 ]; then
             # single user mode use this
             # to run test clusters
-               $LSF_SERVERDIR/lim -1
-               echo "lim -1 started"
+               $LSF_SERVERDIR/lim -1               
+               if [ $? -eq 0 ]; then
+                 echo "lim -1 started"
+               else 
+                 echo "lim -1 startup failed"
+               fi
                $LSF_SERVERDIR/res -1
-               echo "res -1 started"
+               if [ $? -eq 0 ]; then
+                 echo "res -1 started"
+               else
+                 echo "res -1 startup failed"
+               fi
                $LSF_SERVERDIR/sbatchd -1
-               echo "sbatchd -1 started"
+               if [ $? -eq 0 ]; then
+                 echo "sbatchd -1 started"
+               else
+                 echo "sbatchd -1 startup failed"
+               fi
             else
                # multi user mode
                $LSF_SERVERDIR/lim
-               echo "lim started"
+               if [ $? -eq 0 ]; then
+                 echo "lim started"
+               else
+                 echo "lim startup failed"
+               fi
                $LSF_SERVERDIR/res
-               echo "res started"
+               if [ $? -eq 0 ]; then
+                 echo "res started"
+               else
+                 echo "res startup failed"
+               fi
                $LSF_SERVERDIR/sbatchd
-               echo "sbatchd started"
+               if [ $? -eq 0 ]; then
+                 echo "sbatchd started"
+               else
+                 echo "sbatchd startup failed"
+               fi
             fi
             exit 0
         fi
