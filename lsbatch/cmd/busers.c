@@ -20,7 +20,7 @@
 
 #include "cmd.h"
 
-#define NL_SETN 8	 
+#define NL_SETN 8
 
 #define USR_NAME_LENGTH    18
 #define USR_JL_P_LENGTH    5
@@ -37,7 +37,7 @@ static void sort_users (struct userInfoEnt *, int);
 
 static char fomt[200];
 
-void 
+void
 usage (char *cmd)
 {
     fprintf(stderr, I18N_Usage);
@@ -45,18 +45,16 @@ usage (char *cmd)
     exit(-1);
 }
 
-int 
+int
 main (int argc, char **argv)
 {
-    extern int optind;
     int cc, numUsers;
     struct userInfoEnt  *usrInfo;
     char **users=NULL, **userPoint;
     int all = FALSE;
     int rc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
-
+    rc = _i18n_init ( I18N_CAT_MIN );
 
     if (lsb_init(argv[0]) < 0) {
 	lsb_perror("lsb_init");
@@ -74,23 +72,23 @@ main (int argc, char **argv)
         }
     }
     numUsers = getNames (argc, argv, optind, &users, &all, "user");
-    if (!all && !numUsers) {	 
+    if (!all && !numUsers) {
         numUsers = 1;
         userPoint = NULL;
-    } else 
+    } else
         userPoint = users;
     if (!(usrInfo = lsb_userinfo (userPoint, &numUsers))) {
-        if (lsberrno == LSBE_BAD_USER && userPoint) 
-            lsb_perror(users[numUsers]);        
+        if (lsberrno == LSBE_BAD_USER && userPoint)
+            lsb_perror(users[numUsers]);
         else
             lsb_perror(NULL);
         exit (-1);
     }
     display_users(usrInfo, numUsers);
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
     exit(0);
 
-} 
+}
 
 static void
 display_users (struct userInfoEnt *reply, int numReply)
@@ -118,25 +116,25 @@ display_users (struct userInfoEnt *reply, int numReply)
         prtWord(USR_RSV_LENGTH,   I18N_RSV,   -1);
         printf("\n");
     }
-    if (numReply > 1)                      
-	sort_users (reply, numReply);      
+    if (numReply > 1)
+	sort_users (reply, numReply);
 
     for (i = 0; i < numReply; i++) {
 
-	
+
         if (reply[i].procJobLimit < INFINIT_FLOAT) {
             sprintf(fomt, "%%%d.1f ", USR_JL_P_LENGTH);
             sprintf (procJobLimit, fomt, reply[i].procJobLimit);
 	}
-        else 
+        else
              strcpy(procJobLimit, prtDash(USR_JL_P_LENGTH) );
 
-	
+
         if (reply[i].maxJobs < INFINIT_INT)
             strcpy(maxJobs, prtValue(USR_MAX_LENGTH, reply[i].maxJobs) );
-        else 
+        else
              strcpy(maxJobs, prtDash(USR_MAX_LENGTH) );
-         
+
         prtWordL(USR_NAME_LENGTH, reply[i].user);
 
 	if (lsbMode_ & LSB_MODE_BATCH) {
@@ -161,22 +159,22 @@ display_users (struct userInfoEnt *reply, int numReply)
                    );
 	}
         else {
-        sprintf(fomt, "%%%dd %%%dd %%%dd %%%dd %%%dd %%%dd\n", 
+        sprintf(fomt, "%%%dd %%%dd %%%dd %%%dd %%%dd %%%dd\n",
                                                   USR_NJOBS_LENGTH,
                                                   USR_PEND_LENGTH,
                                                   USR_RUN_LENGTH,
                                                   USR_SSUSP_LENGTH,
                                                   USR_USUSP_LENGTH,
                                                   USR_RSV_LENGTH );
-	printf(fomt, 
+	printf(fomt,
                 reply[i].numJobs, reply[i].numPEND, reply[i].numRUN,
                 reply[i].numSSUSP, reply[i].numUSUSP, reply[i].numRESERVE);
 	};
     }
 
-    
 
-} 
+
+}
 
 static void
 sort_users (struct userInfoEnt *users, int numUsers)
@@ -197,5 +195,5 @@ sort_users (struct userInfoEnt *users, int numUsers)
     }
     return;
 
-} 
+}
 

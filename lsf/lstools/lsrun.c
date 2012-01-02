@@ -59,12 +59,6 @@ main(int argc, char **argv, char **environ)
     int tid;
     char **hlist;
 
-    /* tell getopt() to stop processing
-     * options after the first non option
-     * is found.
-     */
-    putenv("POSIXLY_CORRECT=yes");
-
     P = calloc(1, sizeof(struct lsrunParams));
 
     while ((cc = getopt(argc, argv, "hVPvpR:m:")) != EOF) {

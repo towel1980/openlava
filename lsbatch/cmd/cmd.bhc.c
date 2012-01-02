@@ -20,7 +20,7 @@
 #include <netdb.h>
 #include <ctype.h>
 
-#define NL_SETN 8 	
+#define NL_SETN 8
 
 
 extern char *myGetOpt (int nargc, char **nargv, char *ostr);
@@ -32,10 +32,9 @@ static int exitrc;
 static char *opStr;
 static struct hostInfoEnt *getHostList(int *numHosts, char **inputHosts);
 
-int 
+int
 bhc (int argc, char *argv[], int opCode)
 {
-    extern int optind;
     struct hostInfoEnt *hostInfo ;
     char **hostPoint ;
     char **hosts=NULL;
@@ -74,17 +73,17 @@ bhc (int argc, char *argv[], int opCode)
 
     exitrc = 0;
     numHosts = getNames (argc, argv, optind, &hosts, &all, "hostC");
-    numReq = numHosts;                        
+    numReq = numHosts;
     hostPoint = NULL;
-    if (!numHosts && !all)                    
+    if (!numHosts && !all)
         numHosts = 1;
-    else if (numHosts)                        
+    else if (numHosts)
         hostPoint = hosts;
 
 
     if ((opCode == HOST_REBOOT || opCode == HOST_SHUTDOWN) &&
 	!(numHosts == 0 && all)) {
-		
+
 	if ((hostInfo = getHostList(&numHosts, hostPoint)) == NULL)
 	    return (-1);
     } else {
@@ -93,7 +92,7 @@ bhc (int argc, char *argv[], int opCode)
 	    return (-1);
 	}
     }
-    
+
     if (!fFlag && all && (opCode == HOST_REBOOT || opCode == HOST_SHUTDOWN))
         inquerFlag = !doConfirm (opCode, NULL);
 
@@ -112,13 +111,13 @@ bhc (int argc, char *argv[], int opCode)
 
         ctrlHost (hostInfo[i].host, hostInfo[i].hStatus, opCode);
     }
-    return (exitrc);     
+    return (exitrc);
 
-} 
+}
 
-static void 
+static void
 ctrlHost (char *host, int hStatus, int opCode)
-{   
+{
 
     if (lsb_hostcontrol(host, opCode) < 0) {
         char i18nBuf[100];
@@ -148,9 +147,9 @@ ctrlHost (char *host, int hStatus, int opCode)
 
     fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,915, "done\n"))); /* catgets  915  */
 
-} 
+}
 
-static int  
+static int
 doConfirm (int opCode, char *host)
 {
     char msg[MAXLINELEN];
@@ -158,11 +157,11 @@ doConfirm (int opCode, char *host)
     if (host == NULL)
         host = (_i18n_msg_get(ls_catd,NL_SETN,916, "all the hosts")); /* catgets  916  */
 
-    sprintf(msg, "\n%s %s? [y/n] ", opStr, host); 
-    
+    sprintf(msg, "\n%s %s? [y/n] ", opStr, host);
+
     return (getConfirm(msg));
 
-} 
+}
 
 static struct hostInfoEnt *
 getHostList(int *numHosts, char **inputHosts)
@@ -191,5 +190,5 @@ getHostList(int *numHosts, char **inputHosts)
     }
 
     return hostInfo;
-} 
-						  
+}
+

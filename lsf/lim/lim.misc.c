@@ -452,12 +452,26 @@ loadEvents(void)
             case EV_ADD_HOST:
                 hPtr = eRec->record;
                 e = h_addEnt_(&tab, hPtr->hostName, &new);
-                assert(new == TRUE);
+                if (new != TRUE) {
+                    /* Somebody has been messing around
+                     * with the LIM events?
+                     */
+                    ls_syslog(LOG_WARNING, "\
+%s: host %s already added, ignoring the second instance.",
+                              __func__, hPtr->hostName);
+                    freeHostEntryLog(&hPtr);
+                    break;
+                }
                 e->hData = hPtr;
                 break;
             case EV_REMOVE_HOST:
                 hPtr = eRec->record;
                 e = h_getEnt_(&tab, hPtr->hostName);
+                if (e == NULL) {
+                    ls_syslog(LOG_WARNING, "\
+%s: attempt to remove host %s which is not configured, ignoring it.",
+                              __func__, hPtr->hostName);
+                }
                 h_rmEnt_(&tab, e);
                 freeHostEntryLog(&hPtr);
                 break;

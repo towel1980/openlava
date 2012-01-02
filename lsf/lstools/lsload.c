@@ -16,15 +16,8 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <string.h>
-#include <netdb.h>
-#include <errno.h>
 
 #include "../lsf.h"
-
 #include "../lib/lib.table.h"
 #include "../lib/lproto.h"
 #include "../intlib/intlibout.h"
@@ -65,10 +58,8 @@ main(int argc, char **argv)
     static char **loadval;
     char *indexfilter = NULL;
     char **nlp;
-    static char *defaultindex[]={"r15s", "r1m", "r15m", "ut", "pg", "ls",
-                               "it", "tmp", "swp", "mem", NULL};
-    extern int	optind, opterr;
-    extern char	*optarg;
+    static char *defaultindex[] = {"r15s", "r1m", "r15m", "ut", "pg", "ls",
+                                   "it", "tmp", "swp", "mem", NULL};
     int	achar;
     char longFormat = FALSE;
     char wideFormat = FALSE;
@@ -181,7 +172,7 @@ main(int argc, char **argv)
 
         }
     }
-
+    printf("%d %d\n", optind, argc);
     for ( ; optind < argc ; optind++)
     {
         if (num>=MAXLISTSIZE) {

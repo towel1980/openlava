@@ -22,12 +22,8 @@
 #include <ctype.h>
 
 
-#define NL_SETN 8	 
+#define NL_SETN 8
 
-
-extern int optind;
-extern char *optarg;
-extern char **environ;
 extern void sub_perror (char *usrMsg);
 extern int getJobIdList(char *, LS_LONG_INT **);
 
@@ -42,22 +38,22 @@ main (int argc, char **argv)
     time_t beginTime, terminTime;
     int rc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
- 
+    rc = _i18n_init ( I18N_CAT_MIN );
+
     if (lsb_init(argv[0]) < 0) {
         sub_perror("lsb_init");
-	fprintf(stderr, ". %s.\n", 
+	fprintf(stderr, ". %s.\n",
 		(_i18n_msg_get(ls_catd,NL_SETN,351, "Job not modified"))); /* catgets  351  */
         exit (-1);
     }
 
     if (fillReq (argc, argv, CMD_BMODIFY, &req) < 0) {
-	fprintf(stderr, ". %s.\n", 
-		(_i18n_msg_get(ls_catd,NL_SETN,351, "Job not modified"))); 
+	fprintf(stderr, ". %s.\n",
+		(_i18n_msg_get(ls_catd,NL_SETN,351, "Job not modified")));
         exit (-1);
     }
-   
-    job = req.command; 
+
+    job = req.command;
     beginTime = req.beginTime;
     terminTime = req.termTime;
 
@@ -69,10 +65,10 @@ main (int argc, char **argv)
         if (lsberrno == LSBE_JOB_ARRAY) {
             fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,352, "Options -q and -O cannot be applied on job array"))); /* catgets  352  */
         }
-        else 
-            prtErrMsg (&req, &reply);         
-	fprintf(stderr, ". %s.\n", 
-	    (_i18n_msg_get(ls_catd,NL_SETN,351, "Job not modified"))); 
+        else
+            prtErrMsg (&req, &reply);
+	fprintf(stderr, ". %s.\n",
+	    (_i18n_msg_get(ls_catd,NL_SETN,351, "Job not modified")));
         if (req.nxf)
             free(req.xf);
         exit (-1);
@@ -84,6 +80,6 @@ main (int argc, char **argv)
     if (req.nxf)
         free(req.xf);
 
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
     exit (0);
-} 
+}

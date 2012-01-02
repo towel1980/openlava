@@ -296,8 +296,6 @@ main(int argc, char **argv)
     char   staticResource = FALSE, otherOption = FALSE;
     int extView = FALSE;
     int achar;
-    extern int  optind;
-    extern char *optarg;
     int     unknown;
     int     options=0;
     int isClus;

@@ -22,7 +22,7 @@
 #include <pwd.h>
 #include "lsadmin.h"
 
-#define NL_SETN 25      
+#define NL_SETN 25
 
 static int doLsCmd (int argc, char *argv[]);
 static void limDebugReq(struct debugReq *pdebug, int num, char *host[]);
@@ -32,13 +32,12 @@ static void support1_2 (int argc, char *argv[]);
 static int checkPerm();
 static int exitDebug;
 extern int startup( int argc, char **argv, int opCode);
-extern char *optarg;
 extern int linux_optind;
 extern int linux_opterr;
 
-static char *cmdList[] = { 
-			    "reconfig", 
-			    "ckconfig", 
+static char *cmdList[] = {
+			    "reconfig",
+			    "ckconfig",
 		            "limrestart",
 		            "limstartup",
 		            "limshutdown",
@@ -59,36 +58,36 @@ static char *cmdList[] = {
 			    NULL
 		         };
 
-static char *cmdSyntax[] = 
-{ 
-  "[-v] [-f]",                             
-  "[-v]",                                  
-  "[-v] [-f] [ host_name ... | all ]",     
-  "[-f] [ host_name ... | all ]",          
-  "[-f] [ host_name ... | all ]",          
-  "[-l time_seconds] ",                    
-  "",                                      
-  "[-f] [ host_name ... | all ]",          
-  "[-f] [ host_name ... | all ]",          
-  "[-f] [ host_name ... | all ]",          
-  "[ host_name ... | all ] [-c cpu_time]", 
-  "[ host_name ... | all ]",               
-  "[-c class_name] [-l debug_level] [-f logfile_name] [-o] [host_name ...]", 
-  "[-l timing_level] [-f logfile_name] [-o] [host_name ...]",                
-  "[-c class_name] [-l debug_level] [-f logfile_name] [-o] [host_name ...]", 
-  "[-l timing_level] [-f logfile_name] [-o] [host_name ...]",                
-  "[ command ...]",                                             
-  "[ command ...]",                                             
+static char *cmdSyntax[] =
+{
+  "[-v] [-f]",
+  "[-v]",
+  "[-v] [-f] [ host_name ... | all ]",
+  "[-f] [ host_name ... | all ]",
+  "[-f] [ host_name ... | all ]",
+  "[-l time_seconds] ",
+  "",
+  "[-f] [ host_name ... | all ]",
+  "[-f] [ host_name ... | all ]",
+  "[-f] [ host_name ... | all ]",
+  "[ host_name ... | all ] [-c cpu_time]",
+  "[ host_name ... | all ]",
+  "[-c class_name] [-l debug_level] [-f logfile_name] [-o] [host_name ...]",
+  "[-l timing_level] [-f logfile_name] [-o] [host_name ...]",
+  "[-c class_name] [-l debug_level] [-f logfile_name] [-o] [host_name ...]",
+  "[-l timing_level] [-f logfile_name] [-o] [host_name ...]",
+  "[ command ...]",
+  "[ command ...]",
   "",
   NULL
 };
 
-static char *cmdInfo[] = { "Reconfigure LSF",  /* catgets 100 */ 
+static char *cmdInfo[] = { "Reconfigure LSF",  /* catgets 100 */
                            "Check configuration files",  /* catgets 101 */
                            "Restart LIM (Load Information Manager)", /* catgets 102*/
                            "Startup LIM (Load Information Manager)", /* catgets 103 */
                            "Shut down LIM (Load Information Manager)", /* catgets 104 */
-                           "Lock LIM on local host",  /* catgets 105 */ 
+                           "Lock LIM on local host",  /* catgets 105 */
                            "Unlock LIM on local host", /* catgets 106 */
                            "Restart RES (Remote Execution Server)",  /* catgets 107 */
                            "Startup RES (Remote Execution Server)", /* catgets 108 */
@@ -100,14 +99,14 @@ static char *cmdInfo[] = { "Reconfigure LSF",  /* catgets 100 */
 			   "Debug RES",  /* catgets 114 */
 			   "Debug RES timing message",  /* catgets 115 */
                            "Get help on commands",  /* catgets 116 */
-                           "Get help on commands",  
+                           "Get help on commands",
                            "Quit",  /* catgets 117 */
 			   NULL
 		         };
 
 static int opCodeList[] = {  LIM_CMD_REBOOT, -1, LIM_CMD_REBOOT, -1, LIM_CMD_SHUTDOWN, 0,
-		      -1, RES_CMD_REBOOT, -1, RES_CMD_SHUTDOWN, RES_CMD_LOGON, 
-		      RES_CMD_LOGOFF, LIM_DEBUG, LIM_TIMING, RES_DEBUG, 
+		      -1, RES_CMD_REBOOT, -1, RES_CMD_SHUTDOWN, RES_CMD_LOGON,
+		      RES_CMD_LOGOFF, LIM_DEBUG, LIM_TIMING, RES_DEBUG,
 		      RES_TIMING, -1, -1, -1
                    };
 
@@ -115,7 +114,7 @@ int
 main (int argc, char **argv)
 {
     int cc,  myIndex;
-    char *prompt = "lsadmin>"; 
+    char *prompt = "lsadmin>";
     char line[MAXLINELEN];
 
     if (ls_initdebug(argv[0]) < 0) {
@@ -123,10 +122,10 @@ main (int argc, char **argv)
 	exit(-1);
     }
 
-    
+
     support1_2(argc, argv);
 
-    
+
 
     while ((cc = getopt(argc, argv, "Vh")) != EOF) {
         switch (cc) {
@@ -135,22 +134,22 @@ main (int argc, char **argv)
             exit(0);
         case 'h':
         default:
-            
-            cmdsUsage("lsadmin", cmdList, 
-		      _i18n_msgArray_get( ls_catd, NL_SETN, cmdInfo_ID, cmdInfo)); 
+
+            cmdsUsage("lsadmin", cmdList,
+		      _i18n_msgArray_get( ls_catd, NL_SETN, cmdInfo_ID, cmdInfo));
         }
     }
-    if (argc > optind) {                 
+    if (argc > optind) {
         if ((myIndex=adminCmdIndex(argv[optind], cmdList)) == -1) {
             fprintf(stderr, "Invalid command <%s> \n", argv[optind]);
-            
-            cmdsUsage("lsadmin", cmdList, 
-		      _i18n_msgArray_get( ls_catd, NL_SETN, cmdInfo_ID, cmdInfo)); 
+
+            cmdsUsage("lsadmin", cmdList,
+		      _i18n_msgArray_get( ls_catd, NL_SETN, cmdInfo_ID, cmdInfo));
 	}
-	optind++; 
+	optind++;
 	exit (doLsCmd (argc, argv));
     }
-    
+
     for (;;) {
         printf("%s", prompt);
         fflush(stdout);
@@ -158,10 +157,10 @@ main (int argc, char **argv)
 	    printf("\n");
             exit(-1);
         }
-        parseAndDo (line , doLsCmd);      
-					 
+        parseAndDo (line , doLsCmd);
+
     }
-}  
+}
 
 
 static int
@@ -174,22 +173,22 @@ doLsCmd (int argc, char *argv[])
 	return -1;
     }
     switch (myIndex) {
-    case LSADM_CKCONFIG :  
+    case LSADM_CKCONFIG :
         if ((argc == optind + 1) && strcmp(argv[optind], "-v") == 0)
             cc =  checkConf(1, 1);
-        else if (argc == optind) {    
+        else if (argc == optind) {
 	    cc = checkConf(0, 1);
 	    if (cc == -1 || cc == -2)
 	        if (getConfirm(I18N(201, "Do you want to see detailed messages? [y/n] "))) /* catgets 201 */
 		    cc =  checkConf(1, 1);
-	} else 
-	    cmdRet = -2;                        
+	} else
+	    cmdRet = -2;
         if (cmdRet == 0 && cc != 0)
-            cmdRet = -1;                    
+            cmdRet = -1;
         break;
-    case LSADM_RECONFIG :  
-    case LSADM_LIMREBOOT : 
-    case LSADM_LIMSHUTDOWN : 
+    case LSADM_RECONFIG :
+    case LSADM_LIMREBOOT :
+    case LSADM_LIMSHUTDOWN :
         cmdRet = limCtrl (argc, argv, opCodeList[myIndex]);
         break;
     case LSADM_LIMSTARTUP :
@@ -198,13 +197,13 @@ doLsCmd (int argc, char *argv[])
     case LSADM_LIMLOCK :
         cmdRet = limLock (argc, argv);
         break;
-    case LSADM_LIMUNLOCK : 
+    case LSADM_LIMUNLOCK :
         cmdRet = limUnlock (argc, argv);
         break;
-    case LSADM_RESREBOOT : 
-    case LSADM_RESSHUTDOWN : 
-    case LSADM_RESLOGON : 
-    case LSADM_RESLOGOFF : 
+    case LSADM_RESREBOOT :
+    case LSADM_RESSHUTDOWN :
+    case LSADM_RESLOGON :
+    case LSADM_RESLOGOFF :
         cmdRet = resCtrl (argc, argv, opCodeList[myIndex]);
         break;
     case LSADM_LIMDEBUG:
@@ -216,31 +215,31 @@ doLsCmd (int argc, char *argv[])
     case LSADM_RESSTARTUP :
         cmdRet = startup (argc, argv, myIndex);
 	break;
-    case LSADM_HELP :         
-    case LSADM_QES :          
+    case LSADM_HELP :
+    case LSADM_QES :
 	cmdHelp (argc, argv, cmdList, cmdInfo, cmdSyntax);
         break;
-    case LSADM_QUIT :         
+    case LSADM_QUIT :
         exit(0);
     default :
         fprintf(stderr, I18N_FUNC_S_ERROR, "adminCmdIndex:");
         exit(-1);
     }
-    if (cmdRet == -2)         
+    if (cmdRet == -2)
 	oneCmdUsage(myIndex, cmdList, cmdSyntax);
 
     fflush(stderr);
     return (cmdRet);
 
-} 
+}
 
 
-static void 
+static void
 support1_2 (int argc, char *argv[])
 {
     int cc;
 
-    
+
     if (strstr(argv[0], "lsreconfig") != NULL) {
         if (argc != 1) {
             fputs(_LS_VERSION_, stderr);
@@ -273,15 +272,15 @@ support1_2 (int argc, char *argv[])
                 exit(-1);
             }
         }
-        if (argc > optind)      
+        if (argc > optind)
             argv[--optind] = "-l";
 
         if ((cc=limLock (argc, argv)) == -2)
             fprintf(stderr, "%s: lslockhost [-V] [-h] [duration]\n", I18N_Usage);
- 
+
         exit(cc);
     }
-} 
+}
 
 static int
 lsadminDebug (int argc, char **argv, int opCode)
@@ -296,7 +295,7 @@ lsadminDebug (int argc, char **argv, int opCode)
     int   numHosts = 0;
     struct debugReq  debug;
 
-    
+
 
     exitDebug = 0;
     debug.opCode = opCode ;
@@ -309,7 +308,7 @@ lsadminDebug (int argc, char **argv, int opCode)
        strcpy(opt, "oc:l:f:");
     else if (opCode == LIM_TIMING || opCode == RES_TIMING)
        strcpy (opt, "ol:f:");
-    else 
+    else
        return (-2);
     linux_optind = 1;
     linux_opterr = 1;
@@ -317,7 +316,7 @@ lsadminDebug (int argc, char **argv, int opCode)
 	linux_optind++;
     }
      while ((c = getopt(argc, argv, opt )) != EOF) {
-   
+
        switch (c) {
 
        case 'c':
@@ -346,28 +345,28 @@ lsadminDebug (int argc, char **argv, int opCode)
 		   debug.logClass |= LC_PIM;
 	   }
 	   if (debug.logClass == 0) {
-		fprintf(stderr,I18N(6545,"Command denied. Invalid class name\n")); /* catgets 6545 */     
+		fprintf(stderr,I18N(6545,"Command denied. Invalid class name\n")); /* catgets 6545 */
                 return (-1);
             }
-           break;      
+           break;
        case 'l':
            for (i=0;i<strlen(optarg);i++) {
 	       if (!isdigit(optarg[i])) {
-                    fprintf(stderr,I18N(6546,"Command denied. Invalid level value\n")); /* catgets 6546 */ 
+                    fprintf(stderr,I18N(6546,"Command denied. Invalid level value\n")); /* catgets 6546 */
 		    return(-1);
 	       }
-	   }	
+	   }
 	   debug.level = atoi(optarg);
 	   if (opCode == LIM_DEBUG || opCode == RES_DEBUG) {
 	       if (debug.level < 0 || debug.level > 3) {
 		   fprintf(stderr,I18N(6547,"Command denied. Valid debug level value is [0-3]\n")); /* catgets 6547 */
-		   return(-1); 
+		   return(-1);
 	       }
 	   }
 	   else if (debug.level < 1 || debug.level > 5) {
 	       fprintf(stderr,I18N(6548,"Command denied. Valid timing level value is [1-5]\n")); /* catgets 6548 */
-	       return(-1); 
-	   }            
+	       return(-1);
+	   }
            break;
 
        case 'f':
@@ -393,15 +392,15 @@ lsadminDebug (int argc, char **argv, int opCode)
 
        default:
 	   return (-2);
-       } 
-   } 
-   
+       }
+   }
+
    if (checkPerm()) {
        if (opCode == LIM_DEBUG || opCode == LIM_TIMING ) {
 	   fprintf(stderr,I18N(6546,
 			  "Operation permission denied by LIM\n")); /* catgets 6546 */
        }
-       else { 
+       else {
 	   fprintf(stderr,I18N(6550,
 			  "Operation permission denied by RES\n")); /* catgets 6550 */
        }
@@ -419,11 +418,11 @@ lsadminDebug (int argc, char **argv, int opCode)
        if ( !fileOption ) {
 	   strcpy (debug.logFileName, "res");
        }
-       else { 
+       else {
 	   strcat(debug.logFileName,".res");
        }
    }
-   if (optind >= argc) { 
+   if (optind >= argc) {
        if ((localHost = ls_getmyhostname())  == NULL) {
 	   ls_perror("ls_getmyhostname");
            return -1;
@@ -432,13 +431,13 @@ lsadminDebug (int argc, char **argv, int opCode)
            limDebugReq (&debug, 1, &localHost);
        }
        else {
-           resDebugReq (&debug, 1, &localHost); 
+           resDebugReq (&debug, 1, &localHost);
        }
        return (exitDebug);
    }
-  
+
   if (optind == argc-1 && strcmp (argv[optind], "all") == 0) {
-	  
+
       hostInfo = ls_gethostinfo("-:server", &numHosts, NULL, 0, LOCAL_ONLY);
       if (hostInfo == NULL) {
 	  ls_perror("ls_gethostinfo");
@@ -467,7 +466,7 @@ lsadminDebug (int argc, char **argv, int opCode)
    return(exitDebug);
 }
 
- 
+
 static int
 checkPerm(void)
 {
@@ -485,11 +484,11 @@ checkPerm(void)
     {
         struct passwd *pw;
         if ((pw = getpwuid((uid_t)getuid())) != NULL) {
-            if (pw->pw_uid == 0)        
-	        return(0);                
+            if (pw->pw_uid == 0)
+	        return(0);
         }
     }
-    
+
     if ((mycluster = ls_getclustername()) == NULL) {
 	ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_getclustername");
 	return (RESE_DENIED);
@@ -498,28 +497,28 @@ checkPerm(void)
 	    ls_syslog(LOG_ERR, I18N_FUNC_FAIL_MM, fname, "ls_clusterinfo");
 	    return (RESE_DENIED);
     }
-              
+
     nAdmins = (clusterInfo->nAdmins) ? clusterInfo->nAdmins : 1;
-    if (clusterInfo->nAdmins == 0) { 
+    if (clusterInfo->nAdmins == 0) {
 	if (strcmp(clusterInfo->managerName,username) == 0) {
 	    return(0);
 	}
-    }	
+    }
     for (i = 0; i < nAdmins; i++) {
         if (strcmp(clusterInfo->admins[i],username) == 0) {
             return (0);
 	}
-    }	
+    }
     return(-1);
 }
 
-static void 
+static void
 limDebugReq(struct debugReq *pdebug, int numHost, char *hosts[])
 {
     int i;
     char strBuf[100];
 
-    for (i=0; i<numHost; i++) 
+    for (i=0; i<numHost; i++)
         if (hosts[i][0] != '\0') {
             if(oneLimDebug(pdebug, hosts[i]) == -1) {
 		sprintf(strBuf, "Host %s set LIM debug failed",hosts[i]);
@@ -533,9 +532,9 @@ limDebugReq(struct debugReq *pdebug, int numHost, char *hosts[])
 	}
     return ;
 
- } 
+ }
 
-static void 
+static void
 resDebugReq(struct debugReq *pdebug, int numHost, char *hosts[])
 {
     int pid;
@@ -543,7 +542,7 @@ resDebugReq(struct debugReq *pdebug, int numHost, char *hosts[])
     char strBuf[100];
     LS_WAIT_T status;
 
-    
+
     if ((pid = fork()) < 0) {
 	perror("fork");
 	exitDebug = -1;
@@ -554,14 +553,14 @@ resDebugReq(struct debugReq *pdebug, int numHost, char *hosts[])
 	    ls_perror ("ls_initrex:" );
             exit (-1);
          }
- 
+
         for (i=0; i<numHost; i++)
             if (ls_connect(hosts[i]) < 0) {
 		sprintf(strBuf, "Host %s set RES debug failed",hosts[i]);
-		ls_perror (I18N(206, strBuf)); /* catgets 206 */       	
+		ls_perror (I18N(206, strBuf)); /* catgets 206 */
 	        exitDebug = -1;
 
-	  
+
 	         hosts[i][0] = '\0';
 	    }
         for (i=0; i<numHost; i++) {
@@ -573,30 +572,30 @@ resDebugReq(struct debugReq *pdebug, int numHost, char *hosts[])
                  }
 	        else {
 		    sprintf(strBuf, "Host %s set RES debug done\n",hosts[i]);
-		    fprintf(stderr, I18N(205, strBuf)); /* catgets 205 */	      
+		    fprintf(stderr, I18N(205, strBuf)); /* catgets 205 */
 		}
 	    }
 	}
-            exit(exitDebug);  
-    } 
+            exit(exitDebug);
+    }
 
-      
+
     if (waitpid(pid, &status, 0) <0 ) {
         perror("waitpid");
         exitDebug = -1;
         return ;
     }
 
-     
+
     if (WIFEXITED(status) == 0) {
         fprintf(stderr, I18N(204, "Child process killed by signal.\n")); /* catgets 204 */
 	exitDebug = -1;
 	return;
-     }	 
-    else {  
-        if (WEXITSTATUS(status) == 0xff) {  
+     }
+    else {
+        if (WEXITSTATUS(status) == 0xff) {
             exitDebug = -1;
 	    return;
 	}
     }
-}  
+}

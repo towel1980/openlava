@@ -23,7 +23,7 @@
 #include "cmd.h"
 #include <netdb.h>
 
-#define NL_SETN 8 	
+#define NL_SETN 8
 
 extern int getSigVal (char *);
 extern char *getSigSymbolList (void);
@@ -40,52 +40,48 @@ static int runCount = 0;
 static int do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue);
 void usage (char *cmd, int sig);
 
-void 
+void
 usage (char *cmd, int sig)
 {
     fprintf(stderr, I18N_Usage);
-    fprintf(stderr, ": %s [-h] [-V] ", cmd); 
+    fprintf(stderr, ": %s [-h] [-V] ", cmd);
 
     if (sig == SIGKILL)
-        fprintf(stderr, "[-l] [-m host_name] [-q queue_name]\n               [-u user_name | -u all] [0] [-r | -s sigval] [-J job_name] "); 
+        fprintf(stderr, "[-l] [-m host_name] [-q queue_name]\n               [-u user_name | -u all] [0] [-r | -s sigval] [-J job_name] ");
     else if (sig == SIGCHK)
-        fprintf(stderr,  "[-m host_name] [-q queue_name] [-u user_name |-u all]\n               [-p period] [-f] [-k] [-J job_name]\n               "); 
-    else if (sig == SIGDEL)	
+        fprintf(stderr,  "[-m host_name] [-q queue_name] [-u user_name |-u all]\n               [-p period] [-f] [-k] [-J job_name]\n               ");
+    else if (sig == SIGDEL)
         fprintf(stderr, " [-m host_name] [-q queue_name] [-u user_name | -u all]\n            [-n running_times] [-d] [-a] [-J job_name] ");
     else if (sig == SIGSTOP)
-         fprintf(stderr, " [-m host_name] [-q queue_name]\n               [-u user_name | -u all] [0] [-d] [-a] [-J job_name] "); 
+         fprintf(stderr, " [-m host_name] [-q queue_name]\n               [-u user_name | -u all] [0] [-d] [-a] [-J job_name] ");
     else
-        fprintf(stderr, " [-m host_name] [-q queue_name]\n               [-u user_name | -u all] [0] [-J job_name] "); 
+        fprintf(stderr, " [-m host_name] [-q queue_name]\n               [-u user_name | -u all] [0] [-J job_name] ");
 
 
     if (lsbMode_ & LSB_MODE_BATCH)
-        fprintf(stderr, "\n               [jobId | \"jobId[index_list]\"]...\n"); 
+        fprintf(stderr, "\n               [jobId | \"jobId[index_list]\"]...\n");
     else
-        fprintf(stderr, "\n               [jobId ...]\n"); 
+        fprintf(stderr, "\n               [jobId ...]\n");
 
     exit(-1);
-} 
+}
 
-static int 
+static int
 do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
 {
-    extern char *optarg;
-    extern int   optind;
-
     int cc;
-
     int kflg=0;
     int sflg=0;
     int sigflg=0;
     int forceflg=0;
-    int newOptions = 0;                    
-    
-    
-    sigJobId   = 0;                         
-    sigUser    = NULL;                      
-    sigQueue   = NULL;                      
-    sigHost    = NULL;                      
-    sigJobName = NULL;			    
+    int newOptions = 0;
+
+
+    sigJobId   = 0;
+    sigUser    = NULL;
+    sigQueue   = NULL;
+    sigHost    = NULL;
+    sigJobName = NULL;
     chkOptions = 0;
 
     sigValue = signalValue;
@@ -107,25 +103,25 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
             sigHost = optarg;
             break;
         case 'l':
-	    
+
 	    if (signalValue != SIGKILL) {
-		fprintf (stderr, "%s: %s %s\n", 
+		fprintf (stderr, "%s: %s %s\n",
   		    argv[0],
 		    _i18n_msg_get(ls_catd,NL_SETN,459, "Illegal option --"), /* catgets  459  */
-		    "l"); 
+		    "l");
 		usage (argv[0], signalValue);
 	    }
             puts (getSigSymbolList());
             exit (-1);
 	case 's':
 	    if (signalValue != SIGKILL) {
-		fprintf (stderr, "%s: %s %s\n", 
+		fprintf (stderr, "%s: %s %s\n",
   		    argv[0],
 		    _i18n_msg_get(ls_catd,NL_SETN,459, "Illegal option --"),
-		    "s"); 
+		    "s");
 		usage (argv[0], signalValue);
 	    }
-	    if (forceflg) {  
+	    if (forceflg) {
 	        usage (argv[0], signalValue);
 		exit(-1);
 	    } else {
@@ -139,37 +135,37 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
 	    break;
         case 'a':
             if (signalValue != SIGDEL && signalValue != SIGSTOP) {
-		fprintf (stderr, "%s: %s %s\n", 
+		fprintf (stderr, "%s: %s %s\n",
   		    argv[0],
 		    _i18n_msg_get(ls_catd,NL_SETN,459, "Illegal option --"),
-		    "a"); 
+		    "a");
                 usage (argv[0], signalValue);
             }
             newOptions |= ALL_JOB;
 	    break;
         case 'd':
             if (signalValue != SIGDEL && signalValue != SIGSTOP) {
-		fprintf (stderr, "%s: %s %s\n", 
+		fprintf (stderr, "%s: %s %s\n",
   		    argv[0],
 		    _i18n_msg_get(ls_catd,NL_SETN,459, "Illegal option --"),
-		    "d"); 
+		    "d");
                 usage (argv[0], signalValue);
             }
             newOptions |= DONE_JOB;
 	    break;
 	case 'n':
 	    if (signalValue != SIGDEL) {
-		fprintf (stderr, "%s: %s %s\n", 
+		fprintf (stderr, "%s: %s %s\n",
   		    argv[0],
 		    _i18n_msg_get(ls_catd,NL_SETN,459, "Illegal option --"),
-		    "n"); 
+		    "n");
 		usage (argv[0], signalValue);
 	    }
             if (isint_(optarg) && ((runCount = atoi(optarg)) >= 0))
                 break;
             fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,465, "%s: Illegal times value\n")), optarg); /* catgets  465  */
             exit(-1);
- 
+
         case 'J':
             if ( supportJobNamePattern(optarg) != 0) {
                fprintf(stderr, (_i18n_msg_get(ls_catd, NL_SETN, 491, "%s: Job or Job Group name is not valid.\n")), optarg); /* catgets 491*/
@@ -178,7 +174,7 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
 
             sigJobName = optarg;
             break;
-	    
+
 	case 'f':
 	    if (signalValue == SIGCHK) {
 		chkOptions |= LSB_CHKPNT_FORCE;
@@ -191,14 +187,14 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
 	case 'r':
 	    if ( (signalValue == SIGKILL) && (!sigflg) ) {
 	        sigValue = SIGFORCE;
-		newOptions |= ZOMBIE_JOB; 
+		newOptions |= ZOMBIE_JOB;
 		forceflg=TRUE;
 	    } else {
 	        usage(argv[0], signalValue);
 		exit(-1);
 	    }
 	    break;
-	    
+
 	case 'p':
 	    if (signalValue != SIGCHK) {
 		usage(argv[0], signalValue);
@@ -211,7 +207,7 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
 	    fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,466, "%s: Illegal checkpoint period value\n")), optarg); /* catgets  466  */
 	    exit(-1);
 
-	case 'k':  
+	case 'k':
             if (sflg) {
                 usage(argv[0], signalValue);
                 exit(-1);
@@ -224,7 +220,7 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
 	        chkOptions |= LSB_CHKPNT_KILL;
             }
 	    break;
-        case 'S': 
+        case 'S':
             if (kflg) {
                 usage(argv[0], signalValue);
                 exit(-1);
@@ -247,24 +243,24 @@ do_options (int argc, char **argv, LS_LONG_INT **jobIds, int signalValue)
         }
     }
 
-    
+
     if ((argc == optind) &&
 	    (sigUser == NULL) &&
 	    (sigQueue == NULL) &&
 	    (sigHost == NULL) &&
 	    (sigJobName == NULL) ) {
-	fprintf(stderr, "%s.\n", 
+	fprintf(stderr, "%s.\n",
 	    (_i18n_msg_get(ls_catd,NL_SETN,467, "Job ID or one of '-m', '-u' '-q' and '-J' must be specified"))); /* catgets  467  */
 	usage(argv[0], signalValue);
     }
 
-        
-    return (getJobIds (argc, argv, sigJobName, sigUser, sigQueue, sigHost, 
+
+    return (getJobIds (argc, argv, sigJobName, sigUser, sigQueue, sigHost,
                        jobIds, newOptions));
 
-} 
+}
 
-int 
+int
 bsignal (int argc, char **argv)
 {
     int numJobs;
@@ -289,11 +285,11 @@ bsignal (int argc, char **argv)
     else {
         fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,468, "%s: Illegal operation\n")), argv[0]); /* catgets  468  */
         exit (-1);
-    } 
+    }
     numJobs = do_options (argc, argv, &jobIds, signalValue);
 
-    if ((signalValue == SIGKILL)       
-	&& (sigValue != SIGFORCE)      
+    if ((signalValue == SIGKILL)
+	&& (sigValue != SIGFORCE)
 	&& (sigValue >= LSF_NSIG || sigValue < 1) ) {
         fprintf(stderr, (_i18n_msg_get(ls_catd,NL_SETN,469, "%d: Illegal signal value\n")), sigValue); /* catgets  469  */
         exit(-1);
@@ -301,9 +297,9 @@ bsignal (int argc, char **argv)
 
     return (signalJobs (jobIds, numJobs));
 
-} 
+}
 
-static int 
+static int
 signalJobs (LS_LONG_INT *jobIds, int numJobs)
 {
     int failsignal = FALSE, signaled = FALSE;
@@ -316,16 +312,16 @@ signalJobs (LS_LONG_INT *jobIds, int numJobs)
         else if (sigValue == SIGDEL)
 	    cc = lsb_deletejob(jobIds[i], runCount, 0);
 	else if (sigValue == SIGFORCE)
-	    cc = lsb_forcekilljob(jobIds[i]);	  
+	    cc = lsb_forcekilljob(jobIds[i]);
 	else
 	    cc = lsb_signaljob(jobIds[i], sigValue);
-	
+
 	if (cc < 0) {
 	    if (sigValue == SIGCHK && lsberrno == LSBE_NOT_STARTED &&
 		chkPeriod != LSB_CHKPERIOD_NOCHNG) {
 		if (chkPeriod)
 		    printf((_i18n_msg_get(ls_catd,NL_SETN,470, "Job <%s>: Checkpoint period is now %d min.\n")), /* catgets  470  */
-			   lsb_jobid2str(jobIds[i]), 
+			   lsb_jobid2str(jobIds[i]),
 			   (int) (chkPeriod / 60));
 		else
 		    printf((_i18n_msg_get(ls_catd,NL_SETN,471, "Job <%s>: Periodic checkpointing is disabled\n")), /* catgets  471  */
@@ -333,7 +329,7 @@ signalJobs (LS_LONG_INT *jobIds, int numJobs)
 		signaled = TRUE;
 	    } else {
 		failsignal = TRUE;
-		sprintf (msg, "%s <%s>", I18N_Job, lsb_jobid2str(jobIds[i])); 
+		sprintf (msg, "%s <%s>", I18N_Job, lsb_jobid2str(jobIds[i]));
 		lsb_perror (msg);
 	    }
 	} else {
@@ -342,10 +338,10 @@ signalJobs (LS_LONG_INT *jobIds, int numJobs)
 	}
     }
 
-    
+
     return (signaled ? !failsignal : FALSE);
 
-} 
+}
 
 static
 void prtSignaled (int signalValue, LS_LONG_INT jobId)
@@ -374,11 +370,11 @@ void prtSignaled (int signalValue, LS_LONG_INT jobId)
 	break;
     }
 
-    if (signalValue == SIGDEL && runCount != 0) 
+    if (signalValue == SIGDEL && runCount != 0)
         printf((_i18n_msg_get(ls_catd,NL_SETN,479, "Job <%s> will be deleted after running next %d times\n")),  /* catgets  479  */
                lsb_jobid2str(jobId), runCount);
     else
         printf((_i18n_msg_get(ls_catd,NL_SETN,480, "Job <%s> is being %s\n")), lsb_jobid2str(jobId), op); /* catgets  480  */
 
-} 
+}
 

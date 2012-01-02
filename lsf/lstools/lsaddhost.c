@@ -93,7 +93,7 @@ main(int argc, char **argv)
         }
     }
 
-    hp = gethostbyname(argv[argc - 1]);
+    hp = Gethostbyname_(argv[argc - 1]);
     if (hp == NULL) {
         fprintf(stderr, "\
 %s: invalid hostname %s\n", __func__, argv[optind]);
@@ -112,7 +112,7 @@ main(int argc, char **argv)
         return -1;
     }
 
-    printf("Host %s added all right.\n", hPtr->hostName);
+    printf("Host %s added.\n", hPtr->hostName);
     freeInfo(&hPtr);
 
     return 0;

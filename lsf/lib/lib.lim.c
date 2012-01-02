@@ -627,6 +627,9 @@ err_return_(enum limReplyCode limReplyCode)
         case LIME_NO_RESOURCE:
             lserrno = LSE_NO_RESOURCE;
             return;
+        case LIME_KWN_MIGRANT:
+            lserrno = LSE_HOST_EXIST;
+            return;
         default:
             lserrno = limReplyCode + NOCODE;
             return;

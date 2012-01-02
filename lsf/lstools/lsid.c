@@ -32,7 +32,6 @@ static void
 usage(char *cmd)
 {
     fprintf (stderr, "%s: %s [-h] [-V]\n", I18N_Usage, cmd);
-    exit(-1);
 }
 
 int
@@ -43,20 +42,20 @@ main(int argc, char **argv)
 
     if (ls_initdebug(argv[0]) < 0) {
         ls_perror("ls_initdebug");
-        exit(-1);
+        return -1;
     }
 
     while ((cc = getopt(argc, argv, "hV")) != EOF) {
         switch (cc) {
             case 'h':
                 usage(argv[0]);
-                exit(0);
+                return 0;
             case 'V':
                 fputs(_LS_VERSION_, stderr);
-                exit(0);
+                return 0;
             default:
                 usage(argv[0]);
-                exit(-1);
+                return -1;
         }
     }
     puts(_LS_VERSION_);
@@ -75,6 +74,6 @@ main(int argc, char **argv)
     }
     printf("My master name is %s\n", name);
 
-    exit(0);
+    return 0;
 }
 

@@ -124,7 +124,8 @@ char *ls_errmsg[] = {
     /* 94 */  "Requested label is not valid",
     /* 95 */  "Requested label is above your allowed range",
     /* 96 */  "Request label rejected by /etc/rhost.conf",
-    /* 97 */  "Request label doesn't dominate current label"
+    /* 97 */  "Request label doesn't dominate current label",
+    /* 98 */  "Migrant host already known to master LIM"
 };
 
 void

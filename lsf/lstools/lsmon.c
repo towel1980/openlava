@@ -380,28 +380,17 @@ main(int argc, char **argv)
     int    nReady;
     int StdIn = 0;
     int	optc;
-
-
-
     int Vflag = 0, Nflag = 0, Eflag = 0, Rflag = 0, iflag = 0, nflag = 0, Iflag = 0;
-    extern int optind, opterr;
-    extern char *optarg;
     int rc;
 
     Signal_(SIGINT, (SIGFUNCTYPE) quit);
-
-
     numneeded = 0;
     cmd = *argv;
-
     opterr = 0;
     rc = _i18n_init ( I18N_CAT_MIN );
 
-
-    while ((optc = getopt(argc, argv, "hVNEn:R:I:i:L:")) != EOF)
-    {
-	switch(optc)
-	{
+    while ((optc = getopt(argc, argv, "hVNEn:R:I:i:L:")) != EOF) {
+	switch(optc) {
 	case 'R':
 	    if (Rflag)
 		usage(cmd);
@@ -516,34 +505,34 @@ main(int argc, char **argv)
 
     if (!redirect) {
 
-    (void)initscr();
+        initscr();
         cbreak();
         noecho();
 
 
         if ((COLS < 80)) {
-            (void)endwin();
-            (void)fprintf(stderr,
-	              _i18n_msg_get(ls_catd,NL_SETN,2144, "Sorry, screen must be at least %d COLUMNS wide (currently COLS = %d).\n"), /* catgets  2144  */
-		      80, COLS);
+            endwin();
+            fprintf(stderr,
+                    _i18n_msg_get(ls_catd,NL_SETN,2144, "Sorry, screen must be at least %d COLUMNS wide (currently COLS = %d).\n"), /* catgets  2144  */
+                    80, COLS);
             exit(1);
         }
 
         if (LINES < 5) {
-            (void)endwin();
-            (void)fprintf(stderr,
-		      _i18n_msg_get(ls_catd,NL_SETN,2145, "Sorry, screen must have at least %d LINES (currently LINES = %d).\n"), /* catgets  2145  */
-		      5, LINES);
+            endwin();
+            fprintf(stderr,
+                    _i18n_msg_get(ls_catd,NL_SETN,2145, "Sorry, screen must have at least %d LINES (currently LINES = %d).\n"), /* catgets  2145  */
+                    5, LINES);
             exit(1);
         } else if ((LINES < num + 4)) {
 
-            (void)endwin();
-            (void)fprintf(stderr,
-                      _i18n_msg_get(ls_catd,NL_SETN,2146, "Sorry, screen must have at least %d LINES to display all of the requested hosts.\n"),  /* catgets  2146  */
+            endwin();
+            fprintf(stderr,
+                    _i18n_msg_get(ls_catd,NL_SETN,2146, "Sorry, screen must have at least %d LINES to display all of the requested hosts.\n"),  /* catgets  2146  */
 		      num+4);
-            (void)fprintf(stderr,
-		      _i18n_msg_get(ls_catd,NL_SETN,2147, "The current window has %d lines.\n"), /* catgets  2147  */
-		      LINES);
+            fprintf(stderr,
+                    _i18n_msg_get(ls_catd,NL_SETN,2147, "The current window has %d lines.\n"), /* catgets  2147  */
+                    LINES);
             exit(1);
         }
 
@@ -558,8 +547,7 @@ main(int argc, char **argv)
 
         getLoadInfo();
 
-        if (!redirect)
-        {
+        if (!redirect) {
 
   	    	timeout.tv_usec = 0;
 	    	timeout.tv_sec = updateRate;
