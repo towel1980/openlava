@@ -2,5 +2,8 @@
 # lava.sh:
 #   Setup openlava environment variables
 #
-export LSF_ENVDIR=@prefix@/etc
-export PATH=$PATH:@prefix@/bin
+
+LSF_ENVDIR=@prefix@/etc
+PATH=$PATH:@prefix@/bin
+
+export LSF_ENVDIR PATH
