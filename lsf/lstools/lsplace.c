@@ -51,9 +51,6 @@ main(int argc, char **argv)
     int wanted = 1;
     int i;
     char locality=FALSE;
-
-    extern int	optind, opterr;
-    extern char	*optarg;
     int	achar;
     char badHost = FALSE;
     int rc;

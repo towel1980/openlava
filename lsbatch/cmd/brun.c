@@ -19,10 +19,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define NL_SETN 8	 
-
-extern int   optind;
-extern char *optarg;
+#define NL_SETN 8
 
 static void
 usage(char* name)
@@ -30,7 +27,7 @@ usage(char* name)
     fprintf(stderr, I18N_Usage);
     fprintf(stderr, ": %s [ -h ] [ -V ] [ -f ] [ -b ] -m host_name ... jobId", name);
     if (lsbMode_ & LSB_MODE_BATCH)
-	fprintf(stderr,  " | \"jobId[index]\""); 
+	fprintf(stderr,  " | \"jobId[index]\"");
     fprintf(stderr, "\n");
 }
 
@@ -69,7 +66,7 @@ main(int argc, char** argv)
     bool_t		  bFlag = FALSE;
     int rc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
 
     if (lsb_init(argv[0]) < 0) {
@@ -109,13 +106,13 @@ main(int argc, char** argv)
     memset((struct runJobRequest* )&runJobRequest, 0,
 	   sizeof(struct runJobRequest));
 
-    
+
     if (getOneJobId (argv[argc - 1], &(runJobRequest.jobId), 0)) {
 	usage(argv[0]);
 	exit(-1);
     }
     runJobRequest.numHosts = countHosts(hosts);
-    
+
     if (runJobRequest.numHosts > 1) {
 	int     i;
 
@@ -133,15 +130,15 @@ main(int argc, char** argv)
 	}
     } else
 	runJobRequest.hostname = &hosts;
-	
-    runJobRequest.options = (fFlag == TRUE) ? 
+
+    runJobRequest.options = (fFlag == TRUE) ?
 	RUNJOB_OPT_NOSTOP : RUNJOB_OPT_NORMAL;
 
     if (bFlag) {
 	runJobRequest.options |= RUNJOB_OPT_FROM_BEGIN;
-    } 
+    }
 
-        
+
     cc = lsb_runjob(&runJobRequest);
     if (cc < 0) {
 	lsb_perror((_i18n_msg_get(ls_catd,NL_SETN,2755, "Failed to run the job"))); /* catgets  2755  */
@@ -151,7 +148,7 @@ main(int argc, char** argv)
     printf((_i18n_msg_get(ls_catd,NL_SETN,2756, "Job <%s> is being forced to run.\n")), /* catgets  2756  */
 	   lsb_jobid2str(runJobRequest.jobId));
 
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
     return (0);
 }
 

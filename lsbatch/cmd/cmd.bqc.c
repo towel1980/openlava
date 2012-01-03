@@ -18,7 +18,7 @@
 
 #include "cmd.h"
 
-#define NL_SETN 8 	
+#define NL_SETN 8
 
 static int ctrlQueue (char *, int);
 static int exitrc = 0;
@@ -26,14 +26,13 @@ static int exitrc = 0;
 int
 bqc (int argc, char *argv[], int opCode)
 {
-    extern int optind;
     struct queueInfoEnt *queueInfo;
     char **queueList=NULL, **queues ;
-    int numQueues, all = FALSE; 
-    int i; 
+    int numQueues, all = FALSE;
+    int i;
 
     queues = NULL;
-    if (argc == optind)              
+    if (argc == optind)
         numQueues =1;
     else {
         numQueues = getNames (argc, argv, optind, &queueList, &all, "queueC");
@@ -43,7 +42,7 @@ bqc (int argc, char *argv[], int opCode)
 
     if ((queueInfo = lsb_queueinfo(queues, &numQueues, NULL, NULL, 0))
         == NULL) {
-        if (lsberrno == LSBE_BAD_QUEUE 
+        if (lsberrno == LSBE_BAD_QUEUE
             && queues && queues[numQueues])
             lsb_perror(queues[numQueues]);
         else
@@ -55,7 +54,7 @@ bqc (int argc, char *argv[], int opCode)
         ctrlQueue (queueInfo[i].queue, opCode);
     }
     return (exitrc);
-} 
+}
 static int
 ctrlQueue (char *queue, int opCode)
 {
@@ -71,10 +70,10 @@ ctrlQueue (char *queue, int opCode)
         case LSBE_MBATCHD:
         default:
             lsb_perror (queue);
-            return (-1);                   
+            return (-1);
         }
     }
-    
+
     switch (opCode) {
     case QUEUE_OPEN:
         printf((_i18n_msg_get(ls_catd,NL_SETN,951, "Queue <%s> is opened\n")), queue); /* catgets  951  */
@@ -93,5 +92,5 @@ ctrlQueue (char *queue, int opCode)
         return (-1);
     }
     return (0);
-} 
+}
 

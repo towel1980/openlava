@@ -78,11 +78,9 @@ Gethostbyname_(char *hname)
 
     strcpy(lsfHname, hname);
     /* openlava strips all hostnames
-     * of thier domain names and lowercase
-     * them.
+     * of their domain names.
      */
     stripDomain(lsfHname);
-    strToLower_(lsfHname);
 
     if (nameTab == NULL)
         mkHostTab();
@@ -248,9 +246,6 @@ mkHostTab(void)
         if (name == NULL)
             continue;
 
-        stripDomain(name);
-        strToLower_(name);
-
         cc = 0;
         while ((p = getNextWord_(&buf))
                && cc < MAX_HOSTALIAS) {
@@ -295,6 +290,11 @@ addHost2Tab(const char *name,
     hEnt *e2;
     int new;
     int cc;
+
+    /* Strip the domain name before
+     * adding it into the cache in case
+     */
+    stripDomain(name);
 
     /* add the host to the table by its name
      * if it exists already we must be processing

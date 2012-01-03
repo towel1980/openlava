@@ -47,7 +47,6 @@ main(int argc, char **argv)
     char tFlag = FALSE;
     char mFlag = FALSE;
     char mmFlag = FALSE;
-    extern int optind;
     int rc;
 
     rc = _i18n_init ( I18N_CAT_MIN );
@@ -86,7 +85,7 @@ main(int argc, char **argv)
         }
     }
 
-    for (nnames=0; optind < argc; optind++, nnames++)
+    for (nnames = 0; optind < argc; optind++, nnames++)
         namebufs[nnames] = argv[optind];
 
     if ((lsInfo = ls_info()) == NULL) {
@@ -118,7 +117,7 @@ main(int argc, char **argv)
 	    FREEUP(buf4);
 	}
 
-        for (i=0; i < lsInfo->nRes; i++) {
+        for (i = 0; i < lsInfo->nRes; i++) {
             if (!nameInList(namebufs, nnames, lsInfo->resTable[i].name))
                 continue;
             if (!longFormat) {
@@ -131,10 +130,10 @@ main(int argc, char **argv)
                print_long(&(lsInfo->resTable[i]));
         }
 
-        for (i=0; i < nnames; i++)
+        for (i = 0; i < nnames; i++)
             if (namebufs[i])
                 printf(_i18n_msg_get(ls_catd,NL_SETN,1808, "%s: Resource name not found\n"),/* catgets  1808  */
-		    namebufs[i]);
+                       namebufs[i]);
 
     }
 

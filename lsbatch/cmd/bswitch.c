@@ -18,12 +18,12 @@
 
 #include "cmd.h"
 
-#define NL_SETN 8	
+#define NL_SETN 8
 
 
 static int printErrMsg (LS_LONG_INT jobId, char *queue);
 
-void 
+void
 usage (char *cmd)
 {
     fprintf(stderr, I18N_Usage);
@@ -31,11 +31,9 @@ usage (char *cmd)
     exit(-1);
 }
 
-int 
+int
 main (int argc, char **argv)
 {
-    extern char *optarg;
-    extern int optind;
     char *queue = NULL, *user = NULL, *host = NULL, *jobName = NULL;
     char *destQueue = NULL;
     int numJobs;
@@ -43,7 +41,7 @@ main (int argc, char **argv)
     int  i, cc, exitrc = 0;
     int rc;
 
-    rc = _i18n_init ( I18N_CAT_MIN );	
+    rc = _i18n_init ( I18N_CAT_MIN );
 
 
     if (lsb_init(argv[0]) < 0) {
@@ -79,45 +77,45 @@ main (int argc, char **argv)
        }
     }
 
-    if (argc >= optind + 1) {           
+    if (argc >= optind + 1) {
         destQueue = argv[optind];
         optind++;
     }
     if (destQueue == NULL) {
         printf((_i18n_msg_get(ls_catd,NL_SETN,2902, "The destination queue name must be specified.\n"))); /* catgets  2902  */
         usage(argv[0]);
-    } 
+    }
     numJobs = getJobIds (argc, argv, jobName, user, queue, host, &jobIds, 0);
 
-    
+
     for (i = 0; i < numJobs; i++) {
 	if (lsb_switchjob (jobIds[i], destQueue) < 0) {
             exitrc = -1;
-	    printErrMsg (jobIds[i], destQueue); 
+	    printErrMsg (jobIds[i], destQueue);
         }
         else
 	    printf((_i18n_msg_get(ls_catd,NL_SETN,2903, "Job <%s> is switched to queue <%s>\n")),  /* catgets  2903  */
 		lsb_jobid2str(jobIds[i]), destQueue);
     }
 
-    _i18n_end ( ls_catd );			
+    _i18n_end ( ls_catd );
     exit(exitrc);
 
-} 
+}
 
 static int
 printErrMsg (LS_LONG_INT jobId, char *queue)
 {
     char Job[80];
-    sprintf (Job, "%s <%s>", I18N_Job, lsb_jobid2str(jobId)); 
+    sprintf (Job, "%s <%s>", I18N_Job, lsb_jobid2str(jobId));
 
     switch (lsberrno) {
     case LSBE_BAD_USER:
     case LSBE_PROTOCOL:
     case LSBE_MBATCHD:
         lsb_perror ("lsb_switchjob");
-        return (-1);                        
-	
+        return (-1);
+
    case LSBE_PERMISSION:
         lsb_perror (Job);
         return (-1);
@@ -127,10 +125,10 @@ printErrMsg (LS_LONG_INT jobId, char *queue)
     case LSBE_QUEUE_USE:
     case LSBE_QUEUE_HOST:
         lsb_perror (queue);
-        return (-1);                        
+        return (-1);
     default:
 	lsb_perror (Job);
-        return (-1);                        
+        return (-1);
     }
 
-} 
+}

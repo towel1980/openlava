@@ -56,8 +56,6 @@ usage (char *cmd)
 int
 main(int argc, char **argv)
 {
-    extern int optind;
-    extern char *optarg;
     int numQueues;
     char **queueNames=NULL, **queues = NULL;
     struct queueInfoEnt *queueInfo;
@@ -402,8 +400,8 @@ prtQueuesLong(int numQueues, struct queueInfoEnt *queueInfo)
             if (strcmp(qp->hostList, " ") != 0 && qp->hostList[0])
                 printf("%s:  %s\n", I18N_HOSTS, qp->hostList);
         }
-	if (strcmp (qp->prepostUsername, " ") != 0) 
-	    printf("%s:  %s\n", 
+	if (strcmp (qp->prepostUsername, " ") != 0)
+	    printf("%s:  %s\n",
 		   (_i18n_msg_get(ls_catd,NL_SETN,1238, "PRE_POST_EXEC_USER")), qp->prepostUsername); /* catgets  1238  */
         if (strcmp (qp->admins, " ") != 0)
             printf("%s:  %s\n",

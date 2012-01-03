@@ -18,13 +18,13 @@
 
 #include "cmd.h"
 
-#define NL_SETN 8 	
+#define NL_SETN 8
 
 
 
 
 
-void 
+void
 usage (char *cmd)
 {
     fprintf(stderr, I18N_Usage);
@@ -38,14 +38,11 @@ bmove (int argc, char **argv, int opCode)
     int position, reqPos;
     LS_LONG_INT jobId = 0;
     int achar;
-    extern int optind, opterr;
 
     if (lsb_init(argv[0]) < 0) {
 	lsb_perror("lsb_init");
 	exit(-1);
     }
-
-    
 
     opterr = 0;
     while((achar = getopt(argc, argv, "hV")) != EOF) {
@@ -59,12 +56,12 @@ bmove (int argc, char **argv, int opCode)
         }
     }
     if (argc == optind) {
-        fprintf(stderr, "%s.\n", 
+        fprintf(stderr, "%s.\n",
 	    (_i18n_msg_get(ls_catd,NL_SETN,852, "Job ID must be specified"))); /* catgets  852  */
         usage(argv[0]);
     }
     if (optind < argc-2) {
-	fprintf(stderr, "%s.\n", 
+	fprintf(stderr, "%s.\n",
 	    (_i18n_msg_get(ls_catd,NL_SETN,853, "Command syntax error: too many arguments"))); /* catgets  853  */
 	usage(argv[0]);
     }
@@ -73,8 +70,8 @@ bmove (int argc, char **argv, int opCode)
 	usage(argv[0]);
     }
 
-    position = 1;			
-    if (optind == argc - 2) { 
+    position = 1;
+    if (optind == argc - 2) {
 	if (!isint_(argv[++optind]) || atoi(argv[optind]) <= 0) {
             fprintf(stderr, "%s: %s.\n", argv[optind],
 		I18N(854, "Position value must be a positive integer")); /* catgets854*/
@@ -100,4 +97,4 @@ bmove (int argc, char **argv, int opCode)
 	    lsb_jobid2str (jobId), position);
 
     exit(0);
-} 
+}

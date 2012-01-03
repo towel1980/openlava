@@ -108,7 +108,8 @@ enum limReplyCode {
     LIME_NO_MEM           = 21,
     LIME_BAD_FILTER       = 22,
     LIME_BAD_RESOURCE     = 23,
-    LIME_NO_RESOURCE      = 24
+    LIME_NO_RESOURCE      = 24,
+    LIME_KWN_MIGRANT      = 25
 };
 
 struct loadReply {

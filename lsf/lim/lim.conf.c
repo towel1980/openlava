@@ -4788,7 +4788,7 @@ addMigrantHost(XDR *xdrs,
         ls_syslog(LOG_WARNING, "\
 %s: trying to add already configured host %s from %s", __func__,
                   hPtr.hostName, sockAdd2Str_(from));
-        opCode = LIME_UNKWN_HOST;
+        opCode = LIME_KWN_MIGRANT;
         goto hosed;
     }
 

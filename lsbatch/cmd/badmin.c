@@ -157,9 +157,8 @@ doBatchCmd (int argc, char *argv[])
 }
 
 int
-breconfig (int argc, char **argv, int configFlag)
+breconfig(int argc, char **argv, int configFlag)
 {
-    extern int optind;
     char *optName;
     int vFlag = 0;
     int fFlag = 0;

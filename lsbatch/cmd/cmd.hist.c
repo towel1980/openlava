@@ -33,8 +33,6 @@ extern char *myGetOpt (int nargc, char **, char *);
 int
 sysHist(int argc, char **argv, int opCode)
 {
-    extern int optind;
-    extern char *optarg;
     struct histReq req;
     int all = FALSE, eventFound;
     char **nameList=NULL;

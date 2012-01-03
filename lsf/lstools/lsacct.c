@@ -197,8 +197,6 @@ static void getoptions(int argc, char *argv[])
 
 static void getpids(int argc, char *argv[])
 {
-    extern int optind;
-
     int i, pid;
 
     for (i = 0; optind < argc; optind++) {

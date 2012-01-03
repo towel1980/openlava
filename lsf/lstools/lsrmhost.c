@@ -53,7 +53,7 @@ main(int argc, char **argv)
         }
     }
 
-    hp = gethostbyname(argv[argc - 1]);
+    hp = Gethostbyname_(argv[argc - 1]);
     if (hp == NULL) {
         fprintf(stderr, "\
 %s: invalid hostname %s\n", __func__, argv[argc - 1]);
@@ -68,7 +68,7 @@ main(int argc, char **argv)
         return -1;
     }
 
-    printf("Host %s removed all right.\n", hp->h_name);
+    printf("Host %s removed.\n", hp->h_name);
 
     return 0;
 }
