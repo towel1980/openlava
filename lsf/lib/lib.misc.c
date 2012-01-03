@@ -853,7 +853,7 @@ readAddHost(char *buf,
         cc = sscanf(p, "%s%n", name, &n);
         if (cc != 1)
             goto out;
-        hPtr->resList[cc] = strdup(getstr_(name));
+        hPtr->resList[i] = strdup(getstr_(name));
         p = p + n;
     }
 
