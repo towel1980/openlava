@@ -82,6 +82,11 @@ Gethostbyname_(char *hname)
      */
     stripDomain(lsfHname);
 
+    /* This is always somewhat controversial
+     * should we have an explicit libray init
+     * call host_cache_init() or doing the
+     * initialization as part of the first call...
+     */
     if (nameTab == NULL)
         mkHostTab();
 
@@ -104,7 +109,8 @@ Gethostbyname_(char *hname)
                 hp->h_aliases);
 
     if (0) {
-        /* dybag
+        /* dybag should we write a command
+         * to dump the cache sooner or later.
          */
         cc = 0;
         while (hp->h_addr_list[cc]) {
@@ -128,6 +134,12 @@ Gethostbyaddr_(in_addr_t *addr, socklen_t len, int type)
     struct hostent *hp;
     static char ipbuf[32];
     hEnt *e;
+
+    /* addrTab is built together with
+     * nameTab.
+     */
+    if (nameTab == NULL)
+        mkHostTab();
 
     sprintf(ipbuf, "%u", *addr);
 
@@ -280,12 +292,13 @@ mkHostTab(void)
 /* addHost2Tab()
  */
 static void
-addHost2Tab(const char *name,
+addHost2Tab(const char *hname,
             in_addr_t **addrs,
             char **aliases)
 {
     struct hostent *hp;
     char ipbuf[32];
+    char name[MAXHOSTNAMELEN];
     hEnt *e;
     hEnt *e2;
     int new;
@@ -294,6 +307,7 @@ addHost2Tab(const char *name,
     /* Strip the domain name before
      * adding it into the cache in case
      */
+    strcpy(name, hname);
     stripDomain(name);
 
     /* add the host to the table by its name
