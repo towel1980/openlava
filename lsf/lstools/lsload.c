@@ -172,7 +172,7 @@ main(int argc, char **argv)
 
         }
     }
-    printf("%d %d\n", optind, argc);
+
     for ( ; optind < argc ; optind++)
     {
         if (num>=MAXLISTSIZE) {

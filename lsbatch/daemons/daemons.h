@@ -70,8 +70,8 @@
 #define MAX_FAIL             5
 #define MAX_SEQ_NUM          INFINIT_INT
 
-#define  DEF_MSLEEPTIME      60
-#define  DEF_SSLEEPTIME      30
+#define  DEF_MSLEEPTIME      2
+#define  DEF_SSLEEPTIME      2
 #define  DEF_RETRY_INTVL     2
 #define  DEF_PREEM_PERIOD    INFINIT_INT
 #define  DEF_PG_SUSP_IT      180
