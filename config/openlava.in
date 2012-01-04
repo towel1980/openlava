@@ -18,16 +18,50 @@
 # Description: openlava is a distributed batch system
 ### END INIT INFO
 
+
 # This is the root of openlava installation
 # change it if installed somewhere else.
 OPENLAVA_TOP=@prefix@
 export OPENLAVA_TOP
 
-# kill the old daemons first.
-#
+# who am i
+ID=`id -u`
+
+
+# Init openlava environment
+env_init() 
+{
+    LSF_CONF=$OPENLAVA_TOP/etc/lsf.conf
+
+    if [ -r $LSF_CONF ]; then
+
+        # Get the location of the openlava daemons
+        . $LSF_CONF
+
+        # Some checks on LSF_ENVDIR and LSF_SERVERDIR
+        if [ ! -x "$LSF_ENVDIR" ]; then
+          echo "LSF_ENVDIR=$LSF_ENVDIR unaccessible by user $ID"
+          exit 1
+        fi
+        if [ -x "$LSF_SERVERDIR/lim" -a -x "$LSF_SERVERDIR/res" -a -x "$LSF_SERVERDIR/sbatchd" ]; then
+          export LSF_ENVDIR
+          export LSF_SERVERDIR
+        else
+          echo "user $ID cannot execute daemons under $LSF_SERVERDIR"
+          exit 1
+        fi
+    else
+      echo "Cannot read lsf.conf: ${LSF_CONF}"
+      exit 1
+    fi 
+}
+
+# kill OpenLava daemons
 kill_daemons()
 {
-    killall -q lim res sbatchd  mbatchd
+    OPENLAVA_DAEMONS=`(ps -ef; ps auxww) 2>/dev/null | grep "$LSF_SERVERDIR"`
+    DAEMONS_PIDS=`echo "${OPENLAVA_DAEMONS}" | sed '/\/lim$\|lim -1$\|res$\|res -1$\|sbatchd$\|sbatchd -1$\|mbatchd /!d;s/^[^ ]* *\([0-9]*\).*/\1/'`
+    [ -n "${DAEMONS_PIDS}" ] && 2>/dev/null kill ${DAEMONS_PIDS}
 }
 
 # Restart is just like start since in both
@@ -43,89 +77,64 @@ fi
 # Process the requested operation.
 case "$opcode" in
   'stop')
+        env_init
         echo "Stopping daemons..."
         kill_daemons
         exit 0
         ;;
 
   'start')
-        LSF_CONF=$OPENLAVA_TOP/etc/lsf.conf
+        env_init
+        kill_daemons
 
-        if [ -f $LSF_CONF ]
-        then
-            kill_daemons
+        echo "Starting daemons..."
 
-            # Get the location of the openlava daemons
-            . $LSF_CONF
-
-            # Export this env.variable to notify openlava daemons the loc. of
-            # lsf.conf
-
-            ID=`id -u`
-
-            # Some checks on LSF_ENVDIR and LSF_SERVERDIR
-            if [ ! -x "$LSF_ENVDIR" ]; then
-              echo "LSF_ENVDIR=$LSF_ENVDIR unaccessible by user $ID"
-              exit 1
-            fi
-            if [ -x "$LSF_SERVERDIR/lim" -a -x "$LSF_SERVERDIR/res" -a -x "$LSF_SERVERDIR/sbatchd" ]; then
-              export LSF_ENVDIR
-              export LSF_SERVERDIR
-            else
-              echo "user $ID cannot execute daemons under $LSF_SERVERDIR"
-              exit 1
-            fi
-
-            echo "Starting daemons..."
-
-            if [ "$ID" != 0 ]; then
-            # single user mode use this
-            # to run test clusters
-               $LSF_SERVERDIR/lim -1               
-               if [ $? -eq 0 ]; then
-                 echo "lim -1 started"
-               else 
-                 echo "lim -1 startup failed"
-               fi
-               $LSF_SERVERDIR/res -1
-               if [ $? -eq 0 ]; then
-                 echo "res -1 started"
-               else
-                 echo "res -1 startup failed"
-               fi
-               $LSF_SERVERDIR/sbatchd -1
-               if [ $? -eq 0 ]; then
-                 echo "sbatchd -1 started"
-               else
-                 echo "sbatchd -1 startup failed"
-               fi
-            else
-               # multi user mode
-               $LSF_SERVERDIR/lim
-               if [ $? -eq 0 ]; then
-                 echo "lim started"
-               else
-                 echo "lim startup failed"
-               fi
-               $LSF_SERVERDIR/res
-               if [ $? -eq 0 ]; then
-                 echo "res started"
-               else
-                 echo "res startup failed"
-               fi
-               $LSF_SERVERDIR/sbatchd
-               if [ $? -eq 0 ]; then
-                 echo "sbatchd started"
-               else
-                 echo "sbatchd startup failed"
-               fi
-            fi
-            exit 0
+        if [ "$ID" != 0 ]; then
+        # single user mode use this
+        # to run test clusters
+           $LSF_SERVERDIR/lim -1               
+           if [ $? -eq 0 ]; then
+             echo "lim -1 started"
+           else 
+             echo "lim -1 startup failed"
+           fi
+           $LSF_SERVERDIR/res -1
+           if [ $? -eq 0 ]; then
+             echo "res -1 started"
+           else
+             echo "res -1 startup failed"
+           fi
+           $LSF_SERVERDIR/sbatchd -1
+           if [ $? -eq 0 ]; then
+             echo "sbatchd -1 started"
+           else
+             echo "sbatchd -1 startup failed"
+           fi
+        else
+           # multi user mode
+           $LSF_SERVERDIR/lim
+           if [ $? -eq 0 ]; then
+             echo "lim started"
+           else
+             echo "lim startup failed"
+           fi
+           $LSF_SERVERDIR/res
+           if [ $? -eq 0 ]; then
+             echo "res started"
+           else
+             echo "res startup failed"
+           fi
+           $LSF_SERVERDIR/sbatchd
+           if [ $? -eq 0 ]; then
+             echo "sbatchd started"
+           else
+             echo "sbatchd startup failed"
+           fi
         fi
-        echo "$LSF_CONF: no such file or directory"
-        exit 1
+        exit 0
         ;;
   'status')
+        env_init
         OPENLAVA_DAEMONS=`(ps -ef; ps auxww) 2>/dev/null | grep "$LSF_SERVERDIR"`
         PID=`echo "${OPENLAVA_DAEMONS}" | sed '/\/lim$\|lim -1$/!d;s/^[^ ]* *\([0-9]*\).*/\1/;q'`
         echo "lim pid: <$PID>"
