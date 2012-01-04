@@ -24,8 +24,8 @@
 #include "lproto.h"
 
 #define MAXMSGLEN  32*MSGSIZE
-#define CONNECT_TIMEOUT 5
-#define RECV_TIMEOUT    20
+#define CONNECT_TIMEOUT 3
+#define RECV_TIMEOUT    3
 
 struct sockaddr_in sockIds_[4];
 int  limchans_[4];
