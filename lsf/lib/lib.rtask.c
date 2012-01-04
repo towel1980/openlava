@@ -64,7 +64,7 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 
     if (!reg_ls_donerex) {
 
-        atexit( (void (*) ()) ls_donerex);   
+        atexit( (void (*) ()) ls_donerex);
  	reg_ls_donerex = TRUE;
     }
 
@@ -81,56 +81,56 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 	if (ackReturnCode_(s) < 0){
 	    closesocket(s);
 	    _lostconnection_(host);
-	    sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+	    sigprocmask(SIG_SETMASK, &oldMask, NULL);
 	    return (-1);
 	}
     }
 
-    if (!nios_ok_) 
+    if (!nios_ok_)
         niosOptions = options & REXF_SYNCNIOS;
     options &= ~REXF_SYNCNIOS;
 
     cmdmsg.options = options;
     if (cmdmsg.options & REXF_SHMODE)
 	cmdmsg.options |= REXF_USEPTY;
-    
+
     if (!isatty(0) && !isatty(1))
 	cmdmsg.options &= ~REXF_USEPTY;
     else if (cmdmsg.options & REXF_USEPTY ){
         if (options & REXF_TTYASYNC){
             if (rstty_async_(host) < 0) {
-                sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+                sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 return (-1);
             }
         } else {
-	    if (rstty_(host) < 0) { 
-                sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+	    if (rstty_(host) < 0) {
+                sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 return (-1);
             }
         }
     }
-    
+
     if ( (genParams_[LSF_INTERACTIVE_STDERR].paramValue != NULL)
-	 && (strcasecmp(genParams_[LSF_INTERACTIVE_STDERR].paramValue, 
+	 && (strcasecmp(genParams_[LSF_INTERACTIVE_STDERR].paramValue,
 			"y") == 0) ) {
 	cmdmsg.options |= REXF_STDERR;
     }
 
     if (!nios_ok_) {
-       
+
         initSigHandler(SIGTSTP);
         initSigHandler(SIGTTIN);
         initSigHandler(SIGTTOU);
 
-       
+
         if (socketpair(AF_UNIX, SOCK_STREAM, 0, cli_nios_fd) < 0) {
             lserrno = LSE_SOCK_SYS;
-            sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+            sigprocmask(SIG_SETMASK, &oldMask, NULL);
             closesocket(s);
             return(-1);
         }
 
-        if ((pid = fork()) != 0) { 
+        if ((pid = fork()) != 0) {
             int mypid;
 
             close(cli_nios_fd[1]);
@@ -138,7 +138,7 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
             if (b_write_fix(cli_nios_fd[0], (char *) &mypid, sizeof (mypid)) !=
                 sizeof (mypid)) {
                 close(cli_nios_fd[0]);
-                sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+                sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 lserrno = LSE_MSG_SYS;
                 return (-1);
             }
@@ -146,37 +146,37 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
             if (b_read_fix(cli_nios_fd[0], (char *) &retport, sizeof (u_short))
                 != sizeof(u_short) ) {
                 close(cli_nios_fd[0]);
-                sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+                sigprocmask(SIG_SETMASK, &oldMask, NULL);
                 lserrno = LSE_MSG_SYS;
                 return (-1);
             }
 
             nios_ok_ = TRUE;
 
-            if (waitpid(pid, 0, 0) <0) { 
+            if (waitpid(pid, 0, 0) <0) {
                 if (errno != ECHILD) {
                     close(cli_nios_fd[0]);
                     nios_ok_ = FALSE;
-                    sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+                    sigprocmask(SIG_SETMASK, &oldMask, NULL);
                     lserrno = LSE_WAIT_SYS;
                     return (-1);
                 }
             }
         } else {
-            if (fork()) { 
+            if (fork()) {
                 max = sysconf(_SC_OPEN_MAX);
-                for (d = 3; d < max; ++d) { 
+                for (d = 3; d < max; ++d) {
                     (void)close(d);
                 }
                 exit(0);
             }
-          
+
 
             if (initenv_(NULL, NULL) <0)
                 exit (-1);
             strcpy(pathbuf, genParams_[LSF_SERVERDIR].paramValue);
             strcat(pathbuf, "/nios");
-            sprintf(c_chfd, "%d", cli_nios_fd[1]);  
+            sprintf(c_chfd, "%d", cli_nios_fd[1]);
             new_argv[0] = pathbuf;
             new_argv[1] = c_chfd;
             if (cmdmsg.options & REXF_USEPTY) {
@@ -190,16 +190,16 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
             new_argv[3] = NULL;
 
             max = sysconf(_SC_OPEN_MAX);
-            for (d = 3; d < max; ++d) { 
+            for (d = 3; d < max; ++d) {
                 if (d != cli_nios_fd[1])
                     (void)close(d);
             }
-          
-            for (d = 1; d < NSIG; d++)     
+
+            for (d = 1; d < NSIG; d++)
                 Signal_(d, SIG_DFL);
 
-          
-            sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+
+            sigprocmask(SIG_SETMASK, &oldMask, NULL);
             (void)lsfExecvp(new_argv[0], new_argv);
             exit(-1);
         }
@@ -207,7 +207,7 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 
     if (envp) {
         if (ls_rsetenv_async (host, envp) < 0) {
-            sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+            sigprocmask(SIG_SETMASK, &oldMask, NULL);
             return (-1);
         }
     }
@@ -218,32 +218,32 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 	closesocket(s);
 	_lostconnection_(host);
         lserrno = LSE_WDIR;
-        sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+        sigprocmask(SIG_SETMASK, &oldMask, NULL);
         return (-1);
     }
 
-    
+
     rpid++;
 
     cmdmsg.rpid = rpid;
     cmdmsg.retport = retport;
 
     cmdmsg.argv = argv;
-    cmdmsg.priority = 0;   
+    cmdmsg.priority = 0;
 
     if (sendCmdBill_(s, (resCmd) RES_EXEC, &cmdmsg, NULL, NULL) == -1) {
 	closesocket(s);
 	_lostconnection_(host);
-        sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+        sigprocmask(SIG_SETMASK, &oldMask, NULL);
 	return(-1);
     }
 
     if (cmdmsg.options & REXF_TASKPORT) {
-	
+
 	if ((taskPort = getTaskPort(s)) == 0) {
 	    closesocket(s);
 	    _lostconnection_(host);
-            sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+            sigprocmask(SIG_SETMASK, &oldMask, NULL);
 	    return(-1);
 	}
     }
@@ -253,14 +253,14 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 	closesocket(s);
 	_lostconnection_(host);
 	lserrno = LSE_SOCK_SYS;
-        sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+        sigprocmask(SIG_SETMASK, &oldMask, NULL);
 	return(-1);
     }
 
     SET_LSLIB_NIOS_HDR(taskReq.hdr, LIB_NIOS_RTASK, sizeof(taskReq.r));
     taskReq.r.pid = rpid;
     taskReq.r.peer = sin.sin_addr;
-    
+
     taskReq.r.pid = (niosOptions & REXF_SYNCNIOS)? -rpid : rpid;
 
     if (b_write_fix(cli_nios_fd[0], (char *) &taskReq, sizeof(taskReq))
@@ -268,7 +268,7 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 	closesocket(s);
 	_lostconnection_(host);
 	lserrno = LSE_MSG_SYS;
-        sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+        sigprocmask(SIG_SETMASK, &oldMask, NULL);
 	return (-1);
     }
 
@@ -276,23 +276,23 @@ ls_rtaske(char *host, char **argv, int options, char **envp)
 	closesocket(s);
 	_lostconnection_(host);
 	lserrno = LSE_MALLOC;
-        sigprocmask(SIG_SETMASK, &oldMask, NULL); 
+        sigprocmask(SIG_SETMASK, &oldMask, NULL);
 	return (-1);
     }
 
     sigprocmask(SIG_SETMASK, &oldMask, NULL);
 
     return (rpid);
-} 
+}
 
-int 
+int
 rgetpidCompletionHandler_(struct lsRequest *request)
 {
     struct resPid pidReply;
     XDR xdrs;
     int rc;
 
-    
+
     rc = resRC2LSErr_(request->rc);
     if (rc != 0)
 	return(-1);
@@ -303,12 +303,12 @@ rgetpidCompletionHandler_(struct lsRequest *request)
 	xdr_destroy(&xdrs);
 	return(-1);
     }
-    
+
     *((int *)request->extra) = pidReply.pid;
     xdr_destroy(&xdrs);
     return(0);
 
-} 
+}
 
 void *
 lsRGetpidAsync_(int taskid, int *pid)
@@ -350,10 +350,10 @@ lsRGetpidAsync_(int taskid, int *pid)
         return (NULL);
     }
 
-    
-    request = lsReqHandCreate_(taskid, 
-			       currentSN, 
-			       s, 
+
+    request = lsReqHandCreate_(taskid,
+			       currentSN,
+			       s,
 			       (void *)pid,
 			       rgetpidCompletionHandler_,
 			       (appCompletionHandler) NULL,
@@ -365,7 +365,7 @@ lsRGetpidAsync_(int taskid, int *pid)
 
     return (void *)request;
 
-} 
+}
 
 int
 lsRGetpid_(int taskid, int options)
@@ -408,9 +408,9 @@ lsRGetpid_(int taskid, int options)
         return (-1);
     }
 
-    request = lsReqHandCreate_(taskid, 
-			       currentSN, 
-			       s, 
+    request = lsReqHandCreate_(taskid,
+			       currentSN,
+			       s,
 			       (void *)&pid,
 			       rgetpidCompletionHandler_,
 			       (appCompletionHandler) NULL,
@@ -429,7 +429,7 @@ lsRGetpid_(int taskid, int options)
 
     return(pid);
 
-} 
+}
 
 int
 lsRGetpgrp_(int sock, int taskid, int pid)
@@ -466,9 +466,9 @@ lsRGetpgrp_(int sock, int taskid, int pid)
         return (-1);
     }
 
-    request = lsReqHandCreate_(taskid, 
-			       currentSN, 
-			       s, 
+    request = lsReqHandCreate_(taskid,
+			       currentSN,
+			       s,
 			       (void *)&pgid,
 			       rgetpidCompletionHandler_,
 			       (appCompletionHandler) NULL,
@@ -487,14 +487,14 @@ lsRGetpgrp_(int sock, int taskid, int pid)
 
     return(pgid);
 
-} 
+}
 
 static void
 initSigHandler(int sig)
 {
     struct sigaction act, oact;
 
-    
+
     act.sa_handler = (SIGFUNCTYPE) default_tstp_;
     sigemptyset(&act.sa_mask);
     sigaddset(&act.sa_mask, sig);
@@ -503,7 +503,7 @@ initSigHandler(int sig)
 
     if (oact.sa_handler != SIG_DFL)
         sigaction(sig, &oact, NULL);
-} 
+}
 
 int
 ls_rtask(char *host, char **argv, int options)
@@ -529,14 +529,14 @@ ls_rtask(char *host, char **argv, int options)
 
     return ret;
 
-} 
+}
 
 static void
 default_tstp_(int signo)
 {
     (void) ls_stoprex();
     kill(getpid(), SIGSTOP);
-} 
+}
 
 static
 u_short getTaskPort(int s)
@@ -549,13 +549,13 @@ u_short getTaskPort(int s)
         return(0);
 
     return (htons(hdr.opCode));
-} 
+}
 
-void 
+void
 setRexWd_(char *wd)
 {
     if (wd)
         strcpy(rexcwd_, wd);
     else
         rexcwd_[0]='\0';
-} 
+}

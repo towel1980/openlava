@@ -161,6 +161,9 @@ lsrun: ls_rtaske() failed on host %s: %s\n",
         }
     }
 
+    if (P->verbose)
+        printf("Going to ls_rwait() for %d tasks\n", num);
+
     while (num > 0) {
         LS_WAIT_T stat;
         struct rusage ru;

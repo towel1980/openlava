@@ -250,7 +250,7 @@ getConnectionNum_(char *hostName)
 
     connNum = hEntPtr->hData;
     delhostbysock_(connNum[0]);
-    h_delEnt_(&conn_table, hEntPtr);
+    h_rmEnt_(&conn_table, hEntPtr);
 
     return connNum[0];
 }

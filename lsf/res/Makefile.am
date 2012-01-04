@@ -22,3 +22,5 @@ if !CYGWIN
 nios_LDADD += -lnsl
 endif
 #
+etags:
+	etags *.[hc] ../*.h ../lib/*.[hc] ../intlib/*.[hc]
