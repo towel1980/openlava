@@ -186,7 +186,7 @@ Reading configuration from %s/lsf.conf\n", env_dir);
                    (lim_debug == 2),
                    limParams[LSF_LOG_MASK].paramValue);
         ls_syslog(LOG_ERR, "\
-%s: initenv() failed reading lsf.conf from %s", env_dir);
+%s: initenv() failed reading lsf.conf from %s", __func__, env_dir);
         lim_Exit("main");
     }
 

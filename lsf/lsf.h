@@ -770,7 +770,7 @@ typedef void (*SIGFUNCTYPE)(int);
 typedef struct stat LS_STAT_T;
 #define LSTMPDIR        lsTmpDir_
 #define LSDEVNULL       "/dev/null"
-#define LSETCDIR        "/etc"
+#define LSETCDIR        "/opt/openlava/etc"
 #define closesocket close
 #define CLOSESOCKET(s) close((s))
 #define SOCK_CALL_FAIL(c) ((c) < 0 )
@@ -804,10 +804,8 @@ extern int     ls_rwait(LS_WAIT_T *, int, struct rusage *);
 extern int     ls_rwaittid(int, LS_WAIT_T *, int, struct rusage *);
 extern int     ls_rkill(int, int);
 extern int     ls_startserver(char *, char **, int);
-extern int     ls_conntaskport(int tid);
-
-extern char    **ls_placereq(char *resreq, int *numhosts, int options,
-                             char *fromhost);
+extern int     ls_conntaskport(int);
+extern char    **ls_placereq(char *, int *, int, char *);
 extern char    **ls_placeofhosts(char *resreq, int *numhosts,
                                  int options, char *fromhost, char **hostlist,
                                  int listsize);
@@ -923,7 +921,6 @@ extern int     ls_niostatus(int, int *, struct rusage *);
 extern int     ls_niokill(int);
 extern int     ls_niosetdebug(int);
 extern int     ls_niodump(int, int, int, char *);
-
 extern struct lsfAcctRec *ls_getacctrec(FILE *, int *);
 extern int ls_putacctrec(FILE *, struct lsfAcctRec *);
 extern int getBEtime(char *, char, time_t *);
