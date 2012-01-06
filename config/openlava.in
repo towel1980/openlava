@@ -68,7 +68,7 @@ kill_daemons()
 # cases previously running daemons are 
 # killed.
 opcode="$1"
-if [ "$opcode" == "restart" ]
+if [ "$opcode" = "restart" ]
 then 
    opcode="start"
    echo "Stopping daemons..."
