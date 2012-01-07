@@ -101,6 +101,7 @@ Gethostbyname_(char *hname)
         lserrno = LSE_BAD_HOST;
         return NULL;
     }
+    stripDomain(hp->h_name);
 
     /* add the new host to the host hash table
      */
@@ -154,6 +155,7 @@ Gethostbyaddr_(in_addr_t *addr, socklen_t len, int type)
         lserrno = LSE_BAD_HOST;
         return NULL;
     }
+    stripDomain(hp->h_name);
 
     addHost2Tab(hp->h_name,
                 (in_addr_t **)hp->h_addr_list,
@@ -298,26 +300,19 @@ addHost2Tab(const char *hname,
 {
     struct hostent *hp;
     char ipbuf[32];
-    char name[MAXHOSTNAMELEN];
     hEnt *e;
     hEnt *e2;
     int new;
     int cc;
 
-    /* Strip the domain name before
-     * adding it into the cache in case
-     */
-    strcpy(name, hname);
-    stripDomain(name);
-
     /* add the host to the table by its name
      * if it exists already we must be processing
      * another ipaddr for it.
      */
-    e = h_addEnt_(nameTab, name, &new);
+    e = h_addEnt_(nameTab, hname, &new);
     if (new) {
         hp = calloc(1, sizeof(struct hostent));
-        hp->h_name = strdup(name);
+        hp->h_name = strdup(hname);
         hp->h_addrtype = AF_INET;
         hp->h_length = 4;
         e->hData = hp;
